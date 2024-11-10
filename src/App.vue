@@ -1,8 +1,15 @@
 <template>
     <header
-        class="text-3xl font-bold text-center mb-6 fixed top-0 left-0 w-full p-4 bg-white shadow-md z-50"
+        class="flex justify-between mb-6 fixed top-0 left-0 w-full p-4 bg-white shadow-md z-50"
     >
-        FinTrack
+        <span class="text-center text-3xl font-bold"> FinTrack </span>
+        <button
+            v-if="loggedIn"
+            @click="() => isLoggedIn(false)"
+            class="text-blue-400 rounded p-2"
+        >
+            Logout
+        </button>
     </header>
 
     <div class="container mx-auto mt-16 p-4" v-if="!loggedIn">
@@ -31,24 +38,16 @@
                     </div>
                 </div>
                 <div v-if="activeTab == 'Loans'">
-                    <Loans  :friends="friends"/>
+                    <Loans :friends="friends" />
                 </div>
             </el-tab-pane>
         </el-tabs>
     </div>
-
-    <button
-        v-if="loggedIn"
-        @click="() => isLoggedIn(false)"
-        class="bg-green-500 text-white rounded p-2 fixed right-2 bottom-2"
-    >
-        Logout
-    </button>
 </template>
       <!-- :payments="payments" -->
 
 <script setup>
-import { ref } from "vue";
+import { provide, ref } from "vue";
 import Login from "./components/Login.vue";
 import PaymentForm from "./components/PaymentForm.vue";
 import ExpenseList from "./components/ExpenseList.vue";
@@ -63,8 +62,8 @@ const props = defineProps({
 // Set "Expenses" as the default active tab
 const activeTab = ref("Expenses");
 
+provide("activeTab", activeTab);
 function handleActiveTab(tab) {
-    console.log("Active tab:", tab); // Use tab.name to get the tab label
     activeTab.value = tab; // Set the active tab using the name
 }
 const payments = ref([]);

@@ -83,11 +83,27 @@
             <!-- Submit Button -->
             <el-form-item>
                 <el-button
+                    v-if="isVisible"
                     type="primary"
                     class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg"
-                    @click="validateForm"
+                    @click="()=>validateForm()"
                 >
                     Add Loan
+                </el-button>
+                <el-button
+                    v-if="!isVisible"
+                    type="warning"
+                    class="w-16 bg-orange-500 hover:bg-orange-600 text-white py-2 rounded-lg"
+                    @click="() => validateForm('Update')"
+                    >Update</el-button
+                >
+                <el-button
+                    v-if="!isVisible"
+                    class="w-16 bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg"
+                    type="danger"
+                    @click="() => validateForm('Delete')"
+                >
+                    Delete
                 </el-button>
             </el-form-item>
         </el-form>
@@ -96,17 +112,18 @@
 
 
 <script setup>
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import { ElMessage } from "element-plus";
-import { database, push, ref as dbRef } from "../firebase"; // Firebase setup
-
+import { database, push, ref as dbRef, remove ,update} from "../firebase"; // Firebase setup
+const emit = defineEmits(["closeModal"]);
 const props = defineProps({
     friends: Array,
+    row: Object,
 });
 
-
 const loanForm = ref(null);
-
+const isVisible = ref(true);
+console.log(props.row);
 // Form data model
 const formData = ref({
     loanAmount: null,
@@ -114,8 +131,18 @@ const formData = ref({
     loanReceiver: "",
     loanDescription: "",
 });
-
-
+// Watch for changes in `row` prop and update formData
+watch(
+    () => props.row,
+    (newRow) => {
+        formData.value.loanAmount = newRow?.amount ?? null;
+        formData.value.loanGiver = newRow?.giver ?? "";
+        formData.value.loanReceiver = newRow?.receiver ?? "";
+        formData.value.loanDescription = newRow?.description ?? "";
+        isVisible.value = !newRow?.amount;
+    },
+    { immediate: true, deep: true }
+);
 // Validation rules
 const rules = {
     loanAmount: [
@@ -152,17 +179,63 @@ const rules = {
 };
 
 // Handle form submission with validation
-const validateForm = () => {
+const validateForm = (whatTask = "Save") => {
     loanForm.value.validate((valid) => {
         if (valid) {
-            handleLoanSubmit();
-        } else {
-            console.log("Form validation failed");
+            if (whatTask == "Save") {
+                handleLoanSubmit();
+            } else if (whatTask == "Update") {
+                console.log("Update");
+                updateLoan(props.row.id);
+                emit("closeModal");
+            } else if (whatTask == "Delete") {
+                deleteLoan(props.row.id);
+                emit("closeModal");
+            }
         }
     });
 };
+function deleteLoan(loanId) {
+    console.log("loan Id: ", loanId);
+    const loanRef = dbRef(database, `loans/${loanId}`); // Reference to the specific loan node
+    console.log(loanRef);
+    remove(loanRef)
+        .then(() => {
+            ElMessage.success(
+                `Loan record with ID ${loanId} deleted successfully`
+            );
+        })
+        .catch((error) => {
+            ElMessage.error("Error deleting loan record:" + error);
+        });
+}
+function updateLoan(loanId) {
+    const loanRef = dbRef(database, `loans/${loanId}`); // Reference to the specific loan node
+    update(loanRef, getLoanData())
+        .then(() => {
+            ElMessage.success(
+                `Loan record with ID ${loanId} updated successfully`
+            );
+            resetForm();
+        })
+        .catch((error) => {
+            ElMessage.error("Error updating loan record: " + error);
+        });
+}
+
 // Handle loan submission
 function handleLoanSubmit() {
+    push(dbRef(database, "loans"), getLoanData())
+        .then(() => {
+            ElMessage.success("Loan added successfully.");
+            // Clear form
+            resetForm();
+        })
+        .catch((error) => {
+            ElMessage.error("Error saving loan: " + error.message);
+        });
+}
+function getLoanData() {
     const storedData = localStorage.getItem("rememberMeData");
     let whoAdded = "";
     if (storedData) {
@@ -180,19 +253,13 @@ function handleLoanSubmit() {
             new Date().toLocaleTimeString(),
         whoAdded,
     };
-
-    push(dbRef(database, "loans"), loan)
-        .then(() => {
-            ElMessage.success("Loan added successfully.");
-            // Clear form
-            formData.value.loanAmount = null;
-            formData.value.loanDescription = "";
-            formData.value.loanGiver = "";
-            formData.value.loanReceiver = "";
-        })
-        .catch((error) => {
-            ElMessage.error("Error saving loan: " + error.message);
-        });
+    return loan;
+}
+function resetForm() {
+    formData.value.loanAmount = null;
+    formData.value.loanDescription = "";
+    formData.value.loanGiver = "";
+    formData.value.loanReceiver = "";
 }
 </script>
 

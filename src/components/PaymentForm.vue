@@ -70,23 +70,28 @@
             </el-row>
 
             <!-- Submit Button -->
-            <el-form-item >
+            <el-form-item>
                 <el-button
-                v-if="isVisible"
+                    v-if="isVisible"
                     type="primary"
                     class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg"
-                    @click="validateForm"
+                    @click="()=>validateForm()"
                 >
                     Add Payment
                 </el-button>
-                <el-button v-if="!isVisible" type="warning"
-                 class="w-16 bg-orange-500 hover:bg-orange-600 text-white py-2 rounded-lg"
-                @click="()=>validateForm('Update')"
+                <el-button
+                    v-if="!isVisible"
+                    type="warning"
+                    class="w-16 bg-orange-500 hover:bg-orange-600 text-white py-2 rounded-lg"
+                    @click="() => validateForm('Update')"
                     >Update</el-button
                 >
-                <el-button v-if="!isVisible"
-                 class="w-16 bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg"
-                 type="danger" @click="()=>validateForm('Delete')">
+                <el-button
+                    v-if="!isVisible"
+                    class="w-16 bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg"
+                    type="danger"
+                    @click="() => validateForm('Delete')"
+                >
                     Delete
                 </el-button>
             </el-form-item>
@@ -97,8 +102,8 @@
 <script setup>
 import { ref, watch } from "vue";
 import { ElMessage } from "element-plus";
-import { database, push, ref as dbRef } from "../firebase"; // Firebase setup
-const emit = defineEmits(['closeModal'])
+import { database, push, ref as dbRef ,update,remove} from "../firebase"; // Firebase setup
+const emit = defineEmits(["closeModal"]);
 const props = defineProps({
     friends: Array,
     row: Object,
@@ -118,7 +123,7 @@ watch(
         formData.value.amount = newRow?.amount ?? null;
         formData.value.description = newRow?.description ?? "";
         formData.value.payer = newRow?.payer ?? "";
-        formData.value.date = newRow?.date ?? new Date().toLocaleString();
+        formData.value.date = newRow?.date ?? "";
         isVisible.value = !newRow?.amount;
     },
     { immediate: true, deep: true }
@@ -157,41 +162,78 @@ const validateForm = (whatTask = "Save") => {
             if (whatTask == "Save") {
                 handleSubmit();
             } else if (whatTask == "Update") {
-                console.log("Update");
-                emit('closeModal')
-
+                updatePayment(props.row.id);
+                emit("closeModal");
             } else if (whatTask == "Delete") {
-                console.log("Delete");
-                emit('closeModal')
+                deletePayment(props.row.id);
+                emit("closeModal");
             }
-        } else {
-            console.log("Form validation failed");
         }
     });
 };
 
-function handleSubmit() {
-    const payment = {
-        amount: parseFloat(formData.value.amount),
-        description: formData.value.description,
-        payer: formData.value.payer,
-        date: new Date(formData.value.date).toLocaleString("en-PK"),
-    };
+function deletePayment(paymentId) {
+    console.log("payment Id: ", paymentId);
+    const paymentRef = dbRef(database, `payments/${paymentId}`); // Reference to the specific payment node
+    console.log(paymentRef);
+    remove(paymentRef)
+        .then(() => {
+            ElMessage.success(
+                `Payment record with ID ${paymentId} deleted successfully`
+            );
+        })
+        .catch((error) => {
+            ElMessage.error("Error deleting payment record:" + error);
+        });
+}
+function updatePayment(paymentId) {
+    const paymentRef = dbRef(database, `payments/${paymentId}`); // Reference to the specific payment node
+    update(paymentRef, getPaymentData())
+        .then(() => {
+            ElMessage.success(
+                `Payment record with ID ${paymentId} updated successfully`
+            );
+            resetForm();
+        })
+        .catch((error) => {
+            ElMessage.error("Error updating payment record: " + error);
+        });
+}
 
+function handleSubmit() {
     // Log data and push to Firebase
-    console.log("Payment:", payment);
-    push(dbRef(database, "payments"), payment)
+
+    push(dbRef(database, "payments"), getPaymentData())
         .then(() => {
             // Clear form fields after successful submission
-            formData.value.amount = null;
-            formData.value.description = "";
-            formData.value.date = "";
-            formData.value.payer = "";
+            resetForm();
             ElMessage.success("Transaction successfully saved.");
         })
         .catch((error) => {
             ElMessage.error("Error saving payment: " + error.message);
         });
+}
+function getPaymentData() {
+    const storedData = localStorage.getItem("rememberMeData");
+    let whoAdded = "";
+    if (storedData) {
+        const data = JSON.parse(storedData);
+        whoAdded = data.username;
+    }
+    const payment = {
+        amount: parseFloat(formData.value.amount),
+        description: formData.value.description,
+        payer: formData.value.payer,
+        date: new Date(formData.value.date).toLocaleString("en-PK"),
+        whoAdded,
+    };
+    return payment;
+}
+function resetForm() {
+    formData.value.amount = null;
+    formData.value.description = "";
+    formData.value.date = "";
+    formData.value.payer = "";
 }
 </script>
 

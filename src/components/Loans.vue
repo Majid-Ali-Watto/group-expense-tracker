@@ -7,7 +7,7 @@
             <!-- Loan Records Section -->
 
             <h2 class="text-xl font-semibold my-4">Loan Records</h2>
-            <Table :rows="loans" :friends="friends" />
+            <Table :rows="loans" :keys="loanKeys" :friends="friends" />
 
             <!-- Balances Section -->
             <fieldset class="border border-gray-300 rounded-lg p-3">
@@ -62,6 +62,7 @@ const props = defineProps({
 
 // Loan records array
 const loans = ref([]);
+const loanKeys = ref([]);
 
 // Reference for the content to be downloaded
 const loanContent = ref(null);
@@ -71,6 +72,8 @@ onMounted(() => {
     const loansRef = dbRef(database, "loans");
     onValue(loansRef, (snapshot) => {
         loans.value = snapshot.exists() ? Object.values(snapshot.val()) : [];
+        loanKeys.value = snapshot.exists() ? Object.keys(snapshot.val()) : [];
+        console.log(loanKeys.value);
     });
 });
 

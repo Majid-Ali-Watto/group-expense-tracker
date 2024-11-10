@@ -16,7 +16,7 @@
             <tbody>
                 <tr
                     @dblclick="() => handleDoubleClick(row)"
-                    @click="() => handleClick(row)"
+                    @click="() => handleClick(row, rowIndex)"
                     v-for="(row, rowIndex) in rows"
                     :key="rowIndex"
                     class="hover:bg-gray-50"
@@ -62,11 +62,20 @@
                     </el-select>
                 </el-form-item>
             </el-form> -->
-            <PaymentForm
-                @closeModal="dialogFormVisible = false"
-                :friends="friends"
-                :row="state.row"
-            />
+            <div v-if="activeTab == 'Expenses'">
+                <PaymentForm
+                    @closeModal="dialogFormVisible = false"
+                    :friends="friends"
+                    :row="state.row"
+                />
+            </div>
+            <div v-if="activeTab == 'Loans'">
+                <LoanForm
+                    @closeModal="dialogFormVisible = false"
+                    :friends="friends"
+                    :row="state.row"
+                />
+            </div>
             <template #footer>
                 <div class="dialog-footer">
                     <el-button type="success" @click="dialogFormVisible = false"
@@ -88,16 +97,21 @@
 import { ElMessage } from "element-plus";
 import { computed, inject, onMounted, onUnmounted, ref, reactive } from "vue";
 import PaymentForm from "./PaymentForm.vue";
+import LoanForm from "./LoanForm.vue";
 const timeout = ref(null);
 const delay = 300; // Time to wait for double click in milliseconds
 const dialogFormVisible = ref(false);
 const state = reactive({ row: null });
 const screenWidth = ref(window.innerWidth); // Store the current screen width
-
+const activeTab = ref(inject("activeTab"));
 // Inject the globally provided formatAmount function
 const formatAmount = inject("formatAmount");
 const props = defineProps({
     rows: {
+        type: Array,
+        required: true,
+    },
+    keys: {
         type: Array,
         required: true,
     },
@@ -138,7 +152,7 @@ const headers = computed(() => {
     return [];
 });
 
-const handleClick = (rowS) => {
+const handleClick = (rowS, rowIndex) => {
     // Clear previous timeout if any
     clearTimeout(timeout.value);
 
@@ -146,11 +160,7 @@ const handleClick = (rowS) => {
     timeout.value = setTimeout(() => {
         // Handle single click action
         dialogFormVisible.value = true;
-        state.row = rowS;
-        console.log(
-            "🚀 -> file: Table.vue:126 -> timeout.value=setTimeout -> row.value:",
-            state.row
-        );
+        state.row = { ...rowS, id: props.keys[rowIndex] };
     }, delay);
 };
 
@@ -159,9 +169,6 @@ const handleDoubleClick = (row) => {
     clearTimeout(timeout.value);
 
     // Handle double click action
-    rowDetails(row, "dc");
+    ElMessage.info("Added By: " + (row.whoAdded || "N/A"));
 };
-function rowDetails(row, c) {
-    ElMessage.info("Added By: " + (row.whoAdded || "N/A") + c);
-}
 </script>

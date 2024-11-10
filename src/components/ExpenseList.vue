@@ -43,7 +43,7 @@
         </div>
 
         <!-- Table -->
-        <Table :rows="filteredPayments" />
+        <Table :rows="filteredPayments" :keys="paymentKeys" />
 
         <!-- Download Buttons -->
         <el-row class="mt-2 flex justify-center">
@@ -83,6 +83,8 @@ const props = defineProps({
 });
 const friends = ref(props.friends); // Replace this if `friends` are passed as props.
 const payments = ref([]);
+const paymentKeys = ref([]);
+
 const selectedMonth = ref("");
 const selectedFriend = ref("");
 const pdfContent = ref(null);
@@ -94,6 +96,8 @@ onMounted(() => {
     const paymentsRef = dbRef(database, "payments");
     onValue(paymentsRef, (snapshot) => {
         const data = snapshot.val() || {};
+        paymentKeys.value = Object.keys(data);
+        console.log(paymentKeys.value);
         payments.value = Object.values(data);
         props.updatePayment(payments.value);
     });
