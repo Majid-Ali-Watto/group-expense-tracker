@@ -2,7 +2,7 @@
     <header
         class="text-3xl font-bold text-center mb-6 fixed top-0 left-0 w-full p-4 bg-white shadow-md z-50"
     >
-        Group Expense Tracker
+        FinTrack
     </header>
 
     <div class="container mx-auto mt-16 p-4" v-if="!loggedIn">
