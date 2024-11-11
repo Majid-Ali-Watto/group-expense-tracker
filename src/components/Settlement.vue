@@ -21,7 +21,7 @@
                     >
                         {{ balance.balance >= 0 ? "take " : "give " }}
                     </span>
-                    <i>  {{ formatAmount(Math.abs(balance.balance)) }}</i>
+                    <i> {{ formatAmount(Math.abs(balance.balance)) }}</i>
                 </el-col>
             </el-row>
         </fieldset>

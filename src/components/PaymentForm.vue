@@ -75,7 +75,7 @@
                     v-if="isVisible"
                     type="primary"
                     class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg"
-                    @click="()=>validateForm()"
+                    @click="() => validateForm()"
                 >
                     Add Payment
                 </el-button>
@@ -102,7 +102,7 @@
 <script setup>
 import { ref, watch } from "vue";
 import { ElMessage } from "element-plus";
-import { database, push, ref as dbRef ,update,remove} from "../firebase"; // Firebase setup
+import { database, push, ref as dbRef, update, remove } from "../firebase"; // Firebase setup
 const emit = defineEmits(["closeModal"]);
 const props = defineProps({
     friends: Array,

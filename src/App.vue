@@ -28,7 +28,8 @@
                 :label="tab"
                 :name="tab"
             >
-                <div v-if="tab === 'Expenses'">
+                <!-- Content based on activeTab -->
+                <div v-show="activeTab === 'Expenses'">
                     <PaymentForm :friends="friends" />
                     <div ref="pdfContentApp">
                         <ExpenseList
@@ -37,47 +38,48 @@
                         />
                     </div>
                 </div>
-                <div v-if="activeTab == 'Loans'">
+                <div v-show="activeTab === 'Loans'">
                     <Loans :friends="friends" />
+                </div>
+                <div v-show="activeTab === 'Sallary Manager'">
+                    <SallaryManager :friends="friends" />
                 </div>
             </el-tab-pane>
         </el-tabs>
     </div>
 </template>
-      <!-- :payments="payments" -->
 
 <script setup>
-import { provide, ref } from "vue";
+import { ref } from "vue";
+import { useTabStore } from "./stores/useTabStore"; // Import the Pinia store
 import Login from "./components/Login.vue";
 import PaymentForm from "./components/PaymentForm.vue";
 import ExpenseList from "./components/ExpenseList.vue";
 import Loans from "./components/Loans.vue";
-const pdfContentApp = ref(null);
-const tabs = ref(["Expenses", "Loans"]);
+import SallaryManager from "./components/monthly-sallary-expense-manager/Manager.vue";
 
-const props = defineProps({
-    tabs: Array,
-    setActiveTab: Function,
-});
-// Set "Expenses" as the default active tab
-const activeTab = ref("Expenses");
+const tabs = ref(["Expenses", "Loans", "Sallary Manager"]);
 
-provide("activeTab", activeTab);
-function handleActiveTab(tab) {
-    activeTab.value = tab; // Set the active tab using the name
-}
 const payments = ref([]);
 const friends = ["Majid Ali", "Aqil Shahzad"];
 const loggedIn = ref(null);
-
+// Access the store
+const tabStore = useTabStore();
+// Directly use `activeTab` from Pinia store
+const activeTab = tabStore.$state.activeTab;
 function isLoggedIn(logged) {
     loggedIn.value = logged;
 }
+
 function updatePayment(payment) {
     payments.value = payment;
 }
+
+function handleActiveTab(tab) {
+    tabStore.setActiveTab(tab); // Update the tab in the store
+}
 </script>
 
-<style>
+<style scoped>
 @import "tailwindcss/tailwind.css";
 </style>

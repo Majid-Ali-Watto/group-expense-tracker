@@ -2,7 +2,7 @@
     <div class="w-full overflow-x-auto">
         <table class="w-full border-collapse border border-gray-300">
             <thead>
-                <tr class="bg-gray-100 text-gray-700 text-left">
+                <tr class="bg-green-800 text-white text-left">
                     <!-- Render table headers -->
                     <th
                         v-for="(header, index) in headers"
@@ -81,12 +81,6 @@
                     <el-button type="success" @click="dialogFormVisible = false"
                         >Cancel</el-button
                     >
-                    <!-- <el-button type="warning" @click="dialogFormVisible = false"
-                        >Update</el-button
-                    >
-                    <el-button type="danger" @click="dialogFormVisible = false">
-                        Delete
-                    </el-button> -->
                 </div>
             </template>
         </el-dialog>
@@ -97,13 +91,19 @@
 import { ElMessage } from "element-plus";
 import { computed, inject, onMounted, onUnmounted, ref, reactive } from "vue";
 import PaymentForm from "./PaymentForm.vue";
+import { useTabStore } from "../stores/useTabStore"; // Import the Pinia store
+
 import LoanForm from "./LoanForm.vue";
 const timeout = ref(null);
 const delay = 300; // Time to wait for double click in milliseconds
 const dialogFormVisible = ref(false);
 const state = reactive({ row: null });
 const screenWidth = ref(window.innerWidth); // Store the current screen width
-const activeTab = ref(inject("activeTab"));
+// Access the store
+const tabStore = useTabStore();
+
+// Directly use `activeTab` from Pinia store
+const activeTab = tabStore.$state.activeTab;
 // Inject the globally provided formatAmount function
 const formatAmount = inject("formatAmount");
 const props = defineProps({
@@ -117,7 +117,6 @@ const props = defineProps({
     },
     friends: {
         type: Array,
-        required: true,
     },
 });
 
