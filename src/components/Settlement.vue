@@ -1,7 +1,7 @@
 <template>
     <div class="my-4">
         <fieldset class="border border-gray-300 rounded-lg p-4">
-            <legend class="text-xl font-semibold px-2 mb-2">Settlement</legend>
+            <legend>Settlement</legend>
             <el-row>
                 <el-col
                     v-for="(balance, index) in balances"

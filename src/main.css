@@ -1,17 +1,21 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-/*
-legend{
-    margin-bottom: 0 !important;
+
+@layer base {
+	legend {
+		@apply font-semibold px-1
+               text-sm lg:text-base md:text-base sm:text-sm;
+		/* lg:font-semibold md:font-medium sm:font-normal; */
+	}
+	h2 {
+		@apply font-semibold mb-4
+               text-sm lg:text-xl md:text-lg sm:text-base;
+		/* lg:font-semibold md:font-medium sm:font-normal; */
+	}
+	strong {
+		@apply font-semibold
+               text-sm lg:text-base md:text-base sm:text-sm;
+		/* lg:font-semibold md:font-medium sm:font-normal; */
+	}
 }
-body,header{
-    background-color: skyblue !important;
-}
-.el-tabs{
-    background-color: rgb(241, 244, 245) !important;
-    color: black !important;
-}
-input{
-    background-color: white !important;
-} */

@@ -1,6 +1,6 @@
 <template>
     <fieldset class="w-full border border-gray-300 rounded-lg p-4">
-        <legend class="text-xl font-semibold px-2">
+        <legend>
             Add/Update Monthly Salary
         </legend>
         <el-form
@@ -19,10 +19,11 @@
             </el-form-item>
 
             <el-form-item>
-                <el-button type="primary" @click="addSalary"
+                <el-button type="success" @click="addSalary"
                     >Save Salary</el-button
                 >
-                <el-button type="primary" @click="updateSalary"
+
+                <el-button button type="warning" @click="updateSalary"
                     >Update Salary</el-button
                 >
             </el-form-item>
@@ -40,13 +41,25 @@
 <script>
 import { database } from "../../firebase";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { ref as dbRef, set, get, update } from "firebase/database";
+import {
+    ref as dbRef,
+    set,
+    get,
+    update,
+    onValue,
+    off,
+} from "firebase/database";
 import { inject } from "vue";
+import { store } from "../../stores/store";
+
 export default {
     setup() {
         const formatAmount = inject("formatAmount");
+        const userStore = store();
+
         return {
             formatAmount,
+            userStore,
         };
     },
     data() {
@@ -73,6 +86,7 @@ export default {
                     },
                 ],
             },
+            salaryListener: null, // Store the listener for cleanup
         };
     },
     methods: {
@@ -82,7 +96,9 @@ export default {
                     try {
                         const monthRef = dbRef(
                             database,
-                            `salaries/${this.getCurrentMonth()}`
+                            `salaries/${
+                                this.userStore.activeUser
+                            }/${this.getCurrentMonth()}`
                         );
                         await set(monthRef, {
                             salary: this.form.salary,
@@ -104,7 +120,9 @@ export default {
                 if (valid) {
                     const monthRef = dbRef(
                         database,
-                        `salaries/${this.getCurrentMonth()}`
+                        `salaries/${
+                            this.userStore.activeUser
+                        }/${this.getCurrentMonth()}`
                     );
                     try {
                         const snapshot = await get(monthRef);
@@ -132,25 +150,24 @@ export default {
                 }
             });
         },
-        async fetchSalary() {
-            try {
-                const monthRef = dbRef(
-                    database,
-                    `salaries/${this.getCurrentMonth()}`
-                );
-                const snapshot = await get(monthRef);
+        listenForSalaryChanges() {
+            const monthRef = dbRef(
+                database,
+                `salaries/${
+                    this.userStore.activeUser
+                }/${this.getCurrentMonth()}`
+            );
+
+            this.salaryListener = onValue(monthRef, (snapshot) => {
                 if (snapshot.exists()) {
-                    console.log("salary:", snapshot.val());
-                    this.salaryData.salary = snapshot.val().salary;
-                    this.salaryData.month = snapshot.val().month;
+                    const data = snapshot.val();
+                    this.salaryData.salary = data.salary;
+                    this.salaryData.month = data.month;
                 } else {
                     this.salaryData.salary = null;
                     this.salaryData.month = null;
                 }
-            } catch (error) {
-                console.error("Error fetching salary:", error);
-                ElMessage.error("Failed to fetch salary. Please try again.");
-            }
+            });
         },
         getCurrentMonth() {
             const date = new Date();
@@ -160,8 +177,22 @@ export default {
         },
     },
     mounted() {
-        this.fetchSalary(); // Fetch salary when component mounts
+        console.log("active user", this.userStore.activeUser);
+        this.listenForSalaryChanges(); // Start listening for changes when component mounts
+    },
+    unmounted() {
+        // Clean up the listener when component unmounts
+        if (this.salaryListener) {
+            const monthRef = dbRef(
+                database,
+                `salaries/${
+                    this.userStore.activeUser
+                }/${this.getCurrentMonth()}`
+            );
+            off(monthRef, "value", this.salaryListener);
+        }
     },
 };
 </script>
+
 

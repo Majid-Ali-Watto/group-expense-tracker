@@ -1,7 +1,7 @@
 <template>
     <div class="my-4">
         <fieldset class="border border-gray-300 rounded-lg p-4">
-            <legend class="text-xl font-semibold px-2">Summary</legend>
+            <legend>Summary</legend>
             <el-row class="mt-2">
                 <el-col :lg="12" :md="12" :sm="24" class="space-y-2">
                     <p>
@@ -44,17 +44,3 @@ const friendTotals = computed(() =>
     }))
 );
 </script>
-
-<style scoped>
-@import "tailwindcss/tailwind.css";
-
-fieldset {
-    /* Enhanced styling for fieldset */
-    border: 2px solid #cbd5e0; /* Light gray border */
-    border-radius: 8px;
-}
-
-legend {
-    padding: 0 0.5rem; /* Padding around legend text */
-}
-</style>

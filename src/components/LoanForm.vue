@@ -1,7 +1,7 @@
 <template>
     <!-- Add New Loan Section -->
     <fieldset class="border border-gray-300 rounded-lg p-4">
-        <legend class="text-xl font-semibold px-2">Add New Loan</legend>
+        <legend>Add New Loan</legend>
 
         <el-form
             :model="formData"
@@ -84,8 +84,8 @@
             <el-form-item>
                 <el-button
                     v-if="isVisible"
-                    type="primary"
-                    class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg"
+                    type="success"
+                    class=" text-white py-2 rounded-lg"
                     @click="() => validateForm()"
                 >
                     Add Loan
@@ -93,13 +93,13 @@
                 <el-button
                     v-if="!isVisible"
                     type="warning"
-                    class="w-16 bg-orange-500 hover:bg-orange-600 text-white py-2 rounded-lg"
+                    class=" text-white py-2 rounded-lg"
                     @click="() => validateForm('Update')"
                     >Update</el-button
                 >
                 <el-button
                     v-if="!isVisible"
-                    class="w-16 bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg"
+                    class=" text-white py-2 rounded-lg"
                     type="danger"
                     @click="() => validateForm('Delete')"
                 >
@@ -264,11 +264,10 @@ function resetForm() {
 </script>
 
 <style scoped>
-@import "tailwindcss/tailwind.css";
 
 /* Styling for responsive adjustments */
-.el-button {
+/* .el-button {
     padding: 10px 20px;
     font-size: 1rem;
-}
+} */
 </style>

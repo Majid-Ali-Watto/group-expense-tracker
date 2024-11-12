@@ -1,6 +1,6 @@
 <template>
     <fieldset class="w-full border border-gray-300 rounded-lg p-4">
-        <legend class="text-xl font-semibold px-2">Add Expense</legend>
+        <legend>Add Expense</legend>
         <el-form
             @submit.prevent="addExpense"
             label-position="top"
@@ -31,7 +31,7 @@
                 <el-input v-model="form.recipient" placeholder="To Whom" />
             </el-form-item>
             <el-form-item>
-                <el-button type="primary" @click="addExpense"
+                <el-button type="success" @click="addExpense"
                     >Add Expense</el-button
                 >
             </el-form-item>
@@ -43,8 +43,16 @@
 import { database } from "../../firebase";
 import { ElMessage } from "element-plus";
 import { ref as dbRef, push } from "firebase/database";
-
+import { store } from "../../stores/store";
+import { ref } from "vue";
 export default {
+    setup() {
+        const userStore = store();
+        const activeUser = ref(userStore.activeUser);
+        return {
+            activeUser,
+        };
+    },
     data() {
         return {
             form: {
@@ -99,7 +107,7 @@ export default {
                         await push(
                             dbRef(
                                 database,
-                                `expenses/${this.getCurrentMonth()}`
+                                `expenses/${this.activeUser}/${this.getCurrentMonth()}`
                             ),
                             {
                                 amount: this.form.amount,

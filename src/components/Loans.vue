@@ -6,12 +6,12 @@
         <div ref="loanContent">
             <!-- Loan Records Section -->
 
-            <h2 class="text-xl font-semibold my-4">Loan Records</h2>
+            <h2>Loan Records</h2>
             <Table :rows="loans" :keys="loanKeys" :friends="friends" />
 
             <!-- Balances Section -->
             <fieldset class="border border-gray-300 rounded-lg p-3">
-                <legend class="text-xl font-semibold px-2">
+                <legend>
                     Final Balances
                 </legend>
                 <el-row>
@@ -41,7 +41,7 @@
         </div>
         <el-button
             type="success"
-            class="mt-4 bg-green-500 hover:bg-green-600"
+            class="mt-4 text-white"
             @click="downloadLoanDetails"
         >
             Download Loan Details
@@ -112,12 +112,3 @@ function downloadLoanDetails() {
 }
 </script>
 
-<style scoped>
-@import "tailwindcss/tailwind.css";
-
-/* Styling for responsive adjustments */
-.el-button {
-    padding: 10px 20px;
-    font-size: 1rem;
-}
-</style>

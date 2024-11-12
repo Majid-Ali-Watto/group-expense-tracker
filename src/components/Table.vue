@@ -2,7 +2,7 @@
     <div class="w-full overflow-x-auto">
         <table class="w-full border-collapse border border-gray-300">
             <thead>
-                <tr class="bg-green-800 text-white text-left">
+                <tr class="bg-slate-900 text-white text-left">
                     <!-- Render table headers -->
                     <th
                         v-for="(header, index) in headers"
@@ -91,7 +91,7 @@
 import { ElMessage } from "element-plus";
 import { computed, inject, onMounted, onUnmounted, ref, reactive } from "vue";
 import PaymentForm from "./PaymentForm.vue";
-import { useTabStore } from "../stores/useTabStore"; // Import the Pinia store
+import { store } from "../stores/store"; // Import the Pinia store
 
 import LoanForm from "./LoanForm.vue";
 const timeout = ref(null);
@@ -100,10 +100,11 @@ const dialogFormVisible = ref(false);
 const state = reactive({ row: null });
 const screenWidth = ref(window.innerWidth); // Store the current screen width
 // Access the store
-const tabStore = useTabStore();
+const tabStore = store();
 
 // Directly use `activeTab` from Pinia store
-const activeTab = tabStore.$state.activeTab;
+const activeTab = computed(() => tabStore.$state.activeTab);
+console.log(activeTab, " is active tab");
 // Inject the globally provided formatAmount function
 const formatAmount = inject("formatAmount");
 const props = defineProps({

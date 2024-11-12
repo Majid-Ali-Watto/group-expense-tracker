@@ -3,7 +3,7 @@
         <Summary :payments="payments" :friends="friends" />
         <Settlement :payments="payments" :friends="friends" />
         <el-divider />
-        <h2 class="text-xl font-semibold mb-4">Expense List</h2>
+        <h2>Expense List</h2>
 
         <!-- Filters -->
         <div class="flex space-x-4 mb-4">
@@ -48,21 +48,23 @@
         <!-- Download Buttons -->
         <el-row class="mt-2 flex justify-center">
             <el-col :lg="11" :md="11" :sm="24">
-                <button
+                <el-button
+                    type="success"
                     @click="downloadPDF"
-                    class="bg-red-500 mt-1 text-white w-full px-4 py-2 rounded"
+                    class="mt-1 text-white px-4 py-2 rounded"
                 >
                     Download PDF
-                </button>
+                </el-button>
             </el-col>
             <el-col :lg="1" :md="1"></el-col>
             <el-col :lg="11" :md="11" :sm="24">
-                <button
+                <el-button
+                    type="warning"
                     @click="downloadExcel"
-                    class="bg-green-500 mt-1 text-white w-full px py-2 rounded"
+                    class="mt-1 text-white px py-2 rounded"
                 >
                     Download Excel
-                </button>
+                </el-button>
             </el-col>
         </el-row>
     </div>
