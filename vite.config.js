@@ -4,6 +4,7 @@ import vue from "@vitejs/plugin-vue";
 import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
+	base: "./",
 	plugins: [
 		vue(),
 		VitePWA({
@@ -39,6 +40,7 @@ export default defineConfig({
 				chunkSizeWarningLimit: 1600
 			},
 			workbox: {
+				maximumFileSizeToCacheInBytes: 3 * 1024 * 1024, // 3 MB
 				runtimeCaching: [
 					{
 						urlPattern: /^https:\/\/firebasestorage\.googleapis\.com/,
@@ -55,4 +57,5 @@ export default defineConfig({
 			}
 		})
 	]
+
 });

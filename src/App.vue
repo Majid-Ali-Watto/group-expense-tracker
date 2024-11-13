@@ -21,7 +21,10 @@
                 :name="tab"
             >
                 <!-- Content based on activeTab -->
-                <div v-show="activeTab === 'Expenses'">
+                <div
+                    v-show="activeTab === 'Expenses'"
+                    v-if="activeTab === 'Expenses'"
+                >
                     <PaymentForm :friends="friends" />
                     <div ref="pdfContentApp">
                         <ExpenseList
@@ -30,10 +33,16 @@
                         />
                     </div>
                 </div>
-                <div v-show="activeTab === 'Loans'">
+                <div
+                    v-show="activeTab === 'Loans'"
+                    v-if="activeTab === 'Loans'"
+                >
                     <Loans :friends="friends" />
                 </div>
-                <div v-show="activeTab === 'Sallary Manager'">
+                <div
+                    v-show="activeTab === 'Salary Manager'"
+                    v-if="activeTab === 'Salary Manager'"
+                >
                     <SallaryManager :friends="friends" />
                 </div>
             </el-tab-pane>
@@ -42,25 +51,31 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
 import { store } from "./stores/store"; // Import the Pinia store
-import Login from "./components/Login.vue";
-import PaymentForm from "./components/PaymentForm.vue";
-import ExpenseList from "./components/ExpenseList.vue";
-import Loans from "./components/Loans.vue";
-import SallaryManager from "./components/monthly-sallary-expense-manager/Manager.vue";
-import Header from "./components/Header.vue";
-const tabs = ref(["Expenses", "Loans", "Sallary Manager"]);
+import { defineAsyncComponent, ref } from "vue";
 
-const payments = ref([]);
+const Login = defineAsyncComponent(() => import("./components/Login.vue"));
+const PaymentForm = defineAsyncComponent(() =>
+    import("./components/PaymentForm.vue")
+);
+const ExpenseList = defineAsyncComponent(() =>
+    import("./components/ExpenseList.vue")
+);
+const Loans = defineAsyncComponent(() => import("./components/Loans.vue"));
+const SallaryManager = defineAsyncComponent(() =>
+    import("./components/monthly-sallary-expense-manager/Manager.vue")
+);
+const Header = defineAsyncComponent(() => import("./components/Header.vue"));
+
+const tabs = ref(["Expenses", "Loans", "Salary Manager"]);
 const friends = ["Majid Ali", "Aqil Shahzad"];
+const payments = ref([]);
 const loggedIn = ref(null);
 // Access the store
 const tabStore = store();
 // Directly use `activeTab` from Pinia store
-const activeTab = tabStore.$state.activeTab;
+const activeTab = ref(tabStore.$state.activeTab);
 function isLoggedIn(logged) {
-    console.log("isLoggedIn called with", logged);
     loggedIn.value = logged;
 }
 
@@ -69,10 +84,8 @@ function updatePayment(payment) {
 }
 
 function handleActiveTab(tab) {
+    activeTab.value = tab;
     tabStore.setActiveTab(tab); // Update the tab in the store
 }
 </script>
-<!--
-<style scoped>
-@import "tailwindcss/tailwind.css";
-</style> -->
+

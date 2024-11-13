@@ -11,9 +11,7 @@
 
             <!-- Balances Section -->
             <fieldset class="border border-gray-300 rounded-lg p-3">
-                <legend>
-                    Final Balances
-                </legend>
+                <legend>Final Balances</legend>
                 <el-row>
                     <el-col
                         v-for="(balance, index) in balances"
@@ -55,6 +53,7 @@ import { database, ref as dbRef, onValue } from "../firebase"; // Firebase setup
 import html2pdf from "html2pdf.js"; // For PDF download
 import Table from "./Table.vue";
 import LoanForm from "./LoanForm.vue";
+import { downloadPDF } from "../utils/downloadDataProcedures";
 const formatAmount = inject("formatAmount");
 const props = defineProps({
     friends: Array,
@@ -100,15 +99,10 @@ const balances = computed(() => {
 
 // Download loan records as PDF
 function downloadLoanDetails() {
-    const options = {
-        margin: 0.5,
-        filename:
-            props.friends.toString().replaceAll(",", "-") + "-Loan_Details.pdf",
-        image: { type: "jpeg", quality: 1 },
-        html2canvas: { scale: 5 },
-        jsPDF: { unit: "in", format: "a3", orientation: "portrait" },
-    };
-    html2pdf().set(options).from(loanContent.value).save();
+    downloadPDF(
+        loanContent.value,
+        props.friends.toString().replaceAll(",", "-") + "-Loan_Details"
+    );
 }
 </script>
 

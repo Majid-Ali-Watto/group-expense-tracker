@@ -44,6 +44,7 @@ import { database } from "../../firebase";
 import { ElMessage } from "element-plus";
 import { ref as dbRef, push } from "firebase/database";
 import { store } from "../../stores/store";
+import getCurrentMonth from "../../utils/getCurrentMonth";
 import { ref } from "vue";
 export default {
     setup() {
@@ -107,20 +108,19 @@ export default {
                         await push(
                             dbRef(
                                 database,
-                                `expenses/${this.activeUser}/${this.getCurrentMonth()}`
+                                `expenses/${this.activeUser}/${getCurrentMonth()}`
                             ),
                             {
                                 amount: this.form.amount,
                                 description: this.form.description,
                                 location: this.form.location,
                                 recipient: this.form.recipient,
-                                month: this.getCurrentMonth(),
+                                month: getCurrentMonth(),
                             }
                         );
                         this.resetForm();
                         ElMessage.success("Expense added successfully!");
                     } catch (error) {
-                        console.error("Error adding expense:", error);
                         ElMessage.error(
                             "Failed to add expense. Please try again."
                         );
@@ -134,12 +134,7 @@ export default {
             this.form.location = "";
             this.form.recipient = "";
         },
-        getCurrentMonth() {
-            const date = new Date();
-            return `${date.getFullYear()}-${String(
-                date.getMonth() + 1
-            ).padStart(2, "0")}`;
-        },
+
     },
 };
 </script>

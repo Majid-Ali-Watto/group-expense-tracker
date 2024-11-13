@@ -50,14 +50,14 @@
             <el-col :lg="12" :md="12" :sm="24">
                 <el-button
                     type="success"
-                    @click="downloadPDF"
+                    @click="downloadPdfData"
                     class="mt-1 text-white px-4 py-2 rounded"
                 >
                     Download PDF
                 </el-button>
                 <el-button
                     type="warning"
-                    @click="downloadExcel"
+                    @click="downloadExcelData"
                     class="mt-1 text-white px py-2 rounded"
                 >
                     Download Excel
@@ -72,12 +72,12 @@
 
 <script setup>
 import { ref, computed, onMounted } from "vue";
-import html2pdf from "html2pdf.js";
-import * as XLSX from "xlsx";
+
 import Summary from "./Summary.vue";
 import Settlement from "./Settlement.vue";
 import Table from "./Table.vue";
 import { database, onValue, ref as dbRef } from "../firebase";
+import { downloadExcel, downloadPDF } from "../utils/downloadDataProcedures";
 const props = defineProps({
     friends: Array,
     payments: Array,
@@ -121,37 +121,18 @@ const filteredPayments = computed(() => {
     });
 });
 
-function downloadPDF() {
-    const options = {
-        margin: 0.5, // No margin
-        filename:
-            props.friends.toString().replaceAll(",", "-") +
-            "-Expenses-Table.pdf",
-        image: { type: "jpeg", quality: 1 },
-        html2canvas: {
-            scale: 5, // Higher scale for better quality
-            logging: false,
-            backgroundColor: "#ffffff", // Set a white background
-        },
-        jsPDF: {
-            unit: "in",
-            format: "a3",
-            orientation: "portrait",
-        },
-    };
-
-    html2pdf().set(options).from(pdfContent.value).save();
+function downloadPdfData() {
+    downloadPDF(
+        pdfContent.value,
+        props.friends?.toString()?.replaceAll(",", "-") + "Expenses_"
+    );
 }
 
-function downloadExcel() {
-    const ws = XLSX.utils.json_to_sheet(filteredPayments.value);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Expenses");
-    XLSX.writeFile(
-        wb,
-        props.friends.toString().replaceAll(",", "-") +
-            " Expenses-Table" +
-            ".xlsx"
+function downloadExcelData() {
+    downloadExcel(
+        filteredPayments.value,
+        props.friends?.toString()?.replaceAll(",", "-") + "Expenses_",
+        "Expenses"
     );
 }
 </script>

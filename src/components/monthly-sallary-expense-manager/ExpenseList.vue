@@ -1,31 +1,62 @@
 <template>
-    <div class="w-full">
+    <div class="w-full" ref="content">
         <h2>Expenses</h2>
-        <el-form-item label="Select Month">
-            <el-select
-                v-model="selectedMonth"
-                @change="fetchExpenses"
-                placeholder="Select month"
-            >
-                <el-option
-                    v-for="month in months"
-                    :key="month"
-                    :label="month"
-                    :value="month"
-                />
-            </el-select>
-        </el-form-item>
+        <el-row :gutter="30">
+            <el-col :lg="12" :md="12" :sm="12">
+                <el-form-item label="Select Month">
+                    <el-select
+                        v-model="selectedMonth"
+                        @change="fetchExpenses"
+                        placeholder="Select month"
+                    >
+                        <el-option
+                            v-for="month in months"
+                            :key="month"
+                            :label="month"
+                            :value="month"
+                        />
+                    </el-select>
+                </el-form-item>
+            </el-col>
+        </el-row>
 
-        <el-divider />
-
-        <p>
-            Total Spent: <strong>{{ formatAmount(totalSpent) }}</strong>
-        </p>
-        <p>
-            Remaining: <strong>{{ formatAmount(remaining) }}</strong>
-        </p>
+        <!-- <el-divider /> -->
+        <el-row class="mb-4">
+            <el-col :lg="12" :md="12" :sm="24">
+                <p>
+                    Total Spent: <strong>{{ formatAmount(totalSpent) }}</strong>
+                </p>
+            </el-col>
+            <el-col :lg="12" :md="12" :sm="24">
+                <p>
+                    Remaining: <strong>{{ formatAmount(remaining) }}</strong>
+                </p>
+            </el-col>
+        </el-row>
 
         <Table v-if="expenses.length" :rows="expenses" :keys="keys" />
+        <!-- Download Buttons -->
+        <el-row class="mt-2 flex justify-start">
+            <el-col :lg="12" :md="12" :sm="24">
+                <el-button
+                    type="success"
+                    @click="downloadPdfData"
+                    class="mt-1 text-white px-4 py-2 rounded"
+                >
+                    Download PDF
+                </el-button>
+                <el-button
+                    type="warning"
+                    @click="downloadExcelData"
+                    class="mt-1 text-white px py-2 rounded"
+                >
+                    Download Excel
+                </el-button>
+            </el-col>
+            <!-- <el-col :lg="1" :md="1"></el-col>
+            <el-col :lg="11" :md="11" :sm="24">
+            </el-col> -->
+        </el-row>
     </div>
 </template>
 
@@ -35,15 +66,11 @@ import { ElMessage } from "element-plus";
 import Table from "../Table.vue";
 import { store } from "../../stores/store";
 import { ref, onMounted, watch, inject } from "vue";
+import getCurrentMonth from "../../utils/getCurrentMonth";
+import { downloadExcel, downloadPDF } from "../../utils/downloadDataProcedures";
 export default {
     setup() {
         const formatAmount = inject("formatAmount");
-        const getCurrentMonth = () => {
-            const date = new Date();
-            return `${date.getFullYear()}-${String(
-                date.getMonth() + 1
-            ).padStart(2, "0")}`;
-        };
 
         const userStore = store();
         const activeUser = ref(userStore.activeUser);
@@ -54,7 +81,7 @@ export default {
         const remaining = ref(0);
         const salary = ref(0);
         const months = ref([]);
-
+        const content = ref(null);
         onMounted(async () => {
             await fetchMonths();
             await fetchSalary(); // Fetch salary when the component mounts
@@ -91,7 +118,6 @@ export default {
                     : null;
                 salary.value = salaryData ? salaryData.salary : 0;
             } catch (error) {
-                console.error("Error fetching salary:", error);
                 ElMessage.error("Failed to load salary. Please try again.");
             }
         };
@@ -121,14 +147,23 @@ export default {
                     remaining.value = salary.value - totalSpent.value;
                 },
                 (error) => {
-                    console.error("Error fetching expenses:", error);
                     ElMessage.error(
                         "Failed to load expenses. Please try again."
                     );
                 }
             );
         };
+        function downloadPdfData() {
+            downloadPDF(content.value, "Monthly_Salary_Expense_");
+        }
 
+        function downloadExcelData() {
+            downloadExcel(
+                expenses.value,
+                "Monthly_Salary_Expense_",
+                "Salary Expenses"
+            );
+        }
         return {
             activeUser,
             selectedMonth,
@@ -139,6 +174,9 @@ export default {
             months,
             fetchExpenses,
             formatAmount,
+            content,
+            downloadPdfData,
+            downloadExcelData,
         };
     },
     components: {

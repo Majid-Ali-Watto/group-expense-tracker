@@ -1,8 +1,6 @@
 <template>
     <fieldset class="w-full border border-gray-300 rounded-lg p-4">
-        <legend>
-            Add/Update Monthly Salary
-        </legend>
+        <legend>Add/Update Monthly Salary</legend>
         <el-form
             @submit.prevent="addSalary"
             label-position="top"
@@ -41,6 +39,7 @@
 <script>
 import { database } from "../../firebase";
 import { ElMessage, ElMessageBox } from "element-plus";
+import getCurrentMonth from "../../utils/getCurrentMonth";
 import {
     ref as dbRef,
     set,
@@ -98,16 +97,15 @@ export default {
                             database,
                             `salaries/${
                                 this.userStore.activeUser
-                            }/${this.getCurrentMonth()}`
+                            }/${getCurrentMonth()}`
                         );
                         await set(monthRef, {
                             salary: this.form.salary,
-                            month: this.getCurrentMonth(),
+                            month: getCurrentMonth(),
                         });
                         this.form.salary = null;
                         ElMessage.success("Salary added successfully!");
                     } catch (error) {
-                        console.error("Error adding salary:", error);
                         ElMessage.error(
                             "Failed to add salary. Please try again."
                         );
@@ -116,15 +114,29 @@ export default {
             });
         },
         async updateSalary() {
-            this.$refs.salaryForm.validate(async (valid) => {
-                if (valid) {
-                    const monthRef = dbRef(
-                        database,
-                        `salaries/${
-                            this.userStore.activeUser
-                        }/${this.getCurrentMonth()}`
-                    );
+            try {
+                await ElMessageBox.confirm(
+                    "Are you sure to update Salary. Continue?",
+                    "Warning",
+                    {
+                        confirmButtonText: "OK",
+                        cancelButtonText: "Cancel",
+                        type: "warning",
+                    }
+                );
+
+                // Validate form
+                this.$refs.salaryForm.validate(async (valid) => {
+                    if (!valid) return;
+
                     try {
+                        const monthRef = dbRef(
+                            database,
+                            `salaries/${
+                                this.userStore.activeUser
+                            }/${getCurrentMonth()}`
+                        );
+
                         const snapshot = await get(monthRef);
                         if (snapshot.exists()) {
                             await update(monthRef, {
@@ -133,29 +145,32 @@ export default {
                             this.form.salary = null;
                             ElMessage.success("Salary updated successfully!");
                         } else {
-                            ElMessageBox.alert(
-                                "No existing salary to update for this month.",
-                                "Update Failed",
-                                {
-                                    type: "warning",
-                                }
+                            throw new Error(
+                                "No existing salary to update for this month."
                             );
                         }
-                    } catch (error) {
-                        console.error("Error updating salary:", error);
+                    } catch (dbError) {
+                        // Handle database-related errors here
                         ElMessage.error(
-                            "Failed to update salary. Please try again."
+                            `Database error: ${dbError.message || dbError}`
                         );
                     }
+                });
+            } catch (error) {
+                if (error !== "cancel") {
+                    // Handle all other errors that may occur
+                    ElMessage({
+                        type: "error",
+                        message:
+                            error.message || "An unexpected error occurred.",
+                    });
                 }
-            });
+            }
         },
         listenForSalaryChanges() {
             const monthRef = dbRef(
                 database,
-                `salaries/${
-                    this.userStore.activeUser
-                }/${this.getCurrentMonth()}`
+                `salaries/${this.userStore.activeUser}/${getCurrentMonth()}`
             );
 
             this.salaryListener = onValue(monthRef, (snapshot) => {
@@ -169,12 +184,6 @@ export default {
                 }
             });
         },
-        getCurrentMonth() {
-            const date = new Date();
-            return `${date.getFullYear()}-${String(
-                date.getMonth() + 1
-            ).padStart(2, "0")}`;
-        },
     },
     mounted() {
         console.log("active user", this.userStore.activeUser);
@@ -185,9 +194,7 @@ export default {
         if (this.salaryListener) {
             const monthRef = dbRef(
                 database,
-                `salaries/${
-                    this.userStore.activeUser
-                }/${this.getCurrentMonth()}`
+                `salaries/${this.userStore.activeUser}/${getCurrentMonth()}`
             );
             off(monthRef, "value", this.salaryListener);
         }
