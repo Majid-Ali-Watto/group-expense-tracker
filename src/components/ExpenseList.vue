@@ -46,8 +46,8 @@
         <Table :rows="filteredPayments" :keys="paymentKeys" />
 
         <!-- Download Buttons -->
-        <el-row class="mt-2 flex justify-center">
-            <el-col :lg="11" :md="11" :sm="24">
+        <el-row class="mt-2 flex justify-start">
+            <el-col :lg="12" :md="12" :sm="24">
                 <el-button
                     type="success"
                     @click="downloadPDF"
@@ -55,9 +55,6 @@
                 >
                     Download PDF
                 </el-button>
-            </el-col>
-            <el-col :lg="1" :md="1"></el-col>
-            <el-col :lg="11" :md="11" :sm="24">
                 <el-button
                     type="warning"
                     @click="downloadExcel"
@@ -66,6 +63,9 @@
                     Download Excel
                 </el-button>
             </el-col>
+            <!-- <el-col :lg="1" :md="1"></el-col>
+            <el-col :lg="11" :md="11" :sm="24">
+            </el-col> -->
         </el-row>
     </div>
 </template>
