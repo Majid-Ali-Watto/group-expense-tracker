@@ -52,12 +52,11 @@ import { ref, computed, onMounted, inject } from "vue";
 import { database, ref as dbRef, onValue } from "../firebase"; // Firebase setup
 import html2pdf from "html2pdf.js"; // For PDF download
 import Table from "./Table.vue";
+import { friends } from "../assets/data";
 import LoanForm from "./LoanForm.vue";
 import { downloadPDF } from "../utils/downloadDataProcedures";
 const formatAmount = inject("formatAmount");
-const props = defineProps({
-    friends: Array,
-});
+
 
 // Loan records array
 const loans = ref([]);
@@ -80,7 +79,7 @@ onMounted(() => {
 const balances = computed(() => {
     const balanceMap = {};
 
-    props.friends.forEach((friend) => {
+    friends.forEach((friend) => {
         balanceMap[friend] = 0;
     });
 
@@ -101,7 +100,7 @@ const balances = computed(() => {
 function downloadLoanDetails() {
     downloadPDF(
         loanContent.value,
-        props.friends.toString().replaceAll(",", "-") + "-Loan_Details"
+        friends.toString().replaceAll(",", "-") + "-Loan_Details"
     );
 }
 </script>

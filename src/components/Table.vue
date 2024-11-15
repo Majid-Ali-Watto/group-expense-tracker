@@ -76,6 +76,13 @@
                     :row="state.row"
                 />
             </div>
+            <div v-if="activeTab == 'Salary Manager'">
+                <AddExpense
+                    @closeModal="dialogFormVisible = false"
+                    :friends="friends"
+                    :row="state.row"
+                />
+            </div>
             <template #footer>
                 <div class="dialog-footer">
                     <el-button type="success" @click="dialogFormVisible = false"
@@ -89,11 +96,12 @@
 
 <script setup>
 import { ElMessage } from "element-plus";
-import { computed, inject, onMounted, onUnmounted, ref, reactive } from "vue";
-import PaymentForm from "./PaymentForm.vue";
+import { computed, inject, onMounted, onUnmounted, reactive, ref } from "vue";
 import { store } from "../stores/store"; // Import the Pinia store
+import PaymentForm from "./PaymentForm.vue";
 
 import LoanForm from "./LoanForm.vue";
+import AddExpense from "./monthly-sallary-expense-manager/AddExpense.vue";
 const timeout = ref(null);
 const delay = 300; // Time to wait for double click in milliseconds
 const dialogFormVisible = ref(false);
