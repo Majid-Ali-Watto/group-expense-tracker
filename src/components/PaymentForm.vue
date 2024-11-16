@@ -27,35 +27,31 @@
 				<el-col :lg="12" :md="12" :sm="24">
 					<!-- Description Textarea -->
 					<el-form-item label="Description" prop="description" required>
-						<el-input v-model="formData.description" type="textarea" placeholder="Enter description" class="w-full" rows="8" />
+						<el-input v-model="formData.description" type="textarea" placeholder="Enter description" class="w-full" rows=8 />
 					</el-form-item>
 				</el-col>
 			</el-row>
 
 			<!-- Submit Button -->
-			<el-form-item>
+			<div class="flex justify-end">
 				<el-button v-if="isVisible" type="success" class="text-white py-2 rounded-lg" @click="() => validateForm()"> Add Payment </el-button>
-				<el-button v-if="!isVisible" type="warning" class="text-white py-2 rounded-lg" @click="() => validateForm('Update')">Update</el-button>
-				<el-button v-if="!isVisible" class="text-white py-2 rounded-lg" type="danger" @click="() => validateForm('Delete')"> Delete </el-button>
-			</el-form-item>
+			</div>
 		</el-form>
 	</fieldset>
-	<ExpenseList />
+	<ExpenseList v-if="isVisible" />
 </template>
 
 <script setup>
 	import { ref, watch, defineAsyncComponent } from "vue";
-	import { showError, showSuccess } from "../utils/showAlerts";
 	import getWhoAddedTransaction from "../utils/whoAdded";
 	const ExpenseList = defineAsyncComponent(() => import("./ExpenseList.vue"));
-
-	import { database, push, ref as dbRef, update, remove } from "../firebase"; // Firebase setup
 	const emit = defineEmits(["closeModal"]);
 	import { friends } from "../assets/data";
 	import { rules } from "../assets/validation-rules";
+	import useFireBase from "../api/firebase-apis";
+	const { deleteData, updateData, saveData } = useFireBase();
 	const props = defineProps({
 		row: Object
-		// updatePayment: Function
 	});
 	const isVisible = ref(true);
 	// Form data model
@@ -85,53 +81,18 @@
 		transactionForm.value.validate((valid) => {
 			if (valid) {
 				if (whatTask == "Save") {
-					handleSubmit();
+					saveData("payments", getPaymentData, transactionForm, "Transaction successfully saved.");
 				} else if (whatTask == "Update") {
-					updatePayment(props.row.id);
+					updateData(`payments/${props.row.id}`, getPaymentData, transactionForm, `Payment record with ID ${props.row.id} updated successfully`);
 					emit("closeModal");
 				} else if (whatTask == "Delete") {
-					deletePayment(props.row.id);
+					deleteData(`payments/${props.row.id}`, `Payment record with ID ${props.row.id} deleted successfully`);
 					emit("closeModal");
 				}
 			}
 		});
 	};
 
-	function deletePayment(paymentId) {
-		const paymentRef = dbRef(database, `payments/${paymentId}`); // Reference to the specific payment node
-		remove(paymentRef)
-			.then(() => {
-				showSuccess(`Payment record with ID ${paymentId} deleted successfully`);
-			})
-			.catch((error) => {
-				showError("Error deleting payment record:" + error);
-			});
-	}
-	function updatePayment(paymentId) {
-		const paymentRef = dbRef(database, `payments/${paymentId}`); // Reference to the specific payment node
-		update(paymentRef, getPaymentData())
-			.then(() => {
-				showSuccess(`Payment record with ID ${paymentId} updated successfully`);
-				resetForm();
-			})
-			.catch((error) => {
-				showError("Error updating payment record: " + error);
-			});
-	}
-
-	function handleSubmit() {
-		// Log data and push to Firebase
-
-		push(dbRef(database, "payments"), getPaymentData())
-			.then(() => {
-				// Clear form fields after successful submission
-				resetForm();
-				showSuccess("Transaction successfully saved.");
-			})
-			.catch((error) => {
-				showError("Error saving payment: " + error.message);
-			});
-	}
 	function getPaymentData() {
 		const payment = {
 			amount: parseFloat(formData.value.amount),
@@ -142,10 +103,8 @@
 		};
 		return payment;
 	}
-	function resetForm() {
-		formData.value.amount = null;
-		formData.value.description = "";
-		formData.value.date = "";
-		formData.value.payer = "";
-	}
+
+	defineExpose({
+		validateForm
+	});
 </script>

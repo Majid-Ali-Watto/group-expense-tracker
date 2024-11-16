@@ -17,7 +17,7 @@
 <script setup>
 import { defineAsyncComponent } from "vue";
 
-const AddSalary = defineAsyncComponent(() => import("./AddSalary.vue"));
-const AddExpense = defineAsyncComponent(() => import("./AddExpense.vue"));
-const ExpenseList = defineAsyncComponent(() => import("./ExpenseList.vue"));
+const AddSalary = defineAsyncComponent(() => import("./SalaryForm.vue"));
+const AddExpense = defineAsyncComponent(() => import("./ExpenseForm.vue"));
+const ExpenseList = defineAsyncComponent(() => import("./SalaryExpenseList.vue"));
 </script>

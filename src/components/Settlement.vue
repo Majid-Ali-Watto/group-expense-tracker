@@ -6,7 +6,7 @@
 				<el-col v-for="(balance, index) in balances" :key="index" class="space-y-2" :lg="12" :md="12" :sm="24">
 					<strong>{{ balance.name }}</strong> will
 					<span :class="balance.balance >= 0 ? 'text-green-500' : 'text-red-500'">
-						{{ balance.balance >= 0 ? "take " : "give " }}
+						{{ balance.balance >= 0 ? "take + " : "give - " }}
 					</span>
 					<i> {{ formatAmount(Math.abs(balance.balance)) }}</i>
 				</el-col>

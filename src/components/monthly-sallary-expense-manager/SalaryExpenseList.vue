@@ -25,22 +25,14 @@
 			</el-col>
 		</el-row>
 
-		<Table v-if="expenses.length" :rows="expenses" :keys="keys" />
-		<!-- Download Buttons -->
-		<el-row class="mt-2 flex justify-start">
-			<el-col :lg="12" :md="12" :sm="24">
-				<el-button type="success" @click="downloadPdfData" class="mt-1 text-white px-4 py-2 rounded"> Download PDF </el-button>
-				<el-button type="warning" @click="downloadExcelData" class="mt-1 text-white px py-2 rounded"> Download Excel </el-button>
-			</el-col>
-		</el-row>
+		<Table downloadTitle="Monthly_Expenses" :rows="expenses" :keys="keys" :dataRef="content" />
 	</div>
 </template>
 
 <script>
 	import { inject, onMounted, ref, watch } from "vue";
-	import { database, ref as dbRef, get, onValue } from "../../firebase";
+	import { onValue } from "../../firebase";
 	import { store } from "../../stores/store";
-	import { downloadExcel, downloadPDF } from "../../utils/downloadDataProcedures";
 	import getCurrentMonth from "../../utils/getCurrentMonth";
 	import { showError } from "../../utils/showAlerts";
 	import Table from "../Table.vue";
@@ -48,7 +40,7 @@
 	export default {
 		setup() {
 			const formatAmount = inject("formatAmount");
-			const { read } = useFireBase();
+			const { read, dbRef } = useFireBase();
 			const userStore = store();
 			const activeUser = ref(userStore.activeUser);
 			const selectedMonth = ref(getCurrentMonth());
@@ -89,7 +81,7 @@
 			};
 
 			const fetchExpenses = () => {
-				const expensesRef = dbRef(database, `expenses/${activeUser.value}/${selectedMonth.value}`);
+				const expensesRef = dbRef(`expenses/${activeUser.value}/${selectedMonth.value}`);
 
 				onValue(
 					expensesRef,
@@ -111,13 +103,7 @@
 					}
 				);
 			};
-			function downloadPdfData() {
-				downloadPDF(content.value, "Monthly_Salary_Expense_");
-			}
 
-			function downloadExcelData() {
-				downloadExcel(expenses.value, "Monthly_Salary_Expense_", "Salary Expenses");
-			}
 			return {
 				activeUser,
 				selectedMonth,
@@ -128,9 +114,7 @@
 				months,
 				fetchExpenses,
 				formatAmount,
-				content,
-				downloadPdfData,
-				downloadExcelData
+				content
 			};
 		},
 		components: {

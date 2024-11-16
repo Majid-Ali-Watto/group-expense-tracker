@@ -25,13 +25,11 @@
 </template>
 <script setup>
 	import { onMounted, ref } from "vue";
-	import { get } from "../firebase";
 	import useFireBase from "../api/firebase-apis";
-	import { store } from "../stores/store";
-	import { notify } from "../utils/showAlert";
-	import { showError } from "../utils/showAlerts";
-	import { getStoredUser, removeUserFromStorage, setUserInStorage } from "../utils/whoAdded";
 	import { rules } from "../assets/validation-rules";
+	import { store } from "../stores/store";
+	import { showError ,showSuccess} from "../utils/showAlerts";
+	import { getStoredUser, removeUserFromStorage, setUserInStorage } from "../utils/whoAdded";
 	const userStore = store();
 	const props = defineProps({
 		isLoggedIn: Function
@@ -75,7 +73,7 @@
 				const user = await read(`users/${userKey}`);
 				if (user) {
 					if (user.username === form.value.username && user.password === form.value.password) {
-						notify("Login successful!", "success");
+						showSuccess("Login successful!");
 						props.isLoggedIn(true);
 					} else {
 						throw "Invalid username or password";

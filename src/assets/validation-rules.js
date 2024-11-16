@@ -63,5 +63,20 @@ export const rules = {
 			message: "Salary should be greater than zero",
 			trigger: "blur"
 		}
+	],
+
+	location: [
+		{
+			required: true,
+			message: "Location is required",
+			trigger: "blur"
+		}
+	],
+	recipient: [
+		{
+			required: true,
+			message: "Recipient is required",
+			trigger: "blur"
+		}
 	]
 };

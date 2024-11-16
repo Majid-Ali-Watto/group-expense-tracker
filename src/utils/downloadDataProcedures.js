@@ -1,6 +1,8 @@
 import html2pdf from "html2pdf.js";
 import * as XLSX from "xlsx";
+import { startLoading, stopLoading } from "./loading";
 function downloadPDF(pdfContent, fileName = "") {
+	const loading = startLoading();
 	const options = {
 		margin: 0.5,
 		filename: fileName + new Date().toLocaleString() + ".pdf",
@@ -38,12 +40,15 @@ function downloadPDF(pdfContent, fileName = "") {
 		.finally(() => {
 			document.head.removeChild(style);
 		});
+	stopLoading(loading);
 }
 
 function downloadExcel(data = [], fileName = "", sheetName = "Expenses") {
+	const loading = startLoading();
 	const ws = XLSX.utils.json_to_sheet(data);
 	const wb = XLSX.utils.book_new();
 	XLSX.utils.book_append_sheet(wb, ws, sheetName);
 	XLSX.writeFile(wb, fileName + new Date().toLocaleString() + ".xlsx");
+	stopLoading(loading);
 }
 export { downloadPDF, downloadExcel };

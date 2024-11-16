@@ -1,9 +1,9 @@
 <template>
 	<!-- Add New Loan Section -->
 	<fieldset class="border border-gray-300 rounded-lg p-4">
-		<legend>Add New Loan</legend>
+		<legend>Loan Details</legend>
 
-		<el-form :model="formData" :rules="rules" ref="loanForm" @submit.prevent="handleLoanSubmit" label-position="top" class="space-y-4">
+		<el-form :model="formData" :rules="rules" ref="loanForm" label-position="top" class="space-y-4">
 			<el-row :gutter="20">
 				<!-- Column for Loan Amount, Giver, and Receiver -->
 				<el-col :lg="12" :md="12" :sm="24">
@@ -27,28 +27,26 @@
 				<!-- Column for Loan Description -->
 				<el-col :lg="12" :md="12" :sm="24">
 					<el-form-item label="Description" prop="loanDescription" required>
-						<el-input rows="8" v-model="formData.loanDescription" type="textarea" placeholder="Loan details" class="w-full" />
+						<el-input rows=8 v-model="formData.loanDescription" type="textarea" placeholder="Loan details" class="w-full" />
 					</el-form-item>
 				</el-col>
 			</el-row>
 
 			<!-- Submit Button -->
-			<el-form-item>
+			<div class="flex justify-end">
 				<el-button v-if="isVisible" type="success" class="text-white py-2 rounded-lg" @click="() => validateForm()"> Add Loan </el-button>
-				<el-button v-if="!isVisible" type="warning" class="text-white py-2 rounded-lg" @click="() => validateForm('Update')">Update</el-button>
-				<el-button v-if="!isVisible" class="text-white py-2 rounded-lg" type="danger" @click="() => validateForm('Delete')"> Delete </el-button>
-			</el-form-item>
+			</div>
 		</el-form>
 	</fieldset>
 </template>
 
 <script setup>
 	import { ref, watch } from "vue";
-	import { showError, showSuccess } from "../utils/showAlerts";
-	import { database, push, ref as dbRef, remove, update } from "../firebase"; // Firebase setup
 	import getWhoAddedTransaction from "../utils/whoAdded";
 	import { rules } from "../assets/validation-rules";
+	import useFireBase from "../api/firebase-apis";
 	const emit = defineEmits(["closeModal"]);
+	const { deleteData, updateData, saveData } = useFireBase();
 	const props = defineProps({
 		friends: Array,
 		row: Object
@@ -82,54 +80,18 @@
 		loanForm.value.validate((valid) => {
 			if (valid) {
 				if (whatTask == "Save") {
-					handleLoanSubmit();
+					saveData('loans',getLoanData, loanForm, "Loan added successfully.");
 				} else if (whatTask == "Update") {
-					console.log("Update");
-					updateLoan(props.row.id);
+					updateData(`loans/${props.row.id}`, getLoanData, loanForm, `Loan record with ID ${props.row.id} updated successfully`);
 					emit("closeModal");
 				} else if (whatTask == "Delete") {
-					deleteLoan(props.row.id);
+					deleteData(`loans/${props.row.id}`, `Loan record with ID ${props.row.id} deleted successfully`);
 					emit("closeModal");
 				}
 			}
 		});
 	};
-	function deleteLoan(loanId) {
-		console.log("loan Id: ", loanId);
-		const loanRef = dbRef(database, `loans/${loanId}`); // Reference to the specific loan node
-		console.log(loanRef);
-		remove(loanRef)
-			.then(() => {
-				showSuccess(`Loan record with ID ${loanId} deleted successfully`);
-			})
-			.catch((error) => {
-				showError("Error deleting loan record:" + error);
-			});
-	}
-	function updateLoan(loanId) {
-		const loanRef = dbRef(database, `loans/${loanId}`); // Reference to the specific loan node
-		update(loanRef, getLoanData())
-			.then(() => {
-				showSuccess(`Loan record with ID ${loanId} updated successfully`);
-				resetForm();
-			})
-			.catch((error) => {
-				showError("Error updating loan record: " + error);
-			});
-	}
 
-	// Handle loan submission
-	function handleLoanSubmit() {
-		push(dbRef(database, "loans"), getLoanData())
-			.then(() => {
-				showSuccess("Loan added successfully.");
-				// Clear form
-				resetForm();
-			})
-			.catch((error) => {
-				showError("Error saving loan: " + error.message);
-			});
-	}
 	function getLoanData() {
 		const loan = {
 			amount: formData.value.loanAmount,
@@ -141,10 +103,8 @@
 		};
 		return loan;
 	}
-	function resetForm() {
-		formData.value.loanAmount = null;
-		formData.value.loanDescription = "";
-		formData.value.loanGiver = "";
-		formData.value.loanReceiver = "";
-	}
+
+	defineExpose({
+		validateForm
+	});
 </script>

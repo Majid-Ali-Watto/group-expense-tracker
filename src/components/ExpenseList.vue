@@ -25,28 +25,20 @@
 		</div>
 
 		<!-- Table -->
-		<Table :rows="filteredPayments" :keys="paymentKeys" />
-
-		<!-- Download Buttons -->
-		<el-row class="mt-2 flex justify-start">
-			<el-col :lg="12" :md="12" :sm="24">
-				<el-button type="success" @click="downloadPdfData" class="mt-1 text-white px-4 py-2 rounded"> Download PDF </el-button>
-				<el-button type="warning" @click="downloadExcelData" class="mt-1 text-white px py-2 rounded"> Download Excel </el-button>
-			</el-col>
-		</el-row>
+		<Table :rows="filteredPayments" downloadTitle="Expenses" :keys="paymentKeys" :dataRef="pdfContent" />
 	</div>
 </template>
 
 <script setup>
 	import { computed, onMounted, ref } from "vue";
 	import { friends } from "../assets/data";
-	import { database, ref as dbRef, onValue } from "../firebase";
-	import { downloadExcel, downloadPDF } from "../utils/downloadDataProcedures";
+	import { onValue } from "../firebase";
 	import months from "../utils/monthsList";
 	import Settlement from "./Settlement.vue";
 	import Summary from "./Summary.vue";
 	import Table from "./Table.vue";
-
+	import useFireBase from "../api/firebase-apis";
+	const { dbRef } = useFireBase();
 	const props = defineProps({
 		payments: Array
 	});
@@ -58,7 +50,7 @@
 	const pdfContent = ref(null);
 
 	onMounted(() => {
-		const paymentsRef = dbRef(database, "payments");
+		const paymentsRef = dbRef("payments");
 		onValue(paymentsRef, (snapshot) => {
 			const data = snapshot.val() || {};
 			paymentKeys.value = Object.keys(data);
@@ -79,12 +71,4 @@
 			return monthMatches && friendMatches;
 		});
 	});
-
-	function downloadPdfData() {
-		downloadPDF(pdfContent.value, friends?.toString()?.replaceAll(",", "-") + "Expenses_");
-	}
-
-	function downloadExcelData() {
-		downloadExcel(filteredPayments.value, friends?.toString()?.replaceAll(",", "-") + "Expenses_", "Expenses");
-	}
 </script>

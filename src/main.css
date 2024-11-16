@@ -15,3 +15,9 @@
 		@apply font-semibold text-sm lg:text-base md:text-base sm:text-sm !important;
 	}
 }
+
+legend,
+h2,
+strong,header>span {
+	color: #4a4a4a !important;
+}

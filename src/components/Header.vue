@@ -15,10 +15,10 @@
 			function isLoggedIn() {
 				emit("click-log", false);
 			}
+
 			return {
 				isLoggedIn
 			};
 		}
 	};
 </script>
-
