@@ -6,7 +6,7 @@
 				<el-input v-model.number="form.salary" type="number" placeholder="0.00" />
 			</el-form-item>
 
-			<div  class="flex justify-between">
+			<div class="flex justify-between">
 				<el-button :disabled="isSaveEnbl" type="success" @click="addSalary">Save Salary</el-button>
 				<el-button :disabled="isUpdateEnbl" button type="warning" @click="updateSalary">Update Salary</el-button>
 			</div>
@@ -44,7 +44,7 @@
 	const form = ref({
 		salary: null
 	});
-
+	const salaryForm = ref(null);
 	const isSaveEnbl = ref(false);
 	const isUpdateEnbl = ref(true);
 	let salaryListener = null; // Reference for Firebase listener
@@ -124,7 +124,7 @@
 		let isValid = false;
 		await new Promise((resolve) => {
 			// Assuming form validation is linked to a ref element
-			form.value.$refs.salaryForm.validate((valid) => {
+			salaryForm.value.validate((valid) => {
 				isValid = valid;
 				resolve(valid);
 			});
