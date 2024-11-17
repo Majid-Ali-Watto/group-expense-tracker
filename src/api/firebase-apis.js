@@ -3,7 +3,6 @@ import { database } from "../firebase";
 import { startLoading, stopLoading } from "../utils/loading";
 import { showError, showSuccess } from "../utils/showAlerts";
 import { resetForm } from "../utils/reset-form";
-
 export default function useFireBase() {
 	function dbRef(url) {
 		return fRef(database, url);
@@ -18,15 +17,20 @@ export default function useFireBase() {
 	}
 
 	function deleteData(url, message) {
+		const loading = startLoading();
 		remove(dbRef(url))
 			.then(() => {
 				showSuccess(message);
 			})
 			.catch((error) => {
 				showError(error.message);
+			})
+			.finally(() => {
+				stopLoading(loading);
 			});
 	}
 	function updateData(url, getData, formRef, message) {
+		const loading = startLoading();
 		update(dbRef(url), getData())
 			.then(() => {
 				showSuccess(message);
@@ -34,11 +38,15 @@ export default function useFireBase() {
 			})
 			.catch((error) => {
 				showError(error.message);
+			})
+			.finally(() => {
+				stopLoading(loading);
 			});
 	}
 
 	// Handle loan submission
 	function saveData(url, getData, formRef, message) {
+		const loading = startLoading();
 		push(dbRef(url), getData())
 			.then(() => {
 				showSuccess(message);
@@ -46,6 +54,9 @@ export default function useFireBase() {
 			})
 			.catch((error) => {
 				showError(error.message);
+			})
+			.finally(() => {
+				stopLoading(loading);
 			});
 	}
 	return {

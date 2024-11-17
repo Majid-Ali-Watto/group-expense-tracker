@@ -1,38 +1,41 @@
 <template>
 	<div class="w-full overflow-x-auto">
-		<table class="w-full border-collapse border border-gray-300">
+		<table class="w-full border-collapse rounded-lg shadow-lg overflow-hidden">
 			<thead>
-				<tr class="bg-neutral-800 text-white text-left">
+				<tr class="bg-gradient-to-r from-gray-800 to-black text-white text-left">
 					<!-- Render table headers -->
-					<th v-for="(header, index) in headers" :key="index" class="px-4 py-3 border-b border-gray-300 font-bold text-sm">
+					<th v-for="(header, index) in headers" :key="index" class="px-6 py-4 border border-gray-700 font-semibold text-sm uppercase tracking-wide">
 						{{ header.label }}
 					</th>
 				</tr>
 			</thead>
 			<tbody>
-				<tr @dblclick="() => handleDoubleClick(row)" @click="() => handleClick(row, rowIndex)" v-for="(row, rowIndex) in rows" :key="rowIndex" class="hover:bg-gray-50">
-					<!-- Render each cell based on headers' keys -->
-					<td v-for="header in headers" :key="header.key" class="px-4 py-3 border border-gray-200 text-sm text-gray-600">
+				<tr @dblclick="() => handleDoubleClick(row)" @click="() => handleClick(row, rowIndex)" v-for="(row, rowIndex) in rows" :key="rowIndex" class="hover:bg-indigo-100 transition duration-300 ease-in-out even:bg-gray-50">
+					<td v-for="header in headers" :key="header.key" class="px-6 py-3 border border-gray-300 text-sm text-gray-700">
 						{{ header.key == "amount" ? formatAmount(row[header.key]) : row[header.key] }}
 					</td>
 				</tr>
 			</tbody>
 		</table>
-		<!-- Download Buttons -->
-		<div v-if="isDownloadAvailable" class="mt-2 flex justify-between">
-			<!-- <el-col :lg="12" :md="12" :sm="24"> -->
-			<el-button type="success" @click="downloadPdfData" class="mt-1 text-white px-4 py-2 rounded"> Download PDF </el-button>
-			<el-button type="warning" @click="downloadExcelData" class="mt-1 text-white px py-2 rounded"> Download Excel </el-button>
-			<!-- </el-col> -->
-		</div>
-		<el-dialog v-model="dialogFormVisible" title="Transaction Deletion/Updation" :width="dialogWidth + 'px'">
-			<component :is="activeTabComponent" ref="childRef" @closeModal="dialogFormVisible = false" :friends="friends" :row="state.row" />
+
+		<el-dialog top="10vh" center destroy-on-close v-model="dialogFormVisible" :width="dialogWidth + 'px'">
+			<template #header>
+				<div class="dialog-header">
+					<strong>Delete or Update</strong>
+				</div>
+				<!-- <hr/> -->
+			</template>
+			<HOC :componentToBeRendered="activeTabComponent()" :componentProps="{ friends, row: state.row }" :listenersToPass="{ closeModal: () => (dialogFormVisible = false) }" ref="childRef" />
 			<template #footer>
 				<div class="dialog-footer">
 					<BottomButtons @update="update" @delete="remove" @cancel="dialogFormVisible = false" />
 				</div>
 			</template>
 		</el-dialog>
+	</div>
+	<div v-if="isDownloadAvailable" class="mt-2 flex justify-between">
+		<el-button type="success" @click="downloadPdfData" class="mt-1 text-white px-4 py-2 rounded"> Download PDF </el-button>
+		<el-button type="warning" @click="downloadExcelData" class="mt-1 text-white px py-2 rounded"> Download Excel </el-button>
 	</div>
 </template>
 
@@ -44,6 +47,7 @@
 	import BottomButtons from "./bottom-buttons.vue";
 	import { downloadExcel, downloadPDF } from "../utils/downloadDataProcedures";
 	import getCurrentMonth from "../utils/getCurrentMonth";
+	import HOC from "./HOC.vue";
 	const props = defineProps({
 		rows: {
 			type: Array,
@@ -77,7 +81,7 @@
 	// Directly use `activeTab` from Pinia store
 	const activeTab = computed(() => tabStore.$state.activeTab);
 	// Map activeTab to dynamic components
-	const activeTabComponent = computed(() => getActiveTab(activeTab.value));
+	const activeTabComponent = () => getActiveTab(activeTab.value);
 	const isDownloadAvailable = ref(props.rows.length > 0);
 
 	watch(
@@ -90,10 +94,10 @@
 	// Inject the globally provided formatAmount function
 	const formatAmount = inject("formatAmount");
 	function update() {
-		childRef.value.validateForm("Update");
+		childRef.value.componentRef.validateForm("Update");
 	}
 	function remove() {
-		childRef.value.validateForm("Delete");
+		childRef.value.componentRef.validateForm("Delete");
 	}
 
 	function updateScreenWidth() {

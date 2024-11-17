@@ -27,7 +27,7 @@
 				<el-col :lg="12" :md="12" :sm="24">
 					<!-- Description Textarea -->
 					<el-form-item label="Description" prop="description" required>
-						<el-input v-model="formData.description" type="textarea" placeholder="Enter description" class="w-full" rows=8 />
+						<el-input v-model="formData.description" type="textarea" placeholder="Enter description" class="w-full" rows="8" />
 					</el-form-item>
 				</el-col>
 			</el-row>
@@ -38,10 +38,11 @@
 			</div>
 		</el-form>
 	</fieldset>
-	<ExpenseList v-if="isVisible" />
+	<HOC :componentToBeRendered="ExpenseList" v-if="isVisible" />
 </template>
 
 <script setup>
+	import HOC from "./HOC.vue";
 	import { ref, watch, defineAsyncComponent } from "vue";
 	import getWhoAddedTransaction from "../utils/whoAdded";
 	const ExpenseList = defineAsyncComponent(() => import("./ExpenseList.vue"));

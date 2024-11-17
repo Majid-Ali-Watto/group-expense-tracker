@@ -24,6 +24,7 @@
 			// If confirmed, emit the update event
 			emit("update");
 		} catch (error) {
+			console.log("🚀 -> file: bottom-buttons.vue:27 -> confirmUpdate -> error:", error);
 			// Handle the case when user cancels
 			if (error !== "cancel") {
 				console.log("Update action cancelled");

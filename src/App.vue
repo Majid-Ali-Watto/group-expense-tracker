@@ -8,13 +8,12 @@
 					<Login :isLoggedIn="isLoggedIn" />
 				</div>
 
-				<div v-if="loggedIn" class="container mx-auto mt-16 sm:mt-20 md:20 lg:mt-20">
+				<div v-if="loggedIn" class="container mx-auto mt-14 sm:mt-16 md:16 lg:mt-16">
 					<!-- Tabs -->
 					<el-tabs v-model="activeTab" @tab-change="handleActiveTab" type="border-card">
 						<el-tab-pane v-for="(tab, index) in tabs" :key="index" :label="tab" :name="tab">
-							<!-- Dynamic Component with Keep-Alive -->
 							<keep-alive>
-								<component :is="activeTabComponent" />
+								<HOC :componentToBeRendered="activeTabComponent(tab)" />
 							</keep-alive>
 						</el-tab-pane>
 					</el-tabs>
@@ -28,7 +27,8 @@
 </template>
 
 <script setup>
-	import { computed, defineAsyncComponent, ref } from "vue";
+	import HOC from "./components/HOC.vue";
+	import { defineAsyncComponent, ref } from "vue";
 	import { store } from "./stores/store"; // Pinia store
 	import { tabs } from "./assets/data";
 	import { svg } from "./assets/loader-svg";
@@ -58,8 +58,8 @@
 	}
 
 	// Map activeTab to dynamic components
-	const activeTabComponent = computed(() => {
-		switch (activeTab.value) {
+	const activeTabComponent = (activeTab) => {
+		switch (activeTab) {
 			case "Expenses":
 				return PaymentForm;
 			case "Loans":
@@ -69,7 +69,7 @@
 			default:
 				return null;
 		}
-	});
+	};
 </script>
 
 <style>

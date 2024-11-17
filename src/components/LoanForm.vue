@@ -1,5 +1,4 @@
 <template>
-	<!-- Add New Loan Section -->
 	<fieldset class="border border-gray-300 rounded-lg p-4">
 		<legend>Loan Details</legend>
 

@@ -12,6 +12,7 @@
 			</div>
 		</el-form>
 		<!-- Show Salary Here -->
+		<el-divider/>
 		<div v-if="salaryData.salary !== null">
 			<p>
 				<strong>Current Salary for {{ salaryData.month }}:</strong>
