@@ -5,36 +5,21 @@
 			<el-row :gutter="20">
 				<!-- Left Column -->
 				<el-col :lg="12" :md="12" :sm="24">
-					<!-- Amount Input -->
-					<el-form-item label="Amount" prop="amount" required>
-						<el-input v-model.number="formData.amount" type="number" placeholder="0.00" class="w-full" />
-					</el-form-item>
-
-					<!-- Payer Selection -->
-					<el-form-item label="Payer" prop="payer" required>
-						<el-select v-model="formData.payer" placeholder="Select payer" class="w-full">
-							<el-option v-for="friend in friends" :key="friend" :label="friend" :value="friend" />
-						</el-select>
-					</el-form-item>
-
-					<!-- Date Selection -->
-					<el-form-item label="Date" prop="date" required>
-						<el-date-picker v-model="formData.date" type="datetime" :placeholder="formData.date" format="YYYY/MM/DD hh:mm:ss" value-format="YYYY-MM-DD HH:mm:ss" class="w-full" />
-					</el-form-item>
+					<AmountInput v-model="formData.amount" required />
+					<GenericDropDown label="Payer" prop="payer" v-model="formData.payer" placeholder="Select payer" :options="friends" required />
+					<DataTimePicker v-model="formData.date" required />
 				</el-col>
 
 				<!-- Right Column -->
 				<el-col :lg="12" :md="12" :sm="24">
-					<!-- Description Textarea -->
-					<el-form-item label="Description" prop="description" required>
-						<el-input v-model="formData.description" type="textarea" placeholder="Enter description" class="w-full" rows="8" />
-					</el-form-item>
+					<GenericInput rows="8" v-model="formData.description" label="Description" prop="description" required type="textarea" placeholder="Enter description" />
 				</el-col>
 			</el-row>
 
 			<!-- Submit Button -->
 			<div class="flex justify-end">
-				<el-button v-if="isVisible" type="success" class="text-white py-2 rounded-lg" @click="() => validateForm()"> Add Payment </el-button>
+				<GenericButton v-if="isVisible" type="success" @click="() => validateForm()">Add Payment</GenericButton>
+				<!-- <el-button v-if="isVisible" type="success" class="text-white py-2 rounded-lg" @click="() => validateForm()"> Add Payment </el-button> -->
 			</div>
 		</el-form>
 	</fieldset>
@@ -43,8 +28,9 @@
 
 <script setup>
 	import HOC from "./HOC.vue";
-	import { ref, watch, defineAsyncComponent } from "vue";
+	import { ref, watch, defineAsyncComponent, computed } from "vue";
 	import getWhoAddedTransaction from "../utils/whoAdded";
+	import { DataTimePicker, AmountInput, GenericButton, GenericDropDown, GenericInput } from "./generic-components";
 	const ExpenseList = defineAsyncComponent(() => import("./ExpenseList.vue"));
 	const emit = defineEmits(["closeModal"]);
 	import { friends } from "../assets/data";
@@ -75,6 +61,9 @@
 		{ immediate: true, deep: true }
 	);
 
+	computed(() => {
+		console.log(formData.value);
+	});
 	// Form submission handler
 	const transactionForm = ref(null);
 

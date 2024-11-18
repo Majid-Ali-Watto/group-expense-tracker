@@ -16,9 +16,9 @@
 			</el-form-item>
 
 			<!-- Friend Selection -->
-			<el-form-item label="Friend" class="w-full md:w-1/2">
-				<el-select v-model="selectedFriend" placeholder="Select Friend" class="w-full">
-					<el-option value="" label="All Friends" />
+			<el-form-item label="Payer" class="w-full md:w-1/2">
+				<el-select v-model="selectedFriend" placeholder="Select Payer" class="w-full">
+					<el-option value="All" label="All" />
 					<el-option v-for="friend in friends" :key="friend" :value="friend" :label="friend" />
 				</el-select>
 			</el-form-item>
@@ -45,8 +45,8 @@
 
 	const payments = ref([]);
 	const paymentKeys = ref([]);
-	const selectedMonth = ref("");
-	const selectedFriend = ref("");
+	const selectedMonth = ref(new Date().toLocaleString("en", {month: "long"}));
+	const selectedFriend = ref("All");
 	const pdfContent = ref(null);
 
 	onMounted(() => {
@@ -67,7 +67,7 @@
 						month: "long"
 				  }) === selectedMonth.value
 				: true;
-			const friendMatches = selectedFriend.value ? payment.payer === selectedFriend.value : true;
+			const friendMatches = selectedFriend.value ? (payment.payer === selectedFriend.value||selectedFriend.value==='All') : true;
 			return monthMatches && friendMatches;
 		});
 	});

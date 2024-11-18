@@ -34,8 +34,11 @@
 		</el-dialog>
 	</div>
 	<div v-if="isDownloadAvailable" class="mt-2 flex justify-between">
-		<el-button type="success" @click="downloadPdfData" class="mt-1 text-white px-4 py-2 rounded"> Download PDF </el-button>
-		<el-button type="warning" @click="downloadExcelData" class="mt-1 text-white px py-2 rounded"> Download Excel </el-button>
+		<!-- <el-button type="success" @click="downloadPdfData" class="mt-1 text-white px-4 py-2 rounded"> Download PDF </el-button> -->
+		<GenericButton type="success" @click="downloadPdfData">Download PDF</GenericButton>
+		<GenericButton type="warning" @click="downloadExcelData">Download Excel</GenericButton>
+
+		<!-- <el-button type="warning" @click="downloadExcelData" class="mt-1 text-white px py-2 rounded"> Download Excel </el-button> -->
 	</div>
 </template>
 
@@ -47,6 +50,7 @@
 	import BottomButtons from "./bottom-buttons.vue";
 	import { downloadExcel, downloadPDF } from "../utils/downloadDataProcedures";
 	import getCurrentMonth from "../utils/getCurrentMonth";
+	import GenericButton from "./generic-components/generic-button.vue";
 	import HOC from "./HOC.vue";
 	const props = defineProps({
 		rows: {

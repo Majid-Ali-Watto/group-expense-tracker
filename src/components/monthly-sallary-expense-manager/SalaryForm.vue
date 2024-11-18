@@ -2,20 +2,20 @@
 	<fieldset class="w-full border border-gray-300 rounded-lg p-4">
 		<legend>Add/Update Monthly Salary</legend>
 		<el-form label-position="top" :model="form" :rules="rules" ref="salaryForm">
-			<el-form-item label="Monthly Salary" prop="salary">
-				<el-input v-model.number="form.salary" type="number" placeholder="0.00" />
-			</el-form-item>
+			<AmountInput required v-model.number="form.salary" prop="salary" label="Monthly Salary" />
 
 			<div class="flex justify-between">
-				<el-button :disabled="isSaveEnbl" type="success" @click="addSalary">Save Salary</el-button>
-				<el-button :disabled="isUpdateEnbl" button type="warning" @click="updateSalary">Update Salary</el-button>
+				<!-- <el-button :disabled="isSaveEnbl" type="success" @click="addSalary">Save Salary</el-button> -->
+				<!-- <el-button :disabled="isUpdateEnbl" button type="warning" @click="updateSalary">Update Salary</el-button> -->
+				<GenericButton :disabled="isSaveEnbl" type="success" @click="addSalary">Save Salary</GenericButton>
+				<GenericButton :disabled="isUpdateEnbl" button type="warning" @click="updateSalary">Update Salary</GenericButton>
 			</div>
 		</el-form>
 		<!-- Show Salary Here -->
-		<el-divider/>
+		<el-divider />
 		<div v-if="salaryData.salary !== null">
 			<p>
-				<strong>Current Salary for {{ salaryData.month }}:</strong>
+				<strong>Salary for {{ salaryData.month }}:</strong>
 				{{ formatAmount(salaryData.salary) }}
 			</p>
 		</div>
@@ -31,7 +31,7 @@
 	import { store } from "../../stores/store";
 	import { showError, showSuccess } from "../../utils/showAlerts";
 	import { rules } from "../../assets/validation-rules";
-
+	import { GenericButton, AmountInput } from "../generic-components";
 	const formatAmount = inject("formatAmount"); // Inject global dependency
 	const userStore = store(); // Access Pinia store
 	const { read, dbRef } = useFireBase(); // Firebase API helpers
