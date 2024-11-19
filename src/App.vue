@@ -3,11 +3,9 @@
 		<template #default>
 			<div>
 				<Header @click-log="isLoggedIn" :loggedIn="loggedIn" />
-
-				<div class="container mx-auto mt-16 p-4" v-if="!loggedIn">
+				<div class="container my-auto mx-auto mt-16 p-4" v-if="!loggedIn">
 					<Login :isLoggedIn="isLoggedIn" />
 				</div>
-
 				<div v-if="loggedIn" class="container mx-auto mt-14 sm:mt-16 md:16 lg:mt-16">
 					<!-- Tabs -->
 					<el-tabs v-model="activeTab" @tab-change="handleActiveTab" type="border-card">

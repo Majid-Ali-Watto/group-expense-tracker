@@ -18,7 +18,7 @@
 
 			<!-- Submit Button -->
 			<div class="flex justify-end">
-				<GenericButton v-if="isVisible" type="success" @click="() => validateForm()">Add Payment</GenericButton>
+				<GenericButton v-if="isVisible"  type="success" @click="() => validateForm()">Add Payment</GenericButton>
 				<!-- <el-button v-if="isVisible" type="success" class="text-white py-2 rounded-lg" @click="() => validateForm()"> Add Payment </el-button> -->
 			</div>
 		</el-form>

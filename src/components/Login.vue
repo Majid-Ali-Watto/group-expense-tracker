@@ -3,22 +3,20 @@
 		<el-form :model="form" :rules="rules" ref="loginForm" label-position="top" class="w-full">
 			<fieldset class="w-full p-4 border rounded-lg">
 				<legend>Welcome Back</legend>
-
 				<!-- User Name -->
 				<el-form-item label="User Name" prop="username">
 					<el-input v-model="form.username" placeholder="Enter your username" class="w-full border-gray-300 focus:ring-blue-200 focus:border-blue-300" size="large" />
 				</el-form-item>
-
 				<!-- Password with Toggle -->
 				<el-form-item label="Password" prop="password">
 					<el-input v-model="form.password" type="password" placeholder="Enter your password" class="w-full border-gray-300 focus:ring-blue-200 focus:border-blue-300" size="large" show-password />
 				</el-form-item>
-
-				<!-- Remember Me -->
-				<el-checkbox v-model="form.rememberMe" label="Remember Me" class="text-sm text-gray-700 mb-4"></el-checkbox>
-
-				<!-- Submit Button -->
-				<el-button @click="handleSubmit" type="success" class="w-full py-2 rounded-lg text-white focus:ring focus:ring-blue-200" size="large"> Login </el-button>
+				<div class="flex justify-between">
+					<!-- Remember Me -->
+					<el-checkbox v-model="form.rememberMe" label="Remember Me" class="text-sm text-gray-700 mb-4"></el-checkbox>
+					<!-- Submit Button -->
+					<GenericButton @click="handleSubmit" type="success"> Login</GenericButton>
+				</div>
 			</fieldset>
 		</el-form>
 	</div>
@@ -28,7 +26,8 @@
 	import useFireBase from "../api/firebase-apis";
 	import { rules } from "../assets/validation-rules";
 	import { store } from "../stores/store";
-	import { showError ,showSuccess} from "../utils/showAlerts";
+	import { showError, showSuccess } from "../utils/showAlerts";
+	import { GenericButton } from "../components/generic-components";
 	import { getStoredUser, removeUserFromStorage, setUserInStorage } from "../utils/whoAdded";
 	const userStore = store();
 	const props = defineProps({

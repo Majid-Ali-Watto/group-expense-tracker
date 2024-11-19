@@ -1,5 +1,5 @@
 <template>
-	<el-button :type="type" class="mt-1 text-white px-4 py-2 rounded">
+	<el-button :type="type" class="focus:ring focus:ring-blue-200 text-white px-4 py-2 rounded">
 		<slot></slot>
 	</el-button>
 </template>

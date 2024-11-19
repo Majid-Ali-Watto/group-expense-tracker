@@ -47,10 +47,10 @@
 	import { computed, inject, onMounted, onUnmounted, reactive, ref, watch } from "vue";
 	import { store } from "../stores/store"; // Import the Pinia store
 	import { getActiveTab } from "../utils/active-tab";
-	import BottomButtons from "./bottom-buttons.vue";
+	import BottomButtons from "./BottomButtons.vue";
 	import { downloadExcel, downloadPDF } from "../utils/downloadDataProcedures";
 	import getCurrentMonth from "../utils/getCurrentMonth";
-	import GenericButton from "./generic-components/generic-button.vue";
+	import GenericButton from "./generic-components/GenericButton.vue";
 	import HOC from "./HOC.vue";
 	const props = defineProps({
 		rows: {
