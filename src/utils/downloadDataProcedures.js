@@ -1,7 +1,7 @@
 import html2pdf from "html2pdf.js";
 import * as XLSX from "xlsx";
 import { startLoading, stopLoading } from "./loading";
-function downloadPDF(pdfContent, fileName = "") {
+async function downloadPDF(pdfContent, fileName = "Details-Sheet") {
 	const loading = startLoading();
 	const options = {
 		margin: 0.5,
@@ -33,14 +33,31 @@ function downloadPDF(pdfContent, fileName = "") {
     `;
 	document.head.appendChild(style);
 
-	html2pdf()
-		.set(options)
-		.from(pdfContent)
-		.save()
-		.finally(() => {
-			document.head.removeChild(style);
-		});
-	stopLoading(loading);
+	// html2pdf()
+	// 	.set(options)
+	// 	.from(pdfContent)
+	// 	.save()
+	// 	.finally(() => {
+	// 		document.head.removeChild(style);
+	// 	});
+	// stopLoading(loading);
+	// Return a Promise that resolves after download completes
+	return new Promise((resolve, reject) => {
+		html2pdf()
+			.set(options)
+			.from(pdfContent)
+			.save()
+			.then(() => {
+				resolve(); // Signal that download is complete
+			})
+			.catch((error) => {
+				reject(error); // Signal error
+			})
+			.finally(() => {
+				document.head.removeChild(style);
+				stopLoading(loading);
+			});
+	});
 }
 
 function downloadExcel(data = [], fileName = "", sheetName = "Expenses") {

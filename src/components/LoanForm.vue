@@ -4,20 +4,15 @@
 
 		<el-form :model="formData" :rules="rules" ref="loanForm" label-position="top" class="space-y-4">
 			<el-row :gutter="20">
-				<!-- Column for Loan Amount, Giver, and Receiver -->
 				<el-col :lg="12" :md="12" :sm="24">
 					<AmountInput v-model="formData.amount" required />
 					<GenericDropDown v-model="formData.loanGiver" label="Loan Giver" prop="loanGiver" :options="friends" placeholder="Select loan giver" required />
 					<GenericDropDown v-model="formData.loanReceiver" label="Loan Receiver" prop="loanReceiver" :options="friends" placeholder="Select loan receiver" required />
 				</el-col>
-
-				<!-- Column for Loan Description -->
 				<el-col :lg="12" :md="12" :sm="24">
-					<GenericInput rows="8" v-model="formData.loanDescription" label="Description" prop="loanDescription" required type="textarea" placeholder="Loan details" />
+					<GenericInput rows="8" v-model="formData.description" label="Description" prop="description" required type="textarea" placeholder="Loan details" />
 				</el-col>
 			</el-row>
-
-			<!-- Submit Button -->
 			<div class="flex justify-end">
 				<GenericButton v-if="isVisible" type="success" @click="() => validateForm()">Add Loan</GenericButton>
 			</div>
@@ -47,7 +42,7 @@
 		amount: null,
 		loanGiver: "",
 		loanReceiver: "",
-		loanDescription: ""
+		description: ""
 	});
 	// Watch for changes in `row` prop and update formData
 	watch(
@@ -56,7 +51,7 @@
 			formData.value.amount = newRow?.amount ?? null;
 			formData.value.loanGiver = newRow?.giver ?? "";
 			formData.value.loanReceiver = newRow?.receiver ?? "";
-			formData.value.loanDescription = newRow?.description ?? "";
+			formData.value.description = newRow?.description ?? "";
 			isVisible.value = !newRow?.amount;
 		},
 		{ immediate: true, deep: true }
@@ -82,11 +77,12 @@
 	function getLoanData() {
 		const loan = {
 			amount: formData.value.amount,
-			description: formData.value.loanDescription,
+			description: formData.value.description,
 			giver: formData.value.loanGiver,
 			receiver: formData.value.loanReceiver,
 			date: new Date().toLocaleDateString("en-PK") + " " + new Date().toLocaleTimeString(),
-			whoAdded: getWhoAddedTransaction()
+			whoAdded: getWhoAddedTransaction(),
+			whenAdded: new Date().toLocaleString("en-PK"),
 		};
 		return loan;
 	}

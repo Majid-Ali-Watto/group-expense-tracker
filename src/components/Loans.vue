@@ -4,8 +4,6 @@
 		<LoanForm :friends="friends" />
 
 		<div ref="loanContent">
-			<!-- Loan Records Section -->
-
 			<!-- Balances Section -->
 			<fieldset class="border border-gray-300 rounded-lg p-3 mb-1">
 				<legend>Loan Summary</legend>
@@ -22,7 +20,6 @@
 			</fieldset>
 			<h2>Loan Records</h2>
 			<Table downloadTitle="Loans" :rows="loans" :keys="loanKeys" :friends="friends" :dataRef="loanContent" />
-
 		</div>
 	</div>
 </template>
@@ -36,7 +33,8 @@
 	import useFireBase from "../api/firebase-apis";
 	const formatAmount = inject("formatAmount");
 	const { dbRef } = useFireBase();
-
+	import { store } from "../stores/store";
+	const userStore = store();
 	// Loan records array
 	const loans = ref([]);
 	const loanKeys = ref([]);
@@ -52,6 +50,9 @@
 			loanKeys.value = snapshot.exists() ? Object.keys(snapshot.val()) : [];
 		});
 	});
+	setTimeout(() => {
+		userStore.setLoansRef(loanContent.value);
+	}, 1000);
 
 	// Calculate final balances to determine debtors and lenders
 	const balances = computed(() => {

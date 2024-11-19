@@ -20,15 +20,7 @@ export const rules = {
 			trigger: "blur"
 		}
 	],
-	loanAmount: [
-		{ required: true, message: "Loan amount is required", trigger: "blur" },
-		{
-			type: "number",
-			min: 1,
-			message: "Amount cannot be negative or zero",
-			trigger: "blur"
-		}
-	],
+
 	loanGiver: [
 		{
 			required: true,
@@ -43,14 +35,7 @@ export const rules = {
 			trigger: "change"
 		}
 	],
-	loanDescription: [
-		{ required: true, message: "Description is required", trigger: "blur" },
-		{
-			min: 5,
-			message: "Description should be at least 5 characters",
-			trigger: "blur"
-		}
-	],
+
 	salary: [
 		{
 			required: true,

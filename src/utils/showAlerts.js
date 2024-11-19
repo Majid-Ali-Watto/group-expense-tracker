@@ -9,14 +9,18 @@ const options = {
  * @param message - The `message` parameter is a string that represents the success message that you
  * want to display to the user.
  */
-function showSuccess(message = "") {
-	// ElMessage.success(message);
-	ElMessage({
-		message,
-		type: "success",
-		...options
+async function showSuccess(message = "") {
+	return new Promise((resolve) => {
+		ElMessage({
+			message,
+			type: "success",
+			...options
+		});
+		// Add a slight delay if needed for animations
+		setTimeout(resolve, 500); // Adjust the timeout to match the animation duration
 	});
 }
+
 /**
  * The function showError displays an error message using the ElMessage component.
  * @param message - The `message` parameter is a string that represents the error message to be

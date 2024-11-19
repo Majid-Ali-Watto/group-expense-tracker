@@ -6,7 +6,6 @@
 
 <script setup>
 	import { ref, watch } from "vue";
-
 	// Props for customization
 	const props = defineProps({
 		modelValue: {

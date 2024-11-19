@@ -4,7 +4,11 @@ import { defineStore } from "pinia";
 export const store = defineStore("tab", {
 	state: () => ({
 		activeTab: "Expenses", // Default active tab
-		activeUser: null
+		activeUser: null,
+		expenseRef: null,
+		loansRef: null,
+		salaryRef: null,
+		formResetRef: null
 	}),
 	actions: {
 		setActiveTab(tab) {
@@ -12,6 +16,19 @@ export const store = defineStore("tab", {
 		},
 		setActiveUser(user) {
 			this.activeUser = user;
+		},
+		setExpenseRef(state) {
+			this.expenseRef = state;
+		},
+		setLoansRef(state) {
+			this.loansRef = state;
+		},
+		setSalaryRef(state) {
+			this.salaryRef = state;
+		},
+		setFormResetRef(state) {
+			console.log("setFormResetRef", state);
+			this.formResetRef = state;
 		}
 	}
 });

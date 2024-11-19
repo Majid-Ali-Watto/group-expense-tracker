@@ -1,11 +1,13 @@
-import { get, ref as fRef, remove, update, push } from "firebase/database";
+import { get, ref as Ref, remove, update, push } from "firebase/database";
 import { database } from "../firebase";
 import { startLoading, stopLoading } from "../utils/loading";
 import { showError, showSuccess } from "../utils/showAlerts";
 import { resetForm } from "../utils/reset-form";
+import getCurrentMonth from "../utils/getCurrentMonth";
+import { store } from "../stores/store";
 export default function useFireBase() {
 	function dbRef(url) {
-		return fRef(database, url);
+		return Ref(database, url);
 	}
 
 	async function read(url) {
@@ -30,11 +32,13 @@ export default function useFireBase() {
 			});
 	}
 	function updateData(url, getData, formRef, message) {
+		const formResetRef = store();
+		console.log("🚀 -> file: firebase-apis.js:34 -> updateData -> formRef:", formResetRef.$state);
 		const loading = startLoading();
 		update(dbRef(url), getData())
 			.then(() => {
 				showSuccess(message);
-				resetForm(formRef);
+				resetForm(formResetRef.$state.formResetRef);
 			})
 			.catch((error) => {
 				showError(error.message);
@@ -44,11 +48,28 @@ export default function useFireBase() {
 			});
 	}
 
+	function getNewData(formData) {
+		return {
+			amount: formData.amount,
+			description: formData.description,
+			location: formData.description,
+			recipient: formData.payer,
+			month: getCurrentMonth(),
+			whoAdded: formData.whoAdded,
+			date: formData.date,
+			whenAdded: formData.whenAdded
+		};
+	}
 	// Handle loan submission
 	function saveData(url, getData, formRef, message) {
 		const loading = startLoading();
-		push(dbRef(url), getData())
-			.then(() => {
+		const data = getData();
+		push(dbRef(url), data)
+			.then(async () => {
+				if (url === "payments") {
+					const newUrl = `expenses/${data.payer.split(" ")[0]}/${getCurrentMonth()}`;
+					await push(dbRef(newUrl), getNewData(data));
+				}
 				showSuccess(message);
 				resetForm(formRef);
 			})

@@ -34,11 +34,8 @@
 		</el-dialog>
 	</div>
 	<div v-if="isDownloadAvailable" class="mt-2 flex justify-between">
-		<!-- <el-button type="success" @click="downloadPdfData" class="mt-1 text-white px-4 py-2 rounded"> Download PDF </el-button> -->
 		<GenericButton type="success" @click="downloadPdfData">Download PDF</GenericButton>
 		<GenericButton type="warning" @click="downloadExcelData">Download Excel</GenericButton>
-
-		<!-- <el-button type="warning" @click="downloadExcelData" class="mt-1 text-white px py-2 rounded"> Download Excel </el-button> -->
 	</div>
 </template>
 
@@ -98,7 +95,8 @@
 	// Inject the globally provided formatAmount function
 	const formatAmount = inject("formatAmount");
 	function update() {
-		childRef.value.componentRef.validateForm("Update");
+		console.log('childRef.value.componentRef',childRef.value)
+		childRef.value.componentRef.validateForm("Update",childRef);
 	}
 	function remove() {
 		childRef.value.componentRef.validateForm("Delete");
@@ -135,16 +133,23 @@
 	});
 
 	const handleClick = (rowS, rowIndex) => {
+		let date = rowS.date?.split(",")[0].split("/").reverse().join("-");
+		let time = rowS.date?.split(",")[1];
+		date = date + ", " + time;
 		clearTimeout(timeout.value);
 		timeout.value = setTimeout(() => {
 			dialogFormVisible.value = true;
-			state.row = { ...rowS, id: props.keys[rowIndex] };
+			state.row = { ...rowS, date, id: props.keys[rowIndex] };
 		}, delay);
 	};
-
+	function getDetails(row) {
+		if (row.whoAdded) {
+			return row?.whoAdded + " on " + (row?.whenAdded || "N/A");
+		} else return "N/A";
+	}
 	const handleDoubleClick = (row) => {
 		clearTimeout(timeout.value);
-		ElMessage.info("Added By: " + (row.whoAdded || "N/A"));
+		ElMessage.info("Added By: " + getDetails(row));
 	};
 	function downloadExcelData() {
 		downloadExcel(props.rows, getCurrentMonth() + `_${props.downloadTitle}_`, props.downloadTitle);

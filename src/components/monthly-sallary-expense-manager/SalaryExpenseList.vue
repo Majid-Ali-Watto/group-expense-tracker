@@ -24,7 +24,6 @@
 					</el-select>
 				</el-form-item>
 			</el-col>
-
 		</el-row>
 
 		<Table downloadTitle="Monthly_Expenses" :rows="expenses" :keys="keys" :dataRef="content" />
@@ -63,10 +62,13 @@
 				await fetchSalary(); // Fetch salary when selected month changes
 				fetchExpenses(); // Fetch expenses after salary is loaded
 			});
-
+			setTimeout(() => {
+				userStore.setSalaryRef(content.value)
+			}, 1000);
 			const fetchMonths = async () => {
 				try {
 					const data = await read(`salaries/${activeUser.value}`);
+					console.log("🚀 -> file: SalaryExpenseList.vue:72 -> fetchMonths -> data:", data);
 					months.value = data ? Object.keys(data) : [];
 				} catch (error) {
 					showError("Failed to load months. Please try again.");
