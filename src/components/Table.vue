@@ -4,7 +4,7 @@
 			<thead>
 				<tr class="bg-gradient-to-r from-gray-800 to-black text-white text-left">
 					<!-- Render table headers -->
-					<th v-for="(header, index) in headers" :key="index" class="px-6 py-4 border border-gray-700 font-semibold text-sm uppercase tracking-wide">
+					<th v-for="(header, index) in headers" :key="index" class="px-6 py-3 border border-gray-700 font-semibold text-sm uppercase tracking-wide">
 						{{ header.label }}
 					</th>
 				</tr>
@@ -95,7 +95,6 @@
 	// Inject the globally provided formatAmount function
 	const formatAmount = inject("formatAmount");
 	function update() {
-		console.log('childRef.value.componentRef',childRef.value)
 		childRef.value.componentRef.validateForm("Update",childRef);
 	}
 	function remove() {

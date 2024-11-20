@@ -1,23 +1,65 @@
-<template>
+<!-- <template>
 	<fieldset class="w-full border border-gray-300 rounded-lg p-4">
 		<legend>Add/Update Monthly Salary</legend>
 		<el-form label-position="top" :model="form" :rules="rules" ref="salaryForm">
 			<AmountInput required v-model.number="form.salary" prop="salary" label="Monthly Salary" />
 
 			<div class="flex justify-between">
-				<!-- <el-button :disabled="isSaveEnbl" type="success" @click="addSalary">Save Salary</el-button> -->
-				<!-- <el-button :disabled="isUpdateEnbl" button type="warning" @click="updateSalary">Update Salary</el-button> -->
 				<GenericButton :disabled="isSaveEnbl" type="success" @click="addSalary">Save Salary</GenericButton>
 				<GenericButton :disabled="isUpdateEnbl" button type="warning" @click="updateSalary">Update Salary</GenericButton>
 			</div>
 		</el-form>
-		<!-- Show Salary Here -->
 		<el-divider />
 		<div v-if="salaryData.salary !== null">
 			<p>
 				<strong>Salary for {{ salaryData.month }}:</strong>
 				{{ formatAmount(salaryData.salary) }}
 			</p>
+		</div>
+	</fieldset>
+</template> -->
+
+
+<template>
+	<fieldset class="w-full border border-gray-300 rounded-lg p-6 bg-white shadow-md">
+		<legend class="text-lg font-semibold px-2">Add/Update Monthly Salary</legend>
+
+		<!-- Form Section -->
+		<el-form
+			label-position="top"
+			:model="form"
+			:rules="rules"
+			ref="salaryForm"
+			class="space-y-4"
+		>
+			<el-form-item label="Monthly Salary" prop="salary">
+				<el-input-number
+					v-model.number="form.salary"
+					:min="0"
+					placeholder="Enter salary"
+					class="w-full"
+					controls-position="right"
+				/>
+			</el-form-item>
+
+			<div class="flex justify-between">
+				<GenericButton :disabled="isSaveEnbl" type="success" @click="addSalary">Save Salary</GenericButton>
+				<GenericButton :disabled="isUpdateEnbl" button type="warning" @click="updateSalary">Update Salary</GenericButton>
+			</div>
+		</el-form>
+
+		<!-- Divider -->
+		<el-divider />
+
+		<!-- Display Section -->
+		<div v-if="salaryData.salary !== null" class="text-center space-x-2">
+			<span class="lg:text-lg md:text-base sm:text-sm font-semibold text-gray-700">
+				<strong>Salary for {{ salaryData.month }}:</strong>
+			</span>
+
+			<span class="lg:text-2xl md:text-lg sm:text-base font-bold text-green-600">
+				{{ formatAmount(salaryData.salary) }}
+			</span>
 		</div>
 	</fieldset>
 </template>

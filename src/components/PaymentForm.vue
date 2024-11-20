@@ -9,7 +9,7 @@
 					<DataTimePicker v-model="formData.date" required />
 				</el-col>
 				<el-col :lg="12" :md="12" :sm="24">
-					<GenericInput rows="8" v-model="formData.description" label="Description" prop="description" required type="textarea" placeholder="Enter description" />
+					<GenericInput rows=9 v-model="formData.description" label="Description" prop="description" required type="textarea" placeholder="Enter description" />
 				</el-col>
 			</el-row>
 			<div class="flex justify-end">
@@ -23,7 +23,7 @@
 
 <script setup>
 	import HOC from "./HOC.vue";
-	import { ref, watch, defineAsyncComponent, computed } from "vue";
+	import { ref, watch, defineAsyncComponent } from "vue";
 	import getWhoAddedTransaction from "../utils/whoAdded";
 	import { DataTimePicker, AmountInput, GenericButton, GenericDropDown, GenericInput } from "./generic-components";
 	const ExpenseList = defineAsyncComponent(() => import("./ExpenseList.vue"));
@@ -58,9 +58,6 @@
 		{ immediate: true, deep: true }
 	);
 
-	computed(() => {
-		console.log(formData.value);
-	});
 	// Form submission handler
 	const transactionForm = ref(null);
 
@@ -72,7 +69,7 @@
 				if (whatTask == "Save") {
 					saveData("payments/"+monthYear, getPaymentData, transactionForm, "Transaction successfully saved.");
 				} else if (whatTask == "Update") {
-					updateData(`payments/${monthYear}/${props.row.id}`, getPaymentData, transactionForm, `Payment record with ID ${props.row.id} updated successfully`);
+					updateData(`payments/${monthYear}/${props.row.id}`, getPaymentData, `Payment record with ID ${props.row.id} updated successfully`);
 					emit("closeModal");
 				} else if (whatTask == "Delete") {
 					deleteData(`payments/${monthYear}/${props.row.id}`, `Payment record with ID ${props.row.id} deleted successfully`);

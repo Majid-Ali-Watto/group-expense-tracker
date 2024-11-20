@@ -4,6 +4,7 @@
       v-model="internalValue"
       :placeholder="placeholder"
       class="w-full"
+      clearable
       @change="$emit('update:modelValue', internalValue)"
       >
       <el-option

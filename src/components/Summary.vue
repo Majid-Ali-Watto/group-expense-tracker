@@ -1,6 +1,6 @@
 <template>
 	<div class="my-4">
-		<fieldset class="border border-gray-300 rounded-lg p-4">
+		<!-- <fieldset class="border border-gray-300 rounded-lg p-4">
 			<legend>Summary</legend>
 			<el-row class="mt-2">
 				<el-col :lg="12" :md="12" :sm="24" class="space-y-2">
@@ -19,7 +19,22 @@
 					</div>
 				</el-col>
 			</el-row>
-		</fieldset>
+		</fieldset> -->
+		<div class="w-full mx-auto">
+			<el-descriptions direction="vertical" title="Expense Summary" column="2" :border="true">
+				<el-descriptions-item label="Total Spent">
+					{{ formatAmount(totalSpent) }}
+				</el-descriptions-item>
+				<el-descriptions-item label="Average Per Person">
+					{{ formatAmount(averageSpent) }}
+				</el-descriptions-item>
+				<template v-for="(friend, index) in friendTotals" :key="index">
+					<el-descriptions-item :label="`${friend.name} Paid`">
+						{{ formatAmount(friend.total) }}
+					</el-descriptions-item>
+				</template>
+			</el-descriptions>
+		</div>
 	</div>
 </template>
 

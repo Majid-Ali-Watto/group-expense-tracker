@@ -10,7 +10,7 @@
 					<GenericDropDown v-model="formData.loanReceiver" label="Loan Receiver" prop="loanReceiver" :options="friends" placeholder="Select loan receiver" required />
 				</el-col>
 				<el-col :lg="12" :md="12" :sm="24">
-					<GenericInput rows="8" v-model="formData.description" label="Description" prop="description" required type="textarea" placeholder="Loan details" />
+					<GenericInput rows=9 v-model="formData.description" label="Description" prop="description" required type="textarea" placeholder="Loan details" />
 				</el-col>
 			</el-row>
 			<div class="flex justify-end">
@@ -64,7 +64,7 @@
 				if (whatTask == "Save") {
 					saveData("loans", getLoanData, loanForm, "Loan added successfully.");
 				} else if (whatTask == "Update") {
-					updateData(`loans/${props.row.id}`, getLoanData, loanForm, `Loan record with ID ${props.row.id} updated successfully`);
+					updateData(`loans/${props.row.id}`, getLoanData, `Loan record with ID ${props.row.id} updated successfully`);
 					emit("closeModal");
 				} else if (whatTask == "Delete") {
 					deleteData(`loans/${props.row.id}`, `Loan record with ID ${props.row.id} deleted successfully`);

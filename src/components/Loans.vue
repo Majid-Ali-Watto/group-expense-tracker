@@ -5,7 +5,7 @@
 
 		<div ref="loanContent">
 			<!-- Balances Section -->
-			<fieldset class="border border-gray-300 rounded-lg p-3 mb-1">
+			<!-- <fieldset class="border border-gray-300 rounded-lg p-3 mb-1">
 				<legend>Loan Summary</legend>
 				<el-row>
 					<el-col v-for="(balance, index) in balances" :key="index" :sm="24" :lg="12" :md="12" class="mb-2">
@@ -17,7 +17,16 @@
 						<i> {{ formatAmount(Math.abs(balance.amount)) }}</i>
 					</el-col>
 				</el-row>
-			</fieldset>
+			</fieldset> -->
+			<el-descriptions title="Loan Details" column=1 :border="true">
+				<el-descriptions-item v-for="(balance, index) in balances" :key="index" :label="balance.name">
+					<span :class="balance.amount < 0 ? 'text-red-500' : 'text-green-500'">
+						{{ balance.amount < 0 ? "Under Debt" : "A Lender" }}
+					</span>
+					with
+					<i>{{ formatAmount(Math.abs(balance.amount)) }}</i>
+				</el-descriptions-item>
+			</el-descriptions>
 			<h2>Loan Records</h2>
 			<Table downloadTitle="Loans" :rows="loans" :keys="loanKeys" :friends="friends" :dataRef="loanContent" />
 		</div>

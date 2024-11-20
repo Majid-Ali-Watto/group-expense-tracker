@@ -8,6 +8,7 @@
       :min="min"
       :max="max"
       :step="step"
+      clearable
       @input="$emit('update:modelValue', internalValue)"
     />
   </el-form-item>

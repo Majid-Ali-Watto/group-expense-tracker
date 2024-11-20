@@ -57,15 +57,13 @@
 	);
 
 	const validateForm = async (whatTask = "Save",childRef) => {
-		console.log(childRef.value)
-		userStore.setFormResetRef(childRef.value)
 		expenseForm.value.validate(async (valid) => {
 
 			if (valid) {
 				if (whatTask == "Save") {
 					saveData(`expenses/${activeUser.value}/${getCurrentMonth()}`, getExpenseData, expenseForm, "Expense added successfully!");
 				} else if (whatTask == "Update") {
-					updateData(`expenses/${activeUser.value}/${getCurrentMonth()}/${props.row.id}`, getExpenseData, expenseForm, `Expense record with ID ${props.row.id} updated successfully`);
+					updateData(`expenses/${activeUser.value}/${getCurrentMonth()}/${props.row.id}`, getExpenseData, `Expense record with ID ${props.row.id} updated successfully`);
 					emit("closeModal");
 				} else if (whatTask == "Delete") {
 					deleteData(`expenses/${activeUser.value}/${getCurrentMonth()}/${props.row.id}`, `Expense record with ID ${props.row.id} deleted successfully`);

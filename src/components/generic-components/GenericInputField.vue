@@ -1,6 +1,6 @@
 <template>
 	<el-form-item :label="label" :prop="prop" :required="required" class="w-full">
-		<el-input :rows="rows" v-model="internalValue" :placeholder="placeholder" :type="type" @input="$emit('update:modelValue', internalValue)" />
+		<el-input resize="none" clearable :rows="rows" v-model="internalValue" :placeholder="placeholder" :type="type" @input="$emit('update:modelValue', internalValue)" />
 	</el-form-item>
 </template>
 

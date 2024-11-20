@@ -1,29 +1,34 @@
 <template>
 	<div class="my-4" ref="pdfContent">
 		<Summary :payments="filteredPayments" :friends="friends" />
-		<Settlement :payments="filteredPayments" :friends="friends" />
+		<Settlement :payments="filteredPayments" :keys="paymentKeys" :selectedMonth="selectedMonth" :friends="friends" />
 		<el-divider />
-		<h2>Expense List</h2>
-
-		<!-- Filters -->
-		<div class="flex space-x-4 mb-4">
-			<!-- Month Selection -->
-			<el-form-item label="Month" class="w-full md:w-1/2">
-				<el-select v-model="selectedMonth" placeholder="Select Month" class="w-full">
-					<!-- <el-option value="All" label="All" /> -->
-					<el-option v-for="month in months" :key="month" :value="month" :label="month" />
-				</el-select>
-			</el-form-item>
-
-			<!-- Friend Selection -->
-			<el-form-item label="Payer" class="w-full md:w-1/2">
-				<el-select v-model="selectedFriend" placeholder="Select Payer" class="w-full">
-					<el-option value="All" label="All" />
-					<el-option v-for="friend in friends" :key="friend" :value="friend" :label="friend" />
-				</el-select>
-			</el-form-item>
+		<div class="flex justify-between">
+			<h2>Expense List</h2>
+			<el-badge :value="filteredPayments.length" class="item mr-4" type="secondary">{{ selectedFriend }}:<el-text tag="b"> Transactions</el-text> </el-badge>
 		</div>
 
+		<!-- Filters -->
+		<el-row :gutter="20" class="mb-1" justify="space-between">
+			<!-- Month Selection -->
+			<el-col :lg="6" :md="6" :sm="12" :xs="12">
+				<el-form-item label="Month" class="w-full">
+					<el-select v-model="selectedMonth" placeholder="Select Month" class="w-full">
+						<!-- <el-option value="All" label="All" /> -->
+						<el-option v-for="month in months" :key="month" :value="month" :label="month" />
+					</el-select>
+				</el-form-item>
+			</el-col>
+			<el-col :lg="6" :md="6" :sm="12" :xs="12">
+				<!-- Friend Selection -->
+				<el-form-item label="Payer" class="w-full">
+					<el-select v-model="selectedFriend" placeholder="Select Payer" class="w-full">
+						<el-option value="All" label="All" />
+						<el-option v-for="friend in friends" :key="friend" :value="friend" :label="friend" />
+					</el-select>
+				</el-form-item>
+			</el-col>
+		</el-row>
 		<!-- Table -->
 		<Table :rows="filteredPayments" downloadTitle="Expenses" :keys="paymentKeys" :dataRef="pdfContent" />
 	</div>
@@ -61,8 +66,13 @@
 	});
 	watch(selectedMonth, async () => {
 		selectedFriend.value = "All";
-		await fetchMonths();
+		// await fetchMonths();
 		await fetchExpenses();
+	});
+	watch(months, async() => {
+		selectedMonth.value = getCurrentMonth();
+		await fetchExpenses();
+
 	});
 	const fetchMonths = async () => {
 		try {
@@ -79,6 +89,9 @@
 		const paymentsRef = dbRef(`payments/${selectedMonth.value}`);
 		onValue(paymentsRef, (snapshot) => {
 			const data = snapshot.val() || {};
+			// console.log("🚀 -> file: ExpenseList.vue:88 -> onValue -> data:", data);
+			// paymentKeys.value = [];
+			// payments.value = [];
 			paymentKeys.value = Object.keys(data);
 			payments.value = Object.values(data);
 		});

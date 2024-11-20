@@ -1,6 +1,9 @@
 <template>
 	<div class="w-full" ref="content">
-		<h2>Expenses</h2>
+		<div class="flex justify-between">
+			<h2>Expenses</h2>
+			<el-badge :value="expenses.length" class="item mr-4" type="secondary">{{ selectedMonth }}:<el-text tag="b"> Transactions</el-text> </el-badge>
+		</div>
 		<el-row :gutter="30" class="mb-4 flex items-center">
 			<el-col :lg="12" :md="12" :sm="24" class="space-y-2">
 				<el-row>

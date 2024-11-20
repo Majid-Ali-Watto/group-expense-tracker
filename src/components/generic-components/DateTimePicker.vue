@@ -1,6 +1,6 @@
 <template>
 	<el-form-item :label="label" class="w-full" :prop="prop" :required="required">
-		<el-date-picker :disabled-date="disabledFutureDates" :model-value="modelValue" @update:model-value="$emit('update:modelValue', $event)" :type="type" :placeholder="placeholder" :format="format" :value-format="valueFormat" style="width: 100%" />
+		<el-date-picker clearable :disabled-date="disabledFutureDates" :model-value="modelValue" @update:model-value="$emit('update:modelValue', $event)" :type="type" :placeholder="placeholder" :format="format" :value-format="valueFormat" style="width: 100%" />
 	</el-form-item>
 </template>
 
