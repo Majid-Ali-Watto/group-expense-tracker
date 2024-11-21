@@ -32,100 +32,116 @@
 		<Table downloadTitle="Monthly_Expenses" :rows="expenses" :keys="keys" :dataRef="content" />
 	</div>
 </template>
+<script setup>
+import { inject, ref, onMounted, watch, onUnmounted } from "vue";
+import { onValue, off } from "../../firebase";
+import { store } from "../../stores/store";
+import getCurrentMonth from "../../utils/getCurrentMonth";
+import { showError } from "../../utils/showAlerts";
+import Table from "../Table.vue";
+import useFireBase from "../../api/firebase-apis";
 
-<script>
-	import { inject, onMounted, ref, watch } from "vue";
-	import { onValue } from "../../firebase";
-	import { store } from "../../stores/store";
-	import getCurrentMonth from "../../utils/getCurrentMonth";
-	import { showError } from "../../utils/showAlerts";
-	import Table from "../Table.vue";
-	import useFireBase from "../../api/firebase-apis";
-	export default {
-		setup() {
-			const formatAmount = inject("formatAmount");
-			const { read, dbRef } = useFireBase();
-			const userStore = store();
-			const activeUser = ref(userStore.activeUser);
-			const selectedMonth = ref(getCurrentMonth());
-			const expenses = ref([]);
-			const keys = ref([]);
-			const totalSpent = ref(0);
-			const remaining = ref(0);
-			const salary = ref(0);
-			const months = ref([]);
-			const content = ref(null);
-			onMounted(async () => {
-				await fetchMonths();
-				await fetchSalary(); // Fetch salary when the component mounts
-				fetchExpenses(); // Fetch expenses after salary is loaded
-			});
+const formatAmount = inject("formatAmount");
+const { dbRef } = useFireBase();
+const userStore = store();
 
-			watch(selectedMonth, async () => {
-				await fetchSalary(); // Fetch salary when selected month changes
-				fetchExpenses(); // Fetch expenses after salary is loaded
-			});
-			setTimeout(() => {
-				userStore.setSalaryRef(content.value)
-			}, 1000);
-			const fetchMonths = async () => {
-				try {
-					const data = await read(`salaries/${activeUser.value}`);
-					console.log("🚀 -> file: SalaryExpenseList.vue:72 -> fetchMonths -> data:", data);
-					months.value = data ? Object.keys(data) : [];
-				} catch (error) {
-					showError("Failed to load months. Please try again.");
-				}
-			};
+const activeUser = ref(userStore.activeUser);
+const selectedMonth = ref(getCurrentMonth());
+const expenses = ref([]);
+const keys = ref([]);
+const totalSpent = ref(0);
+const remaining = ref(0);
+const salary = ref(0);
+const months = ref([]);
+const content = ref(null);
 
-			const fetchSalary = async () => {
-				try {
-					const salaryData = await read(`salaries/${activeUser.value}/${selectedMonth.value}`);
-					salary.value = salaryData ? salaryData.salary : 0;
-				} catch (error) {
-					showError("Failed to load salary. Please try again.");
-				}
-			};
+let expensesListener = null; // Listener reference for expenses
+let salaryListener = null; // Listener reference for salary
 
-			const fetchExpenses = () => {
-				const expensesRef = dbRef(`expenses/${activeUser.value}/${selectedMonth.value}`);
+// Fetch available months
+const fetchMonths = () => {
+  const monthsRef = dbRef(`expenses/${activeUser.value}`);
+  onValue(
+    monthsRef,
+    (snapshot) => {
+      months.value = snapshot.exists() ? Object.keys(snapshot.val()) : [];
+    },
+    (error) => {
+      showError("Failed to load months. Please try again.");
+      console.error(error);
+    }
+  );
+};
 
-				onValue(
-					expensesRef,
-					(snapshot) => {
-						if (snapshot.exists()) {
-							const monthExpenses = snapshot.val();
-							expenses.value = Object.values(monthExpenses);
-							keys.value = Object.keys(monthExpenses);
+// Fetch salary data
+const fetchSalary = () => {
+  const salaryRef = dbRef(`salaries/${activeUser.value}/${selectedMonth.value}`);
+  if (salaryListener) off(salaryRef, "value", salaryListener); // Remove old listener if exists
 
-							totalSpent.value = expenses.value.reduce((total, expense) => total + (expense.amount || 0), 0);
-						} else {
-							expenses.value = [];
-							totalSpent.value = 0;
-						}
-						remaining.value = salary.value - totalSpent.value;
-					},
-					(error) => {
-						showError("Failed to load expenses. Please try again.");
-					}
-				);
-			};
+  salaryListener = onValue(
+    salaryRef,
+    (snapshot) => {
+      salary.value = snapshot.exists() ? snapshot.val().salary || 0 : 0;
+      updateRemaining(); // Update remaining after fetching salary
+    },
+    (error) => {
+      showError("Failed to load salary. Please try again.");
+      console.error(error);
+    }
+  );
+};
 
-			return {
-				activeUser,
-				selectedMonth,
-				expenses,
-				keys,
-				totalSpent,
-				remaining,
-				months,
-				fetchExpenses,
-				formatAmount,
-				content
-			};
-		},
-		components: {
-			Table
-		}
-	};
+// Fetch expenses data
+const fetchExpenses = () => {
+  const expensesRef = dbRef(`expenses/${activeUser.value}/${selectedMonth.value}`);
+  if (expensesListener) off(expensesRef, "value", expensesListener); // Remove old listener if exists
+
+  expensesListener = onValue(
+    expensesRef,
+    (snapshot) => {
+      if (snapshot.exists()) {
+        const monthExpenses = snapshot.val();
+        expenses.value = Object.values(monthExpenses);
+        keys.value = Object.keys(monthExpenses);
+        totalSpent.value = expenses.value.reduce((total, expense) => total + (expense.amount || 0), 0);
+      } else {
+        expenses.value = [];
+        totalSpent.value = 0;
+      }
+      updateRemaining(); // Update remaining after fetching expenses
+    },
+    (error) => {
+      showError("Failed to load expenses. Please try again.");
+      console.error(error);
+    }
+  );
+};
+
+// Update remaining amount
+const updateRemaining = () => {
+  remaining.value = salary.value - totalSpent.value;
+};
+
+// Watch for changes in selectedMonth and re-fetch data
+watch(selectedMonth, () => {
+  userStore.setCurrentMonth(selectedMonth.value);
+  fetchSalary();
+  fetchExpenses();
+});
+
+// Cleanup listeners on component unmount
+onUnmounted(() => {
+  if (salaryListener) off(dbRef(`salaries/${activeUser.value}/${selectedMonth.value}`), "value", salaryListener);
+  if (expensesListener) off(dbRef(`expenses/${activeUser.value}/${selectedMonth.value}`), "value", expensesListener);
+});
+
+onMounted(() => {
+  fetchMonths();
+  fetchSalary();
+  fetchExpenses();
+
+  setTimeout(() => {
+    userStore.setSalaryRef(content.value);
+  }, 1000);
+});
 </script>

@@ -1,5 +1,6 @@
 // stores/useTabStore.js
 import { defineStore } from "pinia";
+import getCurrentMonth from "../utils/getCurrentMonth";
 
 export const store = defineStore("tab", {
 	state: () => ({
@@ -8,6 +9,7 @@ export const store = defineStore("tab", {
 		expenseRef: null,
 		loansRef: null,
 		salaryRef: null,
+		selectedMonth: getCurrentMonth()
 	}),
 	actions: {
 		setActiveTab(tab) {
@@ -25,6 +27,8 @@ export const store = defineStore("tab", {
 		setSalaryRef(state) {
 			this.salaryRef = state;
 		},
-
+		setCurrentMonth(month) {
+			this.selectedMonth = month;
+		}
 	}
 });

@@ -3,7 +3,7 @@ import { database } from "../firebase";
 import { startLoading, stopLoading } from "../utils/loading";
 import { showError, showSuccess } from "../utils/showAlerts";
 import { resetForm } from "../utils/reset-form";
-import getCurrentMonth from "../utils/getCurrentMonth";
+import getCurrentMonth, { dateToMonthNode } from "../utils/getCurrentMonth";
 export default function useFireBase() {
 	/**
 	 * The function `dbRef` returns a reference to a specific location in a database based on the provided
@@ -86,8 +86,8 @@ export default function useFireBase() {
 		return {
 			amount: formData.amount,
 			description: formData.description,
-			location: formData.description,
-			recipient: formData.payer,
+			location: "Islamabad",
+			recipient: "Expenses-Auto-Add, Paid by " + formData.payer,
 			month: getCurrentMonth(),
 			whoAdded: formData.whoAdded,
 			date: formData.date,
@@ -113,8 +113,8 @@ export default function useFireBase() {
 		const data = getData();
 		push(dbRef(url), data)
 			.then(async () => {
-				if (url === "payments") {
-					const newUrl = `expenses/${data.payer.split(" ")[0]}/${getCurrentMonth()}`;
+				if (url.includes("payments")) {
+					const newUrl = `expenses/${data.payer.split(" ")[0]}/${dateToMonthNode(data.date)}`;
 					await push(dbRef(newUrl), getNewData(data));
 				}
 				showSuccess(message);

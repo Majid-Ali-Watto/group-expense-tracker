@@ -33,11 +33,9 @@
 		<Table :rows="filteredPayments" downloadTitle="Expenses" :keys="paymentKeys" :dataRef="pdfContent" />
 	</div>
 </template>
-
 <script setup>
-	import { computed, onMounted, ref, watch } from "vue";
-	import { friends } from "../assets/data";
-	import { onValue } from "../firebase";
+	import { computed, onMounted, onUnmounted, ref, watch } from "vue";
+	import { onValue, off } from "../firebase";
 	import Settlement from "./Settlement.vue";
 	import Summary from "./Summary.vue";
 	import Table from "./Table.vue";
@@ -45,9 +43,12 @@
 	import { checkDaily } from "../utils/notifications";
 	import getCurrentMonth from "../utils/getCurrentMonth";
 	import { showError } from "../utils/showAlerts";
+	import { friends } from "../assets/data";
+
 	const pdfContent = ref(null);
 	const months = ref([]);
 	const { dbRef } = useFireBase();
+
 	const props = defineProps({
 		payments: Array
 	});
@@ -56,50 +57,66 @@
 	const paymentKeys = ref([]);
 	const selectedMonth = ref(getCurrentMonth());
 	const selectedFriend = ref("All");
+
+	let monthsListener = null;
+	let paymentsListener = null;
+
 	onMounted(() => {
 		checkDaily(pdfContent);
+		fetchMonths();
+		fetchExpenses();
 	});
 
-	onMounted(async () => {
-		await fetchMonths();
-		await fetchExpenses();
+	// Clean up listeners on unmount
+	onUnmounted(() => {
+		if (monthsListener) off(dbRef(`payments`), "value", monthsListener);
+		if (paymentsListener) off(dbRef(`payments/${selectedMonth.value}`), "value", paymentsListener);
 	});
-	watch(selectedMonth, async () => {
-		selectedFriend.value = "All";
-		// await fetchMonths();
-		await fetchExpenses();
-	});
-	watch(months, async() => {
-		selectedMonth.value = getCurrentMonth();
-		await fetchExpenses();
 
-	});
-	const fetchMonths = async () => {
-		try {
-			const monthsRef = dbRef(`payments`);
-			onValue(monthsRef, (snapshot) => {
+	// Fetch available months
+	const fetchMonths = () => {
+		const monthsRef = dbRef(`payments`);
+		monthsListener = onValue(
+			monthsRef,
+			(snapshot) => {
 				const data = snapshot.val() || {};
-				months.value = data ? Object.keys(data) : [];
-			});
-		} catch (error) {
-			showError("Failed to load months. Please try again.");
-		}
-	};
-	const fetchExpenses = async () => {
-		const paymentsRef = dbRef(`payments/${selectedMonth.value}`);
-		onValue(paymentsRef, (snapshot) => {
-			const data = snapshot.val() || {};
-			// console.log("🚀 -> file: ExpenseList.vue:88 -> onValue -> data:", data);
-			// paymentKeys.value = [];
-			// payments.value = [];
-			paymentKeys.value = Object.keys(data);
-			payments.value = Object.values(data);
-		});
+				months.value = Object.keys(data);
+				if (months.value.length) selectedMonth.value = getCurrentMonth();
+			},
+			(error) => {
+				showError("Failed to load months. Please try again.");
+			}
+		);
 	};
 
+	// Fetch expenses for the selected month
+	const fetchExpenses = () => {
+		const paymentsRef = dbRef(`payments/${selectedMonth.value}`);
+		if (paymentsListener) off(paymentsRef, "value", paymentsListener); // Remove old listener
+
+		paymentsListener = onValue(
+			paymentsRef,
+			(snapshot) => {
+				const data = snapshot.val() || {};
+				paymentKeys.value = Object.keys(data);
+				payments.value = Object.values(data);
+			},
+			(error) => {
+				showError("Failed to load expenses. Please try again.");
+			}
+		);
+	};
+
+	// Watch for changes in selectedMonth
+	watch(selectedMonth, () => {
+		selectedFriend.value = "All";
+		fetchExpenses();
+	});
+
+	// Filter payments based on selected friend
 	const filteredPayments = computed(() => {
 		return payments.value.filter((payment) => {
-			const friendMatches = selectedFriend.value ? payment.payer === selectedFriend.value || selectedFriend.value === "All" : true;
+			const friendMatches = payment?.payer && (payment.payer === selectedFriend.value || selectedFriend.value === "All");
 			return friendMatches;
 		});
 	});

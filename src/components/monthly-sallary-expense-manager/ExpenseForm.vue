@@ -39,8 +39,15 @@
 
 	const expenseForm = ref(null);
 	const userStore = store();
-	const activeUser = ref(userStore.activeUser);
+	const selectedMonth = ref(userStore.$state.selectedMonth);
 
+	const activeUser = ref(userStore.activeUser);
+	watch(
+		() => userStore.$state.selectedMonth, // Reactive dependency
+		(newMonth) => {
+			selectedMonth.value = newMonth;
+		}
+	);
 	// Watcher for props.row
 	watch(
 		() => props.row,
@@ -56,17 +63,16 @@
 		{ immediate: true, deep: true }
 	);
 
-	const validateForm = async (whatTask = "Save",childRef) => {
+	const validateForm = async (whatTask = "Save", childRef) => {
 		expenseForm.value.validate(async (valid) => {
-
 			if (valid) {
 				if (whatTask == "Save") {
 					saveData(`expenses/${activeUser.value}/${getCurrentMonth()}`, getExpenseData, expenseForm, "Expense added successfully!");
 				} else if (whatTask == "Update") {
-					updateData(`expenses/${activeUser.value}/${getCurrentMonth()}/${props.row.id}`, getExpenseData, `Expense record with ID ${props.row.id} updated successfully`);
+					updateData(`expenses/${activeUser.value}/${selectedMonth.value}/${props.row.id}`, getExpenseData, `Expense record with ID ${props.row.id} updated successfully`);
 					emit("closeModal");
 				} else if (whatTask == "Delete") {
-					deleteData(`expenses/${activeUser.value}/${getCurrentMonth()}/${props.row.id}`, `Expense record with ID ${props.row.id} deleted successfully`);
+					deleteData(`expenses/${activeUser.value}/${selectedMonth.value}/${props.row.id}`, `Expense record with ID ${props.row.id} deleted successfully`);
 					emit("closeModal");
 				}
 			}
@@ -80,8 +86,8 @@
 			recipient: form.value?.recipient,
 			month: getCurrentMonth(),
 			whoAdded: getWhoAddedTransaction(),
-			date:new Date().toLocaleString('en-PK'),
-			whenAdded: new Date().toLocaleString("en-PK"),
+			date: new Date().toLocaleString("en-PK"),
+			whenAdded: new Date().toLocaleString("en-PK")
 		};
 	}
 	defineExpose({

@@ -33,14 +33,21 @@ async function downloadPDF(pdfContent, fileName = "Details-Sheet") {
     `;
 	document.head.appendChild(style);
 
-	// html2pdf()
-	// 	.set(options)
-	// 	.from(pdfContent)
-	// 	.save()
-	// 	.finally(() => {
-	// 		document.head.removeChild(style);
-	// 	});
-	// stopLoading(loading);
+	// Temporarily hide or remove buttons
+	const buttons = pdfContent.querySelectorAll("button, .no-pdf"); // Add your selector for elements to exclude
+	buttons.forEach((btn) => (btn.style.display = "none"));
+	// Select all elements with the class 'el-badge' and 'el-select'
+	const badges = pdfContent.querySelectorAll(".el-badge");
+	const selects = pdfContent.querySelectorAll(".el-select");
+
+	// Hide each 'el-badge' and 'el-select' element
+	badges.forEach((badge) => {
+		badge.style.display = "none";
+	});
+
+	selects.forEach((select) => {
+		select.style.display = "none";
+	});
 	// Return a Promise that resolves after download completes
 	return new Promise((resolve, reject) => {
 		html2pdf()
@@ -54,6 +61,15 @@ async function downloadPDF(pdfContent, fileName = "Details-Sheet") {
 				reject(error); // Signal error
 			})
 			.finally(() => {
+				// Restore buttons after PDF generation
+				buttons.forEach((btn) => (btn.style.display = ""));
+				badges.forEach((badge) => {
+					badge.style.display = ""; // Restore the original display style
+				});
+
+				selects.forEach((select) => {
+					select.style.display = ""; // Restore the original display style
+				});
 				document.head.removeChild(style);
 				stopLoading(loading);
 			});

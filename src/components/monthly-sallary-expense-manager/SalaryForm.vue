@@ -1,45 +1,11 @@
-<!-- <template>
-	<fieldset class="w-full border border-gray-300 rounded-lg p-4">
-		<legend>Add/Update Monthly Salary</legend>
-		<el-form label-position="top" :model="form" :rules="rules" ref="salaryForm">
-			<AmountInput required v-model.number="form.salary" prop="salary" label="Monthly Salary" />
-
-			<div class="flex justify-between">
-				<GenericButton :disabled="isSaveEnbl" type="success" @click="addSalary">Save Salary</GenericButton>
-				<GenericButton :disabled="isUpdateEnbl" button type="warning" @click="updateSalary">Update Salary</GenericButton>
-			</div>
-		</el-form>
-		<el-divider />
-		<div v-if="salaryData.salary !== null">
-			<p>
-				<strong>Salary for {{ salaryData.month }}:</strong>
-				{{ formatAmount(salaryData.salary) }}
-			</p>
-		</div>
-	</fieldset>
-</template> -->
-
-
 <template>
 	<fieldset class="w-full border border-gray-300 rounded-lg p-6 bg-white shadow-md">
 		<legend class="text-lg font-semibold px-2">Add/Update Monthly Salary</legend>
 
 		<!-- Form Section -->
-		<el-form
-			label-position="top"
-			:model="form"
-			:rules="rules"
-			ref="salaryForm"
-			class="space-y-4"
-		>
+		<el-form label-position="top" :model="form" :rules="rules" ref="salaryForm" class="space-y-4">
 			<el-form-item label="Monthly Salary" prop="salary">
-				<el-input-number
-					v-model.number="form.salary"
-					:min="0"
-					placeholder="Enter salary"
-					class="w-full"
-					controls-position="right"
-				/>
+				<el-input-number v-model.number="form.salary" :min="0" placeholder="Enter salary" class="w-full" controls-position="right" />
 			</el-form-item>
 
 			<div class="flex justify-between">
@@ -65,7 +31,7 @@
 </template>
 
 <script setup>
-	import { ref, onMounted, onUnmounted, inject } from "vue";
+	import { ref, onMounted, onUnmounted, inject, watch } from "vue";
 	import { ElMessageBox } from "element-plus";
 	import { set, update, onValue, off } from "firebase/database";
 	import getCurrentMonth from "../../utils/getCurrentMonth";
@@ -77,7 +43,7 @@
 	const formatAmount = inject("formatAmount"); // Inject global dependency
 	const userStore = store(); // Access Pinia store
 	const { read, dbRef } = useFireBase(); // Firebase API helpers
-
+	const selectedMonth = ref(userStore.$state.selectedMonth);
 	// Reactive state
 	const salaryData = ref({
 		month: null,
@@ -91,14 +57,28 @@
 	const isSaveEnbl = ref(false);
 	const isUpdateEnbl = ref(true);
 	let salaryListener = null; // Reference for Firebase listener
+	watch(
+		() => userStore.$state.selectedMonth, // Reactive dependency
+		(newMonth) => {
+			selectedMonth.value = newMonth;
+			listenForSalaryChanges();
+		}
+	);
 
+	watch(
+		() => salaryData.value.salary,
+		() => {
+			isSaveEnbl.value = !!salaryData.value.salary;
+			isUpdateEnbl.value = !isSaveEnbl.value;
+		}
+	);
 	// Method: Add Salary
 	const addSalary = async () => {
 		const formValid = await validateForm();
 		if (!formValid) return;
 
 		try {
-			const monthRef = dbRef(`salaries/${userStore.activeUser}/${getCurrentMonth()}`);
+			const monthRef = dbRef(`salaries/${userStore.activeUser}/${selectedMonth.value}`);
 			await set(monthRef, {
 				salary: form.value.salary,
 				month: getCurrentMonth()
@@ -123,8 +103,8 @@
 				type: "warning"
 			});
 
-			const monthRef = dbRef(`salaries/${userStore.activeUser}/${getCurrentMonth()}`);
-			const data = await read(`salaries/${userStore.activeUser}/${getCurrentMonth()}`);
+			const monthRef = dbRef(`salaries/${userStore.activeUser}/${selectedMonth.value}`);
+			const data = await read(`salaries/${userStore.activeUser}/${selectedMonth.value}`);
 
 			if (data) {
 				await update(monthRef, { salary: form.value.salary });
@@ -143,7 +123,7 @@
 
 	// Listen for salary changes
 	const listenForSalaryChanges = () => {
-		const monthRef = dbRef(`salaries/${userStore.activeUser}/${getCurrentMonth()}`);
+		const monthRef = dbRef(`salaries/${userStore.activeUser}/${selectedMonth.value}`);
 
 		salaryListener = onValue(monthRef, (snapshot) => {
 			if (snapshot.exists()) {
@@ -152,12 +132,10 @@
 				salaryData.value.salary = data.salary;
 				salaryData.value.month = data.month;
 				form.value.salary = data.salary;
-
-				isSaveEnbl.value = !!data.salary;
-				isUpdateEnbl.value = !data.salary;
 			} else {
 				salaryData.value.salary = null;
 				salaryData.value.month = null;
+				form.value.salary = null;
 			}
 		});
 	};

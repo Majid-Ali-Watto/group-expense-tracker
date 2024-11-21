@@ -41,15 +41,16 @@
 <script setup>
 	import { computed, inject } from "vue";
 	const formatAmount = inject("formatAmount");
+	import { friends } from "../assets/data";
 	const props = defineProps({
-		payments: Array,
-		friends: Array
+		payments: Array
+		// friends: Array
 	});
 
 	const totalSpent = computed(() => props.payments.reduce((sum, payment) => sum + payment.amount, 0));
-	const averageSpent = computed(() => totalSpent.value / props.friends.length);
+	const averageSpent = computed(() => totalSpent.value / friends.length);
 	const friendTotals = computed(() =>
-		props.friends.map((friend) => ({
+		friends.map((friend) => ({
 			name: friend,
 			total: props.payments.filter((payment) => payment.payer === friend).reduce((sum, payment) => sum + payment.amount, 0)
 		}))

@@ -41,7 +41,7 @@
 	import useFireBase from "../api/firebase-apis";
 	import { showError } from "../utils/showAlerts";
 	import { ElMessageBox } from "element-plus";
-
+	import { friends } from "../assets/data";
 	const { updateData, deleteData } = useFireBase();
 	const formatAmount = inject("formatAmount");
 	const userStore = store();
@@ -50,7 +50,7 @@
 	const props = defineProps({
 		payments: Array,
 		keys: Array,
-		friends: Array,
+		// friends: Array,
 		selectedMonth: String
 	});
 
@@ -81,9 +81,9 @@
 	};
 
 	const totalSpent = computed(() => props.payments.reduce((sum, payment) => sum + payment.amount, 0));
-	const averageSpent = computed(() => (props.friends.length ? totalSpent.value / props.friends.length : 0));
+	const averageSpent = computed(() => (friends.length ? totalSpent.value / friends.length : 0));
 	const balances = computed(() =>
-		props.friends.map((friend) => ({
+		friends.map((friend) => ({
 			name: friend,
 			balance: props.payments.filter((payment) => payment.payer === friend).reduce((sum, payment) => sum + payment.amount, 0) - averageSpent.value
 		}))

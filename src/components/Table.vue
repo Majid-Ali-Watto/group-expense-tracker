@@ -1,6 +1,6 @@
 <template>
 	<div class="w-full overflow-x-auto">
-		<table class="w-full border-collapse rounded-lg shadow-lg overflow-hidden">
+		<table class="w-full border-collapse rounded-md shadow-md overflow-hidden" style="width: 100% !important; min-width: 800px !important">
 			<thead>
 				<tr class="bg-gradient-to-r from-gray-800 to-black text-white text-left">
 					<!-- Render table headers -->
@@ -10,14 +10,13 @@
 				</tr>
 			</thead>
 			<tbody>
-				<tr @dblclick="() => handleDoubleClick(row)" @click="() => handleClick(row, rowIndex)" v-for="(row, rowIndex) in rows" :key="rowIndex" class="hover:bg-indigo-100 transition duration-300 ease-in-out even:bg-gray-50">
+				<tr @dblclick="() => handleDoubleClick(row)" @click="() => handleClick(row, rowIndex)" v-for="(row, rowIndex) in rows" :key="rowIndex" class="w-full hover:bg-indigo-100 transition duration-300 ease-in-out even:bg-gray-50">
 					<td v-for="header in headers" :key="header.key" class="px-6 py-3 border border-gray-300 text-sm text-gray-700">
 						{{ header.key == "amount" ? formatAmount(row[header.key]) : row[header.key] }}
 					</td>
 				</tr>
 			</tbody>
 		</table>
-
 		<el-dialog top="10vh" center destroy-on-close v-model="dialogFormVisible" :width="dialogWidth + 'px'">
 			<template #header>
 				<div class="dialog-header">
@@ -95,7 +94,7 @@
 	// Inject the globally provided formatAmount function
 	const formatAmount = inject("formatAmount");
 	function update() {
-		childRef.value.componentRef.validateForm("Update",childRef);
+		childRef.value.componentRef.validateForm("Update", childRef);
 	}
 	function remove() {
 		childRef.value.componentRef.validateForm("Delete");
@@ -122,8 +121,9 @@
 	// Generate headers dynamically from `rows`
 	const headers = computed(() => {
 		if (props.rows.length > 0) {
-			return Object.keys(props.rows[0]).map((key) => ({
-				label: key.toCapitalize(),
+			const cols = Object.keys(props.rows[0]).filter((col) => !["whenAdded", "whoAdded"].includes(col));
+			return cols.map((key) => ({
+				label: key,
 				key
 			}));
 		}
