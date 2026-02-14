@@ -3,21 +3,25 @@
 @tailwind utilities;
 
 @layer base {
-	legend {
-		@apply font-semibold px-1 text-sm lg:text-base md:text-base sm:text-sm !important;
-	}
+  legend {
+    @apply font-semibold px-1 text-sm lg:text-base md:text-base sm:text-sm !important;
+  }
 
-	h2 {
-		@apply font-semibold mb-4 text-sm lg:text-xl md:text-lg sm:text-base !important;
-	}
+  h2 {
+    @apply font-semibold mb-4 text-sm lg:text-xl md:text-lg sm:text-base !important;
+  }
 
-	strong {
-		@apply font-semibold text-sm lg:text-base md:text-base sm:text-sm !important;
-	}
+  strong {
+    @apply font-semibold text-sm lg:text-base md:text-base sm:text-sm !important;
+  }
 }
 
+body {
+  min-width: 320px !important;
+}
 legend,
 h2,
-strong,header>span {
-	color: #4a4a4a !important;
+strong,
+header > span {
+  color: #4a4a4a !important;
 }
