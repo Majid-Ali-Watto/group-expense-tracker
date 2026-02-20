@@ -11,7 +11,6 @@ import {
 import { generatePasscodes, printPasscodes } from '../utils/passcodes'
 import { encryptForSession, encryptForStore } from '../utils/sessionCrypto'
 
-
 export const Login = () => {
   const RECOVERY_CODES_COUNT = 1
   const userStore = store()
@@ -56,7 +55,7 @@ export const Login = () => {
     const token = crypto.randomUUID()
     const [encryptedSession, encryptedStore] = await Promise.all([
       encryptForSession(token), // AES-GCM → sessionStorage
-      encryptForStore(token)    // AES-CBC → Pinia store
+      encryptForStore(token) // AES-CBC → Pinia store
     ])
     userStore.setActiveUser(payload.mobile)
     userStore.addUser(payload)
@@ -77,7 +76,14 @@ export const Login = () => {
 
   /** Called when user clicks "I've saved my codes" in the recovery dialog. */
   async function confirmRecoveryCodes() {
-    const { mobile, userName, loginCode, codes, existingUser, isRegenerationFlow } = pendingLoginData.value
+    const {
+      mobile,
+      userName,
+      loginCode,
+      codes,
+      existingUser,
+      isRegenerationFlow
+    } = pendingLoginData.value
 
     // If this is a regeneration flow, codes were already saved to Firebase
     if (!isRegenerationFlow) {
@@ -103,10 +109,7 @@ export const Login = () => {
       ? 'Login code reset successfully. New recovery codes saved. You are now logged in!'
       : 'Welcome! Your account is ready.'
 
-    await completeLogin(
-      { name: userName, mobile, loginCode },
-      message
-    )
+    await completeLogin({ name: userName, mobile, loginCode }, message)
   }
 
   /** Print / Save as PDF button inside the recovery dialog. */
@@ -127,12 +130,16 @@ export const Login = () => {
       const loginCodeValue = form.value.loginCode.trim()
 
       if (!/^03\d{9}$/.test(mobileKey)) {
-        return showError('Mobile number must be 11 digits starting with 03 (e.g., 03009090909)')
+        return showError(
+          'Mobile number must be 11 digits starting with 03 (e.g., 03009090909)'
+        )
       }
 
       const normalizedName = rawName.replace(/\s+/g, ' ').trim()
       if (!/^[a-zA-Z]+(\s[a-zA-Z]+)*$/.test(normalizedName)) {
-        return showError('Name can only contain alphabets and single spaces (no special characters)')
+        return showError(
+          'Name can only contain alphabets and single spaces (no special characters)'
+        )
       }
 
       if (loginCodeValue.length < 4 || loginCodeValue.length > 15) {
@@ -146,7 +153,9 @@ export const Login = () => {
           // ── Existing user ──────────────────────────────────────────────
           const dbName = user.name.trim().replace(/\s+/g, ' ').toLowerCase()
           if (dbName !== normalizedName.toLowerCase()) {
-            return showError('Name does not match the registered user for this mobile number')
+            return showError(
+              'Name does not match the registered user for this mobile number'
+            )
           }
 
           if (user.loginCode === null || user.loginCode === undefined) {
@@ -217,7 +226,9 @@ export const Login = () => {
           recoveryCodesDialogVisible.value = true
         }
       } catch (error) {
-        showError(error?.message || error || 'An error occurred while logging you in')
+        showError(
+          error?.message || error || 'An error occurred while logging you in'
+        )
       }
     })
   }
@@ -231,7 +242,9 @@ export const Login = () => {
       return showError('Please enter your mobile number first')
     }
     if (!/^03\d{9}$/.test(mobileKey)) {
-      return showError('Please enter a valid mobile number (11 digits starting with 03)')
+      return showError(
+        'Please enter a valid mobile number (11 digits starting with 03)'
+      )
     }
 
     try {
@@ -254,7 +267,11 @@ export const Login = () => {
         return ElMessageBox.alert(
           `No recovery codes are set for <strong>${user.name}</strong>.<br><br>Please contact an admin to reset your login code via the Users panel.`,
           'Recovery Not Available',
-          { confirmButtonText: 'OK', type: 'warning', dangerouslyUseHTMLString: true }
+          {
+            confirmButtonText: 'OK',
+            type: 'warning',
+            dangerouslyUseHTMLString: true
+          }
         )
       }
 
@@ -281,7 +298,9 @@ export const Login = () => {
       const matchIndex = normalizedStored.indexOf(enteredCode)
 
       if (matchIndex === -1) {
-        return showError('Invalid recovery passcode. Please check and try again.')
+        return showError(
+          'Invalid recovery passcode. Please check and try again.'
+        )
       }
 
       // ── Step 2: enter new login code ────────────────────────────────────
@@ -296,7 +315,8 @@ export const Login = () => {
             inputType: 'password',
             inputPlaceholder: '4–15 characters',
             inputValidator: (val) => {
-              if (!val || val.trim().length < 4) return 'Minimum 4 characters required'
+              if (!val || val.trim().length < 4)
+                return 'Minimum 4 characters required'
               if (val.trim().length > 15) return 'Maximum 15 characters allowed'
               return true
             }
@@ -355,7 +375,8 @@ export const Login = () => {
 
         // Auto-login with the new code
         form.value.loginCode = newLoginCode
-        if (form.value.rememberMe) setUserInStorage({ ...form.value, loginCode: newLoginCode })
+        if (form.value.rememberMe)
+          setUserInStorage({ ...form.value, loginCode: newLoginCode })
         else removeUserFromStorage()
 
         await completeLogin(

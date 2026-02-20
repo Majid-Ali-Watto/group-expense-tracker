@@ -3,7 +3,11 @@ import getWhoAddedTransaction from '../utils/whoAdded'
 import useFireBase from '../api/firebase-apis'
 import { store } from '../stores/store'
 import { storage } from '../firebase'
-import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
+import {
+  ref as storageRef,
+  uploadBytes,
+  getDownloadURL
+} from 'firebase/storage'
 import { showError } from '../utils/showAlerts'
 
 export const LoanForm = (props, emit) => {

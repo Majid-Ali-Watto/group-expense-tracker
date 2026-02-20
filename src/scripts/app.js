@@ -7,7 +7,6 @@ import { getActiveTab } from '../utils/active-tab'
 import { showError } from '../utils/showAlerts'
 import { decryptFromSession, decryptFromStore } from '../utils/sessionCrypto'
 
-
 export const App = () => {
   // Lazy-loaded components
   const HOC = defineAsyncComponent(() => import('@/components/HOC.vue'))
@@ -74,7 +73,12 @@ export const App = () => {
       decryptFromStore(encryptedStore),
       decryptFromSession(encryptedSession)
     ])
-    if (!tokenFromStore || !tokenFromSession || tokenFromStore !== tokenFromSession) return false
+    if (
+      !tokenFromStore ||
+      !tokenFromSession ||
+      tokenFromStore !== tokenFromSession
+    )
+      return false
 
     const mobile = tabStore.getActiveUser
     if (!mobile) return false

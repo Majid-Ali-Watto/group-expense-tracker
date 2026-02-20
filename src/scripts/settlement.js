@@ -5,61 +5,66 @@ import { showError, showSuccess } from '../utils/showAlerts'
 import { ElMessageBox } from 'element-plus'
 
 export const Settlement = (props) => {
-  const { updateData, deleteData, dbRef, setData } = useFireBase()
+  const { updateData, deleteData, setData } = useFireBase()
   const formatAmount = inject('formatAmount')
   const userStore = store()
 
   const user = ref(userStore.$state.activeUser)
   const activeGroup = computed(() => userStore.getActiveGroup)
-  const group = computed(() => 
+  const group = computed(() =>
     activeGroup.value ? userStore.getGroupById(activeGroup.value) : null
   )
-  
+
   const isAdmin = computed(() => {
     if (!group.value) return false
     return group.value.ownerMobile === userStore.getActiveUser
   })
-  
+
   // Make settlementRequest reactive to group changes
   const settlementRequest = computed(() => {
     return group.value?.settlementRequest || null
   })
-  
+
   // Check if there's a pending settlement request
   const hasSettlementRequest = computed(() => {
-    return settlementRequest.value !== null && settlementRequest.value !== undefined
+    return (
+      settlementRequest.value !== null && settlementRequest.value !== undefined
+    )
   })
-  
+
   // Check if current user has approved settlement request
   const hasUserApprovedSettlement = computed(() => {
     if (!hasSettlementRequest.value) return false
     const mobile = userStore.getActiveUser
-    return settlementRequest.value.approvals?.some(a => a.mobile === mobile) || false
+    return (
+      settlementRequest.value.approvals?.some((a) => a.mobile === mobile) ||
+      false
+    )
   })
-  
+
   // Get settlement approvals
   const getSettlementApprovals = computed(() => {
     return settlementRequest.value?.approvals || []
   })
-  
+
   // Get all affected members for settlement
   const getAllSettlementMembers = computed(() => {
     if (!group.value) return []
     return group.value.members || []
   })
-  
+
   // Check if all members approved settlement
   const allMembersApprovedSettlement = computed(() => {
     if (!hasSettlementRequest.value) return false
     const approvals = getSettlementApprovals.value
     const allMembers = getAllSettlementMembers.value
-    return allMembers.every(member => 
-      approvals.some(approval => approval.mobile === member.mobile)
+    return allMembers.every((member) =>
+      approvals.some((approval) => approval.mobile === member.mobile)
     )
   })
 
   const updates = ref({})
-  
+
   // Request settlement (any member can request)
   async function requestSettlement() {
     try {
@@ -72,14 +77,14 @@ export const Settlement = (props) => {
           type: 'info'
         }
       )
-      
+
       if (!activeGroup.value) {
         return showError('No active group selected')
       }
-      
+
       const mobile = userStore.getActiveUser
       const userName = userStore.getUserByMobile(mobile)?.name || mobile
-      
+
       const newSettlementRequest = {
         requested: true,
         requestedBy: mobile,
@@ -88,7 +93,7 @@ export const Settlement = (props) => {
         month: props.selectedMonth,
         approvals: [{ mobile, name: userName }]
       }
-      
+
       const groupId = activeGroup.value
       await setData(
         `groups/${groupId}/settlementRequest`,
@@ -99,35 +104,31 @@ export const Settlement = (props) => {
       if (error !== 'cancel') showError(error.message || error)
     }
   }
-  
+
   // Approve settlement request
   async function approveSettlement() {
     try {
       if (!hasSettlementRequest.value) return
-      
+
       const mobile = userStore.getActiveUser
       const userName = userStore.getUserByMobile(mobile)?.name || mobile
-      
+
       const updatedRequest = { ...settlementRequest.value }
       if (!updatedRequest.approvals) {
         updatedRequest.approvals = []
       }
-      
+
       updatedRequest.approvals.push({ mobile, name: userName })
-      
+
       const groupId = activeGroup.value
-      await setData(
-        `groups/${groupId}/settlementRequest`,
-        updatedRequest,
-        ''
-      )
-      
+      await setData(`groups/${groupId}/settlementRequest`, updatedRequest, '')
+
       showSuccess('You have approved the settlement request')
     } catch (error) {
       showError(error.message || error)
     }
   }
-  
+
   // Reject settlement request
   async function rejectSettlement() {
     try {
@@ -140,26 +141,28 @@ export const Settlement = (props) => {
           type: 'warning'
         }
       )
-      
+
       if (!activeGroup.value) return
-      
+
       const groupId = activeGroup.value
       const { removeData } = useFireBase()
       await removeData(`groups/${groupId}/settlementRequest`)
-      
+
       showSuccess('Settlement request rejected')
     } catch (error) {
       if (error !== 'cancel') showError(error.message || error)
     }
   }
-  
+
   // Finalize settlement (admin only, after all approvals)
   async function addPaymentsBatch() {
     try {
       if (activeGroup.value && !allMembersApprovedSettlement.value) {
-        return showError('All group members must approve before settlement can be finalized')
+        return showError(
+          'All group members must approve before settlement can be finalized'
+        )
       }
-      
+
       await ElMessageBox.confirm(
         'Are you sure to move expenses to backup and finalize settlement?',
         'Finalize Settlement',
@@ -169,26 +172,26 @@ export const Settlement = (props) => {
           type: 'warning'
         }
       )
-      
+
       updates.value = {}
       props.payments.forEach((payment, index) => {
         const key = props.keys[index]
         updates.value[key] = payment
       })
-      
+
       const groupId = activeGroup.value || 'global'
-      const monthPath = groupId === 'global' ? props.selectedMonth : `${groupId}/${props.selectedMonth}`
-      
+      const monthPath =
+        groupId === 'global'
+          ? props.selectedMonth
+          : `${groupId}/${props.selectedMonth}`
+
       updateData(
         `payments-backup/${monthPath}`,
         getData,
         'Expenses added to Backup successfully!'
       )
-      deleteData(
-        `payments/${monthPath}`,
-        props.selectedMonth + ' data deleted'
-      )
-      
+      deleteData(`payments/${monthPath}`, props.selectedMonth + ' data deleted')
+
       // Remove settlement request if exists
       if (activeGroup.value && hasSettlementRequest.value) {
         const { removeData } = useFireBase()
@@ -198,11 +201,10 @@ export const Settlement = (props) => {
       if (error != 'cancel') showError(error)
     }
   }
-  
+
   const getData = () => {
     return updates.value
   }
-
 
   // Compute balances
   const balances = computed(() => {
@@ -253,7 +255,8 @@ export const Settlement = (props) => {
 
       if (payment.payerMode === 'multiple' && payment.payers?.length) {
         payment.payers.forEach((p) => {
-          if (p.mobile) map[p.mobile] = (map[p.mobile] || 0) + (parseFloat(p.amount) || 0)
+          if (p.mobile)
+            map[p.mobile] = (map[p.mobile] || 0) + (parseFloat(p.amount) || 0)
         })
       } else if (payment.payer) {
         map[payment.payer] = (map[payment.payer] || 0) + amount
@@ -300,7 +303,7 @@ export const Settlement = (props) => {
     }
     return result
   })
-  
+
   return {
     formatAmount,
     userStore,

@@ -1,10 +1,11 @@
+<!-- eslint-disable vue/multi-word-component-names -->
 <template>
   <div class="my-4">
     <div>
       <h3 class="mb-2">Pairwise Settlements (Who pays whom)</h3>
-      
+
       <!-- Show message when no settlements -->
-      <div 
+      <div
         v-if="settlements.length === 0"
         class="text-center py-8 bg-gray-50 rounded-lg border border-gray-200"
       >
@@ -13,7 +14,7 @@
           No pending settlements. Everyone's balance is zero.
         </p>
       </div>
-      
+
       <!-- Show settlements table when data exists -->
       <el-table v-else :data="settlements" style="width: 100%">
         <el-table-column label="Debtor">
@@ -36,14 +37,20 @@
 
     <!-- Settlement Request Section -->
     <div
-      v-if="activeGroup && hasSettlementRequest && !isHistory && settlements.length > 0"
+      v-if="
+        activeGroup &&
+        hasSettlementRequest &&
+        !isHistory &&
+        settlements.length > 0
+      "
       class="mt-4 pt-3 border-t border-blue-200 bg-blue-50 p-3 rounded"
     >
       <div class="text-sm font-medium text-blue-800 mb-2">
         📋 Settlement Request
       </div>
       <div class="text-xs text-blue-700 mb-2">
-        Requested by: {{ group.settlementRequest.requestedByName }} for {{ group.settlementRequest.month }}
+        Requested by: {{ group.settlementRequest.requestedByName }} for
+        {{ group.settlementRequest.month }}
       </div>
       <div class="text-xs text-blue-700 mb-2">
         All members must approve before settlement can be finalized.
@@ -63,8 +70,8 @@
           ✓ {{ approval.name }}
         </el-tag>
         <el-tag
-          v-for="member in getAllSettlementMembers.filter(m => 
-            !getSettlementApprovals.some(a => a.mobile === m.mobile)
+          v-for="member in getAllSettlementMembers.filter(
+            (m) => !getSettlementApprovals.some((a) => a.mobile === m.mobile)
           )"
           :key="member.mobile"
           size="small"
@@ -73,14 +80,10 @@
           ⏳ {{ member.name }}
         </el-tag>
       </div>
-      
+
       <!-- Approve/Reject buttons for members who haven't approved -->
       <div v-if="!hasUserApprovedSettlement" class="flex gap-2">
-        <el-button
-          size="small"
-          type="success"
-          @click="approveSettlement"
-        >
+        <el-button size="small" type="success" @click="approveSettlement">
           Approve Settlement
         </el-button>
         <!-- Show Cancel for the requester -->
@@ -95,15 +98,11 @@
         </el-button>
         <!-- Show Reject only for admin who is NOT the requester -->
         <!-- v-else-if="isAdmin" -->
-        <el-button
-          size="small"
-          type="danger"
-          @click="rejectSettlement"
-        >
+        <el-button size="small" type="danger" @click="rejectSettlement">
           Reject Settlement
         </el-button>
       </div>
-      
+
       <!-- Show approved status -->
       <div v-else class="text-xs text-green-700">
         ✓ You have approved this settlement request
@@ -111,35 +110,30 @@
           - Waiting for all members to approve
         </span>
       </div>
-      
+
       <!-- Finalize button for admin when all approved -->
-      <div v-if="isAdmin && allMembersApprovedSettlement" class="mt-2 flex gap-2">
-        <el-button
-          type="primary"
-          @click="addPaymentsBatch"
-        >
+      <div
+        v-if="isAdmin && allMembersApprovedSettlement"
+        class="mt-2 flex gap-2"
+      >
+        <el-button type="primary" @click="addPaymentsBatch">
           Finalize Settlement Now
         </el-button>
-        <el-button
-          type="danger"
-          plain
-          @click="rejectSettlement"
-        >
+        <el-button type="danger" plain @click="rejectSettlement">
           Cancel Settlement Request
         </el-button>
       </div>
 
       <!-- Cancel button for requester after they've approved (but not all members yet) -->
-      <div 
-        v-if="group.settlementRequest.requestedBy === user && hasUserApprovedSettlement && !allMembersApprovedSettlement"
+      <div
+        v-if="
+          group.settlementRequest.requestedBy === user &&
+          hasUserApprovedSettlement &&
+          !allMembersApprovedSettlement
+        "
         class="mt-2"
       >
-        <el-button
-          size="small"
-          type="danger"
-          plain
-          @click="rejectSettlement"
-        >
+        <el-button size="small" type="danger" plain @click="rejectSettlement">
           Cancel Settlement Request
         </el-button>
       </div>
@@ -148,22 +142,26 @@
     <!-- Action Buttons when no settlement request -->
     <div
       v-if="!isHistory && !hasSettlementRequest && settlements.length > 0"
-      style="display: flex !important; justify-content: end !important; gap: 10px"
+      style="
+        display: flex !important;
+        justify-content: end !important;
+        gap: 10px;
+      "
       class="mt-4"
     >
       <!-- Any member can request settlement -->
-      <GenericButton 
+      <GenericButton
         v-if="activeGroup"
-        @click="requestSettlement" 
+        @click="requestSettlement"
         type="warning"
       >
         Request Settlement
       </GenericButton>
-      
+
       <!-- Settlement Done for non-group expenses -->
-      <GenericButton 
+      <GenericButton
         v-if="!activeGroup"
-        @click="addPaymentsBatch" 
+        @click="addPaymentsBatch"
         type="success"
       >
         Settlement Done
@@ -183,11 +181,11 @@ const props = defineProps({
   isHistory: { type: Boolean, default: false }
 })
 
-const { 
-  formatAmount, 
-  userStore, 
-  user, 
-  addPaymentsBatch, 
+const {
+  formatAmount,
+  userStore,
+  user,
+  addPaymentsBatch,
   settlements,
   isAdmin,
   activeGroup,

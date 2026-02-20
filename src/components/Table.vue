@@ -1,3 +1,4 @@
+<!-- eslint-disable vue/multi-word-component-names -->
 <template>
   <div class="w-full overflow-x-auto">
     <table
@@ -56,16 +57,21 @@
               </template>
             </span>
             <span v-else-if="header.key === 'payer'">
-              <template v-if="row.payerMode === 'multiple' && row.payers?.length">
+              <template
+                v-if="row.payerMode === 'multiple' && row.payers?.length"
+              >
                 <span v-for="(p, i) in row.payers" :key="i">
-                  {{ tabStore.getUserByMobile(p.mobile)?.name + ` (${p.mobile})`  || p.mobile }}:
-                  {{ formatAmount(p.amount) }}<span v-if="i < row.payers.length - 1">, </span>
+                  {{
+                    tabStore.getUserByMobile(p.mobile)?.name +
+                      ` (${p.mobile})` || p.mobile
+                  }}: {{ formatAmount(p.amount)
+                  }}<span v-if="i < row.payers.length - 1">, </span>
                 </span>
               </template>
               <template v-else>
                 {{
-                  tabStore.getUserByMobile(row.payer)?.name + ` (${row.payer})` ||
-                  row.payer
+                  tabStore.getUserByMobile(row.payer)?.name +
+                    ` (${row.payer})` || row.payer
                 }}
               </template>
             </span>
@@ -77,7 +83,9 @@
               }}</span
             >
             <span v-else-if="header.key === 'receiptUrls'">
-              <template v-if="Array.isArray(row.receiptUrls) && row.receiptUrls.length">
+              <template
+                v-if="Array.isArray(row.receiptUrls) && row.receiptUrls.length"
+              >
                 <a
                   v-for="(url, i) in row.receiptUrls"
                   :key="i"

@@ -94,7 +94,7 @@ export const ExpenseList = (props) => {
         months.value = Object.keys(data)
         if (months.value.length) selectedMonth.value = getCurrentMonth()
       },
-      (_) => {
+      () => {
         showError('Failed to load months. Please try again.')
       }
     )
@@ -133,7 +133,7 @@ export const ExpenseList = (props) => {
           rawPaymentsData.value = {}
         }
       },
-      (_) => {
+      () => {
         showError('Failed to load expenses. Please try again.')
       }
     )
@@ -156,7 +156,10 @@ export const ExpenseList = (props) => {
       // Payer filter (supports single and multiple payers)
       if (selected !== 'All') {
         if (Array.isArray(payment.payers) && payment.payers.length) {
-          if (!payment.payers.map((p) => normalize(p.mobile)).includes(selected)) return false
+          if (
+            !payment.payers.map((p) => normalize(p.mobile)).includes(selected)
+          )
+            return false
         } else {
           if (normalize(payment?.payer) !== selected) return false
         }
@@ -164,12 +167,14 @@ export const ExpenseList = (props) => {
 
       // Payer mode filter
       if (selectedPayerMode.value !== 'all') {
-        if ((payment.payerMode || 'single') !== selectedPayerMode.value) return false
+        if ((payment.payerMode || 'single') !== selectedPayerMode.value)
+          return false
       }
 
       // Split mode filter
       if (selectedSplitMode.value !== 'all') {
-        if ((payment.splitMode || 'equal') !== selectedSplitMode.value) return false
+        if ((payment.splitMode || 'equal') !== selectedSplitMode.value)
+          return false
       }
 
       return true

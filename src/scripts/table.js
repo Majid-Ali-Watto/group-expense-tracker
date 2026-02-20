@@ -57,14 +57,14 @@ export const Table = (props) => {
 
   async function update() {
     await nextTick()
-    
+
     // Wait for component to be fully mounted with retries
     let retries = 0
     while (!childRef.value?.componentRef && retries < 10) {
-      await new Promise(resolve => setTimeout(resolve, 50))
+      await new Promise((resolve) => setTimeout(resolve, 50))
       retries++
     }
-    
+
     console.log('update called, childRef:', childRef.value)
     console.log('componentRef:', childRef.value?.componentRef)
     if (!childRef.value?.componentRef) {
@@ -72,19 +72,22 @@ export const Table = (props) => {
       ElMessage.error('Form is not ready. Please try again.')
       return
     }
-    childRef.value.componentRef.validateForm('Update', childRef.value.componentRef)
+    childRef.value.componentRef.validateForm(
+      'Update',
+      childRef.value.componentRef
+    )
   }
-  
+
   async function remove() {
     await nextTick()
-    
+
     // Wait for component to be fully mounted with retries
     let retries = 0
     while (!childRef.value?.componentRef && retries < 10) {
-      await new Promise(resolve => setTimeout(resolve, 50))
+      await new Promise((resolve) => setTimeout(resolve, 50))
       retries++
     }
-    
+
     console.log('remove called, childRef:', childRef.value)
     console.log('componentRef:', childRef.value?.componentRef)
     if (!childRef.value?.componentRef) {
@@ -92,7 +95,10 @@ export const Table = (props) => {
       ElMessage.error('Form is not ready. Please try again.')
       return
     }
-    childRef.value.componentRef.validateForm('Delete', childRef.value.componentRef)
+    childRef.value.componentRef.validateForm(
+      'Delete',
+      childRef.value.componentRef
+    )
   }
 
   function updateScreenWidth() {

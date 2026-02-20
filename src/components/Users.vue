@@ -1,12 +1,15 @@
+<!-- eslint-disable vue/multi-word-component-names -->
 <template>
   <div class="p-4">
-
     <add-new-transaction-button
       v-if="!showForm"
       text="Want to add a new user?"
       @click="setShowForm"
     />
-    <fieldset v-else-if="showForm" class="border border-gray-300 p-4 rounded-md">
+    <fieldset
+      v-else-if="showForm"
+      class="border border-gray-300 p-4 rounded-md"
+    >
       <legend class="mb-4 px-2 font-semibold text-gray-700">
         Add New User
       </legend>
@@ -194,7 +197,7 @@
 <script setup>
 import { loginRules as rules } from '../assets/validation-rules'
 import { Users } from '../scripts/users'
-import AddNewTransactionButton from './generic-components/AddNewTransactionButton.vue';
+import AddNewTransactionButton from './generic-components/AddNewTransactionButton.vue'
 
 const {
   form,

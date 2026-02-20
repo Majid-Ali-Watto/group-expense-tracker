@@ -1,14 +1,20 @@
 export const loginRules = {
   name: [
     { required: true, message: 'Full name is required', trigger: 'blur' },
-    { min: 3, message: 'Name should be at least 3 characters', trigger: 'blur' },
+    {
+      min: 3,
+      message: 'Name should be at least 3 characters',
+      trigger: 'blur'
+    },
     {
       validator: (rule, value, callback) => {
         if (!value) return callback()
         // Only alphabets and single spaces allowed
         const namePattern = /^[a-zA-Z]+(\s[a-zA-Z]+)*$/
         if (!namePattern.test(value.trim())) {
-          callback(new Error('Name can only contain alphabets and single spaces'))
+          callback(
+            new Error('Name can only contain alphabets and single spaces')
+          )
         } else {
           callback()
         }
@@ -20,14 +26,23 @@ export const loginRules = {
     { required: true, message: 'Mobile number is required', trigger: 'blur' },
     {
       pattern: /^03\d{9}$/,
-      message: 'Mobile number must be 11 digits starting with 03 (e.g., 03009090909)',
+      message:
+        'Mobile number must be 11 digits starting with 03 (e.g., 03009090909)',
       trigger: 'blur'
     }
   ],
   loginCode: [
     { required: true, message: 'Login code is required', trigger: 'blur' },
-    { min: 4, message: 'Login code must be at least 4 characters', trigger: 'blur' },
-    { max: 15, message: 'Login code must not exceed 15 characters', trigger: 'blur' }
+    {
+      min: 4,
+      message: 'Login code must be at least 4 characters',
+      trigger: 'blur'
+    },
+    {
+      max: 15,
+      message: 'Login code must not exceed 15 characters',
+      trigger: 'blur'
+    }
   ]
 }
 

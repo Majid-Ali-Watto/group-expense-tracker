@@ -15,8 +15,11 @@
           class="container mx-auto mt-16 sm:mt-16 md:16 lg:mt-16"
         >
           <!-- Welcome Banner -->
-         <WelcomeBanner :displayName="displayName" :activeGroup="activeGroup" />
-          
+          <WelcomeBanner
+            :displayName="displayName"
+            :activeGroup="activeGroup"
+          />
+
           <!-- Tabs -->
           <el-tabs
             v-model="activeTab"
@@ -57,7 +60,7 @@
 
 <script setup>
 import { svg } from './assets/loader-svg'
-import WelcomeBanner from './components/generic-components/WelcomeBanner.vue';
+import WelcomeBanner from './components/generic-components/WelcomeBanner.vue'
 import { App } from './scripts/app'
 
 const {

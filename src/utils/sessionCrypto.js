@@ -14,7 +14,7 @@
 // ── Key registry ──────────────────────────────────────────────────────────────
 
 let _sessionKey = null // AES-GCM — for sessionStorage
-let _storeKey = null   // AES-CBC — for Pinia store
+let _storeKey = null // AES-CBC — for Pinia store
 
 async function getSessionKey() {
   if (!_sessionKey) {
@@ -54,7 +54,11 @@ export async function encryptForSession(token) {
   const key = await getSessionKey()
   const iv = crypto.getRandomValues(new Uint8Array(12))
   const encoded = new TextEncoder().encode(token)
-  const encrypted = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, encoded)
+  const encrypted = await crypto.subtle.encrypt(
+    { name: 'AES-GCM', iv },
+    key,
+    encoded
+  )
 
   const combined = new Uint8Array(12 + encrypted.byteLength)
   combined.set(iv, 0)
@@ -68,7 +72,11 @@ export async function decryptFromSession(encryptedBase64) {
     const combined = fromBase64(encryptedBase64)
     const iv = combined.slice(0, 12)
     const data = combined.slice(12)
-    const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, _sessionKey, data)
+    const decrypted = await crypto.subtle.decrypt(
+      { name: 'AES-GCM', iv },
+      _sessionKey,
+      data
+    )
     return new TextDecoder().decode(decrypted)
   } catch {
     return null
@@ -81,7 +89,11 @@ export async function encryptForStore(token) {
   const key = await getStoreKey()
   const iv = crypto.getRandomValues(new Uint8Array(16))
   const encoded = new TextEncoder().encode(token)
-  const encrypted = await crypto.subtle.encrypt({ name: 'AES-CBC', iv }, key, encoded)
+  const encrypted = await crypto.subtle.encrypt(
+    { name: 'AES-CBC', iv },
+    key,
+    encoded
+  )
 
   const combined = new Uint8Array(16 + encrypted.byteLength)
   combined.set(iv, 0)
@@ -95,7 +107,11 @@ export async function decryptFromStore(encryptedBase64) {
     const combined = fromBase64(encryptedBase64)
     const iv = combined.slice(0, 16)
     const data = combined.slice(16)
-    const decrypted = await crypto.subtle.decrypt({ name: 'AES-CBC', iv }, _storeKey, data)
+    const decrypted = await crypto.subtle.decrypt(
+      { name: 'AES-CBC', iv },
+      _storeKey,
+      data
+    )
     return new TextDecoder().decode(decrypted)
   } catch {
     return null

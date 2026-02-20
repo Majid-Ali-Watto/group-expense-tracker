@@ -1,3 +1,4 @@
+<!-- eslint-disable vue/multi-word-component-names -->
 <template>
   <div class="w-full mx-auto">
     <div class="flex flex-col gap-6">

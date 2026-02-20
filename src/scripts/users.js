@@ -35,7 +35,10 @@ export const Users = () => {
     if (!targetMobile) return ''
     if (targetMobile === activeUser.value) return targetMobile
     if (activeGroupMobiles.value.includes(targetMobile)) return targetMobile
-    return userStore.getUserByMobile(targetMobile)?.maskedMobile || maskMobile(targetMobile)
+    return (
+      userStore.getUserByMobile(targetMobile)?.maskedMobile ||
+      maskMobile(targetMobile)
+    )
   }
 
   function getUserGroups(mobile) {
@@ -121,12 +124,16 @@ export const Users = () => {
       const mobileKey = form.value.mobile.trim()
 
       if (!/^03\d{9}$/.test(mobileKey)) {
-        return showError('Mobile number must be 11 digits starting with 03 (e.g., 03009090909)')
+        return showError(
+          'Mobile number must be 11 digits starting with 03 (e.g., 03009090909)'
+        )
       }
 
       const normalizedName = rawName.replace(/\s+/g, ' ').trim()
       if (!/^[a-zA-Z]+(\s[a-zA-Z]+)*$/.test(normalizedName)) {
-        return showError('Name can only contain alphabets and single spaces (no special characters)')
+        return showError(
+          'Name can only contain alphabets and single spaces (no special characters)'
+        )
       }
 
       if (!normalizedName) return showError('Name is required')
@@ -205,8 +212,10 @@ export const Users = () => {
 
     const user = await read(`users/${mobile}`)
     if (!user) return showError('User not found')
-    if (user.deleteRequest) return showError('A delete request is pending for this user')
-    if (user.updateRequest) return showError('An update request is already pending for this user')
+    if (user.deleteRequest)
+      return showError('A delete request is pending for this user')
+    if (user.updateRequest)
+      return showError('An update request is already pending for this user')
 
     const me = activeUser.value
     const myName = userStore.getUserByMobile(me)?.name
@@ -214,7 +223,11 @@ export const Users = () => {
 
     if (requiredApprovals.length === 0) {
       const updated = { ...user, name: newName }
-      await updateData(`users/${mobile}`, () => updated, 'User updated successfully')
+      await updateData(
+        `users/${mobile}`,
+        () => updated,
+        'User updated successfully'
+      )
       userStore.addUser({ mobile, name: newName })
     } else {
       const updateRequest = {
@@ -257,16 +270,21 @@ export const Users = () => {
 
       const user = await read(`users/${mobile}`)
       if (!user) return showError('User not found')
-      if (user.deleteRequest) return showError('A delete request is already pending for this user')
+      if (user.deleteRequest)
+        return showError('A delete request is already pending for this user')
       if (user.updateRequest)
-        return showError('An update request is pending. Cancel it before deleting.')
+        return showError(
+          'An update request is pending. Cancel it before deleting.'
+        )
 
       const me = activeUser.value
       const myName = userStore.getUserByMobile(me)?.name
 
       if (ownerMobiles.length === 0) {
         await deleteData(`users/${mobile}`, `User ${name} deleted`)
-        userStore.setUsers([...userStore.getUsers].filter((u) => u.mobile !== mobile))
+        userStore.setUsers(
+          [...userStore.getUsers].filter((u) => u.mobile !== mobile)
+        )
         if (mobile === me) {
           userStore.setActiveUser(null)
           userStore.setActiveGroup(null)
@@ -303,14 +321,19 @@ export const Users = () => {
     const request = type === 'delete' ? user.deleteRequest : user.updateRequest
     if (!request) return showError('Request not found or already resolved')
 
-    const newApprovals = [...(request.approvals || []), { mobile: me, name: myName }]
+    const newApprovals = [
+      ...(request.approvals || []),
+      { mobile: me, name: myName }
+    ]
     const allApproved = request.requiredApprovals.every((r) =>
       newApprovals.some((a) => a.mobile === r)
     )
 
     if (type === 'delete' && allApproved) {
       await deleteData(`users/${userMobile}`, `User ${user.name} deleted`)
-      userStore.setUsers([...userStore.getUsers].filter((u) => u.mobile !== userMobile))
+      userStore.setUsers(
+        [...userStore.getUsers].filter((u) => u.mobile !== userMobile)
+      )
     } else if (type === 'update' && allApproved) {
       const updated = { ...user, name: request.newName, updateRequest: null }
       await updateData(
@@ -318,7 +341,11 @@ export const Users = () => {
         () => updated,
         `User name updated to "${request.newName}"`
       )
-      userStore.addUser({ mobile: userMobile, name: request.newName, updateRequest: null })
+      userStore.addUser({
+        mobile: userMobile,
+        name: request.newName,
+        updateRequest: null
+      })
     } else {
       const field = type === 'delete' ? 'deleteRequest' : 'updateRequest'
       const updatedRequest = { ...request, approvals: newApprovals }

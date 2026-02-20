@@ -96,10 +96,17 @@
             <span class="text-gray-400 font-normal text-xs">(optional)</span>
           </p>
           <div class="flex items-center gap-2 flex-wrap">
-            <el-button size="small" @click="triggerFileInput" :disabled="receiptUploading">
+            <el-button
+              size="small"
+              @click="triggerFileInput"
+              :disabled="receiptUploading"
+            >
               {{ receiptFile ? 'Change File' : 'Choose File' }}
             </el-button>
-            <span v-if="receiptFile" class="text-sm text-gray-600 truncate max-w-[180px]">
+            <span
+              v-if="receiptFile"
+              class="text-sm text-gray-600 truncate max-w-[180px]"
+            >
               {{ receiptFile.name }}
             </span>
             <span v-else class="text-sm text-gray-400">No file chosen</span>
@@ -109,7 +116,8 @@
               type="danger"
               text
               @click="removeReceipt"
-            >✕</el-button>
+              >✕</el-button
+            >
             <input
               ref="fileInputRef"
               type="file"
@@ -124,7 +132,8 @@
             target="_blank"
             rel="noopener"
             class="text-xs text-blue-500 hover:underline mt-1 inline-block"
-          >View current receipt</a>
+            >View current receipt</a
+          >
         </div>
         <div v-if="!isEditMode" class="flex justify-end gap-2">
           <el-button type="info" plain @click="closeForm"> Cancel </el-button>

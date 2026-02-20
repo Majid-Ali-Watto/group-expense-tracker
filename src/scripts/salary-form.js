@@ -16,7 +16,7 @@ export const SalaryForm = () => {
     month: null,
     salary: null
   })
-  
+
   const form = ref({
     salary: null
   })
@@ -56,7 +56,7 @@ export const SalaryForm = () => {
 
       form.value.salary = null
       showSuccess('Salary added successfully!')
-    } catch (_) {
+    } catch {
       showError('Failed to add salary. Please try again.')
     }
   }
@@ -122,15 +122,15 @@ export const SalaryForm = () => {
     // Wait for form ref to be available with retries
     let retries = 0
     while (!salaryForm.value && retries < 30) {
-      await new Promise(resolve => setTimeout(resolve, 50))
+      await new Promise((resolve) => setTimeout(resolve, 50))
       retries++
     }
-    
+
     if (!salaryForm.value) {
       console.error('Salary form reference is not available after retries')
       return false
     }
-    
+
     let isValid = false
     await new Promise((resolve) => {
       salaryForm.value.validate((valid) => {

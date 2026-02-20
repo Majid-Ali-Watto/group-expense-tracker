@@ -1,5 +1,5 @@
 <template>
-  <el-header 
+  <el-header
     class="fintrack-header flex items-center justify-between shadow-md fixed top-0 left-0 w-full z-50 bg-white transition-all duration-300"
   >
     <div class="logo-section">
@@ -9,12 +9,7 @@
     </div>
 
     <div v-if="loggedIn" class="actions-section">
-      <el-button 
-        type="primary" 
-        plain 
-        size="small" 
-        @click="setLoggedInStatus"
-      >
+      <el-button type="primary" plain size="small" @click="setLoggedInStatus">
         Logout
       </el-button>
     </div>

@@ -1,3 +1,4 @@
+<!-- eslint-disable vue/multi-word-component-names -->
 <template>
   <div class="space-y-4">
     <!-- Add Group Button -->
@@ -147,7 +148,8 @@
                   <div class="text-sm text-gray-700">
                     {{
                       userStore.getUserByMobile(group.ownerMobile)?.name +
-                        ` (${displayMobileForGroup(group.ownerMobile, group)})` || group.ownerMobile
+                        ` (${displayMobileForGroup(group.ownerMobile, group)})` ||
+                      group.ownerMobile
                     }}
                   </div>
                 </div>
@@ -164,7 +166,9 @@
                       size="small"
                       type="info"
                     >
-                      {{ member.name }} ({{ displayMobileForGroup(member.mobile, group) }})
+                      {{ member.name }} ({{
+                        displayMobileForGroup(member.mobile, group)
+                      }})
                     </el-tag>
                   </div>
                 </div>
@@ -749,10 +753,7 @@
     <!-- Other Groups (not joined) -->
     <h4 class="mt-6">Other Groups</h4>
 
-    <div
-      v-if="otherGroups.length === 0"
-      class="text-center text-gray-500 py-4"
-    >
+    <div v-if="otherGroups.length === 0" class="text-center text-gray-500 py-4">
       <span v-if="searchQuery">No other groups match your search.</span>
       <span v-else>No other groups available.</span>
     </div>
@@ -846,7 +847,8 @@
                   <div class="text-sm text-gray-700">
                     {{
                       userStore.getUserByMobile(group.ownerMobile)?.name +
-                        ` (${displayMobileForGroup(group.ownerMobile, group)})` || group.ownerMobile
+                        ` (${displayMobileForGroup(group.ownerMobile, group)})` ||
+                      group.ownerMobile
                     }}
                   </div>
                 </div>
@@ -863,7 +865,9 @@
                       size="small"
                       type="info"
                     >
-                      {{ member.name }} ({{ displayMobileForGroup(member.mobile, group) }})
+                      {{ member.name }} ({{
+                        displayMobileForGroup(member.mobile, group)
+                      }})
                     </el-tag>
                   </div>
                 </div>
@@ -1039,7 +1043,10 @@
               </div>
               <div class="flex flex-wrap gap-1 mb-2">
                 <el-tag
-                  v-for="approval in getJoinRequestApprovals(group, request.mobile)"
+                  v-for="approval in getJoinRequestApprovals(
+                    group,
+                    request.mobile
+                  )"
                   :key="approval.mobile"
                   size="small"
                   type="success"
@@ -1047,7 +1054,10 @@
                   ✓ {{ approval.name }}
                 </el-tag>
                 <el-tag
-                  v-for="member in getPendingJoinApprovals(group, request.mobile)"
+                  v-for="member in getPendingJoinApprovals(
+                    group,
+                    request.mobile
+                  )"
                   :key="member.mobile"
                   size="small"
                   type="info"
@@ -1248,16 +1258,25 @@
                 v-for="(member, i) in group.editRequest.addedMembers"
                 :key="member.mobile"
               >
-                {{ member.name }}{{ i < group.editRequest.addedMembers.length - 1 ? ', ' : '' }}
+                {{ member.name
+                }}{{
+                  i < group.editRequest.addedMembers.length - 1 ? ', ' : ''
+                }}
               </span>
             </div>
-            <div v-if="group.editRequest.removedMembers?.length > 0" class="mb-1">
+            <div
+              v-if="group.editRequest.removedMembers?.length > 0"
+              class="mb-1"
+            >
               <strong>Removing:</strong>
               <span
                 v-for="(member, i) in group.editRequest.removedMembers"
                 :key="member.mobile"
               >
-                {{ member.name }}{{ i < group.editRequest.removedMembers.length - 1 ? ', ' : '' }}
+                {{ member.name
+                }}{{
+                  i < group.editRequest.removedMembers.length - 1 ? ', ' : ''
+                }}
               </span>
             </div>
           </div>
@@ -1276,10 +1295,18 @@
             </el-tag>
           </div>
           <div v-if="!hasUserApprovedEditRequest(group)" class="flex gap-2">
-            <el-button size="small" type="success" @click="approveEditRequest(group.id)">
+            <el-button
+              size="small"
+              type="success"
+              @click="approveEditRequest(group.id)"
+            >
               Approve
             </el-button>
-            <el-button size="small" type="danger" @click="rejectEditRequest(group.id)">
+            <el-button
+              size="small"
+              type="danger"
+              @click="rejectEditRequest(group.id)"
+            >
               Reject
             </el-button>
           </div>
@@ -1319,11 +1346,22 @@
               ✓ {{ approval.name }}
             </el-tag>
           </div>
-          <div v-if="!hasUserApprovedAddMemberRequest(group)" class="flex gap-2">
-            <el-button size="small" type="success" @click="approveAddMemberRequest(group.id)">
+          <div
+            v-if="!hasUserApprovedAddMemberRequest(group)"
+            class="flex gap-2"
+          >
+            <el-button
+              size="small"
+              type="success"
+              @click="approveAddMemberRequest(group.id)"
+            >
               Approve
             </el-button>
-            <el-button size="small" type="danger" @click="rejectAddMemberRequest(group.id)">
+            <el-button
+              size="small"
+              type="danger"
+              @click="rejectAddMemberRequest(group.id)"
+            >
               Reject
             </el-button>
           </div>
@@ -1331,7 +1369,10 @@
             ✓ You have approved this request
           </div>
           <div
-            v-if="group.ownerMobile === userStore.getActiveUser && allMembersApprovedAddMember(group)"
+            v-if="
+              group.ownerMobile === userStore.getActiveUser &&
+              allMembersApprovedAddMember(group)
+            "
             class="mt-2"
           >
             <el-button type="primary" @click="finalizeAddMember(group.id)">
@@ -1370,11 +1411,22 @@
               ✓ {{ approval.name }}
             </el-tag>
           </div>
-          <div v-if="!hasUserApprovedOwnershipTransfer(group)" class="flex gap-2">
-            <el-button size="small" type="success" @click="approveOwnershipTransfer(group.id)">
+          <div
+            v-if="!hasUserApprovedOwnershipTransfer(group)"
+            class="flex gap-2"
+          >
+            <el-button
+              size="small"
+              type="success"
+              @click="approveOwnershipTransfer(group.id)"
+            >
               Approve Transfer
             </el-button>
-            <el-button size="small" type="danger" @click="rejectOwnershipTransfer(group.id)">
+            <el-button
+              size="small"
+              type="danger"
+              @click="rejectOwnershipTransfer(group.id)"
+            >
               Reject Transfer
             </el-button>
           </div>

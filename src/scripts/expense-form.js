@@ -4,7 +4,11 @@ import getCurrentMonth from '../utils/getCurrentMonth'
 import getWhoAddedTransaction from '../utils/whoAdded'
 import useFireBase from '../api/firebase-apis'
 import { storage } from '../firebase'
-import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
+import {
+  ref as storageRef,
+  uploadBytes,
+  getDownloadURL
+} from 'firebase/storage'
 import { showError } from '../utils/showAlerts'
 
 export const ExpenseForm = (props, emit) => {
@@ -53,22 +57,22 @@ export const ExpenseForm = (props, emit) => {
     { immediate: true, deep: true }
   )
 
-  const validateForm = async (whatTask = 'Save', _childRef) => {
+  const validateForm = async (whatTask = 'Save') => {
     // Wait for form ref to be available with retries
     let retries = 0
     while (!expenseForm.value && retries < 30) {
-      await new Promise(resolve => setTimeout(resolve, 50))
+      await new Promise((resolve) => setTimeout(resolve, 50))
       retries++
       console.log(`Waiting for expenseForm ref... retry ${retries}`)
     }
-    
+
     if (!expenseForm.value) {
       console.error('Form reference is not available after retries')
       console.error('expenseForm ref:', expenseForm)
       console.error('expenseForm.value:', expenseForm.value)
       return
     }
-    
+
     console.log('Form ref is now available, validating...')
     expenseForm.value.validate(async (valid) => {
       if (valid) {

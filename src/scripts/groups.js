@@ -71,7 +71,9 @@ export const Groups = () => {
   const joinedGroups = computed(() => {
     const filtered = filteredGroups.value.filter((g) => isMemberOfGroup(g))
     const pinned = filtered.filter((g) => pinnedGroupIds.value.includes(g.id))
-    const unpinned = filtered.filter((g) => !pinnedGroupIds.value.includes(g.id))
+    const unpinned = filtered.filter(
+      (g) => !pinnedGroupIds.value.includes(g.id)
+    )
     return [...pinned, ...unpinned]
   })
 

@@ -4,7 +4,11 @@ import { friends } from '../assets/data'
 import { store } from '../stores/store'
 import useFireBase from '../api/firebase-apis'
 import { storage } from '../firebase'
-import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
+import {
+  ref as storageRef,
+  uploadBytes,
+  getDownloadURL
+} from 'firebase/storage'
 import { showError } from '../utils/showAlerts'
 
 export const PaymentForm = (props, emit) => {
@@ -198,7 +202,9 @@ export const PaymentForm = (props, emit) => {
               formData.value.payerMode = 'single'
               formData.value.payer = ''
               formData.value.payers = []
-              formData.value.participants = [...usersOptions.value.map((u) => u.value)]
+              formData.value.participants = [
+                ...usersOptions.value.map((u) => u.value)
+              ]
               formData.value.date = ''
               formData.value.splitMode = 'equal'
               formData.value.splitItems = []
@@ -270,14 +276,18 @@ export const PaymentForm = (props, emit) => {
 
     // ---- compute split ----
     let split = []
-    if (formData.value.splitMode === 'custom' && formData.value.splitItems.length) {
+    if (
+      formData.value.splitMode === 'custom' &&
+      formData.value.splitItems.length
+    ) {
       // Item-based: sum each person's equal share within their item, across all items
       const perPerson = {}
       for (const item of formData.value.splitItems) {
         const itemPeople = item.participants || []
         const itemAmount = parseFloat(item.amount) || 0
         if (!itemPeople.length || !itemAmount) continue
-        const equalShare = Math.floor((itemAmount / itemPeople.length) * 100) / 100
+        const equalShare =
+          Math.floor((itemAmount / itemPeople.length) * 100) / 100
         let acc = 0
         itemPeople.forEach((mobile, i) => {
           let share
@@ -287,7 +297,9 @@ export const PaymentForm = (props, emit) => {
             share = equalShare
             acc += share
           }
-          perPerson[mobile] = parseFloat(((perPerson[mobile] || 0) + share).toFixed(2))
+          perPerson[mobile] = parseFloat(
+            ((perPerson[mobile] || 0) + share).toFixed(2)
+          )
         })
       }
       split = Object.keys(perPerson).map((mobile) => ({
@@ -341,7 +353,9 @@ export const PaymentForm = (props, emit) => {
       whoAdded: getWhoAddedTransaction(),
       participants: participantsList,
       splitMode: formData.value.splitMode,
-      ...(formData.value.splitMode === 'custom' ? { splitItems: formData.value.splitItems } : {}),
+      ...(formData.value.splitMode === 'custom'
+        ? { splitItems: formData.value.splitItems }
+        : {}),
       split,
       ...(receiptUrls && receiptUrls.length
         ? {

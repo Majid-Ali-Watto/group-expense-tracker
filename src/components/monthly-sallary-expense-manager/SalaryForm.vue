@@ -76,9 +76,13 @@ const {
 } = SalaryForm()
 
 // Debug: Watch the salaryForm ref
-watch(() => salaryForm.value, (newVal) => {
-  console.log('SalaryForm ref changed:', newVal)
-}, { immediate: true })
+watch(
+  () => salaryForm.value,
+  (newVal) => {
+    console.log('SalaryForm ref changed:', newVal)
+  },
+  { immediate: true }
+)
 
 onMounted(() => {
   console.log('SalaryForm component mounted')

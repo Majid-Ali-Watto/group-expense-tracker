@@ -49,5 +49,6 @@
 import { groupRules } from '../assets/validation-rules'
 import { GroupsCreate } from '../scripts/groups-create'
 
-const { groupForm, groupFormRef, usersOptions, createGroup, getUserLabel } = GroupsCreate()
+const { groupForm, groupFormRef, usersOptions, createGroup, getUserLabel } =
+  GroupsCreate()
 </script>
