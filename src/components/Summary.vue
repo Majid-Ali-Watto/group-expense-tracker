@@ -4,7 +4,7 @@
       <el-descriptions
         direction="vertical"
         title="Expense Summary"
-        column="2"
+        :column="2"
         :border="true"
       >
         <el-descriptions-item label="Total Spent">
@@ -24,62 +24,11 @@
 </template>
 
 <script setup>
-import { computed, inject } from "vue";
-const formatAmount = inject("formatAmount");
-import { friends } from "../assets/data";
-import { store } from "../stores/store";
-const userStore = store();
+import { Summary } from '../scripts/summary'
 
 const props = defineProps({
-  payments: Array,
-});
+  payments: Array
+})
 
-const activeGroup = computed(() => userStore.getActiveGroup);
-const groupObj = computed(() =>
-  activeGroup.value ? userStore.getGroupById(activeGroup.value) : null,
-);
-
-const filteredPayments = computed(() => {
-  const all = props.payments || [];
-  if (activeGroup.value) {
-    return all.filter((p) => p && p.group === activeGroup.value);
-  }
-  return all.filter((p) => !p || !p.group || p.group === "global");
-});
-
-const totalSpent = computed(() =>
-  filteredPayments.value.reduce(
-    (sum, payment) => sum + (payment.amount || 0),
-    0,
-  ),
-);
-
-const usersList = computed(() => {
-  if (
-    groupObj.value &&
-    groupObj.value.members &&
-    groupObj.value.members.length
-  ) {
-    return groupObj.value.members.map((m) => ({
-      name: m.name,
-      mobile: m.mobile,
-    }));
-  }
-  return userStore.getUsers && userStore.getUsers.length
-    ? userStore.getUsers
-    : friends.map((f) => ({ name: f, mobile: f }));
-});
-
-const averageSpent = computed(() =>
-  usersList.value.length ? totalSpent.value / usersList.value.length : 0,
-);
-
-const friendTotals = computed(() =>
-  usersList.value.map((user) => ({
-    name: user.name,
-    total: filteredPayments.value
-      .filter((payment) => payment.payer === user.mobile)
-      .reduce((sum, payment) => sum + (payment.amount || 0), 0),
-  })),
-);
+const { formatAmount, totalSpent, averageSpent, friendTotals } = Summary(props)
 </script>

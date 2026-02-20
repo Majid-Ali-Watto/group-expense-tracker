@@ -1,23 +1,23 @@
 export function getStoredUser() {
-  const storedData = localStorage.getItem("rememberMeData");
+  const storedData = localStorage.getItem('rememberMeData')
   if (storedData) {
-    return JSON.parse(storedData);
+    return JSON.parse(storedData)
   }
-  return "";
+  return ''
 }
 export function setUserInStorage(form) {
   localStorage.setItem(
-    "rememberMeData",
+    'rememberMeData',
     JSON.stringify({
-      name: form.value.name,
-      mobile: form.value.mobile,
-    }),
-  );
+      name: form.name,
+      mobile: form.mobile
+    })
+  )
 }
 export function removeUserFromStorage() {
-  localStorage.removeItem("rememberMeData");
+  localStorage.removeItem('rememberMeData')
 }
 export default function getWhoAddedTransaction() {
-  const user = getStoredUser();
-  return user?.name || user?.mobile || "";
+  const user = getStoredUser()
+  return user?.name || user?.mobile || ''
 }

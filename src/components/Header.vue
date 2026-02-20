@@ -10,7 +10,7 @@
 
     <button
       v-if="loggedIn"
-      @click="isLoggedIn"
+      @click="setLoggedInStatus"
       class="text-blue-500 hover:text-white hover:bg-blue-500 border border-blue-500 rounded-md px-1 transition duration-200"
     >
       Logout
@@ -19,21 +19,19 @@
 </template>
 
 <script>
-import { store } from "../stores/store";
-
 export default {
   props: {
-    loggedIn: { type: Boolean, default: false },
+    loggedIn: { type: Boolean, default: false }
   },
 
   setup(props, { emit }) {
-    function isLoggedIn() {
-      emit("click-log", false);
+    function setLoggedInStatus() {
+      emit('click-log', false)
     }
 
     return {
-      isLoggedIn,
-    };
-  },
-};
+      setLoggedInStatus
+    }
+  }
+}
 </script>

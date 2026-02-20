@@ -1,19 +1,31 @@
 <template>
   <div class="space-y-4">
     <!-- Plus Button -->
-    <div
-      v-if="!showTransactionForm"
-      class="flex justify-between items-center gap-4"
-    >
-      <span> Want to create a new transaction? </span>
-      <el-button type="primary" circle size="medium" @click="openForm">
-        <span class="text-lg">+</span>
-      </el-button>
-    </div>
+
+    <AddNewTransactionButton
+      v-if="!showTransactionForm && !isEditMode"
+      text="Want to create a new transaction?"
+      @click="openForm"
+    />
 
     <!-- Transaction Form -->
     <fieldset v-else class="border border-gray-300 rounded-lg p-4">
       <legend>Transaction Details</legend>
+
+      <!-- Warning Alert -->
+      <el-alert
+        v-if="!isEditMode"
+        class="mb-4"
+        title="Important Notice"
+        type="warning"
+        :closable="false"
+        show-icon
+      >
+        <template #default>
+          Please verify the transaction details carefully. Once added, any
+          changes or deletions will require approval from all group members.
+        </template>
+      </el-alert>
 
       <el-form
         :model="formData"
@@ -26,7 +38,18 @@
           <el-col :lg="12" :md="12" :sm="24">
             <AmountInput v-model="formData.amount" required />
 
+            <!-- Payer Mode Toggle -->
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-sm font-medium text-gray-700">Payer Mode</span>
+              <el-radio-group v-model="formData.payerMode" size="small">
+                <el-radio-button value="single">Single</el-radio-button>
+                <el-radio-button value="multiple">Multiple</el-radio-button>
+              </el-radio-group>
+            </div>
+
+            <!-- Single Payer -->
             <GenericDropDown
+              v-if="formData.payerMode === 'single'"
               label="Payer"
               prop="payer"
               v-model="formData.payer"
@@ -35,12 +58,86 @@
               required
             />
 
+            <!-- Multiple Payers -->
+            <div v-else class="space-y-2 mb-4">
+              <div class="flex items-center justify-between">
+                <span class="text-sm font-medium text-gray-700">Payers</span>
+                <el-button size="small" type="primary" @click="addPayer">
+                  + Add Payer
+                </el-button>
+              </div>
+
+              <div
+                v-for="(p, index) in formData.payers"
+                :key="index"
+                class="flex items-center gap-2 border border-gray-200 rounded-lg p-2 bg-gray-50"
+              >
+                <el-select
+                  v-model="p.mobile"
+                  placeholder="Select payer"
+                  size="small"
+                  class="flex-1"
+                >
+                  <el-option
+                    v-for="opt in usersOptions"
+                    :key="opt.value"
+                    :label="opt.label"
+                    :value="opt.value"
+                  />
+                </el-select>
+                <el-input-number
+                  v-model="p.amount"
+                  :min="0"
+                  :precision="2"
+                  size="small"
+                  controls-position="right"
+                  placeholder="Amount"
+                  style="width: 130px"
+                />
+                <el-button
+                  size="small"
+                  type="danger"
+                  text
+                  @click="removePayer(index)"
+                >
+                  ✕
+                </el-button>
+              </div>
+
+              <!-- Payers balance check -->
+              <div
+                v-if="formData.payers.length > 0"
+                class="flex items-center gap-2 text-sm"
+              >
+                <span class="text-gray-600">Payers total:</span>
+                <span
+                  :class="
+                    payersTotal === parseFloat(formData.amount || 0)
+                      ? 'text-green-600 font-semibold'
+                      : 'text-orange-500 font-semibold'
+                  "
+                >
+                  {{ payersTotal.toFixed(2) }} /
+                  {{ parseFloat(formData.amount || 0).toFixed(2) }}
+                </span>
+                <el-tag
+                  v-if="payersTotal === parseFloat(formData.amount || 0)"
+                  type="success"
+                  size="small"
+                >
+                  Balanced
+                </el-tag>
+                <el-tag v-else type="warning" size="small">Mismatch</el-tag>
+              </div>
+            </div>
+
             <el-form-item
               label="Participants"
               prop="participants"
               class="w-full"
             >
               <el-select
+                filterable
                 v-model="formData.participants"
                 multiple
                 disabled
@@ -62,7 +159,7 @@
 
           <el-col :lg="12" :md="12" :sm="24">
             <GenericInput
-              rows="9"
+              :rows="9"
               v-model="formData.description"
               label="Description"
               prop="description"
@@ -72,9 +169,112 @@
             />
           </el-col>
         </el-row>
+        <!-- Split Mode -->
+        <div class="flex items-center justify-between mb-4">
+          <span class="text-sm font-medium text-gray-700">Split Mode</span>
+          <el-radio-group v-model="formData.splitMode" size="small">
+            <el-radio-button value="equal">Equal</el-radio-button>
+            <el-radio-button value="custom">Custom</el-radio-button>
+          </el-radio-group>
+        </div>
+        <!-- Custom Split Items -->
+        <div v-if="formData.splitMode === 'custom'" class="space-y-3">
+          <div
+            v-for="(item, index) in formData.splitItems"
+            :key="index"
+            class="border border-gray-200 rounded-lg p-3 bg-gray-50 space-y-2"
+          >
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-medium text-gray-500"
+                >Item {{ index + 1 }}</span
+              >
+              <el-button
+                size="small"
+                type="danger"
+                text
+                @click="removeSplitItem(index)"
+              >
+                ✕ Remove
+              </el-button>
+            </div>
 
-        <!-- Buttons -->
-        <div class="flex justify-end gap-2">
+            <el-row :gutter="12">
+              <el-col :sm="14">
+                <el-form-item label="Description" class="mb-1">
+                  <el-input
+                    v-model="item.description"
+                    placeholder="e.g. Burger, Cake..."
+                    size="small"
+                  />
+                </el-form-item>
+              </el-col>
+              <el-col :sm="10">
+                <el-form-item label="Amount" class="mb-1">
+                  <el-input-number
+                    v-model="item.amount"
+                    :min="0"
+                    :precision="2"
+                    size="small"
+                    class="w-full"
+                    controls-position="right"
+                  />
+                </el-form-item>
+              </el-col>
+            </el-row>
+
+            <el-form-item label="Participants" class="mb-0">
+              <el-select
+                v-model="item.participants"
+                multiple
+                placeholder="Who shared this item?"
+                class="w-full"
+                size="small"
+              >
+                <el-option
+                  v-for="opt in usersOptions"
+                  :key="opt.value"
+                  :label="opt.label"
+                  :value="opt.value"
+                />
+              </el-select>
+            </el-form-item>
+          </div>
+
+          <!-- Balance check -->
+          <div
+            v-if="formData.splitItems.length > 0"
+            class="flex items-center gap-2 text-sm"
+          >
+            <span class="text-gray-600">Items total:</span>
+            <span
+              :class="
+                splitItemsTotal === parseFloat(formData.amount || 0)
+                  ? 'text-green-600 font-semibold'
+                  : 'text-orange-500 font-semibold'
+              "
+            >
+              {{ splitItemsTotal.toFixed(2) }} /
+              {{ parseFloat(formData.amount || 0).toFixed(2) }}
+            </span>
+            <el-tag
+              v-if="splitItemsTotal === parseFloat(formData.amount || 0)"
+              type="success"
+              size="small"
+            >
+              Balanced
+            </el-tag>
+            <el-tag v-else type="warning" size="small">Mismatch</el-tag>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-sm font-semibold text-gray-700">Split Items</span>
+            <el-button size="small" type="primary" @click="addSplitItem">
+              + Add Item
+            </el-button>
+          </div>
+        </div>
+
+        <!-- Buttons (only for add mode, not dialog edit mode) -->
+        <div v-if="!isEditMode" class="flex justify-end gap-2">
           <el-button type="info" plain @click="closeForm"> Cancel </el-button>
           <GenericButton type="success" @click="() => validateForm()">
             Add Payment
@@ -83,169 +283,49 @@
       </el-form>
     </fieldset>
 
-    <!-- Expense List (always visible) -->
-    <HOC :componentToBeRendered="ExpenseList" />
+    <!-- Expense List (only in add mode, not dialog edit mode) -->
+    <HOC v-if="!isEditMode" :componentToBeRendered="ExpenseList" />
   </div>
 </template>
 
 <script setup>
-import HOC from "./HOC.vue";
-import { ref, watch, defineAsyncComponent, computed } from "vue";
-import getWhoAddedTransaction from "../utils/whoAdded";
+import HOC from './HOC.vue'
+import { defineAsyncComponent } from 'vue'
 import {
   DataTimePicker,
   AmountInput,
   GenericButton,
   GenericDropDown,
-  GenericInput,
-} from "./generic-components";
-const ExpenseList = defineAsyncComponent(() => import("./ExpenseList.vue"));
-const emit = defineEmits(["closeModal"]);
-import { friends } from "../assets/data";
-import { store } from "../stores/store";
-import { rules } from "../assets/validation-rules";
-import useFireBase from "../api/firebase-apis";
+  GenericInput
+} from './generic-components'
+import { rules } from '../assets/validation-rules'
+import { PaymentForm } from '../scripts/payment-form'
+import AddNewTransactionButton from './generic-components/AddNewTransactionButton.vue'
 
-const { deleteData, updateData, saveData } = useFireBase();
+const ExpenseList = defineAsyncComponent(() => import('./ExpenseList.vue'))
+const emit = defineEmits(['closeModal'])
 const props = defineProps({
-  row: Object,
-});
-const isVisible = ref(true);
-const userStore = store();
+  row: Object
+})
 
-const showTransactionForm = ref(false);
-
-const openForm = () => {
-  showTransactionForm.value = true;
-};
-
-const closeForm = () => {
-  showTransactionForm.value = false;
-};
-
-const usersOptions = computed(() => {
-  // prefer active group's members if available
-  const activeGroup = userStore.getActiveGroup;
-  console.log("Active Group:", activeGroup);
-  const group = activeGroup ? userStore.getGroupById(activeGroup) : null;
-  if (group && group.members && group.members.length) {
-    return group.members.map((m) => ({
-      label: `${m.name} (${m.mobile})`,
-      value: m.mobile,
-    }));
-  }
-  const users =
-    userStore.getUsers && userStore.getUsers.length ? userStore.getUsers : [];
-  if (!users.length) return friends.map((f) => ({ label: f, value: f }));
-  return users.map((u) => ({
-    label: `${u.name} (${u.mobile})`,
-    value: u.mobile,
-  }));
-});
-// Form data model
-const formData = ref({
-  amount: null,
-  description: "",
-  payer: "",
-  participants: [...usersOptions.value.map((u) => u.value)], // default to all users
-  date: "",
-});
-// Watch for changes in `row` prop and update formData
-watch(
-  () => props.row,
-  (newRow) => {
-    formData.value.amount = newRow?.amount ?? null;
-    formData.value.description = newRow?.description ?? "";
-    formData.value.payer = newRow?.payer ?? "";
-    formData.value.date = newRow?.date ?? "";
-    isVisible.value = !newRow?.amount;
-  },
-  { immediate: true, deep: true },
-);
-
-// Form submission handler
-const transactionForm = ref(null);
-
-const validateForm = (whatTask = "Save") => {
-  transactionForm.value.validate((valid) => {
-    if (valid) {
-      let monthYear = formData.value.date.split("-");
-      monthYear = monthYear[0] + "-" + monthYear[1].toString().padStart(2, 0);
-      const groupId = userStore.getActiveGroup || "global";
-      if (whatTask == "Save") {
-        saveData(
-          `payments/${groupId}/${monthYear}`,
-          getPaymentData,
-          transactionForm,
-          "Transaction successfully saved.",
-        );
-      } else if (whatTask == "Update") {
-        updateData(
-          `payments/${groupId}/${monthYear}/${props.row.id}`,
-          getPaymentData,
-          `Payment record with ID ${props.row.id} updated successfully`,
-        );
-        emit("closeModal");
-      } else if (whatTask == "Delete") {
-        deleteData(
-          `payments/${groupId}/${monthYear}/${props.row.id}`,
-          `Payment record with ID ${props.row.id} deleted successfully`,
-        );
-        emit("closeModal");
-      }
-    }
-  });
-};
-
-function getPaymentData() {
-  const amount = parseFloat(formData.value.amount);
-  const participantsList =
-    formData.value.participants && formData.value.participants.length
-      ? formData.value.participants
-      : userStore.getUsers && userStore.getUsers.length
-        ? userStore.getUsers.map((u) => u.mobile)
-        : [];
-
-  // compute equal split and ensure rounding sums to total
-  let split = [];
-  if (participantsList.length) {
-    const equal = Math.floor((amount / participantsList.length) * 100) / 100; // floor to cents
-    let acc = 0;
-    for (let i = 0; i < participantsList.length; i++) {
-      const mobile = participantsList[i];
-      let share = equal;
-      // last participant gets the remainder to match total
-      if (i === participantsList.length - 1) {
-        share = parseFloat((amount - acc).toFixed(2));
-      } else {
-        acc += share;
-      }
-      split.push({
-        mobile,
-        name: userStore.getUserByMobile(mobile)?.name || mobile,
-        amount: share,
-      });
-    }
-  }
-
-  const payment = {
-    amount: amount,
-    description: formData.value.description,
-    payer: formData.value.payer,
-    group: userStore.getActiveGroup || null,
-    date: new Date(formData.value.date).toLocaleString("en-PK"),
-    whenAdded: new Date().toLocaleString("en-PK"),
-    whoAdded: getWhoAddedTransaction(),
-    // store participants as array of mobile ids (strings)
-    participants: participantsList,
-    // per-participant split stored for display and calculations
-    split,
-  };
-
-  return payment;
-}
+const {
+  isEditMode,
+  showTransactionForm,
+  openForm,
+  closeForm,
+  usersOptions,
+  formData,
+  transactionForm,
+  validateForm,
+  splitItemsTotal,
+  addSplitItem,
+  removeSplitItem,
+  payersTotal,
+  addPayer,
+  removePayer
+} = PaymentForm(props, emit)
 
 defineExpose({
-  validateForm,
-});
+  validateForm
+})
 </script>

@@ -7,4 +7,4 @@ export const svg = `
           A 15 15, 0, 1, 1, 27.99 7.5
           L 15 15
         " style="stroke-width: 6px; fill: rgba(255, 255, 255, 0.9)"/>
-      `;
+      `

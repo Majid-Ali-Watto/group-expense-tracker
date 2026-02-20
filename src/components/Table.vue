@@ -24,7 +24,14 @@
           @click="() => (showPopup ? handleClick(row, rowIndex) : null)"
           v-for="(row, rowIndex) in rows"
           :key="rowIndex"
-          class="w-full hover:bg-indigo-100 transition duration-300 ease-in-out even:bg-gray-50"
+          :class="[
+            'w-full transition duration-300 ease-in-out',
+            row.deleteRequest
+              ? 'bg-red-50 hover:bg-red-100'
+              : row.updateRequest
+                ? 'bg-orange-50 hover:bg-orange-100'
+                : 'hover:bg-indigo-100 even:bg-gray-50'
+          ]"
         >
           <td
             v-for="header in headers"
@@ -39,7 +46,7 @@
                 <span v-for="(s, i) in row.split" :key="i">
                   {{
                     (tabStore.getUserByMobile(s.mobile)?.name || s.mobile) +
-                    ": " +
+                    ': ' +
                     formatAmount(s.amount)
                   }}<span v-if="i < row.split.length - 1">, </span>
                 </span>
@@ -48,13 +55,30 @@
                 {{ row.split }}
               </template>
             </span>
-            <span v-else-if="header.key === 'payer'">{{
-              tabStore.getUserByMobile(row.payer)?.name + ` (${row.payer})` ||
-              row.payer
-            }}</span>
+            <span v-else-if="header.key === 'payer'">
+              <template v-if="row.payerMode === 'multiple' && row.payers?.length">
+                <span v-for="(p, i) in row.payers" :key="i">
+                  {{ tabStore.getUserByMobile(p.mobile)?.name + ` (${p.mobile})`  || p.mobile }}:
+                  {{ formatAmount(p.amount) }}<span v-if="i < row.payers.length - 1">, </span>
+                </span>
+              </template>
+              <template v-else>
+                {{
+                  tabStore.getUserByMobile(row.payer)?.name + ` (${row.payer})` ||
+                  row.payer
+                }}
+              </template>
+            </span>
+            <span
+              v-else-if="header.key === 'giver' || header.key === 'receiver'"
+              >{{
+                (tabStore.getUserByMobile(row[header.key])?.name ||
+                  row[header.key]) + ` (${row[header.key]})`
+              }}</span
+            >
             <span v-else>
               {{
-                typeof row[header.key] === "object"
+                typeof row[header.key] === 'object'
                   ? JSON.stringify(row[header.key])
                   : row[header.key]
               }}
@@ -78,7 +102,7 @@
       </template>
       <HOC
         :componentToBeRendered="activeTabComponent()"
-        :componentProps="{ friends, row: state.row }"
+        :componentProps="dialogComponentProps"
         :listenersToPass="{ closeModal: () => (dialogFormVisible = false) }"
         ref="childRef"
       />
@@ -104,140 +128,52 @@
 </template>
 
 <script setup>
-import { ElMessage } from "element-plus";
-import {
-  computed,
-  inject,
-  onMounted,
-  onUnmounted,
-  reactive,
-  ref,
-  watch,
-} from "vue";
-import { store } from "../stores/store"; // Import the Pinia store
-import { getActiveTab } from "../utils/active-tab";
-import BottomButtons from "./BottomButtons.vue";
-import { downloadExcel, downloadPDF } from "../utils/downloadDataProcedures";
-import getCurrentMonth from "../utils/getCurrentMonth";
-import GenericButton from "./generic-components/GenericButton.vue";
-import HOC from "./HOC.vue";
+import BottomButtons from './BottomButtons.vue'
+import GenericButton from './generic-components/GenericButton.vue'
+import HOC from './HOC.vue'
+import { Table } from '../scripts/table'
+
 const props = defineProps({
   rows: {
     type: Array,
-    required: true,
+    required: true
   },
   keys: {
     type: Array,
-    required: true,
+    required: true
   },
   friends: {
-    type: Array,
+    type: Array
   },
   dataRef: {
-    type: [Object, null], // Allow both Object and null
-    required: false, // Not required since it can be null
+    type: [Object, null],
+    required: false
   },
   downloadTitle: {
     type: String,
-    required: true,
+    required: true
   },
   showPopup: {
     type: Boolean,
-    default: true,
-  },
-});
-const timeout = ref(null);
-const delay = 300; // Time to wait for double click in milliseconds
-const dialogFormVisible = ref(false);
-const state = reactive({ row: null });
-const screenWidth = ref(window.innerWidth); // Store the current screen width
-// Access the store
-const tabStore = store();
-const childRef = ref(null);
-
-// Directly use `activeTab` from Pinia store
-const activeTab = computed(() => tabStore.$state.activeTab);
-// Map activeTab to dynamic components
-const activeTabComponent = () => getActiveTab(activeTab.value);
-const isDownloadAvailable = ref(props.rows.length > 0);
-
-watch(
-  () => props.rows,
-  (newRows) => {
-    isDownloadAvailable.value = newRows.length > 0;
-  },
-  { immediate: true, deep: true },
-);
-// Inject the globally provided formatAmount function
-const formatAmount = inject("formatAmount");
-function update() {
-  childRef.value.componentRef.validateForm("Update", childRef);
-}
-function remove() {
-  childRef.value.componentRef.validateForm("Delete");
-}
-
-function updateScreenWidth() {
-  screenWidth.value = window.innerWidth;
-}
-
-// Listen for resize events
-onMounted(() => {
-  window.addEventListener("resize", updateScreenWidth);
-});
-
-onUnmounted(() => {
-  window.removeEventListener("resize", updateScreenWidth);
-});
-
-// Computed width for the dialog, responsive to screen width
-const dialogWidth = computed(() => {
-  // Adjust this logic to make the width responsive based on screen size
-  return screenWidth.value < 600 ? screenWidth.value * 0.95 : 500;
-});
-// Generate headers dynamically from `rows`
-const headers = computed(() => {
-  if (props.rows.length > 0) {
-    const cols = Object.keys(props.rows[0]).filter(
-      (col) =>
-        !["whenAdded", "whoAdded", "group", "participants"].includes(col),
-    );
-    return cols.map((key) => ({
-      label: key,
-      key,
-    }));
+    default: true
   }
+})
 
-  return [];
-});
-
-const handleClick = (rowS, rowIndex) => {
-  let date = rowS.date?.split(",")[0].split("/").reverse().join("-");
-  let time = rowS.date?.split(",")[1];
-  date = date + ", " + time;
-  clearTimeout(timeout.value);
-  timeout.value = setTimeout(() => {
-    dialogFormVisible.value = true;
-    state.row = { ...rowS, date, id: props.keys[rowIndex] };
-  }, delay);
-};
-function getDetails(row) {
-  if (row.whoAdded) {
-    return row?.whoAdded + " on " + (row?.whenAdded || "N/A");
-  } else return "N/A";
-}
-const handleDoubleClick = (row) => {
-  clearTimeout(timeout.value);
-  ElMessage.info("Added By: " + getDetails(row));
-};
-function downloadExcelData() {
-  downloadExcel(
-    props.rows,
-    getCurrentMonth() + `_${props.downloadTitle}_`,
-    props.downloadTitle,
-  );
-}
-function downloadPdfData() {
-  downloadPDF(props.dataRef, getCurrentMonth() + `_${props.downloadTitle}_`);
-}
+const {
+  tabStore,
+  dialogFormVisible,
+  activeTabComponent,
+  dialogComponentProps,
+  isDownloadAvailable,
+  formatAmount,
+  dialogWidth,
+  headers,
+  update,
+  remove,
+  handleClick,
+  handleDoubleClick,
+  downloadExcelData,
+  downloadPdfData,
+  childRef
+} = Table(props)
 </script>

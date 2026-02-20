@@ -1,3 +1,3 @@
 export function resetForm(formRef) {
-	formRef.value.resetFields();
+  formRef.value.resetFields()
 }

@@ -1,4 +1,4 @@
-import { initializeApp } from "firebase/app";
+import { initializeApp } from 'firebase/app'
 import {
   getDatabase,
   ref,
@@ -7,8 +7,8 @@ import {
   update,
   remove,
   get,
-  off,
-} from "firebase/database";
+  off
+} from 'firebase/database'
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_API_KEY,
@@ -17,10 +17,9 @@ const firebaseConfig = {
   projectId: import.meta.env.VITE_PROJECT_ID,
   storageBucket: import.meta.env.VITE_STORAGE_BUCKET,
   messagingSenderId: import.meta.env.VITE_MESSAGE_SENDER_ID,
-  appId: import.meta.env.VITE_APP_ID,
-};
-console.log(firebaseConfig);
-const app = initializeApp(firebaseConfig);
-const database = getDatabase(app);
+  appId: import.meta.env.VITE_APP_ID
+}
+const app = initializeApp(firebaseConfig)
+const database = getDatabase(app)
 
-export { database, ref, push, onValue, update, remove, get, off };
+export { database, ref, push, onValue, update, remove, get, off }

@@ -15,55 +15,55 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, watch } from 'vue'
 
 // Props for flexibility and customization
 const props = defineProps({
   modelValue: {
-    type: [Number,null],
-    required: true,
+    type: [Number, null],
+    required: true
   },
   label: {
     type: String,
-    default: 'Amount',
+    default: 'Amount'
   },
   prop: {
     type: String,
-    default: 'amount',
+    default: 'amount'
   },
   required: {
     type: Boolean,
-    default: false,
+    default: false
   },
   placeholder: {
     type: String,
-    default: '0.00',
+    default: '0.00'
   },
   min: {
     type: Number,
-    default: 1,
+    default: 1
   },
   max: {
     type: Number,
-    default: Infinity,
+    default: Infinity
   },
   step: {
     type: Number,
-    default: 1,
-  },
-});
+    default: 1
+  }
+})
 
 // Emit event for two-way binding
-defineEmits(['update:modelValue']);
+defineEmits(['update:modelValue'])
 
 // Internal value to sync with the parent
-const internalValue = ref(props.modelValue);
+const internalValue = ref(props.modelValue)
 
 // Sync prop changes with internal value
 watch(
   () => props.modelValue,
   (newValue) => {
-    internalValue.value = newValue;
+    internalValue.value = newValue
   }
-);
+)
 </script>

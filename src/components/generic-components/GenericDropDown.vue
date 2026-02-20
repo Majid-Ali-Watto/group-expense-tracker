@@ -1,12 +1,13 @@
 <template>
   <el-form-item :label="label" :prop="prop" :required="required" class="w-full">
     <el-select
+      filterable
       v-model="internalValue"
       :placeholder="placeholder"
       class="w-full"
       clearable
       @change="$emit('update:modelValue', internalValue)"
-      >
+    >
       <el-option
         v-for="item in options"
         :key="getKey(item)"
@@ -18,59 +19,44 @@
 </template>
 
 <script setup>
-import { ref, watch } from "vue";
+import { GenericDropDown } from '../../scripts/generic-dropdown'
 
 const props = defineProps({
   modelValue: {
-    type: [String, Number, Object], // Support various value types
-    required: true,
+    type: [String, Number, Object],
+    required: true
   },
   label: {
     type: String,
-    default: "",
+    default: ''
   },
   prop: {
     type: String,
-    default: "",
+    default: ''
   },
   placeholder: {
     type: String,
-    default: "Select an option",
+    default: 'Select an option'
   },
   required: {
     type: Boolean,
-    default: false,
+    default: false
   },
   options: {
     type: Array,
-    default: () => [],
+    default: () => []
   },
   labelKey: {
     type: String,
-    default: "label", // Key to display as label in dropdown
+    default: 'label'
   },
   valueKey: {
     type: String,
-    default: "value", // Key to bind as value in dropdown
-  },
-});
-
-defineEmits(["update:modelValue"]);
-
-const internalValue = ref(props.modelValue);
-
-// Sync the external modelValue with the internal value
-watch(
-  () => props.modelValue,
-  (newValue) => {
-    internalValue.value = newValue;
+    default: 'value'
   }
-);
+})
 
-// Methods to get key, label, and value from options
-const getLabel = (item) =>
-  typeof item === "object" ? item[props.labelKey] : item;
-const getValue = (item) =>
-  typeof item === "object" ? item[props.valueKey] : item;
-const getKey = (item) => getValue(item);
+defineEmits(['update:modelValue'])
+
+const { internalValue, getLabel, getValue, getKey } = GenericDropDown(props)
 </script>

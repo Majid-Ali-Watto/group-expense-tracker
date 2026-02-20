@@ -1,0 +1,72 @@
+{
+  "rules": {
+    "users": {
+      "$mobile": {
+        ".read": true,
+        ".write": "!data.exists() || data.child('mobile').val() === $mobile",
+        ".validate": "newData.hasChildren(['name', 'mobile', 'loginCode']) && newData.child('mobile').val() === $mobile"
+      }
+    },
+    "groups": {
+      ".read": true,
+      ".write": true,
+      "$groupId": {
+        ".validate": "newData.hasChildren(['name'])"
+      }
+    },
+    "loans": {
+      ".read": true,
+      ".write": true,
+      "$groupId": {
+        "$loanId": {
+          ".validate": "newData.hasChildren(['amount', 'borrower', 'lender'])"
+        }
+      }
+    },
+    "payments": {
+      ".read": true,
+      ".write": true,
+      "$groupId": {
+        "$paymentId": {
+          ".validate": "newData.hasChildren(['amount', 'payer', 'date'])"
+        }
+      }
+    },
+    "groupExpenses": {
+      ".read": true,
+      ".write": true,
+      "$groupId": {
+        "$expenseId": {
+          ".validate": "newData.hasChildren(['amount', 'description', 'whoAdded'])"
+        }
+      }
+    },
+    "monthlyExpenses": {
+      ".read": true,
+      ".write": true,
+      "$mobile": {
+        "$month": {
+          "$expenseId": {
+            ".validate": "newData.hasChildren(['amount', 'description'])"
+          }
+        }
+      }
+    },
+    "salary": {
+      ".read": true,
+      ".write": true,
+      "$mobile": {
+        "$salaryId": {
+          ".validate": "newData.hasChildren(['amount', 'month'])"
+        }
+      }
+    },
+    "personalLoans": {
+      ".read": true,
+      ".write": true,
+      "$loanId": {
+        ".validate": "newData.hasChildren(['amount', 'borrower', 'lender'])"
+      }
+    }
+  }
+}

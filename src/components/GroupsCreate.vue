@@ -2,7 +2,7 @@
   <div>
     <fieldset class="border rounded bg-white shadow-sm p-4">
       <legend class="font-medium">Create Group</legend>
-      <el-form :model="groupForm" ref="groupFormRef">
+      <el-form :model="groupForm" :rules="groupRules" ref="groupFormRef">
         <el-form-item label="Name" prop="name" label-position="top">
           <el-input
             v-model="groupForm.name"
@@ -10,8 +10,18 @@
             class="w-full"
           />
         </el-form-item>
+        <el-form-item label="Description" label-position="top">
+          <el-input
+            v-model="groupForm.description"
+            type="textarea"
+            :rows="3"
+            placeholder="Enter group description (optional)"
+            class="w-full"
+          />
+        </el-form-item>
         <el-form-item label="Members" prop="members" label-position="top">
           <el-select
+            filterable
             v-model="groupForm.members"
             multiple
             placeholder="Select members"
@@ -20,7 +30,7 @@
             <el-option
               v-for="u in usersOptions"
               :key="u.mobile"
-              :label="u.name + ' (' + u.mobile + ')'"
+              :label="getUserLabel(u)"
               :value="u.mobile"
             />
           </el-select>
@@ -36,43 +46,8 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
-import { store } from "../stores/store";
-import useFireBase from "../api/firebase-apis";
-import { showError, showSuccess } from "../utils/showAlerts";
+import { groupRules } from '../assets/validation-rules'
+import { GroupsCreate } from '../scripts/groups-create'
 
-const userStore = store();
-const { updateData } = useFireBase();
-
-const groupForm = ref({ name: "", members: [] });
-
-const usersOptions = computed(() => userStore.getUsers || []);
-
-function generateInvite() {
-  return Math.random().toString(36).slice(2, 8).toUpperCase();
-}
-
-async function createGroup() {
-  if (!groupForm.value.name) return showError("Please provide group name");
-  const id = Date.now().toString();
-  const invite = generateInvite();
-  const payload = {
-    id,
-    name: groupForm.value.name,
-    ownerMobile: userStore.getActiveUser,
-    members: (groupForm.value.members || []).map((m) => ({
-      mobile: m,
-      name: userStore.getUserByMobile(m)?.name || m,
-    })),
-    inviteCode: invite,
-  };
-  try {
-    await updateData(`groups/${id}`, () => payload, "Group created");
-    userStore.addGroup(payload);
-    showSuccess("Group created");
-    groupForm.value = { name: "", members: [] };
-  } catch (err) {
-    showError(err);
-  }
-}
+const { groupForm, groupFormRef, usersOptions, createGroup, getUserLabel } = GroupsCreate()
 </script>

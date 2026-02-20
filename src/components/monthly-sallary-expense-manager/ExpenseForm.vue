@@ -1,96 +1,72 @@
 <template>
-	<fieldset class="w-full border border-gray-300 rounded-lg p-4">
-		<legend>Expense Details</legend>
-		<el-form label-position="top" :model="form" :rules="rules" ref="expenseForm">
-			<AmountInput v-model.number="form.amount" required />
-			<GenericInput v-model="form.description" label="Description" prop="description" placeholder="Enter description" required />
-			<GenericInput v-model="form.location" label="Location" prop="location" placeholder="Enter location" required />
-			<GenericInput v-model="form.recipient" label="Recipient" prop="recipient" placeholder="To Whom" required />
-			<div class="flex justify-end" v-if="isVisible">
-				<GenericButton type="success" @click="() => validateForm()">Add Expense</GenericButton>
-			</div>
-		</el-form>
-	</fieldset>
+  <fieldset class="w-full border border-gray-300 rounded-lg p-4">
+    <legend>Expense Details</legend>
+    <el-form
+      label-position="top"
+      :model="form"
+      :rules="rules"
+      ref="expenseForm"
+    >
+      <AmountInput v-model.number="form.amount" required />
+      <GenericInput
+        v-model="form.description"
+        label="Description"
+        prop="description"
+        placeholder="Enter description"
+        required
+      />
+      <GenericInput
+        v-model="form.location"
+        label="Location"
+        prop="location"
+        placeholder="Enter location"
+        required
+      />
+      <GenericInput
+        v-model="form.recipient"
+        label="Recipient"
+        prop="recipient"
+        placeholder="To Whom"
+        required
+      />
+      <div class="flex justify-end" v-if="!isEditMode">
+        <GenericButton v-if="showForm" type="info" @click="$emit('click')"
+          >Cancel</GenericButton
+        >
+        <GenericButton type="success" @click="() => validateForm()"
+          >Add Expense</GenericButton
+        >
+      </div>
+    </el-form>
+  </fieldset>
 </template>
 
 <script setup>
-	import { ref, watch } from "vue";
-	import { store } from "../../stores/store";
-	import getCurrentMonth from "../../utils/getCurrentMonth";
-	import getWhoAddedTransaction from "../../utils/whoAdded";
-	import { rules } from "../../assets/validation-rules";
-	import useFireBase from "../../api/firebase-apis";
-	import { GenericButton, AmountInput, GenericInput } from "../generic-components";
-	const emit = defineEmits(["closeModal"]);
+import { rules } from '../../assets/validation-rules'
+import { GenericButton, AmountInput, GenericInput } from '../generic-components'
+import { ExpenseForm } from '../../scripts/expense-form'
+import { onMounted, watch } from 'vue'
 
-	// Props
-	const props = defineProps({
-		row: Object
-	});
-	const { saveData, updateData, deleteData } = useFireBase();
-	const isVisible = ref(true);
-	// State
-	const form = ref({
-		amount: null,
-		description: "",
-		location: "",
-		recipient: ""
-	});
+const emit = defineEmits(['closeModal', 'click'])
+const props = defineProps({
+  row: Object,
+  showForm: Boolean
+})
 
-	const expenseForm = ref(null);
-	const userStore = store();
-	const selectedMonth = ref(userStore.$state.selectedMonth);
+const { isEditMode, form, expenseForm, validateForm } = ExpenseForm(props, emit)
 
-	const activeUser = ref(userStore.activeUser);
-	watch(
-		() => userStore.$state.selectedMonth, // Reactive dependency
-		(newMonth) => {
-			selectedMonth.value = newMonth;
-		}
-	);
-	// Watcher for props.row
-	watch(
-		() => props.row,
-		(newRow) => {
-			isVisible.value = !newRow?.amount;
-			form.value = {
-				amount: newRow?.amount ?? null,
-				description: newRow?.description ?? "",
-				location: newRow?.location ?? "",
-				recipient: newRow?.recipient ?? ""
-			};
-		},
-		{ immediate: true, deep: true }
-	);
+// Debug: Watch the expenseForm ref
+watch(() => expenseForm.value, (newVal) => {
+  console.log('ExpenseForm ref changed:', newVal)
+}, { immediate: true })
 
-	const validateForm = async (whatTask = "Save", childRef) => {
-		expenseForm.value.validate(async (valid) => {
-			if (valid) {
-				if (whatTask == "Save") {
-					saveData(`expenses/${activeUser.value}/${getCurrentMonth()}`, getExpenseData, expenseForm, "Expense added successfully!");
-				} else if (whatTask == "Update") {
-					updateData(`expenses/${activeUser.value}/${selectedMonth.value}/${props.row.id}`, getExpenseData, `Expense record with ID ${props.row.id} updated successfully`);
-					emit("closeModal");
-				} else if (whatTask == "Delete") {
-					deleteData(`expenses/${activeUser.value}/${selectedMonth.value}/${props.row.id}`, `Expense record with ID ${props.row.id} deleted successfully`);
-					emit("closeModal");
-				}
-			}
-		});
-	};
-	function getExpenseData() {
-		return {
-			amount: form.value?.amount,
-			description: form.value?.description,
-			location: form.value?.location,
-			recipient: form.value?.recipient,
-			month: getCurrentMonth(),
-			whoAdded: getWhoAddedTransaction(),
-			date: new Date().toLocaleString("en-PK"),
-			whenAdded: new Date().toLocaleString("en-PK")
-		};
-	}
-	defineExpose({
-		validateForm
-	});
+onMounted(() => {
+  console.log('ExpenseForm component mounted')
+  console.log('expenseForm ref on mount:', expenseForm.value)
+})
+
+defineExpose({
+  validateForm,
+  expenseForm
+})
 </script>

@@ -2,7 +2,20 @@
   <div class="my-4">
     <div>
       <h3 class="mb-2">Pairwise Settlements (Who pays whom)</h3>
-      <el-table :data="settlements" style="width: 100%">
+      
+      <!-- Show message when no settlements -->
+      <div 
+        v-if="settlements.length === 0"
+        class="text-center py-8 bg-gray-50 rounded-lg border border-gray-200"
+      >
+        <p class="text-gray-600 text-lg mb-2">✅ All Settled!</p>
+        <p class="text-gray-500 text-sm">
+          No pending settlements. Everyone's balance is zero.
+        </p>
+      </div>
+      
+      <!-- Show settlements table when data exists -->
+      <el-table v-else :data="settlements" style="width: 100%">
         <el-table-column label="Debtor">
           <template #default="{ row }">
             {{ userStore.getUserByMobile(row.from)?.name || row.from }}
@@ -21,168 +34,171 @@
       </el-table>
     </div>
 
+    <!-- Settlement Request Section -->
     <div
-      v-if="userStore.getUserByMobile(user)?.name === 'Majid' && !isHistory"
-      style="display: flex !important; justify-content: end !important"
+      v-if="activeGroup && hasSettlementRequest && !isHistory && settlements.length > 0"
+      class="mt-4 pt-3 border-t border-blue-200 bg-blue-50 p-3 rounded"
     >
-      <GenericButton @click="addPaymentsBatch" class="mt-4" type="success"
-        >Settlement Done</GenericButton
+      <div class="text-sm font-medium text-blue-800 mb-2">
+        📋 Settlement Request
+      </div>
+      <div class="text-xs text-blue-700 mb-2">
+        Requested by: {{ group.settlementRequest.requestedByName }} for {{ group.settlementRequest.month }}
+      </div>
+      <div class="text-xs text-blue-700 mb-2">
+        All members must approve before settlement can be finalized.
+      </div>
+      <div class="text-sm text-blue-700 mb-2">
+        Approvals: {{ getSettlementApprovals.length }} /
+        {{ getAllSettlementMembers.length }}
+      </div>
+      <!-- Show who has approved -->
+      <div class="flex flex-wrap gap-1 mb-2">
+        <el-tag
+          v-for="approval in getSettlementApprovals"
+          :key="approval.mobile"
+          size="small"
+          type="success"
+        >
+          ✓ {{ approval.name }}
+        </el-tag>
+        <el-tag
+          v-for="member in getAllSettlementMembers.filter(m => 
+            !getSettlementApprovals.some(a => a.mobile === m.mobile)
+          )"
+          :key="member.mobile"
+          size="small"
+          type="info"
+        >
+          ⏳ {{ member.name }}
+        </el-tag>
+      </div>
+      
+      <!-- Approve/Reject buttons for members who haven't approved -->
+      <div v-if="!hasUserApprovedSettlement" class="flex gap-2">
+        <el-button
+          size="small"
+          type="success"
+          @click="approveSettlement"
+        >
+          Approve Settlement
+        </el-button>
+        <!-- Show Cancel for the requester -->
+        <el-button
+          v-if="group.settlementRequest.requestedBy === user"
+          size="small"
+          type="danger"
+          plain
+          @click="rejectSettlement"
+        >
+          Cancel Settlement Request
+        </el-button>
+        <!-- Show Reject only for admin who is NOT the requester -->
+        <!-- v-else-if="isAdmin" -->
+        <el-button
+          size="small"
+          type="danger"
+          @click="rejectSettlement"
+        >
+          Reject Settlement
+        </el-button>
+      </div>
+      
+      <!-- Show approved status -->
+      <div v-else class="text-xs text-green-700">
+        ✓ You have approved this settlement request
+        <span v-if="isAdmin && !allMembersApprovedSettlement">
+          - Waiting for all members to approve
+        </span>
+      </div>
+      
+      <!-- Finalize button for admin when all approved -->
+      <div v-if="isAdmin && allMembersApprovedSettlement" class="mt-2 flex gap-2">
+        <el-button
+          type="primary"
+          @click="addPaymentsBatch"
+        >
+          Finalize Settlement Now
+        </el-button>
+        <el-button
+          type="danger"
+          plain
+          @click="rejectSettlement"
+        >
+          Cancel Settlement Request
+        </el-button>
+      </div>
+
+      <!-- Cancel button for requester after they've approved (but not all members yet) -->
+      <div 
+        v-if="group.settlementRequest.requestedBy === user && hasUserApprovedSettlement && !allMembersApprovedSettlement"
+        class="mt-2"
       >
+        <el-button
+          size="small"
+          type="danger"
+          plain
+          @click="rejectSettlement"
+        >
+          Cancel Settlement Request
+        </el-button>
+      </div>
+    </div>
+
+    <!-- Action Buttons when no settlement request -->
+    <div
+      v-if="!isHistory && !hasSettlementRequest && settlements.length > 0"
+      style="display: flex !important; justify-content: end !important; gap: 10px"
+      class="mt-4"
+    >
+      <!-- Any member can request settlement -->
+      <GenericButton 
+        v-if="activeGroup"
+        @click="requestSettlement" 
+        type="warning"
+      >
+        Request Settlement
+      </GenericButton>
+      
+      <!-- Settlement Done for non-group expenses -->
+      <GenericButton 
+        v-if="!activeGroup"
+        @click="addPaymentsBatch" 
+        type="success"
+      >
+        Settlement Done
+      </GenericButton>
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed, inject, ref } from "vue";
-import { GenericButton } from "./generic-components";
-import { store } from "../stores/store";
-import useFireBase from "../api/firebase-apis";
-import { showError } from "../utils/showAlerts";
-import { ElMessageBox } from "element-plus";
-// use users from store instead of static friends list
-const { updateData, deleteData } = useFireBase();
-const formatAmount = inject("formatAmount");
-const userStore = store();
+import { GenericButton } from './generic-components'
+import { Settlement } from '../scripts/settlement'
 
-const user = ref(userStore.$state.activeUser);
 const props = defineProps({
   payments: Array,
   keys: Array,
-  // friends: Array,
   selectedMonth: String,
-  isHistory: { type: Boolean, default: false },
-});
+  isHistory: { type: Boolean, default: false }
+})
 
-const updates = ref({});
-async function addPaymentsBatch() {
-  try {
-    await ElMessageBox.confirm(
-      "Are you sure to move expenses to backup. Continue?",
-      "Warning",
-      {
-        confirmButtonText: "OK",
-        cancelButtonText: "Cancel",
-        type: "warning",
-      },
-    );
-    // Prepare a batch update object
-    updates.value = {};
-    props.payments.forEach((payment, index) => {
-      const key = props.keys[index]; // Generate a unique key
-      updates.value[key] = payment;
-    });
-    console.log(updates.value);
-    // Perform batch update
-    updateData(
-      `payments-backup/${props.selectedMonth}`,
-      getData,
-      "Expenses added to Backup successfully!",
-    );
-    deleteData(
-      `payments/${props.selectedMonth}`,
-      props.selectedMonth + " data deleted",
-    );
-  } catch (error) {
-    if (error != "cancel") showError(error);
-  }
-}
-const getData = () => {
-  return updates.value;
-};
-
-// Total spent across all payments
-const totalSpent = computed(() =>
-  props.payments.reduce((sum, payment) => sum + (payment.amount || 0), 0),
-);
-
-// Compute balances using per-payment participants (equal split when participants stored as strings)
-const balances = computed(() => {
-  const map = {};
-  // Initialize with known users from store (mobile as key)
-  const users =
-    userStore.getUsers && userStore.getUsers.length ? userStore.getUsers : [];
-  if (users.length) users.forEach((u) => (map[u.mobile] = 0));
-  else {
-    // fallback: if no users known, initialize map empty
-  }
-
-  props.payments.forEach((payment) => {
-    const amount = payment.amount || 0;
-    // participants can be an array of strings (names) or objects with { userId/name, share }
-    const participants =
-      payment.participants && payment.participants.length
-        ? payment.participants
-        : users.map((u) => u.mobile); // default to all users if none provided
-
-    // prefer explicit per-payment split if present
-    let shares = [];
-    if (payment.split && Array.isArray(payment.split) && payment.split.length) {
-      shares = payment.split.map((s) => ({ id: s.mobile, share: s.amount }));
-    } else if (
-      participants.length &&
-      typeof participants[0] === "object" &&
-      participants[0].share != null
-    ) {
-      shares = participants.map((p) => ({
-        id: p.userId || p.name,
-        share: p.share,
-      }));
-    } else {
-      const equalShare = participants.length ? amount / participants.length : 0;
-      shares = participants.map((p) => ({
-        id: typeof p === "string" ? p : p.userId || p.name,
-        share: equalShare,
-      }));
-    }
-
-    // subtract each participant's share
-    shares.forEach((s) => {
-      map[s.id] = (map[s.id] || 0) - s.share;
-    });
-
-    // credit the payer with the full amount they paid
-    const payer = payment.payer;
-    map[payer] = (map[payer] || 0) + amount;
-  });
-
-  return Object.keys(map).map((mobile) => ({
-    mobile,
-    name: userStore.getUserByMobile(mobile)?.name || mobile,
-    balance: map[mobile],
-  }));
-});
-
-// Pairwise settlements: who pays whom (list of {from, to, amount})
-const settlements = computed(() => {
-  const list = balances.value.map((b) => ({
-    mobile: b.mobile,
-    name: b.name,
-    balance: Number(b.balance || 0),
-  }));
-  const creditors = list.filter((l) => l.balance > 0).map((c) => ({ ...c }));
-  const debtors = list
-    .filter((l) => l.balance < 0)
-    .map((d) => ({ ...d, balance: -d.balance })); // make positive for owed amount
-
-  const result = [];
-  let i = 0;
-  let j = 0;
-  while (i < debtors.length && j < creditors.length) {
-    const debtor = debtors[i];
-    const creditor = creditors[j];
-    const amt = Math.min(debtor.balance, creditor.balance);
-    if (amt > 0) {
-      result.push({
-        from: debtor.mobile,
-        to: creditor.mobile,
-        amount: parseFloat(amt.toFixed(2)),
-      });
-      debtor.balance = parseFloat((debtor.balance - amt).toFixed(2));
-      creditor.balance = parseFloat((creditor.balance - amt).toFixed(2));
-    }
-    if (debtor.balance <= 0.001) i++;
-    if (creditor.balance <= 0.001) j++;
-  }
-  return result;
-});
+const { 
+  formatAmount, 
+  userStore, 
+  user, 
+  addPaymentsBatch, 
+  settlements,
+  isAdmin,
+  activeGroup,
+  group,
+  hasSettlementRequest,
+  hasUserApprovedSettlement,
+  getSettlementApprovals,
+  getAllSettlementMembers,
+  allMembersApprovedSettlement,
+  requestSettlement,
+  approveSettlement,
+  rejectSettlement
+} = Settlement(props)
 </script>

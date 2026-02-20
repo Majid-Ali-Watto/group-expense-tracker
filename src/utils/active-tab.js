@@ -1,37 +1,58 @@
-import { defineAsyncComponent } from "vue";
-import { Tabs } from "../assets/enums";
+import { defineAsyncComponent } from 'vue'
+import { Tabs } from '../assets/enums'
 const PersonalLoans = defineAsyncComponent(
-  () => import("@/components/personal-loans/PersonalLoans.vue"),
-);
-
+  () => import('@/components/personal-loans/PersonalLoans.vue')
+)
 const PaymentForm = defineAsyncComponent(
-  () => import("@/components/PaymentForm.vue"),
-);
-const LoanForm = defineAsyncComponent(() => import("@/components/Loans.vue"));
-const ExpenseForm = defineAsyncComponent(
-  () => import("@/components/monthly-sallary-expense-manager/Manager.vue"),
-);
-const History = defineAsyncComponent(() => import("@/components/History.vue"));
-const Users = defineAsyncComponent(() => import("@/components/Users.vue"));
-const Groups = defineAsyncComponent(() => import("@/components/Groups.vue"));
+  () => import('@/components/PaymentForm.vue')
+)
+const LoanForm = defineAsyncComponent(() => import('@/components/LoanForm.vue'))
+const SharedLoansGuard = defineAsyncComponent(
+  () => import('@/components/SharedLoansGuard.vue')
+)
+const SalaryManager = defineAsyncComponent(
+  () => import('@/components/monthly-sallary-expense-manager/Manager.vue')
+)
+const SalaryExpenseForm = defineAsyncComponent(
+  () => import('@/components/monthly-sallary-expense-manager/ExpenseForm.vue')
+)
+const History = defineAsyncComponent(() => import('@/components/History.vue'))
+const Users = defineAsyncComponent(() => import('@/components/Users.vue'))
+const Groups = defineAsyncComponent(() => import('@/components/Groups.vue'))
+
+// Used for main tab content rendering
 export function getActiveTab(activeTab) {
-  console.log("Active Tab:", activeTab);
   switch (activeTab) {
     case Tabs.SHARED_EXPENSES:
-      return PaymentForm;
+      return PaymentForm
     case Tabs.SHARED_LOANS:
-      return LoanForm;
-    case Tabs.SALARY_MANAGER:
-      return ExpenseForm;
+      return SharedLoansGuard
+    case Tabs.PERSONAL_EXPENSES:
+      return SalaryManager
     case Tabs.PERSONAL_LOANS:
-      return PersonalLoans;
+      return PersonalLoans
     case Tabs.HISTORY:
-      return History;
+      return History
     case Tabs.USERS:
-      return Users;
+      return Users
     case Tabs.GROUPS:
-      return Groups;
+      return Groups
     default:
-      return null;
+      return null
+  }
+}
+
+// Used for the Table dialog edit form
+export function getEditComponent(activeTab) {
+  switch (activeTab) {
+    case Tabs.SHARED_EXPENSES:
+      return PaymentForm
+    case Tabs.SHARED_LOANS:
+    case Tabs.PERSONAL_LOANS:
+      return LoanForm
+    case Tabs.PERSONAL_EXPENSES:
+      return SalaryExpenseForm
+    default:
+      return null
   }
 }
