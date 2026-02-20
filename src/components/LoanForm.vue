@@ -88,14 +88,54 @@
             />
           </el-col>
         </el-row>
+
+        <!-- Receipt Upload (optional) -->
+        <div class="mb-4">
+          <p class="text-sm font-medium text-gray-700 mb-1">
+            Receipt
+            <span class="text-gray-400 font-normal text-xs">(optional)</span>
+          </p>
+          <div class="flex items-center gap-2 flex-wrap">
+            <el-button size="small" @click="triggerFileInput" :disabled="receiptUploading">
+              {{ receiptFile ? 'Change File' : 'Choose File' }}
+            </el-button>
+            <span v-if="receiptFile" class="text-sm text-gray-600 truncate max-w-[180px]">
+              {{ receiptFile.name }}
+            </span>
+            <span v-else class="text-sm text-gray-400">No file chosen</span>
+            <el-button
+              v-if="receiptFile"
+              size="small"
+              type="danger"
+              text
+              @click="removeReceipt"
+            >✕</el-button>
+            <input
+              ref="fileInputRef"
+              type="file"
+              accept="image/*,.pdf"
+              class="hidden"
+              @change="handleReceiptChange"
+            />
+          </div>
+          <a
+            v-if="existingReceiptUrl && !receiptFile"
+            :href="existingReceiptUrl"
+            target="_blank"
+            rel="noopener"
+            class="text-xs text-blue-500 hover:underline mt-1 inline-block"
+          >View current receipt</a>
+        </div>
         <div v-if="!isEditMode" class="flex justify-end gap-2">
           <el-button type="info" plain @click="closeForm"> Cancel </el-button>
-          <GenericButton
+          <el-button
             v-if="isVisible"
             type="success"
+            :loading="receiptUploading"
             @click="() => validateForm()"
-            >Add Loan</GenericButton
           >
+            {{ receiptUploading ? 'Uploading...' : 'Add Loan' }}
+          </el-button>
         </div>
       </el-form>
     </fieldset>
@@ -106,7 +146,6 @@
 import { rules } from '../assets/validation-rules'
 import {
   AmountInput,
-  GenericButton,
   GenericDropDown,
   GenericInput
 } from './generic-components'
@@ -130,7 +169,14 @@ const {
   formData,
   openForm,
   closeForm,
-  validateForm
+  validateForm,
+  receiptFile,
+  receiptUploading,
+  fileInputRef,
+  existingReceiptUrl,
+  triggerFileInput,
+  handleReceiptChange,
+  removeReceipt
 } = LoanForm(props, emit)
 
 defineExpose({

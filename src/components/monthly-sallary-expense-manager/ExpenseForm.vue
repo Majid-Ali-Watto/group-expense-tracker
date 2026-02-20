@@ -29,13 +29,54 @@
         placeholder="To Whom"
         required
       />
+      <!-- Receipt Upload (optional) -->
+      <div class="mb-4">
+        <p class="text-sm font-medium text-gray-700 mb-1">
+          Receipt
+          <span class="text-gray-400 font-normal text-xs">(optional)</span>
+        </p>
+        <div class="flex items-center gap-2 flex-wrap">
+          <el-button size="small" @click="triggerFileInput" :disabled="receiptUploading">
+            {{ receiptFile ? 'Change File' : 'Choose File' }}
+          </el-button>
+          <span v-if="receiptFile" class="text-sm text-gray-600 truncate max-w-[180px]">
+            {{ receiptFile.name }}
+          </span>
+          <span v-else class="text-sm text-gray-400">No file chosen</span>
+          <el-button
+            v-if="receiptFile"
+            size="small"
+            type="danger"
+            text
+            @click="removeReceipt"
+          >✕</el-button>
+          <input
+            ref="fileInputRef"
+            type="file"
+            accept="image/*,.pdf"
+            class="hidden"
+            @change="handleReceiptChange"
+          />
+        </div>
+        <a
+          v-if="existingReceiptUrl && !receiptFile"
+          :href="existingReceiptUrl"
+          target="_blank"
+          rel="noopener"
+          class="text-xs text-blue-500 hover:underline mt-1 inline-block"
+        >View current receipt</a>
+      </div>
       <div class="flex justify-end" v-if="!isEditMode">
         <GenericButton v-if="showForm" type="info" @click="$emit('click')"
           >Cancel</GenericButton
         >
-        <GenericButton type="success" @click="() => validateForm()"
-          >Add Expense</GenericButton
+        <el-button
+          type="success"
+          :loading="receiptUploading"
+          @click="() => validateForm()"
         >
+          {{ receiptUploading ? 'Uploading...' : 'Add Expense' }}
+        </el-button>
       </div>
     </el-form>
   </fieldset>
@@ -53,7 +94,19 @@ const props = defineProps({
   showForm: Boolean
 })
 
-const { isEditMode, form, expenseForm, validateForm } = ExpenseForm(props, emit)
+const {
+  isEditMode,
+  form,
+  expenseForm,
+  validateForm,
+  receiptFile,
+  receiptUploading,
+  fileInputRef,
+  existingReceiptUrl,
+  triggerFileInput,
+  handleReceiptChange,
+  removeReceipt
+} = ExpenseForm(props, emit)
 
 // Debug: Watch the expenseForm ref
 watch(() => expenseForm.value, (newVal) => {

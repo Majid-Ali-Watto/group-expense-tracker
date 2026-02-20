@@ -8,6 +8,7 @@ export const store = defineStore('tab', {
     activeTab: Tabs.GROUPS, // Default active tab
     activeUser: null,
     sessionToken: null,
+    activeLoginCode: null,
     groups: [],
     activeGroup: null,
     users: [],
@@ -25,6 +26,9 @@ export const store = defineStore('tab', {
     },
     setSessionToken(token) {
       this.sessionToken = token
+    },
+    setActiveLoginCode(code) {
+      this.activeLoginCode = code
     },
     addUser(user) {
       // user: { name, mobile }
@@ -72,6 +76,7 @@ export const store = defineStore('tab', {
     getActiveTab: (state) => state.activeTab,
     getActiveUser: (state) => state.activeUser,
     getSessionToken: (state) => state.sessionToken,
+    getActiveLoginCode: (state) => state.activeLoginCode,
     getUsers: (state) => state.users,
     getUserByMobile: (state) => (mobile) =>
       state.users.find((u) => u.mobile === mobile) || null,

@@ -3,12 +3,51 @@ import getWhoAddedTransaction from '../utils/whoAdded'
 import { friends } from '../assets/data'
 import { store } from '../stores/store'
 import useFireBase from '../api/firebase-apis'
+import { storage } from '../firebase'
+import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
+import { showError } from '../utils/showAlerts'
 
 export const PaymentForm = (props, emit) => {
   const { updateData, saveData } = useFireBase()
   const isVisible = ref(true)
   const userStore = store()
   const isEditMode = computed(() => !!props.row?.amount)
+
+  // ========== Receipt Upload ==========
+  const receiptFiles = ref([])
+  const receiptUploading = ref(false)
+  const fileInputRef = ref(null)
+  const existingReceiptUrls = computed(() => {
+    if (Array.isArray(props.row?.receiptUrls)) return props.row.receiptUrls
+    return props.row?.receiptUrl ? [props.row.receiptUrl] : []
+  })
+
+  function triggerFileInput() {
+    fileInputRef.value?.click()
+  }
+
+  function handleReceiptChange(event) {
+    const files = Array.from(event.target.files || [])
+    if (!files.length) {
+      receiptFiles.value = []
+      return
+    }
+    receiptFiles.value =
+      formData.value.payerMode === 'single' ? [files[0]] : files
+  }
+
+  function removeReceipt() {
+    receiptFiles.value = []
+    if (fileInputRef.value) fileInputRef.value.value = ''
+  }
+
+  async function uploadReceiptToStorage(file) {
+    const groupId = userStore.getActiveGroup || 'global'
+    const path = `receipts/${groupId}/${Date.now()}_${file.name}`
+    const sRef = storageRef(storage, path)
+    const snapshot = await uploadBytes(sRef, file)
+    return await getDownloadURL(snapshot.ref)
+  }
 
   const showTransactionForm = ref(false)
 
@@ -71,8 +110,18 @@ export const PaymentForm = (props, emit) => {
       formData.value.splitMode = newRow?.splitMode ?? 'equal'
       formData.value.splitItems = newRow?.splitItems ?? []
       isVisible.value = !newRow?.amount
+      receiptFiles.value = []
     },
     { immediate: true }
+  )
+
+  watch(
+    () => formData.value.payerMode,
+    (mode) => {
+      if (mode === 'single' && receiptFiles.value.length > 1) {
+        receiptFiles.value = receiptFiles.value.slice(0, 1)
+      }
+    }
   )
 
   const transactionForm = ref(null)
@@ -114,15 +163,32 @@ export const PaymentForm = (props, emit) => {
   }
 
   const validateForm = (whatTask = 'Save') => {
-    transactionForm.value.validate((valid) => {
+    transactionForm.value.validate(async (valid) => {
       if (valid) {
         let monthYear = formData.value.date.split('-')
         monthYear = monthYear[0] + '-' + monthYear[1].toString().padStart(2, 0)
         const groupId = userStore.getActiveGroup || 'global'
+
+        // Upload receipt if a new file was selected
+        let receiptUrls = existingReceiptUrls.value
+        if (receiptFiles.value.length) {
+          try {
+            receiptUploading.value = true
+            receiptUrls = await Promise.all(
+              receiptFiles.value.map((file) => uploadReceiptToStorage(file))
+            )
+          } catch {
+            showError('Failed to upload receipt. Please try again.')
+            receiptUploading.value = false
+            return
+          }
+          receiptUploading.value = false
+        }
+
         if (whatTask == 'Save') {
           saveData(
             `payments/${groupId}/${monthYear}`,
-            getPaymentData,
+            () => getPaymentData(receiptUrls),
             transactionForm,
             'Transaction successfully saved.',
             () => {
@@ -136,12 +202,14 @@ export const PaymentForm = (props, emit) => {
               formData.value.date = ''
               formData.value.splitMode = 'equal'
               formData.value.splitItems = []
+              receiptFiles.value = []
               showTransactionForm.value = false
             }
           )
         } else if (whatTask == 'Update') {
           createUpdateRequest(
-            `payments/${groupId}/${monthYear}/${props.row.id}`
+            `payments/${groupId}/${monthYear}/${props.row.id}`,
+            receiptUrls
           )
         } else if (whatTask == 'Delete') {
           createDeleteRequest(
@@ -171,12 +239,12 @@ export const PaymentForm = (props, emit) => {
     emit('closeModal')
   }
 
-  const createUpdateRequest = (paymentPath) => {
+  const createUpdateRequest = (paymentPath, receiptUrls = []) => {
     const activeUser = userStore.getActiveUser
     const userName = userStore.getUserByMobile(activeUser)?.name || activeUser
 
     const updateRequest = {
-      changes: getPaymentData(),
+      changes: getPaymentData(receiptUrls),
       requestedBy: activeUser,
       requestedByName: userName,
       approvals: [activeUser],
@@ -191,7 +259,7 @@ export const PaymentForm = (props, emit) => {
     emit('closeModal')
   }
 
-  function getPaymentData() {
+  function getPaymentData(receiptUrls = []) {
     const amount = parseFloat(formData.value.amount)
     const participantsList =
       formData.value.participants && formData.value.participants.length
@@ -274,7 +342,13 @@ export const PaymentForm = (props, emit) => {
       participants: participantsList,
       splitMode: formData.value.splitMode,
       ...(formData.value.splitMode === 'custom' ? { splitItems: formData.value.splitItems } : {}),
-      split
+      split,
+      ...(receiptUrls && receiptUrls.length
+        ? {
+            receiptUrl: receiptUrls[0],
+            receiptUrls
+          }
+        : {})
     }
 
     return payment
@@ -295,6 +369,13 @@ export const PaymentForm = (props, emit) => {
     removeSplitItem,
     payersTotal,
     addPayer,
-    removePayer
+    removePayer,
+    receiptFiles,
+    receiptUploading,
+    fileInputRef,
+    existingReceiptUrls,
+    triggerFileInput,
+    handleReceiptChange,
+    removeReceipt
   }
 }

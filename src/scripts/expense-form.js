@@ -3,6 +3,9 @@ import { store } from '../stores/store'
 import getCurrentMonth from '../utils/getCurrentMonth'
 import getWhoAddedTransaction from '../utils/whoAdded'
 import useFireBase from '../api/firebase-apis'
+import { storage } from '../firebase'
+import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
+import { showError } from '../utils/showAlerts'
 
 export const ExpenseForm = (props, emit) => {
   const { saveData, updateData, deleteData } = useFireBase()
@@ -15,6 +18,12 @@ export const ExpenseForm = (props, emit) => {
     location: '',
     recipient: ''
   })
+
+  // Receipt upload (single file)
+  const receiptFile = ref(null)
+  const receiptUploading = ref(false)
+  const fileInputRef = ref(null)
+  const existingReceiptUrl = computed(() => props.row?.receiptUrl || null)
 
   const expenseForm = ref(null)
   const userStore = store()
@@ -38,6 +47,8 @@ export const ExpenseForm = (props, emit) => {
         location: newRow?.location ?? '',
         recipient: newRow?.recipient ?? ''
       }
+      receiptFile.value = null
+      if (fileInputRef.value) fileInputRef.value.value = ''
     },
     { immediate: true, deep: true }
   )
@@ -61,17 +72,35 @@ export const ExpenseForm = (props, emit) => {
     console.log('Form ref is now available, validating...')
     expenseForm.value.validate(async (valid) => {
       if (valid) {
+        // Upload receipt if selected
+        let receiptUrl = existingReceiptUrl.value
+        if (receiptFile.value) {
+          try {
+            receiptUploading.value = true
+            receiptUrl = await uploadReceiptToStorage(receiptFile.value)
+          } catch {
+            showError('Failed to upload receipt. Please try again.')
+            receiptUploading.value = false
+            return
+          }
+          receiptUploading.value = false
+        }
+
         if (whatTask == 'Save') {
           saveData(
             `expenses/${activeUser.value}/${getCurrentMonth()}`,
-            getExpenseData,
+            () => getExpenseData(receiptUrl),
             expenseForm,
-            'Expense added successfully!'
+            'Expense added successfully!',
+            () => {
+              receiptFile.value = null
+              if (fileInputRef.value) fileInputRef.value.value = ''
+            }
           )
         } else if (whatTask == 'Update') {
           updateData(
             `expenses/${activeUser.value}/${selectedMonth.value}/${props.row.id}`,
-            getExpenseData,
+            () => getExpenseData(receiptUrl),
             `Expense record with ID ${props.row.id} updated successfully`
           )
           emit('closeModal')
@@ -86,7 +115,28 @@ export const ExpenseForm = (props, emit) => {
     })
   }
 
-  function getExpenseData() {
+  function triggerFileInput() {
+    fileInputRef.value?.click()
+  }
+
+  function handleReceiptChange(event) {
+    receiptFile.value = event.target.files?.[0] || null
+  }
+
+  function removeReceipt() {
+    receiptFile.value = null
+    if (fileInputRef.value) fileInputRef.value.value = ''
+  }
+
+  async function uploadReceiptToStorage(file) {
+    const groupId = userStore.getActiveGroup || 'personal'
+    const path = `receipts/${groupId}/${Date.now()}_${file.name}`
+    const sRef = storageRef(storage, path)
+    const snapshot = await uploadBytes(sRef, file)
+    return await getDownloadURL(snapshot.ref)
+  }
+
+  function getExpenseData(receiptUrl = null) {
     return {
       amount: form.value?.amount,
       description: form.value?.description,
@@ -95,7 +145,8 @@ export const ExpenseForm = (props, emit) => {
       month: getCurrentMonth(),
       whoAdded: getWhoAddedTransaction(),
       date: new Date().toLocaleString('en-PK'),
-      whenAdded: new Date().toLocaleString('en-PK')
+      whenAdded: new Date().toLocaleString('en-PK'),
+      ...(receiptUrl ? { receiptUrl } : {})
     }
   }
 
@@ -104,6 +155,13 @@ export const ExpenseForm = (props, emit) => {
     isEditMode,
     form,
     expenseForm,
-    validateForm
+    validateForm,
+    receiptFile,
+    receiptUploading,
+    fileInputRef,
+    existingReceiptUrl,
+    triggerFileInput,
+    handleReceiptChange,
+    removeReceipt
   }
 }

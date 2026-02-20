@@ -155,6 +155,51 @@
             </el-form-item>
 
             <DataTimePicker v-model="formData.date" required />
+
+            <!-- Receipt Upload (optional) -->
+            <div class="mb-4">
+              <p class="text-sm font-medium text-gray-700 mb-1">
+                Receipt
+                <span class="text-gray-400 font-normal text-xs">(optional)</span>
+                <span class="text-xs text-gray-500 ml-2">
+                  {{ formData.payerMode === 'multiple' ? 'You can upload multiple files' : 'Single file only' }}
+                </span>
+              </p>
+              <div class="flex items-center gap-2 flex-wrap">
+                <el-button size="small" @click="triggerFileInput" :disabled="receiptUploading">
+                  {{ receiptFiles.length ? 'Change File' : 'Choose File' }}
+                </el-button>
+                <span v-if="receiptFiles.length" class="text-sm text-gray-600 truncate max-w-[220px]">
+                  {{ receiptFiles.length === 1 ? receiptFiles[0].name : receiptFiles[0].name + ' +' + (receiptFiles.length - 1) + ' more' }}
+                </span>
+                <span v-else class="text-sm text-gray-400">No file chosen</span>
+                <el-button
+                  v-if="receiptFiles.length"
+                  size="small"
+                  type="danger"
+                  text
+                  @click="removeReceipt"
+                >✕</el-button>
+                <input
+                  ref="fileInputRef"
+                  type="file"
+                  accept="image/*,.pdf"
+                  class="hidden"
+                  :multiple="formData.payerMode === 'multiple'"
+                  @change="handleReceiptChange"
+                />
+              </div>
+              <div v-if="existingReceiptUrls.length && !receiptFiles.length" class="flex flex-col gap-1 mt-1">
+                <a
+                  v-for="(url, idx) in existingReceiptUrls"
+                  :key="idx"
+                  :href="url"
+                  target="_blank"
+                  rel="noopener"
+                  class="text-xs text-blue-500 hover:underline inline-block"
+                >View receipt {{ existingReceiptUrls.length > 1 ? idx + 1 : '' }}</a>
+              </div>
+            </div>
           </el-col>
 
           <el-col :lg="12" :md="12" :sm="24">
@@ -276,9 +321,13 @@
         <!-- Buttons (only for add mode, not dialog edit mode) -->
         <div v-if="!isEditMode" class="flex justify-end gap-2">
           <el-button type="info" plain @click="closeForm"> Cancel </el-button>
-          <GenericButton type="success" @click="() => validateForm()">
-            Add Payment
-          </GenericButton>
+          <el-button
+            type="success"
+            :loading="receiptUploading"
+            @click="() => validateForm()"
+          >
+            {{ receiptUploading ? 'Uploading...' : 'Add Payment' }}
+          </el-button>
         </div>
       </el-form>
     </fieldset>
@@ -294,7 +343,6 @@ import { defineAsyncComponent } from 'vue'
 import {
   DataTimePicker,
   AmountInput,
-  GenericButton,
   GenericDropDown,
   GenericInput
 } from './generic-components'
@@ -322,7 +370,14 @@ const {
   removeSplitItem,
   payersTotal,
   addPayer,
-  removePayer
+  removePayer,
+  receiptFiles,
+  receiptUploading,
+  fileInputRef,
+  existingReceiptUrls,
+  triggerFileInput,
+  handleReceiptChange,
+  removeReceipt
 } = PaymentForm(props, emit)
 
 defineExpose({

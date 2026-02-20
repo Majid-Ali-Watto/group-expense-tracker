@@ -52,6 +52,7 @@ export const App = () => {
     tabStore.setActiveUser(null)
     tabStore.setActiveGroup(null)
     tabStore.setSessionToken(null)
+    tabStore.setActiveLoginCode(null)
     sessionStorage.removeItem('_session')
     // rememberMeData (name + mobile) is intentionally kept if Remember Me was enabled.
     // It was already cleared during login when Remember Me is OFF.
@@ -78,12 +79,14 @@ export const App = () => {
     const mobile = tabStore.getActiveUser
     if (!mobile) return false
 
-    const storedLoginCode = tabStore.getUserByMobile(mobile)?.loginCode
-    if (!storedLoginCode) return false
+    // activeLoginCode is set at login time in its own store field —
+    // it is never overwritten by setUsers(), unlike the users list entries.
+    const activeLoginCode = tabStore.getActiveLoginCode
+    if (!activeLoginCode) return false
 
     try {
       const user = await read(`users/${mobile}`, loading)
-      return !!(user && user.loginCode === storedLoginCode)
+      return !!(user && user.loginCode === activeLoginCode)
     } catch {
       return false
     }

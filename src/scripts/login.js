@@ -60,6 +60,7 @@ export const Login = () => {
     ])
     userStore.setActiveUser(payload.mobile)
     userStore.addUser(payload)
+    userStore.setActiveLoginCode(payload.loginCode)
     userStore.setSessionToken(encryptedStore)
     sessionStorage.setItem('_session', encryptedSession)
     activateUserGroup(payload.mobile)

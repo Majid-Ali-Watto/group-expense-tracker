@@ -1,28 +1,33 @@
 <template>
-  <header
-    class="flex items-center justify-between mb-6 fixed top-0 left-0 w-full p-3 bg-white shadow-md z-50 transition-all duration-300"
+  <el-header 
+    class="fintrack-header flex items-center justify-between shadow-md fixed top-0 left-0 w-full z-50 bg-white transition-all duration-300"
   >
-    <span
-      class="text-base sm:text-xl md:text-2xl lg:text-3xl font-bold text-center px-4 text-black"
-    >
-      FinTrack
-    </span>
+    <div class="logo-section">
+      <span class="text-base sm:text-xl md:text-2xl font-bold text-black">
+        FinTrack
+      </span>
+    </div>
 
-    <button
-      v-if="loggedIn"
-      @click="setLoggedInStatus"
-      class="text-blue-500 hover:text-white hover:bg-blue-500 border border-blue-500 rounded-md px-1 transition duration-200"
-    >
-      Logout
-    </button>
-  </header>
+    <div v-if="loggedIn" class="actions-section">
+      <el-button 
+        type="primary" 
+        plain 
+        size="small" 
+        @click="setLoggedInStatus"
+      >
+        Logout
+      </el-button>
+    </div>
+  </el-header>
 </template>
 
 <script>
 export default {
+  name: 'AppHeader',
   props: {
     loggedIn: { type: Boolean, default: false }
   },
+  emits: ['click-log'], // Explicitly defining emits is a Vue 3 best practice
 
   setup(props, { emit }) {
     function setLoggedInStatus() {
@@ -35,3 +40,14 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+.fintrack-header {
+  /* Ensure the header height is consistent with el-main's expectations */
+  --el-header-padding: 0 20px;
+  --el-header-height: 60px;
+}
+
+/* Since the header is fixed, remember to add padding-top to your 
+   main content container (like el-main) so it doesn't hide behind the header! */
+</style>

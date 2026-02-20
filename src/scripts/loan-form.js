@@ -2,6 +2,9 @@ import { ref, watch, computed } from 'vue'
 import getWhoAddedTransaction from '../utils/whoAdded'
 import useFireBase from '../api/firebase-apis'
 import { store } from '../stores/store'
+import { storage } from '../firebase'
+import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
+import { showError } from '../utils/showAlerts'
 
 export const LoanForm = (props, emit) => {
   const userStore = store()
@@ -17,6 +20,8 @@ export const LoanForm = (props, emit) => {
       loanReceiver: '',
       description: ''
     }
+    receiptFile.value = null
+    if (fileInputRef.value) fileInputRef.value.value = ''
     setTimeout(() => {
       if (loanForm.value) {
         loanForm.value.clearValidate()
@@ -51,6 +56,12 @@ export const LoanForm = (props, emit) => {
   const isVisible = ref(true)
   const isEditMode = computed(() => !!props.row?.amount)
 
+  // ========== Receipt Upload ==========
+  const receiptFile = ref(null)
+  const receiptUploading = ref(false)
+  const fileInputRef = ref(null)
+  const existingReceiptUrl = computed(() => props.row?.receiptUrl || null)
+
   const formData = ref({
     amount: null,
     loanGiver: '',
@@ -66,12 +77,14 @@ export const LoanForm = (props, emit) => {
       formData.value.loanReceiver = newRow?.receiver ?? ''
       formData.value.description = newRow?.description ?? ''
       isVisible.value = !newRow?.amount
+      receiptFile.value = null
+      if (fileInputRef.value) fileInputRef.value.value = ''
     },
     { immediate: true }
   )
 
   const validateForm = (whatTask = 'Save') => {
-    loanForm.value.validate((valid) => {
+    loanForm.value.validate(async (valid) => {
       if (valid) {
         let loanPath
         if (props.isPersonal) {
@@ -83,16 +96,42 @@ export const LoanForm = (props, emit) => {
           loanPath = `${props.dbRef}/${groupId}`
         }
 
+        // Upload receipt if selected
+        let receiptUrl = existingReceiptUrl.value
+        if (receiptFile.value) {
+          try {
+            receiptUploading.value = true
+            receiptUrl = await uploadReceiptToStorage(receiptFile.value)
+          } catch {
+            showError('Failed to upload receipt. Please try again.')
+            receiptUploading.value = false
+            return
+          }
+          receiptUploading.value = false
+        }
+
         if (whatTask == 'Save') {
-          saveData(loanPath, getLoanData, loanForm, 'Loan added successfully.')
+          saveData(
+            loanPath,
+            () => getLoanData(receiptUrl),
+            loanForm,
+            'Loan added successfully.',
+            () => {
+              receiptFile.value = null
+              if (fileInputRef.value) fileInputRef.value.value = ''
+            }
+          )
         } else if (whatTask == 'Update') {
           if (!props.isPersonal) {
             const groupId = userStore.getActiveGroup || 'global'
-            createUpdateRequest(`${props.dbRef}/${groupId}/${props.row.id}`)
+            createUpdateRequest(
+              `${props.dbRef}/${groupId}/${props.row.id}`,
+              receiptUrl
+            )
           } else {
             updateData(
               `${loanPath}/${props.row.id}`,
-              getLoanData,
+              () => getLoanData(receiptUrl),
               `Loan record with ID ${props.row.id} updated successfully`
             )
             emit('closeModal')
@@ -111,6 +150,27 @@ export const LoanForm = (props, emit) => {
         }
       }
     })
+  }
+
+  function triggerFileInput() {
+    fileInputRef.value?.click()
+  }
+
+  function handleReceiptChange(event) {
+    receiptFile.value = event.target.files?.[0] || null
+  }
+
+  function removeReceipt() {
+    receiptFile.value = null
+    if (fileInputRef.value) fileInputRef.value.value = ''
+  }
+
+  async function uploadReceiptToStorage(file) {
+    const groupId = userStore.getActiveGroup || 'global'
+    const path = `receipts/${groupId}/${Date.now()}_${file.name}`
+    const sRef = storageRef(storage, path)
+    const snapshot = await uploadBytes(sRef, file)
+    return await getDownloadURL(snapshot.ref)
   }
 
   const createDeleteRequest = (loanPath) => {
@@ -132,12 +192,12 @@ export const LoanForm = (props, emit) => {
     emit('closeModal')
   }
 
-  const createUpdateRequest = (loanPath) => {
+  const createUpdateRequest = (loanPath, receiptUrl = null) => {
     const activeUser = userStore.getActiveUser
     const userName = userStore.getUserByMobile(activeUser)?.name || activeUser
 
     const updateRequest = {
-      changes: getLoanData(),
+      changes: getLoanData(receiptUrl),
       requestedBy: activeUser,
       requestedByName: userName,
       approvals: [activeUser],
@@ -152,7 +212,7 @@ export const LoanForm = (props, emit) => {
     emit('closeModal')
   }
 
-  function getLoanData() {
+  function getLoanData(receiptUrl = null) {
     const loan = {
       amount: formData.value.amount,
       description: formData.value.description,
@@ -163,7 +223,8 @@ export const LoanForm = (props, emit) => {
         ' ' +
         new Date().toLocaleTimeString(),
       whoAdded: getWhoAddedTransaction(),
-      whenAdded: new Date().toLocaleString('en-PK')
+      whenAdded: new Date().toLocaleString('en-PK'),
+      ...(receiptUrl ? { receiptUrl } : {})
     }
     return loan
   }
@@ -176,6 +237,13 @@ export const LoanForm = (props, emit) => {
     formData,
     openForm,
     closeForm,
-    validateForm
+    validateForm,
+    receiptFile,
+    receiptUploading,
+    fileInputRef,
+    existingReceiptUrl,
+    triggerFileInput,
+    handleReceiptChange,
+    removeReceipt
   }
 }

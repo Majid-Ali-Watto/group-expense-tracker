@@ -20,3 +20,12 @@ Welcome to **FinTrack**, your reliable partner for managing and organizing finan
 **Built for Convenience**
 
 Our app uses modern web technologies, including Vue.js and Element Plus, to offer a fast, smooth, and reliable user experience. Firebase integration allows for real-time updates and secure data management, ensuring you have accurate information at your fingertips.
+
+
+npm install -g firebase-tools
+firebase login
+firebase storage:cors set cors.json --bucket gs://khata-application.firebasestorage.app
+
+If firebase storage:cors set isn't recognised (older CLI), fall back to:
+
+npx -y gsutil cors set cors.json gs://khata-application.firebasestorage.app

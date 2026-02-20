@@ -76,6 +76,34 @@
                   row[header.key]) + ` (${row[header.key]})`
               }}</span
             >
+            <span v-else-if="header.key === 'receiptUrls'">
+              <template v-if="Array.isArray(row.receiptUrls) && row.receiptUrls.length">
+                <a
+                  v-for="(url, i) in row.receiptUrls"
+                  :key="i"
+                  :href="url"
+                  target="_blank"
+                  rel="noopener"
+                  class="text-blue-600 hover:underline mr-2"
+                >
+                  Receipt {{ i + 1 }}
+                </a>
+              </template>
+              <template v-else>—</template>
+            </span>
+            <span v-else-if="header.key === 'receiptUrl'">
+              <template v-if="row.receiptUrl">
+                <a
+                  :href="row.receiptUrl"
+                  target="_blank"
+                  rel="noopener"
+                  class="text-blue-600 hover:underline"
+                >
+                  View Receipt
+                </a>
+              </template>
+              <template v-else>—</template>
+            </span>
             <span v-else>
               {{
                 typeof row[header.key] === 'object'
