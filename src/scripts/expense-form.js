@@ -3,12 +3,7 @@ import { store } from '../stores/store'
 import getCurrentMonth from '../utils/getCurrentMonth'
 import getWhoAddedTransaction from '../utils/whoAdded'
 import useFireBase from '../api/firebase-apis'
-import { storage } from '../firebase'
-import {
-  ref as storageRef,
-  uploadBytes,
-  getDownloadURL
-} from 'firebase/storage'
+import { uploadToCloudinary, deleteFromCloudinary } from '../utils/cloudinaryUpload'
 import { showError } from '../utils/showAlerts'
 
 export const ExpenseForm = (props, emit) => {
@@ -28,6 +23,7 @@ export const ExpenseForm = (props, emit) => {
   const receiptUploading = ref(false)
   const fileInputRef = ref(null)
   const existingReceiptUrl = computed(() => props.row?.receiptUrl || null)
+  const existingReceiptMeta = computed(() => props.row?.receiptMeta || null)
 
   const expenseForm = ref(null)
   const userStore = store()
@@ -63,25 +59,28 @@ export const ExpenseForm = (props, emit) => {
     while (!expenseForm.value && retries < 30) {
       await new Promise((resolve) => setTimeout(resolve, 50))
       retries++
-      console.log(`Waiting for expenseForm ref... retry ${retries}`)
     }
 
     if (!expenseForm.value) {
       console.error('Form reference is not available after retries')
-      console.error('expenseForm ref:', expenseForm)
-      console.error('expenseForm.value:', expenseForm.value)
       return
     }
 
-    console.log('Form ref is now available, validating...')
     expenseForm.value.validate(async (valid) => {
       if (valid) {
         // Upload receipt if selected
         let receiptUrl = existingReceiptUrl.value
+        let receiptMeta = existingReceiptMeta.value
         if (receiptFile.value) {
           try {
             receiptUploading.value = true
-            receiptUrl = await uploadReceiptToStorage(receiptFile.value)
+            const uploaded = await uploadReceiptToStorage(receiptFile.value)
+            receiptUrl = uploaded.url
+            receiptMeta = { url: uploaded.url, publicId: uploaded.publicId, resourceType: uploaded.resourceType }
+            // Delete old Cloudinary file when replacing on update
+            if (whatTask === 'Update' && existingReceiptMeta.value) {
+              deleteFromCloudinary(existingReceiptMeta.value.publicId, existingReceiptMeta.value.resourceType)
+            }
           } catch {
             showError('Failed to upload receipt. Please try again.')
             receiptUploading.value = false
@@ -93,7 +92,7 @@ export const ExpenseForm = (props, emit) => {
         if (whatTask == 'Save') {
           saveData(
             `expenses/${activeUser.value}/${getCurrentMonth()}`,
-            () => getExpenseData(receiptUrl),
+            () => getExpenseData(receiptUrl, receiptMeta),
             expenseForm,
             'Expense added successfully!',
             () => {
@@ -104,11 +103,14 @@ export const ExpenseForm = (props, emit) => {
         } else if (whatTask == 'Update') {
           updateData(
             `expenses/${activeUser.value}/${selectedMonth.value}/${props.row.id}`,
-            () => getExpenseData(receiptUrl),
+            () => getExpenseData(receiptUrl, receiptMeta),
             `Expense record with ID ${props.row.id} updated successfully`
           )
           emit('closeModal')
         } else if (whatTask == 'Delete') {
+          if (existingReceiptMeta.value) {
+            deleteFromCloudinary(existingReceiptMeta.value.publicId, existingReceiptMeta.value.resourceType)
+          }
           deleteData(
             `expenses/${activeUser.value}/${selectedMonth.value}/${props.row.id}`,
             `Expense record with ID ${props.row.id} deleted successfully`
@@ -124,7 +126,27 @@ export const ExpenseForm = (props, emit) => {
   }
 
   function handleReceiptChange(event) {
-    receiptFile.value = event.target.files?.[0] || null
+    const file = event.target.files?.[0] || null
+    if (!file) {
+      receiptFile.value = null
+      return
+    }
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/bmp', 'image/webp']
+    if (!allowedTypes.includes(file.type)) {
+      showError('Only image files (JPG, PNG, GIF, BMP, WEBP) are allowed.')
+      if (fileInputRef.value) fileInputRef.value.value = ''
+      receiptFile.value = null
+      return
+    }
+    // Validate file size (max 1MB)
+    if (file.size > 1024 * 1024) {
+      showError('File size must be less than 1MB.')
+      if (fileInputRef.value) fileInputRef.value.value = ''
+      receiptFile.value = null
+      return
+    }
+    receiptFile.value = file
   }
 
   function removeReceipt() {
@@ -133,14 +155,10 @@ export const ExpenseForm = (props, emit) => {
   }
 
   async function uploadReceiptToStorage(file) {
-    const groupId = userStore.getActiveGroup || 'personal'
-    const path = `receipts/${groupId}/${Date.now()}_${file.name}`
-    const sRef = storageRef(storage, path)
-    const snapshot = await uploadBytes(sRef, file)
-    return await getDownloadURL(snapshot.ref)
+    return await uploadToCloudinary(file)
   }
 
-  function getExpenseData(receiptUrl = null) {
+  function getExpenseData(receiptUrl = null, receiptMeta = null) {
     return {
       amount: form.value?.amount,
       description: form.value?.description,
@@ -150,7 +168,7 @@ export const ExpenseForm = (props, emit) => {
       whoAdded: getWhoAddedTransaction(),
       date: new Date().toLocaleString('en-PK'),
       whenAdded: new Date().toLocaleString('en-PK'),
-      ...(receiptUrl ? { receiptUrl } : {})
+      ...(receiptUrl ? { receiptUrl, receiptMeta } : {})
     }
   }
 

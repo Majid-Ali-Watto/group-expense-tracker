@@ -163,12 +163,9 @@
                 <span class="text-gray-400 font-normal text-xs"
                   >(optional)</span
                 >
-                <span class="text-xs text-gray-500 ml-2">
-                  {{
-                    formData.payerMode === 'multiple'
-                      ? 'You can upload multiple files'
-                      : 'Single file only'
-                  }}
+                <span class="block text-xs text-gray-500 mt-1">
+                  Only image files (JPG, PNG, GIF, BMP, WEBP) are allowed. Max size: 1MB per file.
+                  {{ formData.payerMode === 'multiple' ? 'You can upload multiple files.' : 'Single file only.' }}
                 </span>
               </p>
               <div class="flex items-center gap-2 flex-wrap">
@@ -204,7 +201,7 @@
                 <input
                   ref="fileInputRef"
                   type="file"
-                  accept="image/*,.pdf"
+                  accept="image/*"
                   class="hidden"
                   :multiple="formData.payerMode === 'multiple'"
                   @change="handleReceiptChange"

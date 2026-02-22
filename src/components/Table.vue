@@ -83,19 +83,20 @@
               }}</span
             >
             <span v-else-if="header.key === 'receiptUrls'">
-              <template
-                v-if="Array.isArray(row.receiptUrls) && row.receiptUrls.length"
-              >
-                <a
-                  v-for="(url, i) in row.receiptUrls"
-                  :key="i"
-                  :href="url"
-                  target="_blank"
-                  rel="noopener"
-                  class="text-blue-600 hover:underline mr-2"
-                >
-                  Receipt {{ i + 1 }}
-                </a>
+              <template v-if="Array.isArray(row.receiptUrls) && row.receiptUrls.length">
+                <ol class="list-decimal pl-4">
+                  <li v-for="(url, i) in row.receiptUrls" :key="i">
+                    <a
+                      :href="url"
+                      target="_blank"
+                      rel="noopener"
+                      class="text-blue-600 hover:underline"
+                      @click.stop
+                    >
+                      {{ getFileNameFromUrl(url) }}
+                    </a>
+                  </li>
+                </ol>
               </template>
               <template v-else>—</template>
             </span>
@@ -106,8 +107,9 @@
                   target="_blank"
                   rel="noopener"
                   class="text-blue-600 hover:underline"
+                  @click.stop
                 >
-                  View Receipt
+                  {{ getFileNameFromUrl(row.receiptUrl) }}
                 </a>
               </template>
               <template v-else>—</template>
@@ -210,6 +212,7 @@ const {
   handleDoubleClick,
   downloadExcelData,
   downloadPdfData,
-  childRef
+  childRef,
+  getFileNameFromUrl
 } = Table(props)
 </script>

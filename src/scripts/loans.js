@@ -4,10 +4,13 @@ import { friends } from '../assets/data'
 import { store } from '../stores/store'
 import useFireBase from '../api/firebase-apis'
 import { ElMessageBox } from 'element-plus'
+import { deleteFromCloudinary } from '../utils/cloudinaryUpload'
+import getCurrentMonth from '../utils/getCurrentMonth'
+import { showError } from '../utils/showAlerts'
 
 export const Loans = () => {
   const userStore = store()
-  const { dbRef, updateData, deleteData } = useFireBase()
+  const { dbRef, readShallow, updateData, deleteData } = useFireBase()
   const formatAmount = inject('formatAmount')
 
   const showLoanForm = ref(false)
@@ -15,7 +18,7 @@ export const Loans = () => {
     showLoanForm.value = !showLoanForm.value
   }
 
-  const selectedMonth = ref('All')
+  const selectedMonth = ref(getCurrentMonth())
   const selectedGiver = ref('All')
   const months = ref([])
 
@@ -53,67 +56,80 @@ export const Loans = () => {
   const rawLoansData = ref({})
   const loanContent = ref(null)
 
-  let loansRef = null
+  let loansListener = null
 
-  const fetchLoans = () => {
-    if (loansRef) {
-      off(loansRef)
+  // Fetch available months
+  const fetchMonths = async () => {
+    const groupId = userStore.getActiveGroup || 'global'
+    try {
+      months.value = await readShallow(`loans/${groupId}`)
+      if (months.value.length) selectedMonth.value = getCurrentMonth()
+    } catch {
+      showError('Failed to load months. Please try again.')
     }
+  }
+  // Fetch loans for the selected month
 
-    const groupId = activeGroup.value || 'global'
-    const path = `loans/${groupId}`
-    loansRef = dbRef(path)
+    const fetchLoans = () => {
+    const groupId = userStore.getActiveGroup || 'global'
+    const loansRef = dbRef(
+      `loans/${groupId}/${selectedMonth.value}`
+    )
+    if (loansListener) off(loansRef, 'value', loansListener)
 
-    onValue(loansRef, (snapshot) => {
-      if (snapshot.exists()) {
-        const data = snapshot.val()
-        rawLoansData.value = data
+    loansListener = onValue(
+      loansRef,
+      (snapshot) => {
+        if (snapshot.exists()) {
+          const data = snapshot.val()
+          rawLoansData.value = data
 
-        const loansArray = []
-        const keysArray = []
-        const monthsSet = new Set()
+          const loansArray = []
+          const keysArray = []
 
-        Object.keys(data).forEach((key) => {
-          if (data[key] && data[key].amount) {
-            loansArray.push(data[key])
-            keysArray.push(key)
-
-            if (data[key].date) {
-              const date = new Date(data[key].date)
-              const monthYear = `${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`
-              monthsSet.add(monthYear)
+          Object.keys(data).forEach((key) => {
+            if (data[key].amount) {
+              loansArray.push(data[key])
+              keysArray.push(key)
             }
-          }
-        })
+          })
 
-        loans.value = loansArray
-        loanKeys.value = keysArray
-
-        months.value = Array.from(monthsSet).sort((a, b) => {
-          const [aMonth, aYear] = a.split('/').map(Number)
-          const [bMonth, bYear] = b.split('/').map(Number)
-          return bYear - aYear || bMonth - aMonth
-        })
-      } else {
-        loans.value = []
-        loanKeys.value = []
-        rawLoansData.value = {}
-        months.value = []
+          loanKeys.value = keysArray
+          loans.value = loansArray
+        } else {
+          loanKeys.value = []
+          loans.value = []
+          rawLoansData.value = {}
+        }
+      },
+      () => {
+        showError('Failed to load loans. Please try again.')
       }
-    })
+    )
   }
 
-  onMounted(() => {
+  // Watch active group and refetch when it changes
+  watch(activeGroup, () => {
+    selectedMonth.value = getCurrentMonth()
+    selectedGiver.value = 'All'
+    fetchMonths()
     fetchLoans()
   })
 
-  watch(activeGroup, () => {
+  // Watch for changes in selectedMonth
+  watch(selectedMonth, () => {
+    selectedGiver.value = 'All'
+    fetchLoans()
+  })
+
+  onMounted(() => {
+    fetchMonths()
     fetchLoans()
   })
 
   onUnmounted(() => {
-    if (loansRef) {
-      off(loansRef)
+    if (loansListener) {
+      off(loansListener)
     }
   })
 
@@ -125,16 +141,9 @@ export const Loans = () => {
     if (!loans.value) return []
 
     return loans.value.filter((loan) => {
+      // Only filter by giver (month filtering is done in fetchLoans)
       if (selectedGiver.value !== 'All' && loan.giver !== selectedGiver.value) {
         return false
-      }
-
-      if (selectedMonth.value !== 'All' && loan.date) {
-        const date = new Date(loan.date)
-        const loanMonthYear = `${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`
-        if (loanMonthYear !== selectedMonth.value) {
-          return false
-        }
       }
 
       return true
@@ -172,7 +181,11 @@ export const Loans = () => {
       const loan = rawLoansData.value[loanId]
       if (loan && loan.notifications && loan.notifications[activeUser.value]) {
         loan.notifications[activeUser.value].forEach((notif) => {
-          notifications.push({ ...notif, loanId })
+          notifications.push({
+            ...notif,
+            loanId,
+            monthYear: selectedMonth.value
+          })
         })
       }
     })
@@ -191,14 +204,16 @@ export const Loans = () => {
         )
 
         if (filtered.length !== loan.notifications[activeUser.value].length) {
+          const loanPath = `loans/${groupId}/${selectedMonth.value}/${loanId}`
+
           if (filtered.length === 0) {
             await deleteData(
-              `loans/${groupId}/${loanId}/notifications/${activeUser.value}`,
+              `${loanPath}/notifications/${activeUser.value}`,
               ''
             )
           } else {
             await updateData(
-              `loans/${groupId}/${loanId}/notifications/${activeUser.value}`,
+              `${loanPath}/notifications/${activeUser.value}`,
               () => filtered,
               ''
             )
@@ -218,16 +233,21 @@ export const Loans = () => {
     Object.keys(rawLoansData.value).forEach((loanId) => {
       const loan = rawLoansData.value[loanId]
 
+      const commonLoan = {
+        loanId,
+        loan: {
+          amount: loan.amount,
+          giver: loan.giver,
+          receiver: loan.receiver,
+          description: loan.description
+        },
+        monthYear: selectedMonth.value
+      }
+
       if (loan.deleteRequest && loan.amount) {
         requests.push({
           type: 'delete',
-          loanId,
-          loan: {
-            amount: loan.amount,
-            giver: loan.giver,
-            receiver: loan.receiver,
-            description: loan.description
-          },
+          ...commonLoan,
           requestedBy: loan.deleteRequest.requestedBy,
           requestedByName: loan.deleteRequest.requestedByName,
           approvals: loan.deleteRequest.approvals || [],
@@ -238,13 +258,7 @@ export const Loans = () => {
       if (loan.updateRequest && loan.amount) {
         requests.push({
           type: 'update',
-          loanId,
-          loan: {
-            amount: loan.amount,
-            giver: loan.giver,
-            receiver: loan.receiver,
-            description: loan.description
-          },
+          ...commonLoan,
           requestedBy: loan.updateRequest.requestedBy,
           requestedByName: loan.updateRequest.requestedByName,
           approvals: loan.updateRequest.approvals || [],
@@ -292,7 +306,7 @@ export const Loans = () => {
     )
       .then(async () => {
         const groupId = activeGroup.value || 'global'
-        const loanPath = `loans/${groupId}/${request.loanId}`
+        const loanPath = `loans/${groupId}/${request.monthYear}/${request.loanId}`
         const requestPath = `${loanPath}/${request.type}Request`
 
         await deleteData(
@@ -305,7 +319,7 @@ export const Loans = () => {
 
   const approveRequest = async (request) => {
     const groupId = activeGroup.value || 'global'
-    const requestPath = `loans/${groupId}/${request.loanId}/${request.type}Request`
+    const requestPath = `loans/${groupId}/${request.monthYear}/${request.loanId}/${request.type}Request`
 
     const updatedApprovals = [...request.approvals, activeUser.value]
 
@@ -332,7 +346,7 @@ export const Loans = () => {
     )
       .then(async () => {
         const groupId = activeGroup.value || 'global'
-        const loanPath = `loans/${groupId}/${request.loanId}`
+        const loanPath = `loans/${groupId}/${request.monthYear}/${request.loanId}`
         const currentUser = userStore.getUserByMobile(activeUser.value)
 
         const notification = {
@@ -366,7 +380,7 @@ export const Loans = () => {
   }
 
   const executeRequest = async (request, groupId) => {
-    const loanPath = `loans/${groupId}/${request.loanId}`
+    const loanPath = `loans/${groupId}/${request.monthYear}/${request.loanId}`
 
     await deleteData(`${loanPath}/${request.type}Request`, '')
 
@@ -378,6 +392,12 @@ export const Loans = () => {
     }
 
     if (request.type === 'delete') {
+      const deletedMeta = rawLoansData.value[request.loanId]?.receiptMeta
+      if (deletedMeta) {
+        const metas = Array.isArray(deletedMeta) ? deletedMeta : [deletedMeta]
+        metas.forEach((m) => deleteFromCloudinary(m.publicId, m.resourceType))
+      }
+
       const existingNotifications =
         rawLoansData.value[request.loanId]?.notifications?.[
           request.requestedBy
@@ -398,6 +418,18 @@ export const Loans = () => {
         'Loan has been deleted (approved by all members).'
       )
     } else if (request.type === 'update') {
+      const oldMeta = rawLoansData.value[request.loanId]?.receiptMeta
+      const newMeta = request.changes?.receiptMeta
+      if (oldMeta && newMeta) {
+        const oldMetas = Array.isArray(oldMeta) ? oldMeta : [oldMeta]
+        const newUrls = new Set(
+          (Array.isArray(newMeta) ? newMeta : [newMeta]).map((m) => m.url)
+        )
+        oldMetas.forEach((m) => {
+          if (!newUrls.has(m.url)) deleteFromCloudinary(m.publicId, m.resourceType)
+        })
+      }
+
       const updatedLoan = {
         ...rawLoansData.value[request.loanId],
         ...request.changes

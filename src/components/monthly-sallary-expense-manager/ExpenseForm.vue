@@ -34,6 +34,10 @@
         <p class="text-sm font-medium text-gray-700 mb-1">
           Receipt
           <span class="text-gray-400 font-normal text-xs">(optional)</span>
+          <span class="block text-xs text-gray-500 mt-1">
+            Only image files (JPG, PNG, GIF, BMP, WEBP) are allowed. Max size:
+            1MB per file.
+          </span>
         </p>
         <div class="flex items-center gap-2 flex-wrap">
           <el-button
@@ -61,7 +65,7 @@
           <input
             ref="fileInputRef"
             type="file"
-            accept="image/*,.pdf"
+            accept="image/*"
             class="hidden"
             @change="handleReceiptChange"
           />
@@ -95,7 +99,6 @@
 import { rules } from '../../assets/validation-rules'
 import { GenericButton, AmountInput, GenericInput } from '../generic-components'
 import { ExpenseForm } from '../../scripts/expense-form'
-import { onMounted, watch } from 'vue'
 
 const emit = defineEmits(['closeModal', 'click'])
 const props = defineProps({
@@ -117,19 +120,6 @@ const {
   removeReceipt
 } = ExpenseForm(props, emit)
 
-// Debug: Watch the expenseForm ref
-watch(
-  () => expenseForm.value,
-  (newVal) => {
-    console.log('ExpenseForm ref changed:', newVal)
-  },
-  { immediate: true }
-)
-
-onMounted(() => {
-  console.log('ExpenseForm component mounted')
-  console.log('expenseForm ref on mount:', expenseForm.value)
-})
 
 defineExpose({
   validateForm,

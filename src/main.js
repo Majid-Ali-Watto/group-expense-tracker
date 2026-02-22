@@ -13,7 +13,6 @@ const PKR = new Intl.NumberFormat('en-PK', {
   maximumFractionDigits: 2
 })
 
-console.log = function () {} // Disable all console logs in production
 
 const formatAmount = (amount) => {
   return PKR.format(amount)

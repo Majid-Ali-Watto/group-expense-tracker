@@ -3,12 +3,7 @@ import getWhoAddedTransaction from '../utils/whoAdded'
 import { friends } from '../assets/data'
 import { store } from '../stores/store'
 import useFireBase from '../api/firebase-apis'
-import { storage } from '../firebase'
-import {
-  ref as storageRef,
-  uploadBytes,
-  getDownloadURL
-} from 'firebase/storage'
+import { uploadToCloudinary, deleteFromCloudinary } from '../utils/cloudinaryUpload'
 import { showError } from '../utils/showAlerts'
 
 export const PaymentForm = (props, emit) => {
@@ -25,6 +20,9 @@ export const PaymentForm = (props, emit) => {
     if (Array.isArray(props.row?.receiptUrls)) return props.row.receiptUrls
     return props.row?.receiptUrl ? [props.row.receiptUrl] : []
   })
+  const existingReceiptMeta = computed(() =>
+    Array.isArray(props.row?.receiptMeta) ? props.row.receiptMeta : []
+  )
 
   function triggerFileInput() {
     fileInputRef.value?.click()
@@ -36,8 +34,25 @@ export const PaymentForm = (props, emit) => {
       receiptFiles.value = []
       return
     }
-    receiptFiles.value =
-      formData.value.payerMode === 'single' ? [files[0]] : files
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/bmp', 'image/webp']
+    const maxSize = 1024 * 1024 // 1MB
+    const validFiles = []
+    for (const file of files) {
+      if (!allowedTypes.includes(file.type)) {
+        showError('Only image files (JPG, PNG, GIF, BMP, WEBP) are allowed.')
+        if (fileInputRef.value) fileInputRef.value.value = ''
+        receiptFiles.value = []
+        return
+      }
+      if (file.size > maxSize) {
+        showError('File size must be less than 1MB.')
+        if (fileInputRef.value) fileInputRef.value.value = ''
+        receiptFiles.value = []
+        return
+      }
+      validFiles.push(file)
+    }
+    receiptFiles.value = formData.value.payerMode === 'single' ? validFiles.slice(0, 1) : validFiles
   }
 
   function removeReceipt() {
@@ -46,11 +61,7 @@ export const PaymentForm = (props, emit) => {
   }
 
   async function uploadReceiptToStorage(file) {
-    const groupId = userStore.getActiveGroup || 'global'
-    const path = `receipts/${groupId}/${Date.now()}_${file.name}`
-    const sRef = storageRef(storage, path)
-    const snapshot = await uploadBytes(sRef, file)
-    return await getDownloadURL(snapshot.ref)
+    return await uploadToCloudinary(file)
   }
 
   const showTransactionForm = ref(false)
@@ -175,12 +186,25 @@ export const PaymentForm = (props, emit) => {
 
         // Upload receipt if a new file was selected
         let receiptUrls = existingReceiptUrls.value
+        let receiptMeta = existingReceiptMeta.value
         if (receiptFiles.value.length) {
           try {
             receiptUploading.value = true
-            receiptUrls = await Promise.all(
+            const uploaded = await Promise.all(
               receiptFiles.value.map((file) => uploadReceiptToStorage(file))
             )
+            receiptUrls = uploaded.map((r) => r.url)
+            receiptMeta = uploaded.map((r) => ({
+              url: r.url,
+              publicId: r.publicId,
+              resourceType: r.resourceType
+            }))
+            // Delete old Cloudinary files when replacing on update
+            if (whatTask === 'Update') {
+              existingReceiptMeta.value.forEach((m) =>
+                deleteFromCloudinary(m.publicId, m.resourceType)
+              )
+            }
           } catch {
             showError('Failed to upload receipt. Please try again.')
             receiptUploading.value = false
@@ -192,7 +216,7 @@ export const PaymentForm = (props, emit) => {
         if (whatTask == 'Save') {
           saveData(
             `payments/${groupId}/${monthYear}`,
-            () => getPaymentData(receiptUrls),
+            () => getPaymentData(receiptUrls, receiptMeta),
             transactionForm,
             'Transaction successfully saved.',
             () => {
@@ -215,7 +239,8 @@ export const PaymentForm = (props, emit) => {
         } else if (whatTask == 'Update') {
           createUpdateRequest(
             `payments/${groupId}/${monthYear}/${props.row.id}`,
-            receiptUrls
+            receiptUrls,
+            receiptMeta
           )
         } else if (whatTask == 'Delete') {
           createDeleteRequest(
@@ -245,12 +270,12 @@ export const PaymentForm = (props, emit) => {
     emit('closeModal')
   }
 
-  const createUpdateRequest = (paymentPath, receiptUrls = []) => {
+  const createUpdateRequest = (paymentPath, receiptUrls = [], receiptMeta = []) => {
     const activeUser = userStore.getActiveUser
     const userName = userStore.getUserByMobile(activeUser)?.name || activeUser
 
     const updateRequest = {
-      changes: getPaymentData(receiptUrls),
+      changes: getPaymentData(receiptUrls, receiptMeta),
       requestedBy: activeUser,
       requestedByName: userName,
       approvals: [activeUser],
@@ -265,7 +290,7 @@ export const PaymentForm = (props, emit) => {
     emit('closeModal')
   }
 
-  function getPaymentData(receiptUrls = []) {
+  function getPaymentData(receiptUrls = [], receiptMeta = []) {
     const amount = parseFloat(formData.value.amount)
     const participantsList =
       formData.value.participants && formData.value.participants.length
@@ -360,7 +385,8 @@ export const PaymentForm = (props, emit) => {
       ...(receiptUrls && receiptUrls.length
         ? {
             receiptUrl: receiptUrls[0],
-            receiptUrls
+            receiptUrls,
+            receiptMeta
           }
         : {})
     }
@@ -388,6 +414,7 @@ export const PaymentForm = (props, emit) => {
     receiptUploading,
     fileInputRef,
     existingReceiptUrls,
+    existingReceiptMeta,
     triggerFileInput,
     handleReceiptChange,
     removeReceipt

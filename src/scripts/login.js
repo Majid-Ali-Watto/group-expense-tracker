@@ -10,6 +10,7 @@ import {
 } from '../utils/whoAdded'
 import { generatePasscodes, printPasscodes } from '../utils/passcodes'
 import { encryptForSession, encryptForStore } from '../utils/sessionCrypto'
+import { generateUUID } from '../utils/uuid'
 
 export const Login = () => {
   const RECOVERY_CODES_COUNT = 1
@@ -52,7 +53,7 @@ export const Login = () => {
   }
 
   async function completeLogin(payload, message) {
-    const token = crypto.randomUUID()
+    const token = generateUUID()
     const [encryptedSession, encryptedStore] = await Promise.all([
       encryptForSession(token), // AES-GCM → sessionStorage
       encryptForStore(token) // AES-CBC → Pinia store

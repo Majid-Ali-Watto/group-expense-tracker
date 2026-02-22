@@ -2,12 +2,7 @@ import { ref, watch, computed } from 'vue'
 import getWhoAddedTransaction from '../utils/whoAdded'
 import useFireBase from '../api/firebase-apis'
 import { store } from '../stores/store'
-import { storage } from '../firebase'
-import {
-  ref as storageRef,
-  uploadBytes,
-  getDownloadURL
-} from 'firebase/storage'
+import { uploadToCloudinary, deleteFromCloudinary } from '../utils/cloudinaryUpload'
 import { showError } from '../utils/showAlerts'
 
 export const LoanForm = (props, emit) => {
@@ -65,6 +60,7 @@ export const LoanForm = (props, emit) => {
   const receiptUploading = ref(false)
   const fileInputRef = ref(null)
   const existingReceiptUrl = computed(() => props.row?.receiptUrl || null)
+  const existingReceiptMeta = computed(() => props.row?.receiptMeta || null)
 
   const formData = ref({
     amount: null,
@@ -91,21 +87,28 @@ export const LoanForm = (props, emit) => {
     loanForm.value.validate(async (valid) => {
       if (valid) {
         let loanPath
+        const date = new Date()
+        const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
         if (props.isPersonal) {
-          const date = new Date()
-          const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
           loanPath = `${props.dbRef}/${userStore.getActiveUser}/${monthYear}`
         } else {
           const groupId = userStore.getActiveGroup || 'global'
-          loanPath = `${props.dbRef}/${groupId}`
+          loanPath = `${props.dbRef}/${groupId}/${monthYear}`
         }
 
         // Upload receipt if selected
         let receiptUrl = existingReceiptUrl.value
+        let receiptMeta = existingReceiptMeta.value
         if (receiptFile.value) {
           try {
             receiptUploading.value = true
-            receiptUrl = await uploadReceiptToStorage(receiptFile.value)
+            const uploaded = await uploadReceiptToStorage(receiptFile.value)
+            receiptUrl = uploaded.url
+            receiptMeta = { url: uploaded.url, publicId: uploaded.publicId, resourceType: uploaded.resourceType }
+            // Delete old Cloudinary file when replacing on direct update
+            if (whatTask === 'Update' && props.isPersonal && existingReceiptMeta.value) {
+              deleteFromCloudinary(existingReceiptMeta.value.publicId, existingReceiptMeta.value.resourceType)
+            }
           } catch {
             showError('Failed to upload receipt. Please try again.')
             receiptUploading.value = false
@@ -117,7 +120,7 @@ export const LoanForm = (props, emit) => {
         if (whatTask == 'Save') {
           saveData(
             loanPath,
-            () => getLoanData(receiptUrl),
+            () => getLoanData(receiptUrl, receiptMeta),
             loanForm,
             'Loan added successfully.',
             () => {
@@ -128,14 +131,16 @@ export const LoanForm = (props, emit) => {
         } else if (whatTask == 'Update') {
           if (!props.isPersonal) {
             const groupId = userStore.getActiveGroup || 'global'
+            const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
             createUpdateRequest(
-              `${props.dbRef}/${groupId}/${props.row.id}`,
-              receiptUrl
+              `${props.dbRef}/${groupId}/${monthYear}/${props.row.id}`,
+              receiptUrl,
+              receiptMeta
             )
           } else {
             updateData(
               `${loanPath}/${props.row.id}`,
-              () => getLoanData(receiptUrl),
+              () => getLoanData(receiptUrl, receiptMeta),
               `Loan record with ID ${props.row.id} updated successfully`
             )
             emit('closeModal')
@@ -143,8 +148,14 @@ export const LoanForm = (props, emit) => {
         } else if (whatTask == 'Delete') {
           if (!props.isPersonal) {
             const groupId = userStore.getActiveGroup || 'global'
-            createDeleteRequest(`${props.dbRef}/${groupId}/${props.row.id}`)
+            const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+            createDeleteRequest(
+              `${props.dbRef}/${groupId}/${monthYear}/${props.row.id}`
+            )
           } else {
+            if (existingReceiptMeta.value) {
+              deleteFromCloudinary(existingReceiptMeta.value.publicId, existingReceiptMeta.value.resourceType)
+            }
             deleteData(
               `${loanPath}/${props.row.id}`,
               `Loan record with ID ${props.row.id} deleted successfully`
@@ -161,7 +172,27 @@ export const LoanForm = (props, emit) => {
   }
 
   function handleReceiptChange(event) {
-    receiptFile.value = event.target.files?.[0] || null
+    const file = event.target.files?.[0] || null
+    if (!file) {
+      receiptFile.value = null
+      return
+    }
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/bmp', 'image/webp']
+    if (!allowedTypes.includes(file.type)) {
+      showError('Only image files (JPG, PNG, GIF, BMP, WEBP) are allowed.')
+      if (fileInputRef.value) fileInputRef.value.value = ''
+      receiptFile.value = null
+      return
+    }
+    // Validate file size (max 1MB)
+    if (file.size > 1024 * 1024) {
+      showError('File size must be less than 1MB.')
+      if (fileInputRef.value) fileInputRef.value.value = ''
+      receiptFile.value = null
+      return
+    }
+    receiptFile.value = file
   }
 
   function removeReceipt() {
@@ -170,11 +201,7 @@ export const LoanForm = (props, emit) => {
   }
 
   async function uploadReceiptToStorage(file) {
-    const groupId = userStore.getActiveGroup || 'global'
-    const path = `receipts/${groupId}/${Date.now()}_${file.name}`
-    const sRef = storageRef(storage, path)
-    const snapshot = await uploadBytes(sRef, file)
-    return await getDownloadURL(snapshot.ref)
+    return await uploadToCloudinary(file)
   }
 
   const createDeleteRequest = (loanPath) => {
@@ -196,12 +223,12 @@ export const LoanForm = (props, emit) => {
     emit('closeModal')
   }
 
-  const createUpdateRequest = (loanPath, receiptUrl = null) => {
+  const createUpdateRequest = (loanPath, receiptUrl = null, receiptMeta = null) => {
     const activeUser = userStore.getActiveUser
     const userName = userStore.getUserByMobile(activeUser)?.name || activeUser
 
     const updateRequest = {
-      changes: getLoanData(receiptUrl),
+      changes: getLoanData(receiptUrl, receiptMeta),
       requestedBy: activeUser,
       requestedByName: userName,
       approvals: [activeUser],
@@ -216,7 +243,7 @@ export const LoanForm = (props, emit) => {
     emit('closeModal')
   }
 
-  function getLoanData(receiptUrl = null) {
+  function getLoanData(receiptUrl = null, receiptMeta = null) {
     const loan = {
       amount: formData.value.amount,
       description: formData.value.description,
@@ -228,7 +255,7 @@ export const LoanForm = (props, emit) => {
         new Date().toLocaleTimeString(),
       whoAdded: getWhoAddedTransaction(),
       whenAdded: new Date().toLocaleString('en-PK'),
-      ...(receiptUrl ? { receiptUrl } : {})
+      ...(receiptUrl ? { receiptUrl, receiptMeta } : {})
     }
     return loan
   }

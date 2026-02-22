@@ -5,6 +5,15 @@ import { showError, showSuccess } from '../utils/showAlerts'
 import { ElMessageBox } from 'element-plus'
 import { onValue, off } from '../firebase'
 import { maskMobile } from '../utils/maskMobile'
+import {
+  isMemberOfGroup,
+  allMembersApproved,
+  allMembersApprovedJoinRequest,
+  hasEditRequest,
+  allAffectedMembersApprovedEdit,
+  hasAddMemberRequest,
+  allMembersApprovedAddMember
+} from '../helpers/users'
 
 export const Groups = () => {
   const showCreateGroup = ref(false)
@@ -23,6 +32,7 @@ export const Groups = () => {
   const { read, updateData, removeData, dbRef, setData } = useFireBase()
 
   const groups = ref([])
+  const groupBalances = ref({})
   let groupsListener = null
 
   // Filtered groups based on search query
@@ -122,6 +132,12 @@ export const Groups = () => {
     savePins()
   }
 
+  // Get join requests for a group
+  function getJoinRequests(groupId) {
+    const group = groups.value.find((g) => g.id === groupId)
+    return group?.joinRequests || []
+  }
+
   onMounted(async () => {
     loadPins()
 
@@ -178,177 +194,104 @@ export const Groups = () => {
     }
   })
 
-  // Check if current user is a member of the group
-  function isMemberOfGroup(group) {
-    const mobile = userStore.getActiveUser
-    return group.members && group.members.some((m) => m.mobile === mobile)
+  // ========== Per-user financial position (expenses + loans) ==========
+  async function loadGroupBalances(groupId, groupType = 'joined') {
+    if (groupType !== 'joined') return
+    const currentUser = userStore.getActiveUser
+    if (!currentUser || !groupId) return
+
+    const cached = groupBalances.value[groupId]
+    if (cached && cached.loaded) return
+
+    groupBalances.value[groupId] = { ...(cached || {}), loading: true }
+
+    let expensesNet = 0
+    let loansNet = 0
+
+    try {
+      // Shared expenses (payments)
+      const currentMonth = new Date()
+      const monthNode = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}`
+      const paymentsByMonth =
+        (await read(`payments/${groupId}/${monthNode}`, false)) || {}
+
+      Object.values(paymentsByMonth || {}).forEach((payment) => {
+        const amount = parseFloat(payment.amount) || 0
+        if (!amount) return
+
+        // User's share (debit)
+        let share = 0
+        if (Array.isArray(payment.split)) {
+          const selfSplit = payment.split.find((s) => s.mobile === currentUser)
+          share = parseFloat(selfSplit?.amount) || 0
+        } else if (Array.isArray(payment.participants)) {
+          const isParticipant = payment.participants.some((p) => {
+            if (typeof p === 'string') return p === currentUser
+            return p?.mobile === currentUser || p?.userId === currentUser
+          })
+          if (isParticipant) {
+            const equal =
+              payment.participants.length > 0
+                ? amount / payment.participants.length
+                : 0
+            share = equal
+          }
+        }
+
+        // User's paid amount (credit)
+        let credit = 0
+        if (payment.payerMode === 'multiple' && Array.isArray(payment.payers)) {
+          const selfPayer = payment.payers.find((p) => p.mobile === currentUser)
+          credit = parseFloat(selfPayer?.amount) || 0
+        } else if (payment.payer === currentUser) {
+          credit = amount
+        }
+
+        expensesNet += credit - share
+      })
+
+      // Shared loans
+      const loansMonthNode =
+        (await read(`loans/${groupId}/${monthNode}`, false)) || null
+      const loansSource =
+        loansMonthNode || (await read(`loans/${groupId}`, false)) || {} // fallback for legacy flat storage
+
+      const isSameMonth = (dateStr) => {
+        if (!dateStr) return false
+        const d = new Date(dateStr)
+        return (
+          d.getFullYear() === currentMonth.getFullYear() &&
+          d.getMonth() === currentMonth.getMonth()
+        )
+      }
+
+      Object.values(loansSource).forEach((loan) => {
+        if (!loansMonthNode && !isSameMonth(loan?.date)) return
+        const amt = parseFloat(loan.amount) || 0
+        if (!amt) return
+        if (loan.giver === currentUser) loansNet += amt
+        if (loan.receiver === currentUser) loansNet -= amt
+      })
+    } catch (error) {
+      console.error('Failed to load group balances', error)
+    }
+
+    groupBalances.value[groupId] = {
+      loaded: true,
+      loading: false,
+      expenses: parseFloat(expensesNet.toFixed(2)),
+      loans: parseFloat(loansNet.toFixed(2))
+    }
   }
 
-  // Check if current user has a pending join request
-  function hasPendingRequest(group) {
-    const mobile = userStore.getActiveUser
+  function getGroupBalances(groupId) {
     return (
-      group.joinRequests && group.joinRequests.some((r) => r.mobile === mobile)
+      groupBalances.value[groupId] || {
+        loading: false,
+        expenses: 0,
+        loans: 0
+      }
     )
-  }
-
-  // Get join requests for a group
-  function getJoinRequests(groupId) {
-    const group = groups.value.find((g) => g.id === groupId)
-    return group?.joinRequests || []
-  }
-
-  // Check if group has a deletion request
-  function hasDeleteRequest(group) {
-    return group.deleteRequest && group.deleteRequest.requested === true
-  }
-
-  // Get deletion approvals for a group
-  function getDeleteApprovals(group) {
-    return group.deleteRequest?.approvals || []
-  }
-
-  // Check if all members have approved deletion
-  function allMembersApproved(group) {
-    if (!hasDeleteRequest(group)) return false
-    const approvals = getDeleteApprovals(group)
-    return group.members.every((member) =>
-      approvals.some((approval) => approval.mobile === member.mobile)
-    )
-  }
-
-  // Get members who haven't approved yet
-  function getPendingApprovals(group) {
-    if (!hasDeleteRequest(group)) return []
-    const approvals = getDeleteApprovals(group)
-    return group.members.filter(
-      (member) =>
-        !approvals.some((approval) => approval.mobile === member.mobile)
-    )
-  }
-
-  // Check if current user has approved deletion
-  function hasUserApprovedDeletion(group) {
-    const mobile = userStore.getActiveUser
-    const approvals = getDeleteApprovals(group)
-    return approvals.some((approval) => approval.mobile === mobile)
-  }
-
-  // ========== Join Request Helpers with Member Approval ==========
-  function getJoinRequestApprovals(group, requestMobile) {
-    const request = group.joinRequests?.find((r) => r.mobile === requestMobile)
-    return request?.approvals || []
-  }
-
-  function getPendingJoinApprovals(group, requestMobile) {
-    const approvals = getJoinRequestApprovals(group, requestMobile)
-    return group.members.filter(
-      (member) =>
-        !approvals.some((approval) => approval.mobile === member.mobile)
-    )
-  }
-
-  function hasUserApprovedJoinRequest(group, requestMobile) {
-    const mobile = userStore.getActiveUser
-    const approvals = getJoinRequestApprovals(group, requestMobile)
-    return approvals.some((approval) => approval.mobile === mobile)
-  }
-
-  function allMembersApprovedJoinRequest(group, requestMobile) {
-    const approvals = getJoinRequestApprovals(group, requestMobile)
-    return group.members.every((member) =>
-      approvals.some((approval) => approval.mobile === member.mobile)
-    )
-  }
-
-  // ========== Leave Group Helpers ==========
-  function getLeaveRequests(group) {
-    return group.leaveRequests || []
-  }
-
-  function hasLeaveRequest(group, mobile) {
-    return getLeaveRequests(group).some((r) => r.mobile === mobile)
-  }
-
-  function getLeaveApprovals(group, mobile) {
-    const request = getLeaveRequests(group).find((r) => r.mobile === mobile)
-    return request?.approvals || []
-  }
-
-  function allMembersApprovedLeave(group, mobile) {
-    const approvals = getLeaveApprovals(group, mobile)
-    return group.members.every(
-      (member) =>
-        approvals.some((approval) => approval.mobile === member.mobile) ||
-        member.mobile === mobile
-    )
-  }
-
-  function hasUserApprovedLeaveRequest(group, leaveMobile) {
-    const mobile = userStore.getActiveUser
-    const request = getLeaveRequests(group).find(
-      (r) => r.mobile === leaveMobile
-    )
-    return request?.approvals?.some((a) => a.mobile === mobile) || false
-  }
-
-  // ========== Edit Request Helpers ==========
-  function hasEditRequest(group) {
-    return group.editRequest !== undefined && group.editRequest !== null
-  }
-
-  function getEditApprovals(group) {
-    return group.editRequest?.approvals || []
-  }
-
-  function getAllAffectedMembers(group) {
-    if (!hasEditRequest(group)) return []
-    const { addedMembers, removedMembers } = group.editRequest
-    const existingMembers = group.members || []
-
-    // Combine existing, added, and removed members
-    const allMembers = [
-      ...existingMembers,
-      ...(addedMembers || []),
-      ...(removedMembers || [])
-    ]
-
-    // Remove duplicates based on mobile
-    const uniqueMembers = allMembers.filter(
-      (member, index, self) =>
-        index === self.findIndex((m) => m.mobile === member.mobile)
-    )
-
-    return uniqueMembers
-  }
-
-  function allAffectedMembersApprovedEdit(group) {
-    if (!hasEditRequest(group)) return false
-    const approvals = getEditApprovals(group)
-    const allAffected = getAllAffectedMembers(group)
-
-    return allAffected.every((member) =>
-      approvals.some((approval) => approval.mobile === member.mobile)
-    )
-  }
-
-  function hasUserApprovedEditRequest(group) {
-    const mobile = userStore.getActiveUser
-    return (
-      group.editRequest?.approvals?.some((a) => a.mobile === mobile) || false
-    )
-  }
-
-  function isUserAffectedByEdit(group) {
-    const mobile = userStore.getActiveUser
-    const allAffected = getAllAffectedMembers(group)
-    return allAffected.some((m) => m.mobile === mobile)
-  }
-
-  // ========== Notification Helpers ==========
-  function getUserNotifications(group) {
-    const mobile = userStore.getActiveUser
-    return group.notifications?.[mobile] || []
   }
 
   async function hideNotification(groupId, notificationId) {
@@ -405,16 +348,6 @@ export const Groups = () => {
         group.notifications[member.mobile].push(notification)
       }
     })
-  }
-
-  // ========== Ownership Transfer Helpers ==========
-  function hasUserApprovedOwnershipTransfer(group) {
-    const mobile = userStore.getActiveUser
-    return (
-      group.transferOwnershipRequest?.approvals?.some(
-        (a) => a.mobile === mobile
-      ) || false
-    )
   }
 
   // Transfer Ownership Dialog
@@ -1117,30 +1050,7 @@ export const Groups = () => {
     }
   }
 
-  // ========== Add Member Request Functions ==========
-  function hasAddMemberRequest(group) {
-    return (
-      group.addMemberRequest && Object.keys(group.addMemberRequest).length > 0
-    )
-  }
-
-  function getAddMemberRequestApprovals(group) {
-    return group.addMemberRequest?.approvals || []
-  }
-
-  function hasUserApprovedAddMemberRequest(group) {
-    const mobile = userStore.getActiveUser
-    return getAddMemberRequestApprovals(group).some((a) => a.mobile === mobile)
-  }
-
-  function allMembersApprovedAddMember(group) {
-    if (!hasAddMemberRequest(group)) return false
-    const approvals = getAddMemberRequestApprovals(group)
-    return group.members.every((member) =>
-      approvals.some((approval) => approval.mobile === member.mobile)
-    )
-  }
-
+  // ========== Add Member Request Actions ==========
   async function requestAddMember(groupId, newMember) {
     try {
       const group = groups.value.find((g) => g.id === groupId)
@@ -1589,14 +1499,6 @@ export const Groups = () => {
     )
   }
 
-  function displayMasked(targetMobile) {
-    if (!targetMobile) return ''
-    return (
-      userStore.getUserByMobile(targetMobile)?.maskedMobile ||
-      maskMobile(targetMobile)
-    )
-  }
-
   function displayMobileInEditDialog(targetMobile) {
     const editGroup = groups.value.find((g) => g.id === editingGroupId.value)
     return displayMobileForGroup(targetMobile, editGroup)
@@ -1637,46 +1539,17 @@ export const Groups = () => {
     approveMemberJoinRequest,
     finalApproveJoinRequest,
     rejectJoinRequest,
-    getJoinRequestApprovals,
-    getPendingJoinApprovals,
-    hasUserApprovedJoinRequest,
-    allMembersApprovedJoinRequest,
 
-    // Membership checks
-    isMemberOfGroup,
-    hasPendingRequest,
-
-    // Delete request helpers
-    hasDeleteRequest,
-    getDeleteApprovals,
-    allMembersApproved,
-    getPendingApprovals,
-    hasUserApprovedDeletion,
-
-    // Leave group
-    getLeaveRequests,
-    hasLeaveRequest,
-    getLeaveApprovals,
-    allMembersApprovedLeave,
-    hasUserApprovedLeaveRequest,
+    // Leave group actions
     requestLeaveGroup,
     approveLeaveRequest,
     rejectLeaveRequest,
 
-    // Edit request
-    hasEditRequest,
-    getEditApprovals,
-    getAllAffectedMembers,
-    hasUserApprovedEditRequest,
-    isUserAffectedByEdit,
+    // Edit request actions
     approveEditRequest,
     rejectEditRequest,
 
-    // Add member request
-    hasAddMemberRequest,
-    getAddMemberRequestApprovals,
-    hasUserApprovedAddMemberRequest,
-    allMembersApprovedAddMember,
+    // Add member request actions
     requestAddMember,
     approveAddMemberRequest,
     finalizeAddMember,
@@ -1685,20 +1558,21 @@ export const Groups = () => {
     submitAddMemberRequest,
 
     // Notifications
-    getUserNotifications,
     hideNotification,
 
     // Pin
     isPinned,
     togglePin,
 
+    // Per-user financial snapshot
+    loadGroupBalances,
+    getGroupBalances,
+
     // Mobile display helpers
     displayMobileForGroup,
-    displayMasked,
     displayMobileInEditDialog,
 
     // Ownership transfer
-    hasUserApprovedOwnershipTransfer,
     showTransferOwnershipDialog,
     requestOwnershipTransfer,
     approveOwnershipTransfer,

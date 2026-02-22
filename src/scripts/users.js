@@ -23,7 +23,6 @@ export const Users = () => {
 
   const setShowForm = () => {
     showForm.value = !showForm.value
-    console.log('Toggled showForm:', showForm.value)
   }
   const activeGroupMobiles = computed(() => {
     const groupId = userStore.getActiveGroup

@@ -143,9 +143,18 @@ export default function useFireBase() {
     await remove(dbRef(path))
   }
 
+  async function readShallow(path) {
+    const baseUrl = import.meta.env.VITE_DATABASE_URL
+    const res = await fetch(`${baseUrl}/${path}.json?shallow=true`)
+    if (!res.ok) return []
+    const data = await res.json()
+    return data ? Object.keys(data) : []
+  }
+
   return {
     dbRef,
     read,
+    readShallow,
     deleteData,
     updateData,
     saveData,

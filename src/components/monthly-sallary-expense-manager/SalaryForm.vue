@@ -62,7 +62,6 @@
 import { rules } from '../../assets/validation-rules'
 import { GenericButton } from '../generic-components'
 import { SalaryForm } from '../../scripts/salary-form'
-import { onMounted, watch } from 'vue'
 
 const {
   formatAmount,
@@ -75,17 +74,5 @@ const {
   updateSalary
 } = SalaryForm()
 
-// Debug: Watch the salaryForm ref
-watch(
-  () => salaryForm.value,
-  (newVal) => {
-    console.log('SalaryForm ref changed:', newVal)
-  },
-  { immediate: true }
-)
 
-onMounted(() => {
-  console.log('SalaryForm component mounted')
-  console.log('salaryForm ref on mount:', salaryForm.value)
-})
 </script>

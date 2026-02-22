@@ -89,23 +89,38 @@
     >
       <template #prefix><span class="text-gray-400">🔍</span></template>
     </el-input>
-    <el-table :data="filteredUsers">
-      <el-table-column prop="name" label="Name" />
-      <el-table-column label="Mobile">
-        <template #default="{ row }">{{ displayMobile(row.mobile) }}</template>
-      </el-table-column>
-      <el-table-column label="Login Code" width="120">
-        <template #default="{ row }">
-          <el-tag v-if="row.loginCode" type="success" size="small">Set</el-tag>
-          <el-tag v-else type="info" size="small">Not Set</el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column label="Groups">
-        <template #default="{ row }">
-          <div
-            v-if="getUserGroups(row.mobile).length > 0"
-            class="flex flex-wrap gap-1"
-          >
+    <!-- Header row — visible only on larger screens -->
+    <div class="hidden sm:flex sm:items-center gap-3 px-3 mt-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+      <div class="flex-1 min-w-0">Name / Mobile</div>
+      <div class="w-20">Login Code</div>
+      <div class="flex-1">Groups</div>
+      <div class="flex-shrink-0 w-48">Actions</div>
+    </div>
+
+    <div class="space-y-3 mt-1">
+      <div
+        v-for="row in filteredUsers"
+        :key="row.mobile"
+        class="border border-gray-200 rounded-lg p-3 hover:shadow-sm transition-shadow"
+      >
+        <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+          <!-- Name & Mobile -->
+          <div class="flex-1 min-w-0">
+            <div class="text-xs font-semibold text-gray-400 uppercase tracking-wide sm:hidden mb-1">Name / Mobile</div>
+            <div class="font-semibold text-gray-800">{{ row.name }}</div>
+            <div class="text-sm text-gray-500">{{ displayMobile(row.mobile) }}</div>
+          </div>
+
+          <!-- Login Code -->
+          <div class="flex items-center gap-2 sm:w-20">
+            <span class="text-xs font-semibold text-gray-400 uppercase tracking-wide sm:hidden">Login Code:</span>
+            <el-tag v-if="row.loginCode" type="success" size="small">Set</el-tag>
+            <el-tag v-else type="info" size="small">Not Set</el-tag>
+          </div>
+
+          <!-- Groups -->
+          <div class="flex flex-wrap gap-1 sm:flex-1">
+            <div class="w-full text-xs font-semibold text-gray-400 uppercase tracking-wide sm:hidden mb-1">Groups</div>
             <el-tag
               v-for="group in getUserGroups(row.mobile)"
               :key="group"
@@ -114,14 +129,17 @@
             >
               {{ group }}
             </el-tag>
+            <span
+              v-if="getUserGroups(row.mobile).length === 0"
+              class="text-gray-400 text-xs"
+              >No groups</span
+            >
           </div>
-          <span v-else class="text-gray-400 text-xs">None</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="Actions" width="220">
-        <template #default="{ row }">
-          <div class="flex flex-wrap gap-1">
-            <!-- Reset login code (any row with loginCode set) -->
+
+          <!-- Actions -->
+          <div class="flex flex-wrap gap-1 flex-shrink-0 sm:w-48">
+            <div class="w-full text-xs font-semibold text-gray-400 uppercase tracking-wide sm:hidden mb-1">Actions</div>
+            <!-- Reset login code -->
             <el-button
               v-if="row.loginCode && canManage(row)"
               type="warning"
@@ -134,11 +152,7 @@
             <template v-if="canManage(row)">
               <!-- No pending request: show edit & delete -->
               <template v-if="!row.deleteRequest && !row.updateRequest">
-                <el-button
-                  size="small"
-                  type="primary"
-                  @click="openEditUser(row)"
-                >
+                <el-button size="small" type="primary" @click="openEditUser(row)">
                   Edit
                 </el-button>
                 <el-button
@@ -152,22 +166,22 @@
 
               <!-- Delete pending -->
               <el-button v-else-if="row.deleteRequest" size="small" disabled>
-                Delete Pending ({{
-                  row.deleteRequest.approvals?.length || 0
-                }}/{{ row.deleteRequest.requiredApprovals?.length || 0 }})
+                Delete Pending ({{ row.deleteRequest.approvals?.length || 0 }}/{{
+                  row.deleteRequest.requiredApprovals?.length || 0
+                }})
               </el-button>
 
               <!-- Update pending -->
               <el-button v-else-if="row.updateRequest" size="small" disabled>
-                Update Pending ({{
-                  row.updateRequest.approvals?.length || 0
-                }}/{{ row.updateRequest.requiredApprovals?.length || 0 }})
+                Update Pending ({{ row.updateRequest.approvals?.length || 0 }}/{{
+                  row.updateRequest.requiredApprovals?.length || 0
+                }})
               </el-button>
             </template>
           </div>
-        </template>
-      </el-table-column>
-    </el-table>
+        </div>
+      </div>
+    </div>
 
     <!-- Edit User Dialog -->
     <el-dialog
@@ -222,8 +236,3 @@ const {
 } = Users()
 </script>
 
-<style scoped>
-.el-table {
-  margin-top: 12px;
-}
-</style>

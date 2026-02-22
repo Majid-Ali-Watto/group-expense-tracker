@@ -160,7 +160,6 @@
               placeholder="Select Month"
               class="w-full"
             >
-              <el-option value="All" label="All" />
               <el-option
                 v-for="month in months"
                 :key="month"

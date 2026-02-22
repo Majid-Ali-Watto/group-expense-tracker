@@ -7,7 +7,7 @@ import useFireBase from '../api/firebase-apis'
 
 export const SalaryExpenseList = () => {
   const formatAmount = inject('formatAmount')
-  const { dbRef } = useFireBase()
+  const { dbRef, readShallow } = useFireBase()
   const userStore = store()
 
   const activeUser = ref(userStore.activeUser)
@@ -23,18 +23,13 @@ export const SalaryExpenseList = () => {
   let expensesListener = null
   let salaryListener = null
 
-  const fetchMonths = () => {
-    const monthsRef = dbRef(`expenses/${activeUser.value}`)
-    onValue(
-      monthsRef,
-      (snapshot) => {
-        months.value = snapshot.exists() ? Object.keys(snapshot.val()) : []
-      },
-      (error) => {
-        showError('Failed to load months. Please try again.')
-        console.error(error)
-      }
-    )
+  const fetchMonths = async () => {
+    try {
+      months.value = await readShallow(`expenses/${activeUser.value}`)
+    } catch (error) {
+      showError('Failed to load months. Please try again.')
+      console.error(error)
+    }
   }
 
   const fetchSalary = () => {

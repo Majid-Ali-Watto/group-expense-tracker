@@ -5,12 +5,13 @@ import useFireBase from '../api/firebase-apis'
 import { checkDaily } from '../utils/notifications'
 import getCurrentMonth from '../utils/getCurrentMonth'
 import { showError } from '../utils/showAlerts'
+import { deleteFromCloudinary } from '../utils/cloudinaryUpload'
 import { friends } from '../assets/data'
 import { ElMessageBox } from 'element-plus'
 
 export const ExpenseList = (props) => {
   const userStore = store()
-  const { dbRef, updateData, deleteData } = useFireBase()
+  const { dbRef, readShallow, updateData, deleteData } = useFireBase()
   const formatAmount = inject('formatAmount')
 
   const usersOptions = computed(() => {
@@ -49,7 +50,6 @@ export const ExpenseList = (props) => {
     activeGroup.value ? userStore.getGroupById(activeGroup.value) : null
   )
 
-  let monthsListener = null
   let paymentsListener = null
 
   // Watch active group and refetch when it changes
@@ -73,8 +73,6 @@ export const ExpenseList = (props) => {
   // Clean up listeners on unmount
   onUnmounted(() => {
     const groupId = userStore.getActiveGroup || 'global'
-    if (monthsListener)
-      off(dbRef(`${props.dbRef}/${groupId}`), 'value', monthsListener)
     if (paymentsListener)
       off(
         dbRef(`${props.dbRef}/${groupId}/${selectedMonth.value}`),
@@ -84,20 +82,14 @@ export const ExpenseList = (props) => {
   })
 
   // Fetch available months
-  const fetchMonths = () => {
+  const fetchMonths = async () => {
     const groupId = userStore.getActiveGroup || 'global'
-    const monthsRef = dbRef(`${props.dbRef}/${groupId}`)
-    monthsListener = onValue(
-      monthsRef,
-      (snapshot) => {
-        const data = snapshot.val() || {}
-        months.value = Object.keys(data)
-        if (months.value.length) selectedMonth.value = getCurrentMonth()
-      },
-      () => {
-        showError('Failed to load months. Please try again.')
-      }
-    )
+    try {
+      months.value = await readShallow(`${props.dbRef}/${groupId}`)
+      if (months.value.length) selectedMonth.value = getCurrentMonth()
+    } catch {
+      showError('Failed to load months. Please try again.')
+    }
   }
 
   // Fetch expenses for the selected month
@@ -404,6 +396,12 @@ export const ExpenseList = (props) => {
     }
 
     if (request.type === 'delete') {
+      const deletedMeta = rawPaymentsData.value[request.paymentId]?.receiptMeta
+      if (deletedMeta) {
+        const metas = Array.isArray(deletedMeta) ? deletedMeta : [deletedMeta]
+        metas.forEach((m) => deleteFromCloudinary(m.publicId, m.resourceType))
+      }
+
       const existingNotifications =
         rawPaymentsData.value[request.paymentId]?.notifications?.[
           request.requestedBy
@@ -424,6 +422,18 @@ export const ExpenseList = (props) => {
         'Payment has been deleted (approved by all members).'
       )
     } else if (request.type === 'update') {
+      const oldMeta = rawPaymentsData.value[request.paymentId]?.receiptMeta
+      const newMeta = request.changes?.receiptMeta
+      if (oldMeta && newMeta) {
+        const oldMetas = Array.isArray(oldMeta) ? oldMeta : [oldMeta]
+        const newUrls = new Set(
+          (Array.isArray(newMeta) ? newMeta : [newMeta]).map((m) => m.url)
+        )
+        oldMetas.forEach((m) => {
+          if (!newUrls.has(m.url)) deleteFromCloudinary(m.publicId, m.resourceType)
+        })
+      }
+
       const updatedPayment = {
         ...rawPaymentsData.value[request.paymentId],
         ...request.changes

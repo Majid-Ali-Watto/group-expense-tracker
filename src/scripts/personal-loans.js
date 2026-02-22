@@ -7,7 +7,7 @@ import { showError } from '../utils/showAlerts'
 
 export const PersonalLoans = () => {
   const formatAmount = inject('formatAmount')
-  const { dbRef } = useFireBase()
+  const { dbRef, readShallow } = useFireBase()
   const userStore = store()
 
   const loans = ref([])
@@ -21,41 +21,25 @@ export const PersonalLoans = () => {
     showLoanForm.value = !showLoanForm.value
   }
 
-  let monthsListener = null
   let loansListener = null
 
   const activeUser = computed(() => userStore.getActiveUser)
 
-  const fetchMonths = () => {
-    const monthsRef = dbRef(`personal-loans/${activeUser.value}`)
+  const fetchMonths = async () => {
+    try {
+      const keys = await readShallow(`personal-loans/${activeUser.value}`)
+      months.value = keys.sort((a, b) => b.localeCompare(a))
 
-    if (monthsListener) off(monthsRef, 'value', monthsListener)
-
-    monthsListener = onValue(
-      monthsRef,
-      (snapshot) => {
-        if (snapshot.exists()) {
-          const data = snapshot.val()
-          months.value = Object.keys(data).sort((a, b) => b.localeCompare(a))
-
-          if (months.value.length && selectedMonth.value === 'All') {
-            const currentMonthFormatted = getCurrentMonth()
-
-            if (months.value.includes(currentMonthFormatted)) {
-              selectedMonth.value = currentMonthFormatted
-            } else if (months.value.length > 0) {
-              selectedMonth.value = months.value[0]
-            }
-          }
-        } else {
-          months.value = []
-        }
-      },
-      (error) => {
-        showError('Failed to load months. Please try again.')
-        console.error(error)
+      if (months.value.length && selectedMonth.value === 'All') {
+        const currentMonthFormatted = getCurrentMonth()
+        selectedMonth.value = months.value.includes(currentMonthFormatted)
+          ? currentMonthFormatted
+          : months.value[0]
       }
-    )
+    } catch (error) {
+      showError('Failed to load months. Please try again.')
+      console.error(error)
+    }
   }
 
   const fetchLoans = () => {
@@ -144,9 +128,6 @@ export const PersonalLoans = () => {
   })
 
   onUnmounted(() => {
-    if (monthsListener) {
-      off(dbRef(`personal-loans/${activeUser.value}`), 'value', monthsListener)
-    }
     if (loansListener) {
       off(loansListener)
     }

@@ -65,10 +65,7 @@ export const Table = (props) => {
       retries++
     }
 
-    console.log('update called, childRef:', childRef.value)
-    console.log('componentRef:', childRef.value?.componentRef)
     if (!childRef.value?.componentRef) {
-      console.error('Component ref not available after retries')
       ElMessage.error('Form is not ready. Please try again.')
       return
     }
@@ -88,10 +85,8 @@ export const Table = (props) => {
       retries++
     }
 
-    console.log('remove called, childRef:', childRef.value)
-    console.log('componentRef:', childRef.value?.componentRef)
+    
     if (!childRef.value?.componentRef) {
-      console.error('Component ref not available after retries')
       ElMessage.error('Form is not ready. Please try again.')
       return
     }
@@ -119,21 +114,34 @@ export const Table = (props) => {
 
   const headers = computed(() => {
     if (props.rows.length > 0) {
-      const cols = Object.keys(props.rows[0]).filter(
-        (col) =>
-          ![
-            'whenAdded',
-            'whoAdded',
-            'group',
-            'participants',
-            'updateRequest',
-            'deleteRequest',
-            'notifications',
-            'payerMode',
-            'splitMode',
-            'splitItems'
-          ].includes(col)
-      )
+      const excludedCols = [
+        'whenAdded',
+        'whoAdded',
+        'group',
+        'participants',
+        'updateRequest',
+        'deleteRequest',
+        'notifications',
+        'payerMode',
+        'splitMode',
+        'splitItems',
+        'receiptMeta',
+        'receiptUrls',
+        'receiptUrl'
+      ]
+
+      const rowKeys = Object.keys(props.rows[0])
+      const isSharedExpenses = activeTab.value === Tabs.SHARED_EXPENSES
+      const isSharedLoans = activeTab.value === Tabs.SHARED_LOANS
+      const isPersonalExpenses = activeTab.value === Tabs.PERSONAL_EXPENSES
+      const isPersonalLoans = activeTab.value === Tabs.PERSONAL_LOANS
+
+      const cols = rowKeys.filter((col) => !excludedCols.includes(col))
+
+      if (isSharedExpenses) cols.push('receiptUrls')
+      if (isPersonalExpenses || isPersonalLoans || isSharedLoans)
+        cols.push('receiptUrl')
+
       return cols.map((key) => ({
         label: key,
         key: key === 'payers' ? 'payer' : key
@@ -195,6 +203,21 @@ export const Table = (props) => {
     downloadPDF(props.dataRef, getCurrentMonth() + `_${props.downloadTitle}_`)
   }
 
+  function getFileNameFromUrl(url) {
+    if (!url) return 'Receipt'
+    try {
+      // Extract filename from URL
+      const urlPath = new URL(url).pathname
+      const fileName = urlPath.split('/').pop()
+      // Decode URL encoding and remove file extension for cleaner display
+      const decodedName = decodeURIComponent(fileName)
+      return decodedName || 'Receipt'
+    } catch {
+      // Fallback if URL parsing fails
+      return url.split('/').pop() || 'Receipt'
+    }
+  }
+
   return {
     tabStore,
     dialogFormVisible,
@@ -211,6 +234,7 @@ export const Table = (props) => {
     handleClick,
     handleDoubleClick,
     downloadExcelData,
-    downloadPdfData
+    downloadPdfData,
+    getFileNameFromUrl
   }
 }
