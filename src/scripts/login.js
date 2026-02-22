@@ -13,7 +13,7 @@ import { encryptForSession, encryptForStore } from '../utils/sessionCrypto'
 import { generateUUID } from '../utils/uuid'
 
 export const Login = () => {
-  const RECOVERY_CODES_COUNT = 1
+  const RECOVERY_CODES_COUNT = 10
   const userStore = store()
   const { read, updateData } = useFireBase()
 
