@@ -137,6 +137,9 @@ export const Login = () => {
       }
 
       const normalizedName = rawName.replace(/\s+/g, ' ').trim()
+      if (normalizedName.length < 3 || normalizedName.length > 50) {
+        return showError('Name must be between 3 and 50 characters')
+      }
       if (!/^[a-zA-Z]+(\s[a-zA-Z]+)*$/.test(normalizedName)) {
         return showError(
           'Name can only contain alphabets and single spaces (no special characters)'

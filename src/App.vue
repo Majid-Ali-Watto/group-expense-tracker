@@ -25,6 +25,10 @@
             v-model="activeTab"
             @tab-change="handleActiveTab"
             class="mt-2"
+            :class="{
+              'hide-prev-arrow': isFirstTab,
+              'hide-next-arrow': isLastTab
+            }"
             type="border-card"
             tab-position="top"
           >
@@ -73,6 +77,8 @@ const {
   displayName,
   activeGroup,
   activeTab,
+  isFirstTab,
+  isLastTab,
   setLoggedInStatus,
   handleActiveTab,
   activeTabComponent
@@ -80,6 +86,12 @@ const {
 </script>
 
 <style>
+.hide-prev-arrow .el-tabs__nav-prev {
+  display: none !important;
+}
+.hide-next-arrow .el-tabs__nav-next {
+  display: none !important;
+}
 .loading-wrapper {
   display: flex;
   justify-content: center;

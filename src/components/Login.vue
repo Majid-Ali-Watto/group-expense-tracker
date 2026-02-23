@@ -35,6 +35,7 @@
             placeholder="Enter your full name"
             class="w-full"
             size="large"
+            :maxlength="50"
           />
         </el-form-item>
         <!-- Mobile Number -->
@@ -44,6 +45,8 @@
             placeholder="Enter your mobile number"
             class="w-full"
             size="large"
+            :maxlength="11"
+            @input="form.mobile = form.mobile.replace(/\D/g, '')"
           />
         </el-form-item>
         <!-- Login Code -->
@@ -55,6 +58,7 @@
             class="w-full"
             size="large"
             show-password
+            :maxlength="15"
           />
         </el-form-item>
 

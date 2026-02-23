@@ -30,6 +30,7 @@
         clearable
         prefix-icon="el-icon-search"
         size="medium"
+        :maxlength="50"
       >
         <template #prefix>
           <span class="text-gray-400">🔍</span>
@@ -55,7 +56,13 @@
         <!-- Group Header -->
         <div class="mb-3">
           <div class="flex items-center justify-between mb-2">
-            <h3 class="font-semibold text-lg">{{ group.name }}</h3>
+            <div>
+              <h3 class="font-semibold text-lg">{{ group.name }}</h3>
+              <p class="text-xs text-gray-500 mt-0.5">
+                Owner: {{ userStore.getUserByMobile(group.ownerMobile)?.name || group.ownerMobile }}
+                ({{ displayMobileForGroup(group.ownerMobile, group) }})
+              </p>
+            </div>
             <el-button
               size="small"
               text
@@ -139,7 +146,11 @@
       >
         <!-- Group Header -->
         <div class="mb-3">
-          <h3 class="font-semibold text-lg mb-2">{{ group.name }}</h3>
+          <h3 class="font-semibold text-lg mb-0.5">{{ group.name }}</h3>
+          <p class="text-xs text-gray-500 mb-2">
+            Owner: {{ userStore.getUserByMobile(group.ownerMobile)?.name || group.ownerMobile }}
+            ({{ displayMobileForGroup(group.ownerMobile, group) }})
+          </p>
 
           <!-- Notifications for current user -->
           <group-notifications-for-current-user
@@ -199,9 +210,13 @@
       width="90%"
       style="max-width: 500px"
     >
-      <el-form :model="editForm" label-position="top">
-        <el-form-item label="Group Name">
-          <el-input v-model="editForm.name" placeholder="Enter group name" />
+      <el-form :model="editForm" :rules="groupRules" ref="editFormRef" label-position="top">
+        <el-form-item label="Group Name" prop="name">
+          <el-input
+            v-model="editForm.name"
+            placeholder="Enter group name"
+            :maxlength="50"
+          />
         </el-form-item>
 
         <el-form-item label="Description">
@@ -210,10 +225,11 @@
             type="textarea"
             :rows="3"
             placeholder="Enter group description (optional)"
+            :maxlength="100"
           />
         </el-form-item>
 
-        <el-form-item label="Members">
+        <el-form-item label="Members" prop="members">
           <el-select
             filterable
             v-model="editForm.members"
@@ -234,7 +250,7 @@
       <template #footer>
         <div class="flex flex-col sm:flex-row gap-2 sm:justify-end">
           <el-button @click="editDialogVisible = false">Cancel</el-button>
-          <el-button type="primary" @click="updateGroup">Save</el-button>
+          <el-button type="primary" @click="handleEditSave">Save</el-button>
         </div>
       </template>
     </el-dialog>
@@ -322,8 +338,9 @@
 </template>
 
 <script setup>
-import { defineAsyncComponent } from 'vue'
+import { defineAsyncComponent, ref } from 'vue'
 import { displayMasked } from '../helpers/users'
+import { groupRules } from '../assets/validation-rules'
 import { Groups } from '../scripts/groups.js'
 import GroupDetailsAccordion from './generic-components/GroupDetailsAccordion.vue'
 import YourPositionInGroup from './generic-components/YourPositionInGroup.vue'
@@ -408,6 +425,15 @@ const {
   loadGroupBalances,
   getGroupBalances
 } = Groups()
+
+const editFormRef = ref(null)
+
+function handleEditSave() {
+  editFormRef.value.validate((valid) => {
+    if (!valid) return
+    updateGroup()
+  })
+}
 </script>
 
 <style scoped>

@@ -70,8 +70,8 @@ export const rules = {
   description: [
     { required: true, message: 'Description is required', trigger: 'blur' },
     {
-      min: 3,
-      message: 'Description should be at least 3 characters',
+      min: 5,
+      message: 'Description should be at least 5 characters',
       trigger: 'blur'
     }
   ],
@@ -83,8 +83,8 @@ export const rules = {
       trigger: ['change', 'blur']
     },
     {
-      min: 2,
-      message: 'Loan giver should be at least 2 characters',
+      min: 5,
+      message: 'Loan giver should be at least 5 characters',
       trigger: 'blur'
     }
   ],
@@ -114,16 +114,16 @@ export const rules = {
   location: [
     { required: true, message: 'Location is required', trigger: 'blur' },
     {
-      min: 2,
-      message: 'Location should be at least 2 characters',
+      min: 5,
+      message: 'Location should be at least 5 characters',
       trigger: 'blur'
     }
   ],
   recipient: [
     { required: true, message: 'Recipient is required', trigger: 'blur' },
     {
-      min: 2,
-      message: 'Recipient should be at least 2 characters',
+      min: 5,
+      message: 'Recipient should be at least 5 characters',
       trigger: 'blur'
     }
   ]
@@ -133,17 +133,18 @@ export const groupRules = {
   name: [
     { required: true, message: 'Group name is required', trigger: 'blur' },
     {
-      min: 2,
-      message: 'Group name should be at least 2 characters',
-      trigger: 'blur'
+      min: 5,
+      message: 'Group name should be at least 5 characters',
+      trigger: 'blur',
+      max: 50
     }
   ],
   members: [
     {
       type: 'array',
       required: true,
-      min: 2,
-      message: 'At least two members are required',
+      min: 1,
+      message: 'At least one member is required',
       trigger: 'change'
     }
   ]

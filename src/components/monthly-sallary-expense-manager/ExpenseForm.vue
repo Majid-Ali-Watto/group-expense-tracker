@@ -14,6 +14,7 @@
         prop="description"
         placeholder="Enter description"
         required
+        :maxlength="200"
       />
       <GenericInput
         v-model="form.location"
@@ -21,6 +22,7 @@
         prop="location"
         placeholder="Enter location"
         required
+        :maxlength="100"
       />
       <GenericInput
         v-model="form.recipient"
@@ -28,6 +30,7 @@
         prop="recipient"
         placeholder="To Whom"
         required
+        :maxlength="50"
       />
       <!-- Receipt Upload (optional) -->
       <div class="mb-4">

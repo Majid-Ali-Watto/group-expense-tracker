@@ -47,6 +47,9 @@ export const App = () => {
   // Current active tab from store
   const activeTab = ref(tabStore.getActiveTab || tabs.value[0])
 
+  const isFirstTab = computed(() => activeTab.value === tabs.value[0])
+  const isLastTab = computed(() => activeTab.value === tabs.value[tabs.value.length - 1])
+
   function logout() {
     tabStore.setActiveUser(null)
     tabStore.setActiveGroup(null)
@@ -153,6 +156,8 @@ export const App = () => {
     displayName,
     activeGroup,
     activeTab,
+    isFirstTab,
+    isLastTab,
     setLoggedInStatus,
     handleActiveTab,
     activeTabComponent

@@ -8,6 +8,7 @@
             v-model="groupForm.name"
             placeholder="Enter group name"
             class="w-full"
+            :maxlength="50"
           />
         </el-form-item>
         <el-form-item label="Description" label-position="top">
@@ -17,6 +18,7 @@
             :rows="3"
             placeholder="Enter group description (optional)"
             class="w-full"
+            :maxlength="100"
           />
         </el-form-item>
         <el-form-item label="Members" prop="members" label-position="top">

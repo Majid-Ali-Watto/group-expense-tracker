@@ -64,6 +64,7 @@
               required
               type="textarea"
               placeholder="Loan Giver Name"
+              :maxlength="50"
             />
             <GenericInput
               v-if="isPersonal"
@@ -74,6 +75,7 @@
               required
               type="textarea"
               placeholder="Loan Receiver Name"
+              :maxlength="50"
             />
           </el-col>
           <el-col :lg="12" :md="12" :sm="24">
@@ -85,6 +87,7 @@
               required
               type="textarea"
               placeholder="Loan details"
+              :maxlength="100"
             />
           </el-col>
         </el-row>

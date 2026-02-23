@@ -16,10 +16,15 @@
 
       <el-form :model="form" :rules="rules" ref="userForm" label-position="top">
         <el-form-item label="Full Name" prop="name">
-          <el-input v-model="form.name" placeholder="Full name" />
+          <el-input v-model="form.name" placeholder="Full name" :maxlength="50" />
         </el-form-item>
         <el-form-item label="Mobile Number" prop="mobile">
-          <el-input v-model="form.mobile" placeholder="Mobile number" />
+          <el-input
+            v-model="form.mobile"
+            placeholder="Mobile number"
+            :maxlength="11"
+            @input="form.mobile = form.mobile.replace(/\D/g, '')"
+          />
         </el-form-item>
         <div class="flex justify-end">
           <el-button type="default" @click="setShowForm">Cancel</el-button>
@@ -86,6 +91,7 @@
       placeholder="Search by name, mobile, or group..."
       clearable
       class="mb-3"
+      :maxlength="50"
     >
       <template #prefix><span class="text-gray-400">🔍</span></template>
     </el-input>
@@ -190,18 +196,18 @@
       width="90%"
       style="max-width: 400px"
     >
-      <el-form label-position="top">
+      <el-form :model="editForm" :rules="rules" ref="editUserFormRef" label-position="top">
         <el-form-item label="Mobile Number">
           <el-input :value="editForm.mobile" disabled />
         </el-form-item>
-        <el-form-item label="Full Name">
-          <el-input v-model="editForm.name" placeholder="Full name" />
+        <el-form-item label="Full Name" prop="name">
+          <el-input v-model="editForm.name" placeholder="Full name" :maxlength="50" />
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="flex gap-2 justify-end">
           <el-button @click="editDialogVisible = false">Cancel</el-button>
-          <el-button type="primary" @click="submitUpdateUser">Save</el-button>
+          <el-button type="primary" @click="handleEditUserSave">Save</el-button>
         </div>
       </template>
     </el-dialog>
@@ -209,6 +215,7 @@
 </template>
 
 <script setup>
+import { ref } from 'vue'
 import { loginRules as rules } from '../assets/validation-rules'
 import { Users } from '../scripts/users'
 import AddNewTransactionButton from './generic-components/AddNewTransactionButton.vue'
@@ -234,5 +241,14 @@ const {
   rejectRequest,
   setShowForm
 } = Users()
+
+const editUserFormRef = ref(null)
+
+function handleEditUserSave() {
+  editUserFormRef.value.validate((valid) => {
+    if (!valid) return
+    submitUpdateUser()
+  })
+}
 </script>
 

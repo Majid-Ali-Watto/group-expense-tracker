@@ -39,18 +39,18 @@ export function printPasscodes(userName, mobile, codes) {
   <title>Recovery Passcodes — ${userName}</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Courier New', Courier, monospace; max-width: 500px; margin: 40px auto; padding: 0 24px; color: #222; }
+    body { font-family: 'Courier New', Courier, monospace; max-width: 500px; margin: 40px auto; padding: 0 24px; color: #111; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     h2 { font-size: 20px; margin-bottom: 6px; }
-    .meta { font-size: 13px; color: #555; margin-bottom: 20px; border-bottom: 1px solid #ddd; padding-bottom: 12px; }
+    .meta { font-size: 13px; color: #333; margin-bottom: 20px; border-bottom: 2px solid #999; padding-bottom: 12px; }
     table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
-    thead th { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #888; padding: 6px 8px; border-bottom: 2px solid #ddd; text-align: left; }
+    thead th { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #111; font-weight: bold; padding: 6px 8px; border-bottom: 2px solid #555; text-align: left; }
     th.used-h, td.used { width: 60px; }
-    td { padding: 10px 8px; border-bottom: 1px solid #eee; vertical-align: middle; }
-    td.num { width: 28px; color: #aaa; font-size: 13px; }
+    td { padding: 10px 8px; border-bottom: 1px solid #bbb; vertical-align: middle; }
+    td.num { width: 28px; color: #333; font-size: 13px; font-weight: bold; }
     td.code { font-size: 17px; font-weight: bold; letter-spacing: 3px; }
-    td.used { border: 1px dashed #ccc; margin: 4px; }
-    .warning { background: #fff8e1; border-left: 4px solid #f0a500; padding: 12px 16px; font-size: 13px; line-height: 1.6; }
-    .warning strong { display: block; margin-bottom: 4px; }
+    td.used { border: 1px dashed #888; margin: 4px; }
+    .warning { background: #fff8e1; border-left: 4px solid #cc8800; padding: 12px 16px; font-size: 13px; line-height: 1.6; color: #222; }
+    .warning strong { display: block; margin-bottom: 4px; color: #111; }
     @media print { body { margin: 20px auto; } }
   </style>
 </head>

@@ -234,6 +234,7 @@
               required
               type="textarea"
               placeholder="Enter description"
+              :maxlength="100"
             />
           </el-col>
         </el-row>
@@ -273,6 +274,7 @@
                     v-model="item.description"
                     placeholder="e.g. Burger, Cake..."
                     size="small"
+                    :maxlength="100"
                   />
                 </el-form-item>
               </el-col>

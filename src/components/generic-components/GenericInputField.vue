@@ -7,6 +7,7 @@
       v-model="internalValue"
       :placeholder="placeholder"
       :type="type"
+      :maxlength="maxlength"
       @input="$emit('update:modelValue', internalValue)"
     />
   </el-form-item>
@@ -43,6 +44,10 @@ const props = defineProps({
   type: {
     type: String,
     default: 'text' // Supports other types like 'password', 'email', etc.
+  },
+  maxlength: {
+    type: Number,
+    default: undefined
   }
 })
 
