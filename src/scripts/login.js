@@ -3,46 +3,105 @@ import { ElMessageBox } from 'element-plus'
 import useFireBase from '../api/firebase-apis'
 import { store } from '../stores/store'
 import { showError, showSuccess } from '../utils/showAlerts'
-import {
-  getStoredUser,
-  removeUserFromStorage,
-  setUserInStorage
-} from '../utils/whoAdded'
-import { generatePasscodes, printPasscodes } from '../utils/passcodes'
 import { encryptForSession, encryptForStore } from '../utils/sessionCrypto'
 import { generateUUID } from '../utils/uuid'
+import {
+  auth,
+  sendPasswordResetEmail,
+  sendEmailVerification,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  updateProfile
+} from '../firebase'
 
 export const Login = () => {
-  const RECOVERY_CODES_COUNT = 10
   const userStore = store()
   const { read, updateData } = useFireBase()
 
   const form = ref({
     name: '',
     mobile: '',
+    email: '',
     loginCode: '',
     rememberMe: false
   })
 
   const loginForm = ref(null)
+  const mode = ref('login') // 'login' or 'register'
 
-  // Recovery codes setup dialog state
-  const recoveryCodesDialogVisible = ref(false)
-  const pendingLoginData = ref(null)
-  // pendingLoginData shape:
-  // { mobile, userName, loginCode, codes: string[], existingUser: object|null }
+  // Email reset dialog state
+  const emailResetDialogVisible = ref(false)
+  const resetEmail = ref('')
+  const isEmailResetLoading = ref(false)
 
-  onMounted(() => {
-    const data = getStoredUser()
-    if (data) {
-      form.value.name = data.name || ''
-      form.value.mobile = data.mobile || ''
-      form.value.loginCode = data.loginCode || ''
+  // Email verification state
+  const lastRegisteredEmail = ref('')
+  const showResendVerification = ref(false)
+
+  onMounted(async () => {
+    const storedEmail = localStorage.getItem('rememberedEmail')
+    if (storedEmail) {
+      form.value.email = storedEmail
       form.value.rememberMe = true
+    }
+
+    // Check if redirected from password reset completion
+    const urlParams = new URLSearchParams(window.location.search)
+    const resetMode = urlParams.get('mode')
+    const emailParam = urlParams.get('email')
+
+    if (resetMode === 'resetPassword' && emailParam) {
+      // Firebase has already handled the password reset
+      // User is being redirected back after completing reset on Firebase domain
+      const email = decodeURIComponent(emailParam)
+
+      // Clean URL
+      window.history.replaceState({}, document.title, window.location.pathname)
+
+      // Pre-fill email and show success message
+      form.value.email = email
+      mode.value = 'login'
+
+      await ElMessageBox.alert(
+        'Your login code has been reset successfully! You can now login with your new code.',
+        'Password Reset Complete',
+        {
+          confirmButtonText: 'OK',
+          type: 'success'
+        }
+      )
     }
   })
 
   // ── helpers ──────────────────────────────────────────────────────────────
+
+  function validateEmail(email) {
+    // More strict email validation:
+    // - At least 3 characters before @
+    // - Domain must have at least 2 characters
+    // - TLD must have at least 2 characters
+    const emailPattern = /^[a-zA-Z0-9._-]{3,}@[a-zA-Z0-9.-]{2,}\.[a-zA-Z]{2,}$/
+    return emailPattern.test(email)
+  }
+
+  async function findUserByEmail(email) {
+    try {
+      const usersSnapshot = await read('users')
+      if (!usersSnapshot) return null
+
+      // Find user with matching email
+      const userEntries = Object.entries(usersSnapshot)
+      for (const [mobile, userData] of userEntries) {
+        if (userData.email?.toLowerCase() === email.toLowerCase()) {
+          return { ...userData, mobile }
+        }
+      }
+      return null
+    } catch (error) {
+      console.error('Error finding user by email:', error)
+      return null
+    }
+  }
 
   function activateUserGroup(mobileKey) {
     const groups = userStore.getGroups || []
@@ -55,353 +114,341 @@ export const Login = () => {
   async function completeLogin(payload, message) {
     const token = generateUUID()
     const [encryptedSession, encryptedStore] = await Promise.all([
-      encryptForSession(token), // AES-GCM → sessionStorage
-      encryptForStore(token) // AES-CBC → Pinia store
+      encryptForSession({ ...payload, token }),
+      encryptForStore({ ...payload, token })
     ])
-    userStore.setActiveUser(payload.mobile)
-    userStore.addUser(payload)
-    userStore.setActiveLoginCode(payload.loginCode)
-    userStore.setSessionToken(encryptedStore)
+
     sessionStorage.setItem('_session', encryptedSession)
+    userStore.setActiveUser(payload.mobile)
+    userStore.setSessionToken(encryptedStore)
+    userStore.setActiveLoginCode(payload.loginCode)
     activateUserGroup(payload.mobile)
-    showSuccess(message)
+    showSuccess(message || 'Login successful!')
   }
 
-  // Firebase may return arrays as plain objects keyed by index – normalise them
-  function toArray(val) {
-    if (!val) return []
-    return Array.isArray(val) ? val : Object.values(val)
-  }
+  // ── Main handlers ─────────────────────────────────────────────────────────
 
-  // ── Recovery codes setup dialog ───────────────────────────────────────────
+  async function handleSubmit() {
+    if (!loginForm.value) return
 
-  /** Called when user clicks "I've saved my codes" in the recovery dialog. */
-  async function confirmRecoveryCodes() {
-    const {
-      mobile,
-      userName,
-      loginCode,
-      codes,
-      existingUser,
-      isRegenerationFlow
-    } = pendingLoginData.value
-
-    // If this is a regeneration flow, codes were already saved to Firebase
-    if (!isRegenerationFlow) {
-      // Original flow: save codes for first-time login or registration
-      const userPayload = existingUser
-        ? { ...existingUser, loginCode, recoveryCodes: codes }
-        : { name: userName, mobile, loginCode, recoveryCodes: codes }
-
-      await updateData(
-        `users/${mobile}`,
-        () => userPayload,
-        'Account setup complete! Your login code and recovery codes have been saved.'
-      )
+    try {
+      await loginForm.value.validate()
+    } catch {
+      return showError('Please fill in all required fields correctly')
     }
 
-    if (form.value.rememberMe) setUserInStorage(form.value)
-    else removeUserFromStorage()
-
-    recoveryCodesDialogVisible.value = false
-    pendingLoginData.value = null
-
-    const message = isRegenerationFlow
-      ? 'Login code reset successfully. New recovery codes saved. You are now logged in!'
-      : 'Welcome! Your account is ready.'
-
-    await completeLogin({ name: userName, mobile, loginCode }, message)
-  }
-
-  /** Print / Save as PDF button inside the recovery dialog. */
-  function handlePrintCodes() {
-    if (!pendingLoginData.value) return
-    const { userName, mobile, codes } = pendingLoginData.value
-    printPasscodes(userName, mobile, codes)
-  }
-
-  // ── Main login / register handler ─────────────────────────────────────────
-
-  function handleSubmit() {
-    loginForm.value.validate(async (valid) => {
-      if (!valid) return
-
-      const mobileKey = form.value.mobile.trim()
-      const rawName = form.value.name.trim()
-      const loginCodeValue = form.value.loginCode.trim()
-
-      if (!/^03\d{9}$/.test(mobileKey)) {
-        return showError(
-          'Mobile number must be 11 digits starting with 03 (e.g., 03009090909)'
-        )
-      }
-
-      const normalizedName = rawName.replace(/\s+/g, ' ').trim()
-      if (normalizedName.length < 3 || normalizedName.length > 50) {
-        return showError('Name must be between 3 and 50 characters')
-      }
-      if (!/^[a-zA-Z]+(\s[a-zA-Z]+)*$/.test(normalizedName)) {
-        return showError(
-          'Name can only contain alphabets and single spaces (no special characters)'
-        )
-      }
-
-      if (loginCodeValue.length < 4 || loginCodeValue.length > 15) {
-        return showError('Login code must be between 4 and 15 characters')
-      }
-
-      try {
-        const user = await read(`users/${mobileKey}`)
-
-        if (user) {
-          // ── Existing user ──────────────────────────────────────────────
-          const dbName = user.name.trim().replace(/\s+/g, ' ').toLowerCase()
-          if (dbName !== normalizedName.toLowerCase()) {
-            return showError(
-              'Name does not match the registered user for this mobile number'
-            )
-          }
-
-          if (user.loginCode === null || user.loginCode === undefined) {
-            // First-time login: set login code + generate recovery codes
-            try {
-              await ElMessageBox.confirm(
-                `This is your first login. After setting your login code you will be shown <strong>${RECOVERY_CODES_COUNT} recovery passcodes</strong> — save them safely before continuing!`,
-                'Set Login Code',
-                {
-                  confirmButtonText: 'OK, Continue',
-                  cancelButtonText: 'Cancel',
-                  type: 'info',
-                  dangerouslyUseHTMLString: true
-                }
-              )
-            } catch {
-              return
-            }
-
-            const codes = generatePasscodes(RECOVERY_CODES_COUNT)
-            pendingLoginData.value = {
-              mobile: mobileKey,
-              userName: user.name,
-              loginCode: loginCodeValue,
-              codes,
-              existingUser: user
-            }
-            recoveryCodesDialogVisible.value = true
-          } else {
-            // Normal login
-            if (user.loginCode !== loginCodeValue) {
-              return showError('Incorrect login code')
-            }
-
-            if (form.value.rememberMe) setUserInStorage(form.value)
-            else removeUserFromStorage()
-
-            await completeLogin(
-              { name: user.name, mobile: mobileKey, loginCode: user.loginCode },
-              'Login successful!'
-            )
-          }
-        } else {
-          // ── New user registration ──────────────────────────────────────
-          try {
-            await ElMessageBox.confirm(
-              `No account found for <strong>${mobileKey}</strong>. Register as a new user named <strong>${normalizedName}</strong>?<br><br>After registration you will be shown <strong>${RECOVERY_CODES_COUNT} recovery passcodes</strong> — save them safely!`,
-              'Register New User',
-              {
-                confirmButtonText: 'Register',
-                cancelButtonText: 'Cancel',
-                type: 'warning',
-                dangerouslyUseHTMLString: true
-              }
-            )
-          } catch {
-            return
-          }
-
-          const codes = generatePasscodes(RECOVERY_CODES_COUNT)
-          pendingLoginData.value = {
-            mobile: mobileKey,
-            userName: normalizedName,
-            loginCode: loginCodeValue,
-            codes,
-            existingUser: null
-          }
-          recoveryCodesDialogVisible.value = true
-        }
-      } catch (error) {
-        showError(
-          error?.message || error || 'An error occurred while logging you in'
-        )
-      }
-    })
-  }
-
-  // ── Forgot login code (recovery flow) ────────────────────────────────────
-
-  async function handleForgotCode() {
-    const mobileKey = form.value.mobile.trim()
-
-    if (!mobileKey) {
-      return showError('Please enter your mobile number first')
+    if (mode.value === 'register') {
+      await handleRegistration()
+    } else {
+      await handleLogin()
     }
-    if (!/^03\d{9}$/.test(mobileKey)) {
-      return showError(
-        'Please enter a valid mobile number (11 digits starting with 03)'
-      )
+  }
+
+  // ── Registration ──────────────────────────────────────────────────────────
+
+  async function handleRegistration() {
+    const { name, mobile, email, loginCode, rememberMe } = form.value
+
+    const normalizedName = name.trim().replace(/\s+/g, ' ')
+    const emailValue = email.trim().toLowerCase()
+    const mobileValue = mobile.trim()
+
+    if (!normalizedName || !mobileValue || !emailValue || !loginCode) {
+      return showError('All fields are required for registration')
+    }
+
+    if (!validateEmail(emailValue)) {
+      return showError('Please enter a valid email address')
+    }
+
+    if (loginCode.length < 6 || loginCode.length > 15) {
+      return showError('Login code must be between 6 and 15 characters')
     }
 
     try {
-      const user = await read(`users/${mobileKey}`)
+      // Check if email already exists in database
+      const existingUserByEmail = await findUserByEmail(emailValue)
+      if (existingUserByEmail) {
+        return showError('An account with this email already exists')
+      }
+
+      // Check if mobile already exists in database
+      const existingUserByMobile = await read(`users/${mobileValue}`)
+      if (existingUserByMobile) {
+        return showError('An account with this mobile number already exists')
+      }
+
+      // Create Firebase Auth user
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        emailValue,
+        loginCode
+      )
+
+      // Update profile with display name
+      await updateProfile(userCredential.user, {
+        displayName: normalizedName
+      })
+
+      // Send email verification
+      const actionCodeSettings = {
+        url: `${window.location.origin}${window.location.pathname}`,
+        handleCodeInApp: false
+      }
+
+      await sendEmailVerification(userCredential.user, actionCodeSettings)
+
+      // Save user data to Realtime Database (without loginCode - it's only in Firebase Auth)
+      const userData = {
+        name: normalizedName,
+        mobile: mobileValue,
+        email: emailValue,
+        emailVerified: false // Will be set to true on first successful login
+      }
+
+      await updateData(`users/${mobileValue}`, () => userData, '')
+
+      // Handle remember me
+      if (rememberMe) {
+        localStorage.setItem('rememberedEmail', emailValue)
+      } else {
+        localStorage.removeItem('rememberedEmail')
+      }
+
+      // Store email for potential resend
+      lastRegisteredEmail.value = emailValue
+
+      await ElMessageBox.alert(
+        `Account created successfully!<br><br>A verification email has been sent to <strong>${emailValue}</strong>.<br><br><strong>Important:</strong> You must verify your email within 48 hours by clicking the link in the email. After verification, you can login.<br><br>If you don't verify within 48 hours, you may need to contact support to complete registration.`,
+        'Registration Successful - Verify Your Email',
+        {
+          confirmButtonText: 'OK',
+          type: 'success',
+          dangerouslyUseHTMLString: true
+        }
+      )
+
+      // Switch to login mode and pre-fill email
+      mode.value = 'login'
+      form.value.email = emailValue
+      form.value.name = ''
+      form.value.mobile = ''
+      form.value.loginCode = ''
+      showResendVerification.value = true
+    } catch (error) {
+      console.error('Registration error:', error)
+
+      if (error.code === 'auth/email-already-in-use') {
+        showError(
+          'This email is already registered. If you registered recently but haven\'t verified, check your email for the verification link. If the email doesn\'t belong to you or you need help, please contact support.'
+        )
+      } else if (error.code === 'auth/weak-password') {
+        showError('Login code is too weak. Please use at least 6 characters.')
+      } else if (error.code === 'auth/invalid-email') {
+        showError('Invalid email format')
+      } else {
+        showError(error.message || 'Registration failed. Please try again.')
+      }
+    }
+  }
+
+  // ── Login ─────────────────────────────────────────────────────────────────
+
+  async function handleLogin() {
+    const { email, loginCode, rememberMe } = form.value
+
+    const emailValue = email.trim().toLowerCase()
+
+    if (!emailValue || !loginCode) {
+      return showError('Email and login code are required')
+    }
+
+    if (!validateEmail(emailValue)) {
+      return showError('Please enter a valid email address')
+    }
+
+    try {
+      // Authenticate with Firebase
+      const userCredential = await signInWithEmailAndPassword(auth, emailValue, loginCode)
+
+      // Check if email is verified
+      // NOTE: Unverified accounts created by mistake (e.g., random emails) will exist
+      // but cannot login. This prevents email squatting since the real owner can verify.
+      // Consider implementing Cloud Function to auto-delete unverified accounts > 48hrs old.
+      if (!userCredential.user.emailVerified) {
+        lastRegisteredEmail.value = emailValue
+        showResendVerification.value = true
+        return showError(
+          'Your email is not verified. Please check your inbox and click the verification link. Use "Resend Verification Email" if needed.'
+        )
+      }
+
+      // Find user in database
+      const user = await findUserByEmail(emailValue)
 
       if (!user) {
-        return ElMessageBox.alert(
-          'No account found with this mobile number. Please register first.',
-          'Account Not Found',
-          { confirmButtonText: 'OK', type: 'warning' }
-        )
+        return showError('User data not found in database. Please contact support.')
       }
 
-      // Pre-fill the name field
-      form.value.name = user.name
-
-      const storedCodes = toArray(user.recoveryCodes)
-
-      if (storedCodes.length === 0) {
-        return ElMessageBox.alert(
-          `No recovery codes are set for <strong>${user.name}</strong>.<br><br>Please contact an admin to reset your login code via the Users panel.`,
-          'Recovery Not Available',
-          {
-            confirmButtonText: 'OK',
-            type: 'warning',
-            dangerouslyUseHTMLString: true
-          }
-        )
-      }
-
-      // ── Step 1: ask for recovery passcode ──────────────────────────────
-      let enteredCode
-      try {
-        const result = await ElMessageBox.prompt(
-          `Enter one of your saved recovery passcodes for <strong>${user.name}</strong>.<br>
-          <span style="color:#888;font-size:12px;">You have <strong>${storedCodes.length}</strong> recovery code(s) remaining.</span>`,
-          'Enter Recovery Passcode',
-          {
-            confirmButtonText: 'Verify',
-            cancelButtonText: 'Cancel',
-            dangerouslyUseHTMLString: true,
-            inputPlaceholder: 'e.g. ABCD-EFGH-JKLM'
-          }
-        )
-        enteredCode = result.value?.trim().toUpperCase()
-      } catch {
-        return
-      }
-
-      const normalizedStored = storedCodes.map((c) => c.trim().toUpperCase())
-      const matchIndex = normalizedStored.indexOf(enteredCode)
-
-      if (matchIndex === -1) {
-        return showError(
-          'Invalid recovery passcode. Please check and try again.'
-        )
-      }
-
-      // ── Step 2: enter new login code ────────────────────────────────────
-      let newLoginCode
-      try {
-        const result = await ElMessageBox.prompt(
-          'Recovery code verified! Enter your new login code.',
-          'Set New Login Code',
-          {
-            confirmButtonText: 'Save & Login',
-            cancelButtonText: 'Cancel',
-            inputType: 'password',
-            inputPlaceholder: '4–15 characters',
-            inputValidator: (val) => {
-              if (!val || val.trim().length < 4)
-                return 'Minimum 4 characters required'
-              if (val.trim().length > 15) return 'Maximum 15 characters allowed'
-              return true
-            }
-          }
-        )
-        newLoginCode = result.value?.trim()
-      } catch {
-        return
-      }
-
-      // Remove the used code; check if it's the last one
-      const updatedCodes = storedCodes.filter((_, i) => i !== matchIndex)
-      const isLastCode = storedCodes.length === 1
-
-      if (isLastCode) {
-        // Generate new recovery codes and show dialog for user to save them
-        const newCodes = generatePasscodes(RECOVERY_CODES_COUNT)
-
-        pendingLoginData.value = {
-          mobile: mobileKey,
-          userName: user.name,
-          loginCode: newLoginCode,
-          codes: newCodes,
-          existingUser: user,
-          isRegenerationFlow: true
-        }
-
-        // Save new codes to Firebase immediately
-        const updated = {
-          ...user,
-          loginCode: newLoginCode,
-          recoveryCodes: newCodes
-        }
-
+      // Mark user as verified in database (since they passed email verification check)
+      if (!user.emailVerified) {
         await updateData(
-          `users/${mobileKey}`,
-          () => updated,
-          `Login code reset! All recovery codes have been regenerated.`
+          `users/${user.mobile}`,
+          (currentData) => ({ ...currentData, emailVerified: true }),
+          ''
         )
+      }
 
-        // Show dialog for user to save new codes
-        recoveryCodesDialogVisible.value = true
+      // Hide resend verification option on successful login
+      showResendVerification.value = false
+
+      // Handle remember me
+      if (rememberMe) {
+        localStorage.setItem('rememberedEmail', emailValue)
       } else {
-        // Normal flow: just update codes and login
-        const updated = {
-          ...user,
-          loginCode: newLoginCode,
-          recoveryCodes: updatedCodes.length > 0 ? updatedCodes : null
-        }
+        localStorage.removeItem('rememberedEmail')
+      }
 
-        await updateData(
-          `users/${mobileKey}`,
-          () => updated,
-          `Login code reset! ${updatedCodes.length} recovery code(s) remaining.`
-        )
+      // Complete login
+      await completeLogin(
+        { name: user.name, mobile: user.mobile, loginCode },
+        'Login successful!'
+      )
+    } catch (error) {
+      console.error('Login error:', error)
 
-        // Auto-login with the new code
-        form.value.loginCode = newLoginCode
-        if (form.value.rememberMe)
-          setUserInStorage({ ...form.value, loginCode: newLoginCode })
-        else removeUserFromStorage()
+      if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+        showError('Incorrect login code')
+      } else if (error.code === 'auth/user-not-found') {
+        showError('No account found with this email')
+      } else if (error.code === 'auth/too-many-requests') {
+        showError('Too many failed attempts. Please try again later.')
+      } else {
+        showError(error.message || 'Login failed. Please try again.')
+      }
+    }
+  }
 
-        await completeLogin(
-          { name: user.name, mobile: mobileKey, loginCode: newLoginCode },
-          'Login code reset successfully. You are now logged in!'
+  // ── Forgot login code (email reset) ───────────────────────────────────────
+
+  async function handleResendVerification() {
+    const email = lastRegisteredEmail.value || form.value.email.trim().toLowerCase()
+
+    if (!email) {
+      return showError('Email address not found. Please enter your email.')
+    }
+
+    try {
+      // Sign in to get the user object (required for sendEmailVerification)
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        form.value.loginCode
+      )
+
+      const actionCodeSettings = {
+        url: `${window.location.origin}${window.location.pathname}`,
+        handleCodeInApp: false
+      }
+
+      await sendEmailVerification(userCredential.user, actionCodeSettings)
+
+      showSuccess(
+        `Verification email has been resent to ${email}. Please check your inbox.`
+      )
+    } catch (error) {
+      console.error('Error resending verification email:', error)
+
+      if (error.code === 'auth/too-many-requests') {
+        showError('Too many requests. Please wait a few minutes before trying again.')
+      } else if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+        showError('Incorrect login code. Please enter your correct login code to resend verification.')
+      } else {
+        showError(error.message || 'Failed to resend verification email.')
+      }
+    }
+  }
+
+  async function handleForgotCode() {
+    emailResetDialogVisible.value = true
+  }
+
+  async function sendResetEmail() {
+    const email = resetEmail.value?.trim() || ''
+
+    if (!email) {
+      return showError('Please enter your email address')
+    }
+
+    if (!validateEmail(email)) {
+      return showError('Please enter a valid email address')
+    }
+
+    isEmailResetLoading.value = true
+
+    try {
+      // Find user by email
+      const user = await findUserByEmail(email)
+
+      if (!user) {
+        isEmailResetLoading.value = false
+        return showError(
+          'No account found with this email address. Please check and try again.'
         )
       }
+
+      // Configure action code settings to redirect back to our app
+      const actionCodeSettings = {
+        // URL to redirect to after email link is clicked
+        url: `${window.location.origin}${window.location.pathname}?mode=resetPassword&email=${encodeURIComponent(email)}`,
+        handleCodeInApp: true
+      }
+
+      // Send password reset email via Firebase
+      await sendPasswordResetEmail(auth, email, actionCodeSettings)
+
+      isEmailResetLoading.value = false
+      emailResetDialogVisible.value = false
+      resetEmail.value = ''
+
+      await ElMessageBox.alert(
+        `A password reset link has been sent to <strong>${email}</strong>.<br><br>Click the link in your email to reset your login code on the secure Firebase page. You'll be redirected back to this page when done.`,
+        'Reset Email Sent',
+        {
+          confirmButtonText: 'OK',
+          type: 'success',
+          dangerouslyUseHTMLString: true
+        }
+      )
     } catch (error) {
-      showError(error?.message || 'Failed to process recovery')
+      isEmailResetLoading.value = false
+      console.error('Error sending reset email:', error)
+
+      if (error.code === 'auth/user-not-found') {
+        showError('No account found with this email address.')
+      } else if (error.code === 'auth/invalid-email') {
+        showError('Invalid email address format.')
+      } else if (error.code === 'auth/too-many-requests') {
+        showError('Too many requests. Please try again later.')
+      } else {
+        showError(
+          error.message || 'Failed to send reset email. Please try again.'
+        )
+      }
     }
   }
 
   return {
     form,
     loginForm,
-    recoveryCodesDialogVisible,
-    pendingLoginData,
+    mode,
+    emailResetDialogVisible,
+    resetEmail,
+    isEmailResetLoading,
+    showResendVerification,
     handleSubmit,
     handleForgotCode,
-    confirmRecoveryCodes,
-    handlePrintCodes,
-    RECOVERY_CODES_COUNT
+    sendResetEmail,
+    handleResendVerification
   }
 }

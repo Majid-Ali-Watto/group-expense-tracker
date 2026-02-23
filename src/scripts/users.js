@@ -4,14 +4,12 @@ import useFireBase from '../api/firebase-apis'
 import { store } from '../stores/store'
 import { showError } from '../utils/showAlerts'
 import { maskMobile } from '../utils/maskMobile'
+import { auth, deleteUser } from '../firebase'
 
 export const Users = () => {
   const userStore = store()
   const { updateData, read, deleteData } = useFireBase()
 
-  const showForm = ref(false)
-  const form = ref({ name: '', mobile: '' })
-  const userForm = ref(null)
   const editDialogVisible = ref(false)
   const editForm = ref({ name: '', mobile: '' })
 
@@ -21,9 +19,7 @@ export const Users = () => {
 
   const searchQuery = ref('')
 
-  const setShowForm = () => {
-    showForm.value = !showForm.value
-  }
+
   const activeGroupMobiles = computed(() => {
     const groupId = userStore.getActiveGroup
     const group = groupId ? userStore.getGroupById(groupId) : null
@@ -59,20 +55,24 @@ export const Users = () => {
   })
 
   // Load full user data (app.js only loads minimal fields)
+  // Only show verified users to prevent unverified accounts from being added to groups
   onMounted(async () => {
     const rawUsers = await read('users')
     if (!rawUsers) return
     Object.keys(rawUsers).forEach((mobile) => {
       const u = rawUsers[mobile]
-      userStore.addUser({
-        mobile,
-        name: u.name || '',
-        loginCode: u.loginCode || null,
-        addedBy: u.addedBy || null,
-        maskedMobile: maskMobile(mobile),
-        deleteRequest: u.deleteRequest || null,
-        updateRequest: u.updateRequest || null
-      })
+      // Only include users who have verified their email
+      // emailVerified is set to true on first successful login
+      if (u.emailVerified === true) {
+        userStore.addUser({
+          mobile,
+          name: u.name || '',
+          addedBy: u.addedBy || null,
+          maskedMobile: maskMobile(mobile),
+          deleteRequest: u.deleteRequest || null,
+          updateRequest: u.updateRequest || null
+        })
+      }
     })
   })
 
@@ -112,86 +112,6 @@ export const Users = () => {
     })
     return result
   })
-
-  // --- Save User ---
-
-  async function saveUser() {
-    userForm.value.validate(async (valid) => {
-      if (!valid) return
-
-      const rawName = form.value.name.trim()
-      const mobileKey = form.value.mobile.trim()
-
-      if (!/^03\d{9}$/.test(mobileKey)) {
-        return showError(
-          'Mobile number must be 11 digits starting with 03 (e.g., 03009090909)'
-        )
-      }
-
-      const normalizedName = rawName.replace(/\s+/g, ' ').trim()
-      if (!/^[a-zA-Z]+(\s[a-zA-Z]+)*$/.test(normalizedName)) {
-        return showError(
-          'Name can only contain alphabets and single spaces (no special characters)'
-        )
-      }
-
-      if (!normalizedName) return showError('Name is required')
-
-      const existingUser = await read(`users/${mobileKey}`)
-      if (existingUser) {
-        return showError(
-          `User with mobile number ${mobileKey} already exists (${existingUser.name})`
-        )
-      }
-
-      const payload = {
-        name: normalizedName,
-        mobile: mobileKey,
-        loginCode: null,
-        addedBy: activeUser.value
-      }
-      await updateData(`users/${mobileKey}`, () => payload, 'User saved')
-      userStore.addUser({ ...payload, maskedMobile: maskMobile(mobileKey) })
-      form.value.name = ''
-      form.value.mobile = ''
-    })
-  }
-
-  // --- Reset Login Code ---
-
-  async function resetLoginCode(mobile, name) {
-    try {
-      await ElMessageBox.confirm(
-        `Reset login code for <strong>${name}</strong> (${mobile})?<br><br>
-        This will set their login code to <strong>null</strong>, and they will be asked to create a new one on their next login.`,
-        'Reset Login Code',
-        {
-          confirmButtonText: 'Reset',
-          cancelButtonText: 'Cancel',
-          type: 'warning',
-          dangerouslyUseHTMLString: true
-        }
-      )
-
-      const user = await read(`users/${mobile}`)
-      if (!user) {
-        return showError('User not found')
-      }
-
-      const updatedUser = { ...user, loginCode: null }
-      await updateData(
-        `users/${mobile}`,
-        () => updatedUser,
-        `Login code reset for ${name}. They will create a new one on next login.`
-      )
-
-      userStore.addUser({ mobile, loginCode: null })
-    } catch (error) {
-      if (error !== 'cancel') {
-        showError(error?.message || 'Failed to reset login code')
-      }
-    }
-  }
 
   // --- Edit User ---
 
@@ -280,13 +200,29 @@ export const Users = () => {
       const myName = userStore.getUserByMobile(me)?.name
 
       if (ownerMobiles.length === 0) {
+        // Delete from Realtime Database
         await deleteData(`users/${mobile}`, `User ${name} deleted`)
         userStore.setUsers(
           [...userStore.getUsers].filter((u) => u.mobile !== mobile)
         )
+        
+        // If user is deleting themselves, also delete from Firebase Auth
         if (mobile === me) {
+          try {
+            const currentUser = auth.currentUser
+            if (currentUser) {
+              await deleteUser(currentUser)
+              console.log('User deleted from Firebase Authentication')
+            }
+          } catch (authError) {
+            console.error('Error deleting user from Firebase Auth:', authError)
+            showError('Account deleted from database but Firebase Authentication deletion failed. You may need to sign in again to complete deletion.')
+          }
+          
           userStore.setActiveUser(null)
           userStore.setActiveGroup(null)
+          userStore.setSessionToken(null)
+          sessionStorage.removeItem('_session')
         }
       } else {
         const deleteRequest = {
@@ -329,10 +265,30 @@ export const Users = () => {
     )
 
     if (type === 'delete' && allApproved) {
+      // Delete from Realtime Database
       await deleteData(`users/${userMobile}`, `User ${user.name} deleted`)
       userStore.setUsers(
         [...userStore.getUsers].filter((u) => u.mobile !== userMobile)
       )
+      
+      // If user is deleting themselves, also delete from Firebase Auth
+      if (userMobile === me) {
+        try {
+          const currentUser = auth.currentUser
+          if (currentUser) {
+            await deleteUser(currentUser)
+            console.log('User deleted from Firebase Authentication')
+          }
+        } catch (authError) {
+          console.error('Error deleting user from Firebase Auth:', authError)
+          showError('Account deleted from database but Firebase Authentication deletion failed.')
+        }
+        
+        userStore.setActiveUser(null)
+        userStore.setActiveGroup(null)
+        userStore.setSessionToken(null)
+        sessionStorage.removeItem('_session')
+      }
     } else if (type === 'update' && allApproved) {
       const updated = { ...user, name: request.newName, updateRequest: null }
       await updateData(
@@ -388,16 +344,11 @@ export const Users = () => {
   }
 
   return {
-    form,
-    userForm,
     searchQuery,
     filteredUsers,
     editDialogVisible,
     editForm,
     myPendingApprovals,
-    showForm,
-    saveUser,
-    resetLoginCode,
     displayMobile,
     getUserGroups,
     canManage,
@@ -405,7 +356,6 @@ export const Users = () => {
     submitUpdateUser,
     requestDeleteUser,
     approveRequest,
-    rejectRequest,
-    setShowForm
+    rejectRequest
   }
 }

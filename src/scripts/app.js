@@ -86,14 +86,11 @@ export const App = () => {
     const mobile = tabStore.getActiveUser
     if (!mobile) return false
 
-    // activeLoginCode is set at login time in its own store field —
-    // it is never overwritten by setUsers(), unlike the users list entries.
-    const activeLoginCode = tabStore.getActiveLoginCode
-    if (!activeLoginCode) return false
-
+    // Verify user exists in database
+    // Note: loginCode is only in Firebase Auth, not in database
     try {
       const user = await read(`users/${mobile}`, loading)
-      return !!(user && user.loginCode === activeLoginCode)
+      return !!user
     } catch {
       return false
     }

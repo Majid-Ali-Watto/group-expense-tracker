@@ -1,40 +1,6 @@
 <!-- eslint-disable vue/multi-word-component-names -->
 <template>
   <div class="p-4">
-    <add-new-transaction-button
-      v-if="!showForm"
-      text="Want to add a new user?"
-      @click="setShowForm"
-    />
-    <fieldset
-      v-else-if="showForm"
-      class="border border-gray-300 p-4 rounded-md"
-    >
-      <legend class="mb-4 px-2 font-semibold text-gray-700">
-        Add New User
-      </legend>
-
-      <el-form :model="form" :rules="rules" ref="userForm" label-position="top">
-        <el-form-item label="Full Name" prop="name">
-          <el-input v-model="form.name" placeholder="Full name" :maxlength="50" />
-        </el-form-item>
-        <el-form-item label="Mobile Number" prop="mobile">
-          <el-input
-            v-model="form.mobile"
-            placeholder="Mobile number"
-            :maxlength="11"
-            @input="form.mobile = form.mobile.replace(/\D/g, '')"
-          />
-        </el-form-item>
-        <div class="flex justify-end">
-          <el-button type="default" @click="setShowForm">Cancel</el-button>
-
-          <el-button type="primary" @click="saveUser">Save User</el-button>
-        </div>
-      </el-form>
-    </fieldset>
-
-    <el-divider />
 
     <!-- Pending Approvals -->
     <div v-if="myPendingApprovals.length > 0" class="mb-4">
@@ -85,7 +51,7 @@
       </div>
     </div>
 
-    <h3>Existing Users</h3>
+    <h3>Existing Users (only verified)</h3>
     <el-input
       v-model="searchQuery"
       placeholder="Search by name, mobile, or group..."
@@ -98,7 +64,6 @@
     <!-- Header row — visible only on larger screens -->
     <div class="hidden sm:flex sm:items-center gap-3 px-3 mt-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
       <div class="flex-1 min-w-0">Name / Mobile</div>
-      <div class="w-20">Login Code</div>
       <div class="flex-1">Groups</div>
       <div class="flex-shrink-0 w-48">Actions</div>
     </div>
@@ -115,13 +80,6 @@
             <div class="text-xs font-semibold text-gray-400 uppercase tracking-wide sm:hidden mb-1">Name / Mobile</div>
             <div class="font-semibold text-gray-800">{{ row.name }}</div>
             <div class="text-sm text-gray-500">{{ displayMobile(row.mobile) }}</div>
-          </div>
-
-          <!-- Login Code -->
-          <div class="flex items-center gap-2 sm:w-20">
-            <span class="text-xs font-semibold text-gray-400 uppercase tracking-wide sm:hidden">Login Code:</span>
-            <el-tag v-if="row.loginCode" type="success" size="small">Set</el-tag>
-            <el-tag v-else type="info" size="small">Not Set</el-tag>
           </div>
 
           <!-- Groups -->
@@ -145,15 +103,6 @@
           <!-- Actions -->
           <div class="flex flex-wrap gap-1 flex-shrink-0 sm:w-48">
             <div class="w-full text-xs font-semibold text-gray-400 uppercase tracking-wide sm:hidden mb-1">Actions</div>
-            <!-- Reset login code -->
-            <el-button
-              v-if="row.loginCode && canManage(row)"
-              type="warning"
-              size="small"
-              @click="resetLoginCode(row.mobile, row.name)"
-            >
-              Reset Code
-            </el-button>
 
             <template v-if="canManage(row)">
               <!-- No pending request: show edit & delete -->
@@ -218,19 +167,13 @@
 import { ref } from 'vue'
 import { loginRules as rules } from '../assets/validation-rules'
 import { Users } from '../scripts/users'
-import AddNewTransactionButton from './generic-components/AddNewTransactionButton.vue'
 
 const {
-  form,
-  userForm,
-  showForm,
   searchQuery,
   filteredUsers,
   editDialogVisible,
   editForm,
   myPendingApprovals,
-  saveUser,
-  resetLoginCode,
   displayMobile,
   getUserGroups,
   canManage,
@@ -238,8 +181,7 @@ const {
   submitUpdateUser,
   requestDeleteUser,
   approveRequest,
-  rejectRequest,
-  setShowForm
+  rejectRequest
 } = Users()
 
 const editUserFormRef = ref(null)

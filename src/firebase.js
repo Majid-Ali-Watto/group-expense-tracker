@@ -9,6 +9,17 @@ import {
   get,
   off
 } from 'firebase/database'
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  sendPasswordResetEmail,
+  sendEmailVerification,
+  verifyPasswordResetCode,
+  confirmPasswordReset,
+  updateProfile,
+  deleteUser
+} from 'firebase/auth'
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_API_KEY,
@@ -21,4 +32,24 @@ const firebaseConfig = {
 }
 const app = initializeApp(firebaseConfig)
 const database = getDatabase(app)
-export { database, ref, push, onValue, update, remove, get, off }
+const auth = getAuth(app)
+
+export {
+  database,
+  ref,
+  push,
+  onValue,
+  update,
+  remove,
+  get,
+  off,
+  auth,
+  createUserWithEmailAndPassword,
+  sendPasswordResetEmail,
+  sendEmailVerification,
+  signInWithEmailAndPassword,
+  verifyPasswordResetCode,
+  confirmPasswordReset,
+  updateProfile,
+  deleteUser
+}

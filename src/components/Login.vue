@@ -13,23 +13,40 @@
       <fieldset class="w-full p-4 border rounded-lg">
         <legend>Login / Register</legend>
 
+        <!-- Mode Toggle -->
+        <div class="flex justify-center mb-4">
+          <el-segmented
+            v-model="mode"
+            :options="[
+              { label: 'Login', value: 'login' },
+              { label: 'Register', value: 'register' }
+            ]"
+            size="large"
+          />
+        </div>
+
         <!-- Info Label -->
         <el-alert
-          title="Login Code Required"
-          type="info"
+          :title="mode === 'register' ? 'Registration' : 'Login'"
+          :type="mode === 'register' ? 'success' : 'info'"
           :closable="false"
           class="mb-4"
         >
           <template #default>
             <span class="text-sm">
-              For new users, you'll be asked to create a login code. For
-              existing users, enter your login code to continue.
+              <template v-if="mode === 'register'">
+                Create a new account with your name, mobile, email, and login
+                code. <strong>You must verify your email within 48 hours to activate your account.</strong>
+              </template>
+              <template v-else>
+                Login with your email and login code.
+              </template>
             </span>
           </template>
         </el-alert>
 
-        <!-- Full Name -->
-        <el-form-item label="Full Name" prop="name">
+        <!-- Full Name (only in register mode) -->
+        <el-form-item v-if="mode === 'register'" label="Full Name" prop="name">
           <el-input
             v-model="form.name"
             placeholder="Enter your full name"
@@ -38,8 +55,13 @@
             :maxlength="50"
           />
         </el-form-item>
-        <!-- Mobile Number -->
-        <el-form-item label="Mobile Number" prop="mobile">
+
+        <!-- Mobile Number (only in register mode) -->
+        <el-form-item
+          v-if="mode === 'register'"
+          label="Mobile Number"
+          prop="mobile"
+        >
           <el-input
             v-model="form.mobile"
             placeholder="Enter your mobile number"
@@ -49,12 +71,24 @@
             @input="form.mobile = form.mobile.replace(/\D/g, '')"
           />
         </el-form-item>
+
+        <!-- Email -->
+        <el-form-item label="Email" prop="email">
+          <el-input
+            v-model="form.email"
+            type="email"
+            placeholder="Enter your email address"
+            class="w-full"
+            size="large"
+          />
+        </el-form-item>
+
         <!-- Login Code -->
         <el-form-item label="Login Code" prop="loginCode">
           <el-input
             v-model="form.loginCode"
             type="password"
-            placeholder="Enter your login code"
+            placeholder="Enter your login code (6-15 characters)"
             class="w-full"
             size="large"
             show-password
@@ -62,8 +96,16 @@
           />
         </el-form-item>
 
-        <!-- Forgot Login Code Link -->
-        <div class="text-right mb-3">
+        <!-- Forgot Login Code Link (only in login mode) -->
+        <div v-if="mode === 'login'" class="flex flex-col items-end gap-1 mb-3">
+          <el-button
+            v-if="showResendVerification"
+            type="text"
+            @click="handleResendVerification"
+            class="text-green-600 hover:text-green-800"
+          >
+            Resend Verification Email
+          </el-button>
           <el-button
             type="text"
             @click="handleForgotCode"
@@ -82,81 +124,64 @@
           ></el-checkbox>
           <!-- Submit Button -->
           <GenericButton @click="handleSubmit" type="success">
-            Login / Continue
+            {{ mode === 'register' ? 'Register' : 'Login' }}
           </GenericButton>
         </div>
       </fieldset>
     </el-form>
 
-    <!-- ── Recovery Codes Setup Dialog ──────────────────────────────────── -->
+    <!-- ── Email Reset Dialog ──────────────────────────────────── -->
     <el-dialog
-      v-model="recoveryCodesDialogVisible"
-      title="Save Your Recovery Passcodes"
+      v-model="emailResetDialogVisible"
+      title="Reset Login Code via Email"
       width="92%"
       style="max-width: 480px"
       :close-on-click-modal="false"
-      :close-on-press-escape="false"
-      :show-close="false"
     >
-      <div class="space-y-3">
-        <el-alert
-          v-if="!pendingLoginData?.isRegenerationFlow"
-          type="warning"
-          :closable="false"
-        >
+      <div class="space-y-4">
+        <el-alert type="info" :closable="false">
           <template #default>
             <div class="text-sm leading-relaxed">
-              <strong>Important:</strong> If you forget your login code, one of
-              these passcodes lets you reset it. Each code works
-              <strong>only once</strong>. Store them somewhere safe before
-              continuing.
+              We'll send a password reset link to your email. Click the link to
+              set a new login code.
             </div>
           </template>
         </el-alert>
 
-        <el-alert v-else type="info" :closable="false">
-          <template #default>
-            <div class="text-sm leading-relaxed">
-              <strong>New Recovery Codes Generated!</strong> Your last recovery
-              code was used to reset your login code. Here are
-              {{ RECOVERY_CODES_COUNT }} brand new passcodes to keep you secure.
-              Save them safely before continuing.
-            </div>
-          </template>
-        </el-alert>
+        <el-form-item label="Email Address">
+          <el-input
+            v-model="resetEmail"
+            type="email"
+            placeholder="Enter your registered email"
+            class="w-full"
+            size="large"
+          />
+        </el-form-item>
 
-        <!-- Code list -->
-        <div v-if="pendingLoginData" class="mt-2 space-y-2">
-          <div
-            v-for="(code, i) in pendingLoginData.codes"
-            :key="i"
-            class="flex items-center gap-3 px-4 py-2 bg-gray-100 rounded-lg"
+        <div class="flex gap-3">
+          <el-button
+            type="primary"
+            class="flex-1"
+            @click="sendResetEmail"
+            :loading="isEmailResetLoading"
+            :disabled="isEmailResetLoading"
+            size="large"
           >
-            <span class="text-gray-400 text-sm w-5 shrink-0">{{ i + 1 }}.</span>
-            <span
-              class="font-mono font-bold tracking-widest text-base select-all"
-            >
-              {{ code }}
-            </span>
-          </div>
+            Send Reset Link
+          </el-button>
+
+          <el-button
+            type="default"
+            @click="emailResetDialogVisible = false"
+            :disabled="isEmailResetLoading"
+            size="large"
+          >
+            Cancel
+          </el-button>
         </div>
-
-        <!-- Print button -->
-        <el-button class="w-full mt-2" @click="handlePrintCodes">
-          🖨️ Print / Save as PDF
-        </el-button>
       </div>
-
-      <template #footer>
-        <el-button type="primary" class="w-full" @click="confirmRecoveryCodes">
-          {{
-            pendingLoginData?.isRegenerationFlow
-              ? "I've Saved My New Codes — Login"
-              : "I've Saved My Recovery Codes — Continue"
-          }}
-        </el-button>
-      </template>
     </el-dialog>
+
   </div>
 </template>
 
@@ -168,12 +193,14 @@ import { Login } from '../scripts/login'
 const {
   form,
   loginForm,
-  recoveryCodesDialogVisible,
-  pendingLoginData,
+  mode,
+  emailResetDialogVisible,
+  resetEmail,
+  isEmailResetLoading,
+  showResendVerification,
   handleSubmit,
   handleForgotCode,
-  confirmRecoveryCodes,
-  handlePrintCodes,
-  RECOVERY_CODES_COUNT
+  sendResetEmail,
+  handleResendVerification
 } = Login()
 </script>

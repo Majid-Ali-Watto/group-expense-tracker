@@ -26,16 +26,36 @@ export const loginRules = {
     { required: true, message: 'Mobile number is required', trigger: 'blur' },
     {
       pattern: /^03\d{9}$/,
-      message:
-        'Mobile number must be 11 digits starting with 03 (e.g., 03009090909)',
+      message: 'Mobile number must be 11 digits starting with 03',
+      trigger: 'blur'
+    }
+  ],
+  email: [
+    { required: true, message: 'Email is required', trigger: 'blur' },
+    {
+      validator: (rule, value, callback) => {
+        if (!value) return callback()
+        // More strict email validation:
+        // - At least 3 characters before @
+        // - Domain must have at least 2 characters
+        // - TLD must have at least 2 characters
+        const emailPattern = /^[a-zA-Z0-9._-]{3,}@[a-zA-Z0-9.-]{2,}\.[a-zA-Z]{2,}$/
+        if (!emailPattern.test(value.trim())) {
+          callback(
+            new Error('Please enter a valid email address (e.g., user@example.com)')
+          )
+        } else {
+          callback()
+        }
+      },
       trigger: 'blur'
     }
   ],
   loginCode: [
     { required: true, message: 'Login code is required', trigger: 'blur' },
     {
-      min: 4,
-      message: 'Login code must be at least 4 characters',
+      min: 6,
+      message: 'Login code must be at least 6 characters',
       trigger: 'blur'
     },
     {

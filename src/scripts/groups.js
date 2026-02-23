@@ -142,14 +142,17 @@ export const Groups = () => {
     loadPins()
 
     // Fetch users — needed for group creation and member display
+    // Only include verified users to prevent unverified accounts from being added to groups
     try {
       const users = await read('users')
       if (users) {
-        const list = Object.keys(users).map((k) => ({
-          mobile: k,
-          name: users[k].name || '',
-          maskedMobile: maskMobile(k)
-        }))
+        const list = Object.keys(users)
+          .filter((k) => users[k].emailVerified === true) // Only verified users
+          .map((k) => ({
+            mobile: k,
+            name: users[k].name || '',
+            maskedMobile: maskMobile(k)
+          }))
         userStore.setUsers(list)
       }
     } catch (error) {
