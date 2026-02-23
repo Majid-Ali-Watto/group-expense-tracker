@@ -1,6 +1,5 @@
 import { ref, computed, onMounted, onUnmounted, inject, watch } from 'vue'
 import { onValue, off } from '../firebase'
-import { friends } from '../assets/data'
 import { store } from '../stores/store'
 import useFireBase from '../api/firebase-apis'
 import { ElMessageBox } from 'element-plus'
@@ -41,7 +40,7 @@ export const Loans = () => {
     }
     return userStore.getUsers && userStore.getUsers.length
       ? userStore.getUsers
-      : friends.map((f) => ({ name: f, mobile: f }))
+      : []
   })
 
   const usersOptions = computed(() => {
@@ -70,11 +69,9 @@ export const Loans = () => {
   }
   // Fetch loans for the selected month
 
-    const fetchLoans = () => {
+  const fetchLoans = () => {
     const groupId = userStore.getActiveGroup || 'global'
-    const loansRef = dbRef(
-      `loans/${groupId}/${selectedMonth.value}`
-    )
+    const loansRef = dbRef(`loans/${groupId}/${selectedMonth.value}`)
     if (loansListener) off(loansRef, 'value', loansListener)
 
     loansListener = onValue(
@@ -426,7 +423,8 @@ export const Loans = () => {
           (Array.isArray(newMeta) ? newMeta : [newMeta]).map((m) => m.url)
         )
         oldMetas.forEach((m) => {
-          if (!newUrls.has(m.url)) deleteFromCloudinary(m.publicId, m.resourceType)
+          if (!newUrls.has(m.url))
+            deleteFromCloudinary(m.publicId, m.resourceType)
         })
       }
 

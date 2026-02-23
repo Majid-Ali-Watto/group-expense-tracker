@@ -83,7 +83,9 @@
               }}</span
             >
             <span v-else-if="header.key === 'receiptUrls'">
-              <template v-if="Array.isArray(row.receiptUrls) && row.receiptUrls.length">
+              <template
+                v-if="Array.isArray(row.receiptUrls) && row.receiptUrls.length"
+              >
                 <ol class="list-decimal pl-4">
                   <li v-for="(url, i) in row.receiptUrls" :key="i">
                     <a
@@ -179,9 +181,6 @@ const props = defineProps({
   keys: {
     type: Array,
     required: true
-  },
-  friends: {
-    type: Array
   },
   dataRef: {
     type: [Object, null],

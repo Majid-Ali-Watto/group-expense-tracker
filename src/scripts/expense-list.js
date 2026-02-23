@@ -6,7 +6,6 @@ import { checkDaily } from '../utils/notifications'
 import getCurrentMonth from '../utils/getCurrentMonth'
 import { showError } from '../utils/showAlerts'
 import { deleteFromCloudinary } from '../utils/cloudinaryUpload'
-import { friends } from '../assets/data'
 import { ElMessageBox } from 'element-plus'
 
 export const ExpenseList = (props) => {
@@ -25,7 +24,6 @@ export const ExpenseList = (props) => {
     }
     const users =
       userStore.getUsers && userStore.getUsers.length ? userStore.getUsers : []
-    if (!users.length) return friends.map((f) => ({ label: f, value: f }))
     return users.map((u) => ({
       label: `${u.name} (${u.mobile})`,
       value: u.mobile
@@ -430,7 +428,8 @@ export const ExpenseList = (props) => {
           (Array.isArray(newMeta) ? newMeta : [newMeta]).map((m) => m.url)
         )
         oldMetas.forEach((m) => {
-          if (!newUrls.has(m.url)) deleteFromCloudinary(m.publicId, m.resourceType)
+          if (!newUrls.has(m.url))
+            deleteFromCloudinary(m.publicId, m.resourceType)
         })
       }
 

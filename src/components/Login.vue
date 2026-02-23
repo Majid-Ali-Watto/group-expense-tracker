@@ -122,7 +122,7 @@
         </el-alert>
 
         <!-- Code list -->
-        <div v-if="pendingLoginData" class="mt-2 space-y-2">
+        <div v-if="pendingLoginData" class="mt-2 space-y-2" ref="passcodes">
           <div
             v-for="(code, i) in pendingLoginData.codes"
             :key="i"

@@ -1,5 +1,4 @@
 import { computed, inject } from 'vue'
-import { friends } from '../assets/data'
 import { store } from '../stores/store'
 
 export const Summary = (props) => {
@@ -39,7 +38,7 @@ export const Summary = (props) => {
     }
     return userStore.getUsers && userStore.getUsers.length
       ? userStore.getUsers
-      : friends.map((f) => ({ name: f, mobile: f }))
+      : []
   })
 
   const averageSpent = computed(() =>

@@ -4,7 +4,7 @@
     <!-- Add New Loan Section -->
     <LoanForm :showForm="showLoanForm" @close-form="closeLoanForm" />
 
-    <div ref="loanContent">
+    <div>
       <!-- Notifications for current user -->
       <div
         v-if="userNotifications && userNotifications.length > 0"
@@ -133,22 +133,6 @@
           </div>
         </div>
       </div>
-
-      <!-- Display Final Balances -->
-      <el-descriptions title="Loan Details" :column="1" :border="true">
-        <el-descriptions-item
-          v-for="(balance, index) in balances"
-          :key="index"
-          :label="balance.name"
-        >
-          <span :class="balance.amount < 0 ? 'text-red-500' : 'text-green-500'">
-            {{ balance.amount < 0 ? 'Under Debt' : 'A Lender' }}
-          </span>
-          with
-          <i>{{ formatAmount(Math.abs(balance.amount)) }}</i>
-        </el-descriptions-item>
-      </el-descriptions>
-
       <!-- Filters -->
       <el-row :gutter="20" class="mb-3 mt-4" justify="space-between">
         <!-- Month Selection -->
@@ -189,22 +173,38 @@
           </el-form-item>
         </el-col>
       </el-row>
+      <div ref="loanContent">
+        <!-- Display Final Balances -->
+        <el-descriptions title="Loan Details" :column="1" :border="true">
+          <el-descriptions-item
+            v-for="(balance, index) in balances"
+            :key="index"
+            :label="balance.name"
+          >
+            <span
+              :class="balance.amount < 0 ? 'text-red-500' : 'text-green-500'"
+            >
+              {{ balance.amount < 0 ? 'Under Debt' : 'A Lender' }}
+            </span>
+            with
+            <i>{{ formatAmount(Math.abs(balance.amount)) }}</i>
+          </el-descriptions-item>
+        </el-descriptions>
 
-      <h2>Loan Records</h2>
-      <Table
-        downloadTitle="Loans"
-        :rows="filteredLoans"
-        :keys="loanKeys"
-        :friends="friends"
-        :dataRef="loanContent"
-      />
+        <h2>Loan Records</h2>
+        <Table
+          downloadTitle="Loans"
+          :rows="filteredLoans"
+          :keys="loanKeys"
+          :dataRef="loanContent"
+        />
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
 import Table from './Table.vue'
-import { friends } from '../assets/data'
 import LoanForm from './LoanForm.vue'
 import { Loans } from '../scripts/loans'
 

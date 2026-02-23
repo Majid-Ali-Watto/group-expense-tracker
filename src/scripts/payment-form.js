@@ -1,9 +1,11 @@
 import { ref, watch, computed } from 'vue'
 import getWhoAddedTransaction from '../utils/whoAdded'
-import { friends } from '../assets/data'
 import { store } from '../stores/store'
 import useFireBase from '../api/firebase-apis'
-import { uploadToCloudinary, deleteFromCloudinary } from '../utils/cloudinaryUpload'
+import {
+  uploadToCloudinary,
+  deleteFromCloudinary
+} from '../utils/cloudinaryUpload'
 import { showError } from '../utils/showAlerts'
 
 export const PaymentForm = (props, emit) => {
@@ -34,7 +36,13 @@ export const PaymentForm = (props, emit) => {
       receiptFiles.value = []
       return
     }
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/bmp', 'image/webp']
+    const allowedTypes = [
+      'image/jpeg',
+      'image/png',
+      'image/gif',
+      'image/bmp',
+      'image/webp'
+    ]
     const maxSize = 1024 * 1024 // 1MB
     const validFiles = []
     for (const file of files) {
@@ -52,7 +60,10 @@ export const PaymentForm = (props, emit) => {
       }
       validFiles.push(file)
     }
-    receiptFiles.value = formData.value.payerMode === 'single' ? validFiles.slice(0, 1) : validFiles
+    receiptFiles.value =
+      formData.value.payerMode === 'single'
+        ? validFiles.slice(0, 1)
+        : validFiles
   }
 
   function removeReceipt() {
@@ -85,7 +96,6 @@ export const PaymentForm = (props, emit) => {
     }
     const users =
       userStore.getUsers && userStore.getUsers.length ? userStore.getUsers : []
-    if (!users.length) return friends.map((f) => ({ label: f, value: f }))
     return users.map((u) => ({
       label: `${u.name} (${u.mobile})`,
       value: u.mobile
@@ -270,7 +280,11 @@ export const PaymentForm = (props, emit) => {
     emit('closeModal')
   }
 
-  const createUpdateRequest = (paymentPath, receiptUrls = [], receiptMeta = []) => {
+  const createUpdateRequest = (
+    paymentPath,
+    receiptUrls = [],
+    receiptMeta = []
+  ) => {
     const activeUser = userStore.getActiveUser
     const userName = userStore.getUserByMobile(activeUser)?.name || activeUser
 

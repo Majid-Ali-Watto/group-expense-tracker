@@ -1,5 +1,5 @@
 <template>
-  <div class="my-4" ref="pdfContent">
+  <div class="my-4">
     <!-- Notifications for current user -->
     <NotificationsForCurrentUser
       v-if="userNotifications && userNotifications.length > 0"
@@ -82,23 +82,6 @@
         </div>
       </div>
     </div>
-
-    <Summary :payments="filteredPayments" :friends="friends" />
-    <Settlement
-      :payments="filteredPayments"
-      :keys="paymentKeys"
-      :selectedMonth="selectedMonth"
-      :friends="friends"
-      :isHistory="isHistory"
-    />
-    <el-divider />
-    <div class="flex justify-between">
-      <h2>Expense List</h2>
-      <el-badge :value="filteredPayments.length" class="item mr-4" type="info"
-        >{{ selectedFriend }}:<el-text tag="b"> Transactions</el-text>
-      </el-badge>
-    </div>
-
     <!-- Filters -->
     <el-row :gutter="20" class="mb-1" justify="space-between">
       <!-- Month Selection -->
@@ -159,21 +142,37 @@
         </el-form-item>
       </el-col>
     </el-row>
-    <!-- Table -->
-    <Table
-      :rows="filteredPayments"
-      downloadTitle="Expenses"
-      :keys="paymentKeys"
-      :dataRef="pdfContent"
-      :showPopup="!isHistory"
-    />
+    <div ref="pdfContent">
+      <Summary :payments="filteredPayments" />
+      <Settlement
+        :payments="filteredPayments"
+        :keys="paymentKeys"
+        :selectedMonth="selectedMonth"
+        :isHistory="isHistory"
+      />
+      <el-divider />
+      <div class="flex justify-between">
+        <h2>Expense List</h2>
+        <el-badge :value="filteredPayments.length" class="item mr-4" type="info"
+          >{{ selectedFriend }}:<el-text tag="b"> Transactions</el-text>
+        </el-badge>
+      </div>
+
+      <!-- Table -->
+      <Table
+        :rows="filteredPayments"
+        downloadTitle="Expenses"
+        :keys="paymentKeys"
+        :dataRef="pdfContent"
+        :showPopup="!isHistory"
+      />
+    </div>
   </div>
 </template>
 <script setup>
 import Settlement from './Settlement.vue'
 import Summary from './Summary.vue'
 import Table from './Table.vue'
-import { friends } from '../assets/data'
 import { ExpenseList } from '../scripts/expense-list'
 import NotificationsForCurrentUser from './generic-components/NotificationsForCurrentUser.vue'
 import ShowPaymentDetails from './generic-components/ShowPaymentDetails.vue'

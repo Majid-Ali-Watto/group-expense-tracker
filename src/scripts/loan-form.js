@@ -2,7 +2,10 @@ import { ref, watch, computed } from 'vue'
 import getWhoAddedTransaction from '../utils/whoAdded'
 import useFireBase from '../api/firebase-apis'
 import { store } from '../stores/store'
-import { uploadToCloudinary, deleteFromCloudinary } from '../utils/cloudinaryUpload'
+import {
+  uploadToCloudinary,
+  deleteFromCloudinary
+} from '../utils/cloudinaryUpload'
 import { showError } from '../utils/showAlerts'
 
 export const LoanForm = (props, emit) => {
@@ -46,7 +49,7 @@ export const LoanForm = (props, emit) => {
         value: u.mobile
       }))
 
-    return (props.friends || []).map((f) => ({ label: f, value: f }))
+    return []
   })
 
   const { deleteData, updateData, saveData } = useFireBase()
@@ -104,10 +107,21 @@ export const LoanForm = (props, emit) => {
             receiptUploading.value = true
             const uploaded = await uploadReceiptToStorage(receiptFile.value)
             receiptUrl = uploaded.url
-            receiptMeta = { url: uploaded.url, publicId: uploaded.publicId, resourceType: uploaded.resourceType }
+            receiptMeta = {
+              url: uploaded.url,
+              publicId: uploaded.publicId,
+              resourceType: uploaded.resourceType
+            }
             // Delete old Cloudinary file when replacing on direct update
-            if (whatTask === 'Update' && props.isPersonal && existingReceiptMeta.value) {
-              deleteFromCloudinary(existingReceiptMeta.value.publicId, existingReceiptMeta.value.resourceType)
+            if (
+              whatTask === 'Update' &&
+              props.isPersonal &&
+              existingReceiptMeta.value
+            ) {
+              deleteFromCloudinary(
+                existingReceiptMeta.value.publicId,
+                existingReceiptMeta.value.resourceType
+              )
             }
           } catch {
             showError('Failed to upload receipt. Please try again.')
@@ -154,7 +168,10 @@ export const LoanForm = (props, emit) => {
             )
           } else {
             if (existingReceiptMeta.value) {
-              deleteFromCloudinary(existingReceiptMeta.value.publicId, existingReceiptMeta.value.resourceType)
+              deleteFromCloudinary(
+                existingReceiptMeta.value.publicId,
+                existingReceiptMeta.value.resourceType
+              )
             }
             deleteData(
               `${loanPath}/${props.row.id}`,
@@ -178,7 +195,13 @@ export const LoanForm = (props, emit) => {
       return
     }
     // Validate file type
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/bmp', 'image/webp']
+    const allowedTypes = [
+      'image/jpeg',
+      'image/png',
+      'image/gif',
+      'image/bmp',
+      'image/webp'
+    ]
     if (!allowedTypes.includes(file.type)) {
       showError('Only image files (JPG, PNG, GIF, BMP, WEBP) are allowed.')
       if (fileInputRef.value) fileInputRef.value.value = ''
@@ -223,7 +246,11 @@ export const LoanForm = (props, emit) => {
     emit('closeModal')
   }
 
-  const createUpdateRequest = (loanPath, receiptUrl = null, receiptMeta = null) => {
+  const createUpdateRequest = (
+    loanPath,
+    receiptUrl = null,
+    receiptMeta = null
+  ) => {
     const activeUser = userStore.getActiveUser
     const userName = userStore.getUserByMobile(activeUser)?.name || activeUser
 
