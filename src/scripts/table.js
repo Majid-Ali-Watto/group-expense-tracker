@@ -28,7 +28,7 @@ export const Table = (props) => {
   const activeTabComponent = () => getEditComponent(activeTab.value)
 
   const dialogComponentProps = computed(() => {
-    const base = { friends: props.friends, row: state.row }
+    const base = { row: state.row }
     if (activeTab.value === Tabs.PERSONAL_LOANS) {
       return {
         ...base,
@@ -85,7 +85,6 @@ export const Table = (props) => {
       retries++
     }
 
-    
     if (!childRef.value?.componentRef) {
       ElMessage.error('Form is not ready. Please try again.')
       return

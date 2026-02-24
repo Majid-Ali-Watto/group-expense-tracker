@@ -82,7 +82,6 @@
         downloadTitle="Personal_Loans"
         :rows="loans"
         :keys="loanKeys"
-        :friends="friends"
         :dataRef="loanContent"
         :showPopup="true"
       />
@@ -93,7 +92,6 @@
 <script setup>
 import LoanForm from '../LoanForm.vue'
 import Table from '../Table.vue'
-import { friends } from '../../assets/data'
 import { PersonalLoans } from '../../scripts/personal-loans'
 
 const {
