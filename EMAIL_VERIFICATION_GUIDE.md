@@ -9,7 +9,7 @@ This application uses Firebase Authentication with email verification to ensure 
 ### Registration Flow
 
 1. **User Registration**
-   - User enters: name, mobile, email, login code
+   - User enters: name, mobile, email, password
    - System validates email format (minimum 3 chars before @, valid domain)
    - Firebase Auth account is created immediately
    - Verification email is automatically sent
@@ -22,7 +22,7 @@ This application uses Firebase Authentication with email verification to ensure 
    - **Deadline: 48 hours recommended**
 
 3. **Login Attempt**
-   - User enters email and login code
+   - User enters email and password
    - System checks if email is verified
    - If NOT verified: Login is blocked with helpful message
    - "Resend Verification Email" button appears
@@ -30,7 +30,7 @@ This application uses Firebase Authentication with email verification to ensure 
 
 ### Password Reset Flow
 
-- User clicks "Forgot Login Code?"
+- User clicks "Forgot Password?"
 - Enters email address
 - Firebase sends password reset link
 - User resets password on Firebase secure page
@@ -114,7 +114,7 @@ Examples:
 - ❌ `m@m.com` (too short)
 - ❌ `ab@test.com` (local part too short)
 
-### Login Code Requirements
+### Password Requirements
 - Minimum: 6 characters
 - Maximum: 15 characters
 - Stored securely in Firebase Auth (not in Realtime Database)
@@ -123,7 +123,7 @@ Examples:
 - Verification links work via Firebase secure domain
 - Links expire after set time
 - Rate limiting on resend attempts
-- Requires login code to resend verification
+- Requires password to resend verification
 
 ## User Messages
 
@@ -170,7 +170,7 @@ contact support.
 ### Verification Link Expired
 1. Try to login (will fail)
 2. Click "Resend Verification Email"
-3. Enter login code when prompted
+3. Enter password when prompted
 4. New email will be sent
 
 ## Admin Tasks
@@ -212,4 +212,4 @@ Implement the Cloud Function shown above to automatically delete old unverified 
 }
 ```
 
-**Note:** Login codes are NOT stored in the database. They are only stored in Firebase Authentication for security.
+**Note:** Passwords are NOT stored in the database. They are only stored in Firebase Authentication for security.

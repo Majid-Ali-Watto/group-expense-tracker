@@ -2,6 +2,11 @@
   <Suspense>
     <template #default>
       <div>
+        <!-- Floating Theme Toggle Button -->
+        <FloatingThemeButton
+          :isDarkTheme="isDarkTheme"
+          :toggleTheme="toggleTheme"
+        />
         <Header
           @click-log="setLoggedInStatus"
           :loggedIn="loggedIn"
@@ -15,21 +20,14 @@
           class="container mx-auto mt-16 sm:mt-16 md:16 lg:mt-16"
         >
           <!-- Welcome Banner -->
-          <WelcomeBanner
-            :displayName="displayName"
-            :activeGroup="activeGroup"
-          />
+          <WelcomeBanner :displayName="displayName" />
 
           <!-- Tabs -->
           <el-tabs
             v-model="activeTab"
             @tab-change="handleActiveTab"
-            class="mt-2"
-            :class="{
-              'hide-prev-arrow': isFirstTab,
-              'hide-next-arrow': isLastTab
-            }"
-            type="border-card"
+            class="demo-tabs"
+            type="card"
             tab-position="top"
           >
             <el-tab-pane
@@ -38,6 +36,7 @@
               :label="tab"
               :name="tab"
               lazy
+              class="py-2 px-3"
             >
               <keep-alive>
                 <HOC :componentToBeRendered="activeTabComponent(tab)" />
@@ -64,6 +63,7 @@
 
 <script setup>
 import { svg } from './assets/loader-svg'
+import FloatingThemeButton from './components/generic-components/FloatingThemeButton.vue'
 import WelcomeBanner from './components/generic-components/WelcomeBanner.vue'
 import { App } from './scripts/app'
 
@@ -75,32 +75,11 @@ const {
   tabStore,
   tabs,
   displayName,
-  activeGroup,
   activeTab,
-  isFirstTab,
-  isLastTab,
   setLoggedInStatus,
   handleActiveTab,
-  activeTabComponent
+  activeTabComponent,
+  isDarkTheme,
+  toggleTheme
 } = App()
 </script>
-
-<style>
-.hide-prev-arrow .el-tabs__nav-prev {
-  display: none !important;
-}
-.hide-next-arrow .el-tabs__nav-next {
-  display: none !important;
-}
-.loading-wrapper {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  width: 100%;
-  background: rgba(30, 32, 28, 0.8); /* Optional for background overlay */
-}
-.el-loading-text {
-  color: white !important;
-}
-</style>

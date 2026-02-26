@@ -66,11 +66,19 @@
       <h2 class="mt-6">Who Owes Whom (Exact)</h2>
 
       <el-table :data="pairwiseSettlements" border>
-        <el-table-column prop="from" label="Debtor" />
-        <el-table-column prop="to" label="Lender" />
+        <el-table-column prop="from" label="Debtor">
+          <template #default="{ row }">
+            <span class="text-red-600 dark:text-red-400 font-medium">{{ row.from }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="to" label="Lender">
+          <template #default="{ row }">
+            <span class="text-green-600 dark:text-green-400 font-medium">{{ row.to }}</span>
+          </template>
+        </el-table-column>
         <el-table-column label="Amount">
           <template #default="{ row }">
-            {{ formatAmount(row.amount) }}
+            <span class="text-orange-600 dark:text-orange-400 font-bold">{{ formatAmount(row.amount) }}</span>
           </template>
         </el-table-column>
       </el-table>
@@ -111,12 +119,6 @@ const {
 </script>
 
 <style scoped>
-.text-red-500 {
-  color: #ef4444;
-}
-.text-green-500 {
-  color: #22c55e;
-}
 .mt-6 {
   margin-top: 24px;
 }

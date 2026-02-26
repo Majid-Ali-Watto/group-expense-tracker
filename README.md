@@ -60,8 +60,8 @@ npx -y gsutil cors set cors.json gs://<your-storage-bucket>
 ---
 
 ## Authentication & Session Flow
-- **Login / Register:** Users enter name, mobile (PK), and a login code. New users set the code and receive printable recovery passcodes (see `src/scripts/login.js`).
-- **Recovery:** “Forgot login code” consumes one recovery passcode; on last code, fresh codes are generated and shown.
+- **Login / Register:** Users enter name, mobile (PK), and a password. New users set the code and receive printable recovery passcodes (see `src/scripts/login.js`).
+- **Recovery:** “Forgot password” consumes one recovery passcode; on last code, fresh codes are generated and shown.
 - **Session hardening:** A random token is encrypted twice (AES-GCM in sessionStorage, AES-CBC in Pinia). Every tab change and a 5‑minute timer re-verify token + loginCode on Firebase; failures force logout.
 - **Remember Me:** Stores name/mobile/loginCode in `localStorage` for prefill only (session still crypto-based).
 
@@ -157,7 +157,7 @@ Component stack: `PaymentForm.vue` → `ExpenseList.vue` → `Table.vue`
 
 ## Users Admin (tab: “Users”)
 - Add users (mobile is ID). Initial loginCode is `null` so the user must set it on first login.
-- Reset login code: sets `loginCode=null` so the user recreates it and gets new recovery codes.
+- Reset password: sets `loginCode=null` so the user recreates it and gets new recovery codes.
 - Rename / delete with approvals:
   - If the user is in groups, all relevant group owners must approve the update/delete request.
   - Pending requests appear in “Pending Approvals” for approvers; actions recorded back to Firebase.

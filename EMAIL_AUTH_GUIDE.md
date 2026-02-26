@@ -7,10 +7,10 @@ This feature adds **email-based authentication** as an alternative to mobile-bas
 ## Features Implemented
 
 ✅ **Dual Login Methods** - Users can login with:
-  - Mobile number + Login code
-  - Email + Login code
+  - Mobile number + Password
+  - Email + Password
 
-✅ **Dual Recovery Methods** - Users can reset forgotten login codes using:
+✅ **Dual Recovery Methods** - Users can reset forgotten passwords using:
   - Recovery passcodes (mobile-based)
   - Firebase password reset email (email-based)
 
@@ -28,7 +28,7 @@ Users can register using their mobile number. During registration, they can opti
 Name: John Doe
 Mobile: 03001234567
 Email: john@example.com (optional)
-Login Code: ****
+Password: ****
 ```
 
 The email field is optional during registration but required for email-based recovery.
@@ -38,37 +38,37 @@ The email field is optional during registration but required for email-based rec
 #### Option A: Mobile Login
 1. Select "Mobile" as login method
 2. Enter mobile number (03XXXXXXXXX)
-3. Enter name and login code
+3. Enter name and password
 4. Click "Login / Continue"
 
 #### Option B: Email Login
 1. Select "Email" as login method
 2. Enter email address
-3. Enter name and login code
+3. Enter name and password
 4. Click "Login / Continue"
 
 ### 3. Password Recovery Options
 
-When users click "Forgot Login Code?", they get two choices:
+When users click "Forgot Password?", they get two choices:
 
 #### Option A: Use Recovery Passcodes (Mobile-based)
-1. System prompts: "How would you like to reset your login code?"
+1. System prompts: "How would you like to reset your password?"
 2. Click "Use Recovery Passcodes"
 3. Enter mobile number
 4. Enter one of the saved recovery passcodes
-5. Set new login code
+5. Set new password
 6. Receive new set of recovery passcodes
 7. Automatically logged in
 
 #### Option B: Use Email Reset (Email-based)
-1. System prompts: "How would you like to reset your login code?"
+1. System prompts: "How would you like to reset your password?"
 2. Click "Use Email Reset"
 3. Enter email address in dialog
 4. Click "Send Reset Link"
 5. Check email inbox for Firebase password reset link
 6. Click link in email and follow instructions
 7. System automatically:
-   - Updates login code in database
+   - Updates password in database
    - Generates new recovery passcodes
    - Logs user in
 
@@ -243,7 +243,7 @@ User Flow:
 2. Select "Mobile" method
 3. Enter mobile: "03331234567"
 4. Enter email: "jane@example.com"
-5. Enter login code: "jane2024"
+5. Enter password: "jane2024"
 6. Click "Login / Continue"
 7. System creates account with mobile + email
 8. Shows 10 recovery passcodes
@@ -257,7 +257,7 @@ User Flow:
 1. Select "Email" method
 2. Enter name: "Jane Smith"
 3. Enter email: "jane@example.com"
-4. Enter login code: "jane2024"
+4. Enter password: "jane2024"
 5. Click "Login / Continue"
 6. System finds user by email
 7. Validates credentials
@@ -268,7 +268,7 @@ User Flow:
 
 ```
 User Flow:
-1. Click "Forgot Login Code?"
+1. Click "Forgot Password?"
 2. System shows: "How would you like to reset?"
 3. Click "Use Email Reset"
 4. Enter email: "jane@example.com"
@@ -276,7 +276,7 @@ User Flow:
 6. Check email inbox
 7. Click reset link in email
 8. System:
-   - Updates login code in database
+   - Updates password in database
    - Generates 10 new recovery codes
    - Shows codes in dialog
 9. User saves codes
@@ -287,13 +287,13 @@ User Flow:
 
 ```
 User Flow:
-1. Click "Forgot Login Code?"
+1. Click "Forgot Password?"
 2. System shows: "How would you like to reset?"
 3. Click "Use Recovery Passcodes"
 4. Enter mobile: "03331234567"
 5. Enter passcode: "ABCD-EFGH-JKLM"
 6. System validates passcode
-7. Enter new login code
+7. Enter new password
 8. If last passcode:
    - System generates 10 new codes
    - Shows codes in dialog
@@ -309,7 +309,7 @@ User Flow:
 |-------|--------------|
 | Email not found | "No account found with this email" |
 | Invalid email format | "Please enter a valid email address" |
-| Wrong login code | "Incorrect login code" |
+| Wrong password | "Incorrect password" |
 | Name mismatch | "Name does not match the registered user" |
 
 ### Email Reset Errors

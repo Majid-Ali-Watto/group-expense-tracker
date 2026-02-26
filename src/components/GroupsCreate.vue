@@ -8,6 +8,7 @@
             v-model="groupForm.name"
             placeholder="Enter group name"
             class="w-full"
+            size="small"
             :maxlength="50"
           />
         </el-form-item>
@@ -18,6 +19,7 @@
             :rows="3"
             placeholder="Enter group description (optional)"
             class="w-full"
+            size="small"
             :maxlength="100"
           />
         </el-form-item>
@@ -28,6 +30,7 @@
             multiple
             placeholder="Select members"
             class="w-full"
+            size="small"
           >
             <el-option
               v-for="u in usersOptions"
@@ -38,7 +41,7 @@
           </el-select>
         </el-form-item>
         <div class="flex flex-col sm:flex-row sm:justify-end gap-2">
-          <el-button type="primary" @click="createGroup">Create</el-button>
+          <el-button type="primary" size="small" @click="createGroup">Create</el-button>
         </div>
         <br />
         <slot name="clear"></slot>
@@ -51,6 +54,8 @@
 import { groupRules } from '../assets/validation-rules'
 import { GroupsCreate } from '../scripts/groups-create'
 
+const emit = defineEmits(['groupCreated'])
+
 const { groupForm, groupFormRef, usersOptions, createGroup, getUserLabel } =
-  GroupsCreate()
+  GroupsCreate(emit)
 </script>

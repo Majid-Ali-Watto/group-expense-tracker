@@ -16,8 +16,9 @@ import { downloadExcel, downloadPDF } from '../utils/downloadDataProcedures'
 import getCurrentMonth from '../utils/getCurrentMonth'
 
 export const Table = (props) => {
-  const timeout = ref(null)
-  const delay = 300
+  const clickTimeout = ref(null)
+  const lastClickTime = ref(0)
+  const doubleClickThreshold = 300
   const dialogFormVisible = ref(false)
   const state = reactive({ row: null })
   const screenWidth = ref(window.innerWidth)
@@ -105,6 +106,7 @@ export const Table = (props) => {
 
   onUnmounted(() => {
     window.removeEventListener('resize', updateScreenWidth)
+    clearTimeout(clickTimeout.value)
   })
 
   const dialogWidth = computed(() => {
@@ -172,22 +174,44 @@ export const Table = (props) => {
     let date = rowS.date?.split(',')[0].split('/').reverse().join('-')
     let time = rowS.date?.split(',')[1]
     date = date + ', ' + time
-    clearTimeout(timeout.value)
-    timeout.value = setTimeout(() => {
-      dialogFormVisible.value = true
-      state.row = { ...rowS, date, id: props.keys[rowIndex] }
-    }, delay)
+    dialogFormVisible.value = true
+    state.row = { ...rowS, date, id: props.keys[rowIndex] }
   }
 
-  function getDetails(row) {
-    if (row.whoAdded) {
-      return row?.whoAdded + ' on ' + (row?.whenAdded || 'N/A')
-    } else return 'N/A'
-  }
-
+ 
   const handleDoubleClick = (row) => {
-    clearTimeout(timeout.value)
-    ElMessage.info('Added By: ' + getDetails(row))
+    const addedBy = row?.whoAdded || 'N/A'
+    const when = row?.whenAdded || 'N/A'
+
+    ElMessage({
+      type: 'info',
+      duration: 5000,
+      showClose: true,
+      customClass: 'table-toast',
+      dangerouslyUseHTMLString: true,
+      message: `
+        <div class="table-toast__content">
+          <div class="table-toast__label">Added By</div>
+          <div class="table-toast__value">${addedBy}</div>
+          <div class="table-toast__label">Date</div>
+          <div class="table-toast__value">${when}</div>
+        </div>
+      `
+    })
+  }
+
+  const handleRowClick = (rowS, rowIndex) => {
+    const now = Date.now()
+    const timeSinceLastClick = now - lastClickTime.value
+    lastClickTime.value = now
+
+    clearTimeout(clickTimeout.value)
+
+    if (timeSinceLastClick < doubleClickThreshold) {
+      handleDoubleClick(rowS)
+    } else {
+      clickTimeout.value = setTimeout(() => handleClick(rowS, rowIndex), doubleClickThreshold)
+    }
   }
 
   function downloadExcelData() {
@@ -230,8 +254,7 @@ export const Table = (props) => {
     headers,
     update,
     remove,
-    handleClick,
-    handleDoubleClick,
+    handleRowClick,
     downloadExcelData,
     downloadPdfData,
     getFileNameFromUrl

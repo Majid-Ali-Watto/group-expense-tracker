@@ -92,6 +92,7 @@
             v-model="selectedMonth"
             placeholder="Select Month"
             class="w-full"
+            size="small"
           >
             <el-option
               v-for="month in months"
@@ -110,6 +111,7 @@
             v-model="selectedFriend"
             placeholder="Select Payer"
             class="w-full"
+            size="small"
           >
             <el-option value="All" label="All" />
             <el-option
@@ -124,7 +126,7 @@
       <el-col :lg="6" :md="6" :sm="12" :xs="12">
         <!-- Payer Mode Filter -->
         <el-form-item label="Payer Mode" class="w-full">
-          <el-select v-model="selectedPayerMode" class="w-full">
+          <el-select v-model="selectedPayerMode" class="w-full" size="small">
             <el-option value="all" label="All" />
             <el-option value="single" label="Single" />
             <el-option value="multiple" label="Multiple" />
@@ -134,7 +136,7 @@
       <el-col :lg="6" :md="6" :sm="12" :xs="12">
         <!-- Split Mode Filter -->
         <el-form-item label="Split Mode" class="w-full">
-          <el-select v-model="selectedSplitMode" class="w-full">
+          <el-select v-model="selectedSplitMode" class="w-full" size="small">
             <el-option value="all" label="All" />
             <el-option value="equal" label="Equal" />
             <el-option value="custom" label="Custom" />
@@ -195,8 +197,8 @@ const {
   filteredPayments,
   activeUser,
   userNotifications,
-  dismissNotification,
   pendingRequests,
+  dismissNotification,
   getTotalMembers,
   getUserName,
   hasUserApproved,

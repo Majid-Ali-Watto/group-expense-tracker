@@ -140,6 +140,7 @@ export const LoanForm = (props, emit) => {
             () => {
               receiptFile.value = null
               if (fileInputRef.value) fileInputRef.value.value = ''
+              emit('closeForm')
             }
           )
         } else if (whatTask == 'Update') {

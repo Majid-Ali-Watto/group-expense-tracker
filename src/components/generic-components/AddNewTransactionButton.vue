@@ -1,6 +1,6 @@
 <template>
   <div class="flex justify-between items-center gap-4">
-    <span> {{ text }} </span>
+    <span @click.stop> {{ text }} </span>
     <el-button
       type="primary"
       circle

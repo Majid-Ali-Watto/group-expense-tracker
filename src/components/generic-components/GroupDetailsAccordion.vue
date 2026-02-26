@@ -4,8 +4,8 @@
     @change="() => loadGroupBalances(group.id, groupType)"
   >
     <el-collapse-item>
-      <template #title>
-        <span class="text-sm font-medium text-gray-600">
+      <template #title >
+        <span class="px-2 text-sm font-medium text-gray-600">
           <svg
             class="inline-block w-4 h-4 mr-1"
             fill="none"
@@ -23,7 +23,7 @@
         </span>
       </template>
 
-      <div class="space-y-3 pt-2">
+      <div class="space-y-3 pt-2 px-2">
         <!-- Description -->
         <div v-if="group.description">
           <div class="text-xs font-medium text-gray-500 mb-1">Description</div>
@@ -56,12 +56,19 @@
         <slot name="your-position"></slot>
         <!-- Members List -->
         <div>
-          <div class="text-xs font-medium text-gray-500 mb-2">
-            Members ({{ group.members.length }})
+          <div class="text-xs font-medium text-gray-500 mb-2 flex items-center justify-between">
+            <span>Members ({{ memberCount }})</span>
+            <button
+              v-if="memberCount > initialMemberLoadCount"
+              class="text-xs text-blue-500 hover:text-blue-700 font-medium"
+              @click="showMembersDialog = true"
+            >
+              View All
+            </button>
           </div>
           <div class="flex flex-wrap gap-2">
             <el-tag
-              v-for="(member, i) in group.members"
+              v-for="(member, i) in group.members.slice(0, initialMemberLoadCount)"
               :key="i"
               size="small"
               type="info"
@@ -70,18 +77,55 @@
                 displayMobileForGroup(member.mobile, group)
               }})
             </el-tag>
+            <el-tag
+              v-if="memberCount > initialMemberLoadCount"
+              size="small"
+              type="info"
+              class="cursor-pointer"
+              @click="showMembersDialog = true"
+            >
+              +{{ memberCount - initialMemberLoadCount }} more
+            </el-tag>
           </div>
         </div>
+
+        <!-- Members Dialog -->
+        <el-dialog
+          v-model="showMembersDialog"
+          :title="`Members (${memberCount})`"
+          width="340px"
+          align-center
+        >
+          <div class="overflow-y-auto max-h-64 pr-1">
+            <div
+              v-for="(member, i) in group.members"
+              :key="i"
+              class="flex items-center gap-2 py-2 border-b border-gray-100 last:border-0"
+            >
+              <div class="w-7 h-7 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-semibold shrink-0">
+                {{ member.name.charAt(0).toUpperCase() }}
+              </div>
+              <div class="text-sm text-gray-700">
+                {{ member.name }}
+                <span class="text-gray-500 font-bold text-xs ml-1">({{ displayMobileForGroup(member.mobile, group) }})</span>
+              </div>
+            </div>
+          </div>
+        </el-dialog>
       </div>
     </el-collapse-item>
   </el-collapse>
 </template>
 <script setup>
+import { computed, ref } from 'vue'
 import { store } from '../../stores/store'
 
 const userStore = store()
+const showMembersDialog = ref(false)
 
-defineProps({
+
+
+const props = defineProps({
   group: {
     type: Object,
     required: true
@@ -99,4 +143,7 @@ defineProps({
     required: true
   }
 })
+
+const memberCount = computed(() => props.group.members.length)
+const initialMemberLoadCount = 3
 </script>

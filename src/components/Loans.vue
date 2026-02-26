@@ -143,6 +143,7 @@
               v-model="selectedMonth"
               placeholder="Select Month"
               class="w-full"
+              size="small"
             >
               <el-option
                 v-for="month in months"
@@ -161,6 +162,7 @@
               v-model="selectedGiver"
               placeholder="Select Giver"
               class="w-full"
+              size="small"
             >
               <el-option value="All" label="All" />
               <el-option

@@ -43,7 +43,7 @@
             <div
               class="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center shadow-md"
               :class="
-                activeGroup
+                userStore.getActiveGroup
                   ? 'bg-gradient-to-br from-blue-400 to-blue-600'
                   : 'bg-gray-300'
               "
@@ -65,14 +65,25 @@
           </div>
           <div class="min-w-0 flex-1">
             <p class="text-xs sm:text-sm text-gray-500 font-medium mb-0.5">
-              Active Group
+              Active Group (joined groups)
             </p>
-            <p
-              class="text-base font-bold truncate"
-              :class="activeGroup ? 'text-gray-800' : 'text-gray-400'"
+            <el-select
+              v-model="selectedGroupId"
+              filterable
+              size="small"
+              placeholder="No Group Selected"
+              class="min-w-0 font-bold"
+              :class="joinedGroups.length === 0 ? 'opacity-50' : ''"
+              :disabled="joinedGroups.length === 0"
+              @change="handleSelectGroup"
             >
-              {{ activeGroup || 'No Group Selected' }}
-            </p>
+              <el-option
+                v-for="group in joinedGroups"
+                :key="group.id"
+                :label="group.name"
+                :value="group.id"
+              />
+            </el-select>
           </div>
         </div>
       </div>
@@ -81,8 +92,34 @@
 </template>
 
 <script setup>
+import { ref, computed, watch } from 'vue'
+import { store } from '../../stores/store'
+import { showSuccess } from '../../utils/showAlerts'
+import { isMemberOfGroup } from '../../helpers/users'
+
 defineProps({
-  displayName: String,
-  activeGroup: String
+  displayName: String
 })
+
+const userStore = store()
+
+const joinedGroups = computed(() =>
+  userStore.getGroups.filter((g) => isMemberOfGroup(g))
+)
+
+const selectedGroupId = ref(userStore.getActiveGroup)
+
+watch(
+  () => userStore.getActiveGroup,
+  (newId) => {
+    selectedGroupId.value = newId
+  }
+)
+
+function handleSelectGroup(id) {
+  const group = userStore.getGroupById(id)
+  if (!group) return
+  userStore.setActiveGroup(id)
+  showSuccess(`Selected group: ${group.name}`)
+}
 </script>

@@ -1,7 +1,7 @@
 <!-- eslint-disable vue/multi-word-component-names -->
 <template>
   <div
-    class="flex flex-col items-center p-6 max-w-sm mx-auto border rounded-lg shadow-xl bg-white"
+    class="flex flex-col items-center p-6 max-w-sm mx-auto border rounded-lg shadow-xl"
   >
     <el-form
       :model="form"
@@ -14,14 +14,15 @@
         <legend>Login / Register</legend>
 
         <!-- Mode Toggle -->
-        <div class="flex justify-center mb-4">
+        <div class="mb-4">
           <el-segmented
             v-model="mode"
             :options="[
               { label: 'Login', value: 'login' },
               { label: 'Register', value: 'register' }
             ]"
-            size="large"
+            size="small"
+            class="w-full"
           />
         </div>
 
@@ -36,11 +37,13 @@
             <span class="text-sm">
               <template v-if="mode === 'register'">
                 Create a new account with your name, mobile, email, and login
-                code. <strong>You must verify your email within 48 hours to activate your account.</strong>
+                code.
+                <strong
+                  >You must verify your email within 48 hours to activate your
+                  account.</strong
+                >
               </template>
-              <template v-else>
-                Login with your email and login code.
-              </template>
+              <template v-else> Login with your email and password. </template>
             </span>
           </template>
         </el-alert>
@@ -51,7 +54,7 @@
             v-model="form.name"
             placeholder="Enter your full name"
             class="w-full"
-            size="large"
+            size="small"
             :maxlength="50"
           />
         </el-form-item>
@@ -66,7 +69,7 @@
             v-model="form.mobile"
             placeholder="Enter your mobile number"
             class="w-full"
-            size="large"
+            size="small"
             :maxlength="11"
             @input="form.mobile = form.mobile.replace(/\D/g, '')"
           />
@@ -79,39 +82,35 @@
             type="email"
             placeholder="Enter your email address"
             class="w-full"
-            size="large"
+            size="small"
           />
         </el-form-item>
 
-        <!-- Login Code -->
-        <el-form-item label="Login Code" prop="loginCode">
+        <!-- Password -->
+        <el-form-item label="Password" prop="loginCode">
           <el-input
             v-model="form.loginCode"
             type="password"
-            placeholder="Enter your login code (6-15 characters)"
+            placeholder="Enter your password (6-15 characters)"
             class="w-full"
-            size="large"
+            size="small"
             show-password
             :maxlength="15"
           />
         </el-form-item>
 
-        <!-- Forgot Login Code Link (only in login mode) -->
+        <!-- Forgot Password Link (only in login mode) -->
         <div v-if="mode === 'login'" class="flex flex-col items-end gap-1 mb-3">
           <el-button
             v-if="showResendVerification"
             type="text"
+            size="small"
             @click="handleResendVerification"
-            class="text-green-600 hover:text-green-800"
           >
             Resend Verification Email
           </el-button>
-          <el-button
-            type="text"
-            @click="handleForgotCode"
-            class="text-blue-600 hover:text-blue-800"
-          >
-            Forgot Login Code?
+          <el-button type="text" size="small" @click="handleForgotCode">
+            Forgot Password?
           </el-button>
         </div>
 
@@ -133,7 +132,7 @@
     <!-- ── Email Reset Dialog ──────────────────────────────────── -->
     <el-dialog
       v-model="emailResetDialogVisible"
-      title="Reset Login Code via Email"
+      title="Reset Password via Email"
       width="92%"
       style="max-width: 480px"
       :close-on-click-modal="false"
@@ -143,7 +142,7 @@
           <template #default>
             <div class="text-sm leading-relaxed">
               We'll send a password reset link to your email. Click the link to
-              set a new login code.
+              set a new password.
             </div>
           </template>
         </el-alert>
@@ -154,7 +153,7 @@
             type="email"
             placeholder="Enter your registered email"
             class="w-full"
-            size="large"
+            size="small"
           />
         </el-form-item>
 
@@ -165,7 +164,7 @@
             @click="sendResetEmail"
             :loading="isEmailResetLoading"
             :disabled="isEmailResetLoading"
-            size="large"
+            size="small"
           >
             Send Reset Link
           </el-button>
@@ -174,14 +173,13 @@
             type="default"
             @click="emailResetDialogVisible = false"
             :disabled="isEmailResetLoading"
-            size="large"
+            size="small"
           >
             Cancel
           </el-button>
         </div>
       </div>
     </el-dialog>
-
   </div>
 </template>
 

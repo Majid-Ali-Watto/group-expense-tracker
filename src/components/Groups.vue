@@ -11,10 +11,10 @@
 
     <!-- Create Group Form -->
     <div v-else>
-      <groups-create>
+      <groups-create @group-created="closeCreateGroup">
         <template #clear>
           <div class="flex flex-col sm:flex-row sm:justify-end gap-2">
-            <el-button type="info" plain @click="closeCreateGroup">
+            <el-button type="info" plain size="small" @click="closeCreateGroup">
               Cancel
             </el-button>
           </div>
@@ -29,7 +29,7 @@
         placeholder="Search by group name, code, owner, or member..."
         clearable
         prefix-icon="el-icon-search"
-        size="medium"
+        size="small"
         :maxlength="50"
       >
         <template #prefix>
@@ -40,7 +40,7 @@
 
     <!-- Existing Groups -->
     <!-- Your Groups (joined) -->
-    <h4>Your Groups</h4>
+    <h4>Joined Groups</h4>
 
     <no-group-found
       v-if="joinedGroups.length === 0"
@@ -55,22 +55,60 @@
       >
         <!-- Group Header -->
         <div class="mb-3">
-          <div class="flex items-center justify-between mb-2">
-            <div>
+          <div class="flex flex-col mb-2">
+            <div class="flex items-center justify-between flex-wrap">
               <h3 class="font-semibold text-lg">{{ group.name }}</h3>
-              <p class="text-xs text-gray-500 mt-0.5">
-                Owner: {{ userStore.getUserByMobile(group.ownerMobile)?.name || group.ownerMobile }}
-                ({{ displayMobileForGroup(group.ownerMobile, group) }})
-              </p>
+              <!-- Pin button - visible on desktop only -->
+              <el-button
+                size="small"
+                text
+                class="hidden sm:inline-flex"
+                :title="isPinned(group.id) ? 'Unpin group' : 'Pin to top'"
+                :type="isPinned(group.id) ? 'warning' : 'info'"
+                @click="togglePin(group.id)"
+              >
+                {{ isPinned(group.id) ? '⭐ Pinned' : '☆ Pin' }}
+              </el-button>
+              <!-- Dropdown menu for small screens -->
+              <el-dropdown trigger="click" class="sm:hidden">
+                <el-icon :size="20" class="vertical-dots">
+                  <MoreFilled />
+                </el-icon>
+
+                <template #dropdown>
+                  <!-- Pin option in dropdown for mobile -->
+                  <el-dropdown-item @click="togglePin(group.id)">
+                    <span :class="isPinned(group.id) ? 'text-orange-500' : ''">
+                      {{ isPinned(group.id) ? '⭐ Unpin' : '☆ Pin' }}
+                    </span>
+                  </el-dropdown-item>
+                  <el-dropdown-item divided disabled>
+                    <span class="text-xs text-gray-400">Actions</span>
+                  </el-dropdown-item>
+                  <!-- Group actions -->
+                  <el-dropdown-item
+                      v-for="action in getGroupActions(group)"
+                      :key="action.label"
+                      :disabled="action.disabled"
+                      @click="action.onClick"
+                    >
+                      <span
+                        :class="{ 'text-red-500': action.type === 'danger' }"
+                      >
+                        {{ action.label }}
+                      </span>
+                    </el-dropdown-item>
+                </template>
+              </el-dropdown>
             </div>
-            <el-button
-              size="small"
-              text
-              :title="isPinned(group.id) ? 'Unpin group' : 'Pin group'"
-              @click="togglePin(group.id)"
-            >
-              {{ isPinned(group.id) ? '📌' : '📍' }}
-            </el-button>
+            <p class="text-xs text-gray-500 mt-0.5">
+              Owner:
+              {{
+                userStore.getUserByMobile(group.ownerMobile)?.name ||
+                group.ownerMobile
+              }}
+              ({{ displayMobileForGroup(group.ownerMobile, group) }})
+            </p>
           </div>
 
           <!-- Notifications for current user -->
@@ -95,18 +133,10 @@
               />
             </template>
           </group-details-accordion>
-          <!-- Action Buttons - Responsive Layout -->
+          <!-- Action Buttons - Responsive Layout (visible on sm screens and above) -->
           <group-action-buttons
-            :group="group"
-            :select-group="selectGroup"
-            :request-leave-group="requestLeaveGroup"
-            :show-add-member-dialog="showAddMemberDialog"
-            :edit-group="editGroup"
-            :show-transfer-ownership-dialog="showTransferOwnershipDialog"
-            :cancel-join-request="cancelJoinRequest"
-            :request-to-join="requestToJoinGroup"
-            :request-group-deletion="requestGroupDeletion"
-            :delete-group="deleteGroup"
+            class="hidden sm:flex"
+            :actions="getGroupActions(group)"
           />
         </div>
         <group-request-buttons
@@ -131,7 +161,7 @@
     </div>
 
     <!-- Other Groups (not joined) -->
-    <h4 class="mt-6">Other Groups</h4>
+    <h4 class="mt-6">Available Groups</h4>
 
     <no-group-found
       v-if="otherGroups.length === 0"
@@ -148,7 +178,11 @@
         <div class="mb-3">
           <h3 class="font-semibold text-lg mb-0.5">{{ group.name }}</h3>
           <p class="text-xs text-gray-500 mb-2">
-            Owner: {{ userStore.getUserByMobile(group.ownerMobile)?.name || group.ownerMobile }}
+            Owner:
+            {{
+              userStore.getUserByMobile(group.ownerMobile)?.name ||
+              group.ownerMobile
+            }}
             ({{ displayMobileForGroup(group.ownerMobile, group) }})
           </p>
 
@@ -165,19 +199,11 @@
             :load-group-balances="loadGroupBalances"
             :display-mobile-for-group="displayMobileForGroup"
           />
-          <!-- Action Buttons - Responsive Layout -->
+          <!-- Action Buttons - Responsive Layout (visible on sm screens and above) -->
 
           <group-action-buttons
-            :group="group"
-            :select-group="selectGroup"
-            :request-leave-group="requestLeaveGroup"
-            :show-add-member-dialog="showAddMemberDialog"
-            :edit-group="editGroup"
-            :show-transfer-ownership-dialog="showTransferOwnershipDialog"
-            :cancel-join-request="cancelJoinRequest"
-            :request-to-join="requestToJoinGroup"
-            :request-group-deletion="requestGroupDeletion"
-            :delete-group="deleteGroup"
+            class="hidden sm:flex"
+            :actions="getGroupActions(group)"
           />
         </div>
 
@@ -210,11 +236,17 @@
       width="90%"
       style="max-width: 500px"
     >
-      <el-form :model="editForm" :rules="groupRules" ref="editFormRef" label-position="top">
+      <el-form
+        :model="editForm"
+        :rules="groupRules"
+        ref="editFormRef"
+        label-position="top"
+      >
         <el-form-item label="Group Name" prop="name">
           <el-input
             v-model="editForm.name"
             placeholder="Enter group name"
+            size="small"
             :maxlength="50"
           />
         </el-form-item>
@@ -225,6 +257,7 @@
             type="textarea"
             :rows="3"
             placeholder="Enter group description (optional)"
+            size="small"
             :maxlength="100"
           />
         </el-form-item>
@@ -236,6 +269,7 @@
             multiple
             placeholder="Select members"
             class="w-full"
+            size="small"
           >
             <el-option
               v-for="u in userStore.getUsers"
@@ -249,8 +283,12 @@
 
       <template #footer>
         <div class="flex flex-col sm:flex-row gap-2 sm:justify-end">
-          <el-button @click="editDialogVisible = false">Cancel</el-button>
-          <el-button type="primary" @click="handleEditSave">Save</el-button>
+          <el-button size="small" @click="editDialogVisible = false"
+            >Cancel</el-button
+          >
+          <el-button type="primary" size="small" @click="handleEditSave"
+            >Save</el-button
+          >
         </div>
       </template>
     </el-dialog>
@@ -269,6 +307,7 @@
             filterable
             placeholder="Select member"
             class="w-full"
+            size="small"
           >
             <el-option
               v-for="u in availableUsersToAdd"
@@ -287,8 +326,10 @@
 
       <template #footer>
         <div class="flex flex-col sm:flex-row gap-2 sm:justify-end">
-          <el-button @click="addMemberDialogVisible = false">Cancel</el-button>
-          <el-button type="primary" @click="submitAddMemberRequest"
+          <el-button size="small" @click="addMemberDialogVisible = false"
+            >Cancel</el-button
+          >
+          <el-button type="primary" size="small" @click="submitAddMemberRequest"
             >Send Request</el-button
           >
         </div>
@@ -309,6 +350,7 @@
             filterable
             placeholder="Select new owner"
             class="w-full"
+            size="small"
           >
             <el-option
               v-for="member in transferOwnershipMembers"
@@ -327,8 +369,13 @@
 
       <template #footer>
         <div class="flex flex-col sm:flex-row gap-2 sm:justify-end">
-          <el-button @click="transferDialogVisible = false">Cancel</el-button>
-          <el-button type="primary" @click="requestOwnershipTransfer"
+          <el-button size="small" @click="transferDialogVisible = false"
+            >Cancel</el-button
+          >
+          <el-button
+            type="primary"
+            size="small"
+            @click="requestOwnershipTransfer"
             >Request Transfer</el-button
           >
         </div>
@@ -353,6 +400,7 @@ const AddNewTransactionButton = defineAsyncComponent(
 const NoGroupFound = defineAsyncComponent(
   () => import('./generic-components/NoGroupFound.vue')
 )
+import { MoreFilled } from '@element-plus/icons-vue'
 
 const {
   // Refs / reactive
@@ -376,24 +424,17 @@ const {
   // Group actions
   openCreateGroup,
   closeCreateGroup,
-  selectGroup,
-  editGroup,
   updateGroup,
-  deleteGroup,
-  requestGroupDeletion,
   approveGroupDeletion,
   rejectGroupDeletion,
 
   // Join request
   getJoinRequests,
-  requestToJoinGroup,
-  cancelJoinRequest,
   approveMemberJoinRequest,
   finalApproveJoinRequest,
   rejectJoinRequest,
 
   // Leave group actions
-  requestLeaveGroup,
   approveLeaveRequest,
   rejectLeaveRequest,
 
@@ -405,7 +446,6 @@ const {
   approveAddMemberRequest,
   finalizeAddMember,
   rejectAddMemberRequest,
-  showAddMemberDialog,
   submitAddMemberRequest,
 
   // Notifications
@@ -416,14 +456,16 @@ const {
   displayMobileInEditDialog,
 
   // Ownership transfer
-  showTransferOwnershipDialog,
   requestOwnershipTransfer,
   approveOwnershipTransfer,
   rejectOwnershipTransfer,
 
   // Financial snapshot
   loadGroupBalances,
-  getGroupBalances
+  getGroupBalances,
+
+  // Group actions helper
+  getGroupActions
 } = Groups()
 
 const editFormRef = ref(null)
@@ -441,10 +483,9 @@ function handleEditSave() {
 .hover\:shadow-md {
   transition: box-shadow 0.2s ease-in-out;
 }
-
-/* Override Element Plus default button sibling margin in flex column */
-/* .flex.flex-col .el-button + .el-button {
-  margin-left: 0 !important;
-  flex-direction: row !important;
-} */
+.vertical-dots {
+  /* Rotate 90 degrees to make it vertical */
+  transform: rotate(90deg);
+  cursor: pointer;
+}
 </style>

@@ -12,7 +12,13 @@ import {
   hasEditRequest,
   allAffectedMembersApprovedEdit,
   hasAddMemberRequest,
-  allMembersApprovedAddMember
+  allMembersApprovedAddMember,
+  hasPendingRequest,
+  hasLeaveRequest,
+  allMembersApprovedLeave,
+  getLeaveApprovals,
+  hasDeleteRequest,
+  getDeleteApprovals
 } from '../helpers/users'
 
 export const Groups = () => {
@@ -1579,6 +1585,90 @@ export const Groups = () => {
     showTransferOwnershipDialog,
     requestOwnershipTransfer,
     approveOwnershipTransfer,
-    rejectOwnershipTransfer
+    rejectOwnershipTransfer,
+
+    // Group actions helper
+    getGroupActions
+  }
+
+  // Helper function to compute actions for a group
+  function getGroupActions(group) {
+    const isOwner = group.ownerMobile === userStore?.getActiveUser
+    const isMember = isMemberOfGroup(group)
+    const hasLeaveReq = hasLeaveRequest(group, userStore?.getActiveUser)
+    const hasJoinReq = hasPendingRequest(group)
+
+    return [
+      // MEMBER ACTIONS
+      {
+        label: 'Select',
+        show: isMember,
+        type: 'primary',
+        onClick: () => selectGroup(group.id)
+      },
+      {
+        label: `Leave Pending (${getLeaveApprovals(group, userStore.getActiveUser).length}/${group.members.length})`,
+        show: isMember && hasLeaveReq && !allMembersApprovedLeave(group, userStore.getActiveUser),
+        disabled: true,
+        type: ''
+      },
+      {
+        label: 'Leave',
+        show: isMember && !hasLeaveReq,
+        type: 'warning',
+        onClick: () => requestLeaveGroup(group.id)
+      },
+      {
+        label: 'Add Member',
+        show: isMember && !isOwner && !hasAddMemberRequest(group),
+        type: 'success',
+        onClick: () => showAddMemberDialog(group.id)
+      },
+      {
+        label: 'Edit',
+        show: isMember,
+        disabled: !isOwner,
+        type: '',
+        onClick: () => editGroup(group.id)
+      },
+      {
+        label: 'Transfer Ownership',
+        show: isMember && isOwner && group.members.length > 1,
+        type: '',
+        onClick: () => showTransferOwnershipDialog(group.id)
+      },
+      // REQUEST ACTIONS
+      {
+        label: 'Cancel Request',
+        show: !isMember && hasJoinReq,
+        type: 'warning',
+        onClick: () => cancelJoinRequest(group.id)
+      },
+      {
+        label: 'Request to Join',
+        show: !isMember && !hasJoinReq,
+        type: 'success',
+        onClick: () => requestToJoinGroup(group.id)
+      },
+      // OWNER DELETE ACTIONS
+      {
+        label: `Delete Now (${getDeleteApprovals(group).length}/${group.members.length})`,
+        show: isOwner && hasDeleteRequest(group) && allMembersApproved(group),
+        type: 'danger',
+        onClick: () => deleteGroup(group.id)
+      },
+      {
+        label: `Delete Pending (${getDeleteApprovals(group).length}/${group.members.length})`,
+        show: isOwner && hasDeleteRequest(group) && !allMembersApproved(group),
+        disabled: true,
+        type: ''
+      },
+      {
+        label: 'Request Delete',
+        show: isOwner && !hasDeleteRequest(group),
+        type: 'danger',
+        onClick: () => requestGroupDeletion(group.id)
+      }
+    ].filter(action => action.show)
   }
 }

@@ -71,7 +71,7 @@ export function printPasscodes(userName, mobile, codes) {
   </table>
   <div class="warning">
     <strong>⚠️ Keep this page private and secure.</strong>
-    Each code can be used <em>only once</em> to reset your login code.
+    Each code can be used <em>only once</em> to reset your password.
     Cross off each code after use.
   </div>
 </body>

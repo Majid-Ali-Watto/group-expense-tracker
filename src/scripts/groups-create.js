@@ -1,10 +1,10 @@
 import { ref, computed } from 'vue'
 import { store } from '../stores/store'
 import useFireBase from '../api/firebase-apis'
-import { showError, showSuccess } from '../utils/showAlerts'
+import { showError } from '../utils/showAlerts'
 import { maskMobile } from '../utils/maskMobile'
 
-export const GroupsCreate = () => {
+export const GroupsCreate = (emit) => {
   const userStore = store()
   const { updateData } = useFireBase()
 
@@ -87,8 +87,8 @@ export const GroupsCreate = () => {
     try {
       await updateData(`groups/${id}`, () => payload, 'Group created')
       userStore.addGroup(payload)
-      showSuccess('Group created')
       groupForm.value = { name: '', description: '', members: [] }
+      if (emit) emit('groupCreated')
     } catch (err) {
       showError(err)
     }

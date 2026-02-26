@@ -1,6 +1,6 @@
 <!-- eslint-disable vue/multi-word-component-names -->
 <template>
-  <div class="p-4">
+  <div>
 
     <!-- Pending Approvals -->
     <div v-if="myPendingApprovals.length > 0" class="mb-4">
@@ -56,6 +56,7 @@
       v-model="searchQuery"
       placeholder="Search by name, mobile, or group..."
       clearable
+      size="small"
       class="mb-3"
       :maxlength="50"
     >
@@ -85,19 +86,26 @@
           <!-- Groups -->
           <div class="flex flex-wrap gap-1 sm:flex-1">
             <div class="w-full text-xs font-semibold text-gray-400 uppercase tracking-wide sm:hidden mb-1">Groups</div>
-            <el-tag
-              v-for="group in getUserGroups(row.mobile)"
-              :key="group"
-              size="small"
-              type="success"
-            >
-              {{ group }}
-            </el-tag>
-            <span
-              v-if="getUserGroups(row.mobile).length === 0"
-              class="text-gray-400 text-xs"
-              >No groups</span
-            >
+            <template v-if="getUserGroups(row.mobile).length > 0">
+              <el-tag
+                v-for="group in getUserGroups(row.mobile).slice(0, 3)"
+                :key="group"
+                size="small"
+                type="success"
+              >
+                {{ group }}
+              </el-tag>
+              <el-tag
+                v-if="getUserGroups(row.mobile).length > 3"
+                size="small"
+                type="success"
+                class="cursor-pointer"
+                @click="openGroupsDialog(row)"
+              >
+                +{{ getUserGroups(row.mobile).length - 3 }} more
+              </el-tag>
+            </template>
+            <span v-else class="text-gray-400 text-xs">No groups</span>
           </div>
 
           <!-- Actions -->
@@ -138,6 +146,27 @@
       </div>
     </div>
 
+    <!-- All Groups Dialog -->
+    <el-dialog
+      v-model="groupsDialogVisible"
+      :title="`${selectedUserName}'s Groups (${selectedUserGroups.length})`"
+      width="300px"
+      align-center
+    >
+      <div class="overflow-y-auto max-h-64 pr-1">
+        <div
+          v-for="(group, i) in selectedUserGroups"
+          :key="i"
+          class="flex items-center gap-2 py-2 border-b border-gray-100 last:border-0"
+        >
+          <div class="w-6 h-6 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-xs font-semibold shrink-0">
+            {{ group.charAt(0).toUpperCase() }}
+          </div>
+          <div class="text-sm text-gray-700">{{ group }}</div>
+        </div>
+      </div>
+    </el-dialog>
+
     <!-- Edit User Dialog -->
     <el-dialog
       v-model="editDialogVisible"
@@ -147,16 +176,16 @@
     >
       <el-form :model="editForm" :rules="rules" ref="editUserFormRef" label-position="top">
         <el-form-item label="Mobile Number">
-          <el-input :value="editForm.mobile" disabled />
+          <el-input :value="editForm.mobile" size="small" disabled />
         </el-form-item>
         <el-form-item label="Full Name" prop="name">
-          <el-input v-model="editForm.name" placeholder="Full name" :maxlength="50" />
+          <el-input v-model="editForm.name" placeholder="Full name" size="small" :maxlength="50" />
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="flex gap-2 justify-end">
-          <el-button @click="editDialogVisible = false">Cancel</el-button>
-          <el-button type="primary" @click="handleEditUserSave">Save</el-button>
+          <el-button size="small" @click="editDialogVisible = false">Cancel</el-button>
+          <el-button type="primary" size="small" @click="handleEditUserSave">Save</el-button>
         </div>
       </template>
     </el-dialog>
@@ -185,6 +214,16 @@ const {
 } = Users()
 
 const editUserFormRef = ref(null)
+
+const groupsDialogVisible = ref(false)
+const selectedUserGroups = ref([])
+const selectedUserName = ref('')
+
+function openGroupsDialog(row) {
+  selectedUserGroups.value = getUserGroups(row.mobile)
+  selectedUserName.value = row.name
+  groupsDialogVisible.value = true
+}
 
 function handleEditUserSave() {
   editUserFormRef.value.validate((valid) => {

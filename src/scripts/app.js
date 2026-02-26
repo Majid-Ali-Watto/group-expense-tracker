@@ -1,4 +1,4 @@
-import { defineAsyncComponent, ref, onUnmounted, computed, watch } from 'vue'
+import { defineAsyncComponent, ref, onUnmounted, onMounted, computed, watch } from 'vue'
 import { store } from '../stores/store'
 import useFireBase from '../api/firebase-apis'
 import { tabs as allTabs } from '../assets/data'
@@ -14,6 +14,39 @@ export const App = () => {
   const Header = defineAsyncComponent(() => import('@/components/Header.vue'))
 
   const tabStore = store()
+
+  // Theme management - Initialize immediately
+  const savedTheme = localStorage.getItem('theme')
+  const isDarkTheme = ref(savedTheme === 'dark')
+
+  // Apply theme immediately on load
+  const applyTheme = () => {
+    if (isDarkTheme.value) {
+      document.documentElement.classList.add('dark-theme')
+      document.documentElement.classList.remove('light-theme')
+      document.body.classList.add('dark-theme')
+      document.body.classList.remove('light-theme')
+    } else {
+      document.documentElement.classList.add('light-theme')
+      document.documentElement.classList.remove('dark-theme')
+      document.body.classList.add('light-theme')
+      document.body.classList.remove('dark-theme')
+    }
+  }
+
+  // Apply theme immediately (before mount)
+  applyTheme()
+
+  const toggleTheme = () => {
+    isDarkTheme.value = !isDarkTheme.value
+    localStorage.setItem('theme', isDarkTheme.value ? 'dark' : 'light')
+    applyTheme()
+  }
+
+  // Apply theme on mount as well
+  onMounted(() => {
+    applyTheme()
+  })
 
   // loggedIn is a computed — cannot be manually overridden via DevTools.
   // Checks presence only; the full crypto comparison happens in verifyUser().
@@ -46,9 +79,6 @@ export const App = () => {
 
   // Current active tab from store
   const activeTab = ref(tabStore.getActiveTab || tabs.value[0])
-
-  const isFirstTab = computed(() => activeTab.value === tabs.value[0])
-  const isLastTab = computed(() => activeTab.value === tabs.value[tabs.value.length - 1])
 
   function logout() {
     tabStore.setActiveUser(null)
@@ -153,10 +183,10 @@ export const App = () => {
     displayName,
     activeGroup,
     activeTab,
-    isFirstTab,
-    isLastTab,
     setLoggedInStatus,
     handleActiveTab,
-    activeTabComponent
+    activeTabComponent,
+    isDarkTheme,
+    toggleTheme
   }
 }

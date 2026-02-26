@@ -52,15 +52,15 @@ export const loginRules = {
     }
   ],
   loginCode: [
-    { required: true, message: 'Login code is required', trigger: 'blur' },
+    { required: true, message: 'Password is required', trigger: 'blur' },
     {
       min: 6,
-      message: 'Login code must be at least 6 characters',
+      message: 'Password must be at least 6 characters',
       trigger: 'blur'
     },
     {
       max: 15,
-      message: 'Login code must not exceed 15 characters',
+      message: 'Password must not exceed 15 characters',
       trigger: 'blur'
     }
   ]

@@ -94,10 +94,10 @@
 
         <!-- Receipt Upload (optional) -->
         <div class="mb-4">
-          <p class="text-sm font-medium text-gray-700 mb-1">
+          <p class="text-sm font-medium receipt-label mb-1">
             Receipt
-            <span class="text-gray-400 font-normal text-xs">(optional)</span>
-            <span class="block text-xs text-gray-500 mt-1">
+            <span class="text-gray-400 dark:text-gray-500 font-normal text-xs">(optional)</span>
+            <span class="block text-xs text-gray-500 dark:text-gray-400 mt-1">
               Only image files (JPG, PNG, GIF, BMP, WEBP) are allowed. Max size:
               1MB per file.
             </span>
@@ -112,11 +112,11 @@
             </el-button>
             <span
               v-if="receiptFile"
-              class="text-sm text-gray-600 truncate max-w-[180px]"
+              class="text-sm text-gray-600 dark:text-gray-400 truncate max-w-[180px]"
             >
               {{ receiptFile.name }}
             </span>
-            <span v-else class="text-sm text-gray-400">No file chosen</span>
+            <span v-else class="text-sm text-gray-400 dark:text-gray-500">No file chosen</span>
             <el-button
               v-if="receiptFile"
               size="small"
@@ -143,10 +143,11 @@
           >
         </div>
         <div v-if="!isEditMode" class="flex justify-end gap-2">
-          <el-button type="info" plain @click="closeForm"> Cancel </el-button>
+          <el-button type="info" plain size="small" @click="closeForm"> Cancel </el-button>
           <el-button
             v-if="isVisible"
             type="success"
+            size="small"
             :loading="receiptUploading"
             @click="() => validateForm()"
           >
@@ -198,3 +199,13 @@ defineExpose({
   validateForm
 })
 </script>
+
+<style scoped>
+.receipt-label {
+  color: #111827 !important; /* text-gray-900 */
+}
+
+:root.dark-theme .receipt-label {
+  color: #d1d5db !important; /* text-gray-300 */
+}
+</style>

@@ -7,10 +7,10 @@
       <!-- Show message when no settlements -->
       <div
         v-if="settlements.length === 0"
-        class="text-center py-8 bg-gray-50 rounded-lg border border-gray-200"
+        class="settled-message text-center py-8 rounded-lg border"
       >
-        <p class="text-gray-600 text-lg mb-2">✅ All Settled!</p>
-        <p class="text-gray-500 text-sm">
+        <p class="settled-title text-lg mb-2">✅ All Settled!</p>
+        <p class="settled-text text-sm">
           No pending settlements. Everyone's balance is zero.
         </p>
       </div>
@@ -19,17 +19,23 @@
       <el-table v-else :data="settlements" style="width: 100%">
         <el-table-column label="Debtor">
           <template #default="{ row }">
-            {{ userStore.getUserByMobile(row.from)?.name || row.from }}
+            <span class="text-red-500 dark:text-red-400 font-medium">
+              {{ userStore.getUserByMobile(row.from)?.name || row.from }}
+            </span>
           </template>
         </el-table-column>
         <el-table-column label="Lender">
           <template #default="{ row }">
-            {{ userStore.getUserByMobile(row.to)?.name || row.to }}
+            <span class="text-green-700 dark:text-green-400 font-medium">
+              {{ userStore.getUserByMobile(row.to)?.name || row.to }}
+            </span>
           </template>
         </el-table-column>
         <el-table-column label="Amount">
           <template #default="{ row }">
-            {{ formatAmount(row.amount) }}
+            <span class="font-bold">
+              {{ formatAmount(row.amount) }}
+            </span>
           </template>
         </el-table-column>
       </el-table>
@@ -43,19 +49,19 @@
         !isHistory &&
         settlements.length > 0
       "
-      class="mt-4 pt-3 border-t border-blue-200 bg-blue-50 p-3 rounded"
+      class="mt-4 pt-3 border-t border-blue-200 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/20 p-3 rounded"
     >
-      <div class="text-sm font-medium text-blue-800 mb-2">
+      <div class="text-sm font-medium text-blue-800 dark:text-blue-300 mb-2">
         📋 Settlement Request
       </div>
-      <div class="text-xs text-blue-700 mb-2">
+      <div class="text-xs text-blue-700 dark:text-blue-300 mb-2">
         Requested by: {{ group.settlementRequest.requestedByName }} for
         {{ group.settlementRequest.month }}
       </div>
-      <div class="text-xs text-blue-700 mb-2">
+      <div class="text-xs text-blue-700 dark:text-blue-300 mb-2">
         All members must approve before settlement can be finalized.
       </div>
-      <div class="text-sm text-blue-700 mb-2">
+      <div class="text-sm text-blue-700 dark:text-blue-300 mb-2">
         Approvals: {{ getSettlementApprovals.length }} /
         {{ getAllSettlementMembers.length }}
       </div>
@@ -104,7 +110,7 @@
       </div>
 
       <!-- Show approved status -->
-      <div v-else class="text-xs text-green-700">
+      <div v-else class="text-xs text-green-700 dark:text-green-300">
         ✓ You have approved this settlement request
         <span v-if="isAdmin && !allMembersApprovedSettlement">
           - Waiting for all members to approve
@@ -116,10 +122,10 @@
         v-if="isAdmin && allMembersApprovedSettlement"
         class="mt-2 flex gap-2"
       >
-        <el-button type="primary" @click="addPaymentsBatch">
+        <el-button type="primary" size="small" @click="addPaymentsBatch">
           Finalize Settlement Now
         </el-button>
-        <el-button type="danger" plain @click="rejectSettlement">
+        <el-button type="danger" plain size="small" @click="rejectSettlement">
           Cancel Settlement Request
         </el-button>
       </div>
@@ -153,7 +159,7 @@
       <GenericButton
         v-if="activeGroup"
         @click="requestSettlement"
-        type="warning"
+        type="success"
       >
         Request Settlement
       </GenericButton>
@@ -200,3 +206,33 @@ const {
   rejectSettlement
 } = Settlement(props)
 </script>
+
+<style scoped>
+/* Light mode - All Settled message */
+.settled-message {
+  background-color: #f9fafb !important;
+  border-color: #e5e7eb !important;
+}
+
+.settled-title {
+  color: #4b5563 !important;
+}
+
+.settled-text {
+  color: #6b7280 !important;
+}
+
+/* Dark mode - All Settled message */
+:root.dark-theme .settled-message {
+  background-color: #1f2937 !important;
+  border-color: #4b5563 !important;
+}
+
+:root.dark-theme .settled-title {
+  color: #d1d5db !important;
+}
+
+:root.dark-theme .settled-text {
+  color: #9ca3af !important;
+}
+</style>

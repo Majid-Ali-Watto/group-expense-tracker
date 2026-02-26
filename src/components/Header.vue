@@ -1,9 +1,9 @@
 <template>
   <el-header
-    class="fintrack-header flex items-center justify-between shadow-md fixed top-0 left-0 w-full z-50 bg-white transition-all duration-300"
+    class="fintrack-header flex items-center justify-between shadow-md fixed top-0 left-0 w-full z-50 !bg-green-600 !text-white transition-all duration-300"
   >
     <div class="logo-section">
-      <span class="text-base sm:text-xl md:text-2xl font-bold text-black">
+      <span class="text-base sm:text-xl md:text-2xl font-bold text-white">
         FinTrack
       </span>
     </div>

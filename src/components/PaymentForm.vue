@@ -143,6 +143,7 @@
                 disabled
                 placeholder="Select participants"
                 class="w-full"
+                size="small"
                 clearable
               >
                 <el-option
@@ -158,12 +159,12 @@
 
             <!-- Receipt Upload (optional) -->
             <div class="mb-4">
-              <p class="text-sm font-medium text-gray-700 mb-1">
+              <p class="text-sm font-medium receipt-label mb-1">
                 Receipt
-                <span class="text-gray-400 font-normal text-xs"
+                <span class="text-gray-400 dark:text-gray-500 font-normal text-xs"
                   >(optional)</span
                 >
-                <span class="block text-xs text-gray-500 mt-1">
+                <span class="block text-xs text-gray-500 dark:text-gray-400 mt-1">
                   Only image files (JPG, PNG, GIF, BMP, WEBP) are allowed. Max size: 1MB per file.
                   {{ formData.payerMode === 'multiple' ? 'You can upload multiple files.' : 'Single file only.' }}
                 </span>
@@ -178,7 +179,7 @@
                 </el-button>
                 <span
                   v-if="receiptFiles.length"
-                  class="text-sm text-gray-600 truncate max-w-[220px]"
+                  class="text-sm text-gray-600 dark:text-gray-400 truncate max-w-[220px]"
                 >
                   {{
                     receiptFiles.length === 1
@@ -189,7 +190,7 @@
                         ' more'
                   }}
                 </span>
-                <span v-else class="text-sm text-gray-400">No file chosen</span>
+                <span v-else class="text-sm text-gray-400 dark:text-gray-500">No file chosen</span>
                 <el-button
                   v-if="receiptFiles.length"
                   size="small"
@@ -345,9 +346,10 @@
 
         <!-- Buttons (only for add mode, not dialog edit mode) -->
         <div v-if="!isEditMode" class="flex justify-end gap-2">
-          <el-button type="info" plain @click="closeForm"> Cancel </el-button>
+          <el-button type="info" plain size="small" @click="closeForm"> Cancel </el-button>
           <el-button
             type="success"
+            size="small"
             :loading="receiptUploading"
             @click="() => validateForm()"
           >
@@ -409,3 +411,13 @@ defineExpose({
   validateForm
 })
 </script>
+
+<style scoped>
+.receipt-label {
+  color: #111827 !important; /* text-gray-900 */
+}
+
+:root.dark-theme .receipt-label {
+  color: #d1d5db !important; /* text-gray-300 */
+}
+</style>

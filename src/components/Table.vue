@@ -7,13 +7,13 @@
     >
       <thead>
         <tr
-          class="bg-gradient-to-r from-gray-800 to-black text-white text-left"
+          class="bg-gradient-to-r from-gray-800 to-black dark:from-gray-900 dark:to-gray-800 text-white text-left"
         >
           <!-- Render table headers -->
           <th
             v-for="(header, index) in headers"
             :key="index"
-            class="px-6 py-3 border border-gray-700 font-semibold text-sm uppercase tracking-wide"
+            class="px-6 py-3 border border-gray-700 dark:border-gray-600 font-semibold text-sm uppercase tracking-wide"
           >
             {{ header.label }}
           </th>
@@ -21,36 +21,43 @@
       </thead>
       <tbody>
         <tr
-          @dblclick="() => handleDoubleClick(row)"
-          @click="() => (showPopup ? handleClick(row, rowIndex) : null)"
+          @click.stop="() => (showPopup ? handleRowClick(row, rowIndex) : null)"
           v-for="(row, rowIndex) in rows"
           :key="rowIndex"
           :class="[
             'w-full transition duration-300 ease-in-out',
             row.deleteRequest
-              ? 'bg-red-50 hover:bg-red-100'
+              ? 'bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/30'
               : row.updateRequest
-                ? 'bg-orange-50 hover:bg-orange-100'
-                : 'hover:bg-indigo-100 even:bg-gray-50'
+                ? 'bg-orange-50 hover:bg-orange-100 dark:bg-orange-900/20 dark:hover:bg-orange-900/30'
+                : 'hover:bg-indigo-100 dark:hover:bg-gray-700 even:bg-gray-50 dark:even:bg-gray-800/50'
           ]"
         >
           <td
             v-for="header in headers"
             :key="header.key"
-            class="px-6 py-3 border border-gray-300 text-sm text-gray-700"
+            class="px-6 py-3 border border-gray-300 dark:border-gray-600 text-sm text-gray-700 dark:text-gray-300"
           >
             <span v-if="header.key === 'amount'">{{
               formatAmount(row[header.key])
             }}</span>
             <span v-else-if="header.key === 'split'">
               <template v-if="Array.isArray(row.split)">
-                <span v-for="(s, i) in row.split" :key="i">
-                  {{
-                    (tabStore.getUserByMobile(s.mobile)?.name || s.mobile) +
-                    ': ' +
-                    formatAmount(s.amount)
-                  }}<span v-if="i < row.split.length - 1">, </span>
+                <span v-for="(s, i) in row.split.slice(0, 2)" :key="i">
+                  {{ formatSplit(s)
+                  }}<span v-if="i < Math.min(1, row.split.length - 1)">, </span>
                 </span>
+                <el-button
+                  v-if="row.split.length > 2"
+                  link
+                  size="small"
+                  class="ml-2"
+                  @click.stop="
+                    openShowMore('Split Details', row.split.map(formatSplit))
+                  "
+                >
+                  Show more (+{{ row.split.length - 2 }})
+                </el-button>
               </template>
               <template v-else>
                 {{ row.split }}
@@ -60,13 +67,23 @@
               <template
                 v-if="row.payerMode === 'multiple' && row.payers?.length"
               >
-                <span v-for="(p, i) in row.payers" :key="i">
-                  {{
-                    tabStore.getUserByMobile(p.mobile)?.name +
-                      ` (${p.mobile})` || p.mobile
-                  }}: {{ formatAmount(p.amount)
-                  }}<span v-if="i < row.payers.length - 1">, </span>
+                <span v-for="(p, i) in row.payers.slice(0, 2)" :key="i">
+                  {{ formatPayer(p)
+                  }}<span v-if="i < Math.min(1, row.payers.length - 1)"
+                    >,
+                  </span>
                 </span>
+                <el-button
+                  v-if="row.payers.length > 2"
+                  link
+                  size="small"
+                  class="ml-2"
+                  @click.stop="
+                    openShowMore('Payers', row.payers.map(formatPayer))
+                  "
+                >
+                  Show more (+{{ row.payers.length - 2 }})
+                </el-button>
               </template>
               <template v-else>
                 {{
@@ -87,18 +104,32 @@
                 v-if="Array.isArray(row.receiptUrls) && row.receiptUrls.length"
               >
                 <ol class="list-decimal pl-4">
-                  <li v-for="(url, i) in row.receiptUrls" :key="i">
+                  <li v-for="(url, i) in row.receiptUrls.slice(0, 2)" :key="i">
                     <a
                       :href="url"
                       target="_blank"
                       rel="noopener"
-                      class="text-blue-600 hover:underline"
+                      class="text-blue-600 dark:text-blue-400 hover:underline"
                       @click.stop
                     >
                       {{ getFileNameFromUrl(url) }}
                     </a>
                   </li>
                 </ol>
+                <el-button
+                  v-if="row.receiptUrls.length > 2"
+                  link
+                  size="small"
+                  class="ml-1"
+                  @click.stop="
+                    openShowMore(
+                      'Receipts',
+                      row.receiptUrls.map((u) => formatReceipt(u))
+                    )
+                  "
+                >
+                  Show more (+{{ row.receiptUrls.length - 2 }})
+                </el-button>
               </template>
               <template v-else>—</template>
             </span>
@@ -108,7 +139,7 @@
                   :href="row.receiptUrl"
                   target="_blank"
                   rel="noopener"
-                  class="text-blue-600 hover:underline"
+                  class="text-blue-600 dark:text-blue-400 hover:underline"
                   @click.stop
                 >
                   {{ getFileNameFromUrl(row.receiptUrl) }}
@@ -161,13 +192,33 @@
     <GenericButton type="success" @click="downloadPdfData"
       >Download PDF</GenericButton
     >
-    <GenericButton type="warning" @click="downloadExcelData"
+    <GenericButton type="" @click="downloadExcelData"
       >Download Excel</GenericButton
     >
   </div>
+
+  <el-dialog
+    v-model="showMoreDialogVisible"
+    :title="showMoreTitle"
+    width="95%"
+    destroy-on-close
+  >
+    <ol class="list-decimal pl-4 space-y-2 text-black dark:text-gray-300 ">
+      <li
+        v-for="(item, idx) in showMoreItems"
+        :key="idx"
+        v-html="
+          typeof item === 'object'
+            ? `<a href='${item.href}' target='_blank' rel='noopener' class='text-blue-600 dark:text-blue-400 hover:underline'>${item.label}</a>`
+            : item
+        "
+      ></li>
+    </ol>
+  </el-dialog>
 </template>
 
 <script setup>
+import { ref } from 'vue'
 import BottomButtons from './BottomButtons.vue'
 import GenericButton from './generic-components/GenericButton.vue'
 import HOC from './HOC.vue'
@@ -207,11 +258,31 @@ const {
   headers,
   update,
   remove,
-  handleClick,
-  handleDoubleClick,
+  handleRowClick,
   downloadExcelData,
   downloadPdfData,
   childRef,
   getFileNameFromUrl
 } = Table(props)
+
+const showMoreDialogVisible = ref(false)
+const showMoreTitle = ref('')
+const showMoreItems = ref([])
+
+const formatPayer = (p) =>
+  `${tabStore.getUserByMobile(p.mobile)?.name || p.mobile} (${p.mobile}): ${formatAmount(p.amount)}`
+
+const formatSplit = (s) =>
+  `${tabStore.getUserByMobile(s.mobile)?.name || s.mobile}: ${formatAmount(s.amount)}`
+
+const formatReceipt = (url) => ({
+  label: getFileNameFromUrl(url),
+  href: url
+})
+
+function openShowMore(title, items) {
+  showMoreTitle.value = title
+  showMoreItems.value = items
+  showMoreDialogVisible.value = true
+}
 </script>

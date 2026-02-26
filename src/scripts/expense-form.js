@@ -98,6 +98,7 @@ export const ExpenseForm = (props, emit) => {
             () => {
               receiptFile.value = null
               if (fileInputRef.value) fileInputRef.value.value = ''
+              emit('click')
             }
           )
         } else if (whatTask == 'Update') {

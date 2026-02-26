@@ -5,7 +5,26 @@
 		<link rel="icon" type="image/*" href="/expenses.png" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>FinTrack</title>
+		<!-- Apply theme immediately to prevent flash -->
+		<script>
+			(function() {
+				const savedTheme = localStorage.getItem('theme') || 'light';
+				const htmlElement = document.documentElement;
+				const bodyElement = document.body;
 
+				if (savedTheme === 'dark') {
+					htmlElement.classList.add('dark-theme');
+					htmlElement.classList.remove('light-theme');
+					bodyElement.classList.add('dark-theme');
+					bodyElement.classList.remove('light-theme');
+				} else {
+					htmlElement.classList.add('light-theme');
+					htmlElement.classList.remove('dark-theme');
+					bodyElement.classList.add('light-theme');
+					bodyElement.classList.remove('dark-theme');
+				}
+			})();
+		</script>
 	</head>
 	<body style="padding: 0%; margin: 0%; box-sizing: border-box">
 		<div id="app"></div>

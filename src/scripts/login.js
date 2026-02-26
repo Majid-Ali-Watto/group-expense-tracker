@@ -63,7 +63,7 @@ export const Login = () => {
       mode.value = 'login'
 
       await ElMessageBox.alert(
-        'Your login code has been reset successfully! You can now login with your new code.',
+        'Your password has been reset successfully! You can now login with your new code.',
         'Password Reset Complete',
         {
           confirmButtonText: 'OK',
@@ -162,7 +162,7 @@ export const Login = () => {
     }
 
     if (loginCode.length < 6 || loginCode.length > 15) {
-      return showError('Login code must be between 6 and 15 characters')
+      return showError('Password must be between 6 and 15 characters')
     }
 
     try {
@@ -243,7 +243,7 @@ export const Login = () => {
           'This email is already registered. If you registered recently but haven\'t verified, check your email for the verification link. If the email doesn\'t belong to you or you need help, please contact support.'
         )
       } else if (error.code === 'auth/weak-password') {
-        showError('Login code is too weak. Please use at least 6 characters.')
+        showError('Password is too weak. Please use at least 6 characters.')
       } else if (error.code === 'auth/invalid-email') {
         showError('Invalid email format')
       } else {
@@ -260,7 +260,7 @@ export const Login = () => {
     const emailValue = email.trim().toLowerCase()
 
     if (!emailValue || !loginCode) {
-      return showError('Email and login code are required')
+      return showError('Email and password are required')
     }
 
     if (!validateEmail(emailValue)) {
@@ -318,7 +318,7 @@ export const Login = () => {
       console.error('Login error:', error)
 
       if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-        showError('Incorrect login code')
+        showError('Incorrect password')
       } else if (error.code === 'auth/user-not-found') {
         showError('No account found with this email')
       } else if (error.code === 'auth/too-many-requests') {
@@ -329,7 +329,7 @@ export const Login = () => {
     }
   }
 
-  // ── Forgot login code (email reset) ───────────────────────────────────────
+  // ── Forgot password (email reset) ───────────────────────────────────────
 
   async function handleResendVerification() {
     const email = lastRegisteredEmail.value || form.value.email.trim().toLowerCase()
@@ -362,7 +362,7 @@ export const Login = () => {
       if (error.code === 'auth/too-many-requests') {
         showError('Too many requests. Please wait a few minutes before trying again.')
       } else if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-        showError('Incorrect login code. Please enter your correct login code to resend verification.')
+        showError('Incorrect password. Please enter your correct password to resend verification.')
       } else {
         showError(error.message || 'Failed to resend verification email.')
       }
@@ -412,7 +412,7 @@ export const Login = () => {
       resetEmail.value = ''
 
       await ElMessageBox.alert(
-        `A password reset link has been sent to <strong>${email}</strong>.<br><br>Click the link in your email to reset your login code on the secure Firebase page. You'll be redirected back to this page when done.`,
+        `A password reset link has been sent to <strong>${email}</strong>.<br><br>Click the link in your email to reset your password on the secure Firebase page. You'll be redirected back to this page when done.`,
         'Reset Email Sent',
         {
           confirmButtonText: 'OK',
