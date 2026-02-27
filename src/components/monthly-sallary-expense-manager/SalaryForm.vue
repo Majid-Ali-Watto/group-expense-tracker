@@ -1,67 +1,56 @@
 <template>
-  <fieldset
-    class="w-full border border-gray-300 rounded-lg p-6 bg-white shadow-md"
-  >
-    <legend class="text-lg font-semibold px-2">
-      Add/Update Monthly Salary
-    </legend>
+  <el-collapse v-model="activePanel" class="mt-4 md:mt-0">
+    <el-collapse-item name="salary-form">
+      <template #title>
+        <span class="font-semibold text-sm lg:text-base px-2">
+          <template v-if="salaryData.salary !== null">
+            Salary for {{ salaryData.month }}:
+            <span class="text-green-600 font-bold ml-1">
+              {{ formatAmount(salaryData.salary) }}
+            </span>
+          </template>
+          <template v-else>Add/Update Monthly Salary</template>
+        </span>
+      </template>
 
-    <!-- Form Section -->
-    <el-form
-      label-position="top"
-      :model="form"
-      :rules="rules"
-      ref="salaryForm"
-      class="space-y-4"
-    >
-      <el-form-item label="Monthly Salary" prop="salary">
-        <el-input-number
-          v-model.number="form.salary"
-          :min="1"
-          placeholder="Enter salary"
-          class="w-full"
-          controls-position="right"
-        />
-      </el-form-item>
-
-      <div class="flex justify-between">
-        <GenericButton :disabled="isSaveEnbl" type="success" @click="addSalary"
-          >Save Salary</GenericButton
-        >
-        <GenericButton
-          :disabled="isUpdateEnbl"
-          button
-          type="warning"
-          @click="updateSalary"
-          >Update Salary</GenericButton
-        >
-      </div>
-    </el-form>
-
-    <!-- Divider -->
-    <el-divider />
-
-    <!-- Display Section -->
-    <div v-if="salaryData.salary !== null" class="text-center space-x-2">
-      <span
-        class="lg:text-lg md:text-base sm:text-sm font-semibold text-gray-700"
+      <!-- Form Section -->
+      <el-form
+        label-position="top"
+        :model="form"
+        :rules="rules"
+        ref="salaryForm"
+        class="space-y-4 px-3 pt-3 pb-1"
       >
-        <strong>Salary for {{ salaryData.month }}:</strong>
-      </span>
+        <el-form-item label="Monthly Salary" prop="salary">
+          <el-input-number
+            v-model.number="form.salary"
+            :min="1"
+            placeholder="Enter salary"
+            class="w-full"
+            controls-position="right"
+          />
+        </el-form-item>
 
-      <span
-        class="lg:text-2xl md:text-lg sm:text-base font-bold text-green-600"
-      >
-        {{ formatAmount(salaryData.salary) }}
-      </span>
-    </div>
-  </fieldset>
+        <div class="flex justify-between">
+          <GenericButton :disabled="isSaveEnbl" type="success" @click="addSalary">
+            Save Salary
+          </GenericButton>
+          <GenericButton :disabled="isUpdateEnbl" type="warning" @click="updateSalary">
+            Update Salary
+          </GenericButton>
+        </div>
+      </el-form>
+    </el-collapse-item>
+  </el-collapse>
 </template>
 
 <script setup>
+import { ref } from 'vue'
 import { rules } from '../../assets/validation-rules'
 import { GenericButton } from '../generic-components'
 import { SalaryForm } from '../../scripts/salary-form'
+
+const activePanel = ref([])
 
 const {
   formatAmount,
@@ -73,6 +62,4 @@ const {
   addSalary,
   updateSalary
 } = SalaryForm()
-
-
 </script>

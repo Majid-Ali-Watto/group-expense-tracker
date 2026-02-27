@@ -125,7 +125,7 @@ function handleSelectGroup(id) {
     var(--tab-gradient-start),
     var(--tab-gradient-end)
   ); */
-  border: 1px solid var(--success-100);
+  border-bottom: 1px solid var(--success-100);
   /* border-radius: 12px; */
 }
 

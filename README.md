@@ -1,6 +1,6 @@
-# FinTrack — Group Expense, Loans, and Personal Budget Hub
+# Kharchafy — Group Expense, Loans, and Personal Budget Hub
 
-FinTrack is a Vue 3 + Pinia single-page app for running small-group or household finances. It keeps shared expenses, shared loans, personal loans, and personal salary budgets in one place, backed by Firebase Realtime Database and Cloudinary for receipt storage. Every sensitive change flows through member approvals, so nothing destructive happens without consensus.
+Kharchafy is a Vue 3 + Pinia single-page app for running small-group or household finances. It keeps shared expenses, shared loans, personal loans, and personal salary budgets in one place, backed by Firebase Realtime Database and Cloudinary for receipt storage. Every sensitive change flows through member approvals, so nothing destructive happens without consensus.
 
 ---
 

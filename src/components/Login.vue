@@ -30,7 +30,7 @@
           <div :key="mode" class="space-y-4">
             <!-- Info Label -->
             <el-alert
-              :title="mode === 'register' ? 'Registration' : 'Login'"
+              :title="''"
               :type="mode === 'register' ? 'success' : 'info'"
               :closable="false"
               class="mb-4"
@@ -104,25 +104,23 @@
             <!-- Forgot Password Link (only in login mode) -->
             <div
               v-if="mode === 'login'"
-              class="flex flex-col items-end gap-1 mb-3"
+              class="flex flex-col items-end gap-1 -mt-1 mb-2"
             >
-              <el-button
+              <button
                 v-if="showResendVerification"
-                type="text"
-                size="small"
+                type="button"
                 class="forgot-link"
                 @click="handleResendVerification"
               >
                 Resend Verification Email
-              </el-button>
-              <el-button
-                type="text"
-                size="small"
+              </button>
+              <button
+                type="button"
                 class="forgot-link"
                 @click="handleForgotCode"
               >
                 Forgot Password?
-              </el-button>
+              </button>
             </div>
 
             <div class="flex flex-col">
@@ -136,6 +134,22 @@
               <GenericButton @click="handleSubmit" type="success">
                 {{ mode === 'register' ? 'Register' : 'Login' }}
               </GenericButton>
+
+              <!-- Switch to Register -->
+              <p v-if="mode === 'login'" class="text-center text-xs text-gray-500 mt-3">
+                New to Kharchafy?
+                <button type="button" class="forgot-link font-medium" @click="mode = 'register'">
+                  Register
+                </button>
+              </p>
+
+              <!-- Switch to Login -->
+              <p v-if="mode === 'register'" class="text-center text-xs text-gray-500 mt-3">
+                Already have an account?
+                <button type="button" class="forgot-link font-medium" @click="mode = 'login'">
+                  Login
+                </button>
+              </p>
             </div>
           </div>
         </transition>
@@ -160,7 +174,7 @@
           </template>
         </el-alert>
 
-        <el-form-item label="Email Address">
+        <el-form-item label="Registered Email Address" labelPosition="top">
           <el-input
             v-model="resetEmail"
             type="email"
@@ -215,3 +229,22 @@ const {
   handleResendVerification
 } = Login()
 </script>
+
+<style scoped>
+.forgot-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.75rem;
+  color: #16a34a;
+  cursor: pointer;
+  text-decoration: none;
+  text-underline-offset: 2px;
+  transition: color 0.15s ease, text-decoration 0.15s ease;
+}
+
+.forgot-link:hover {
+  color: #15803d;
+  text-decoration: underline;
+}
+</style>

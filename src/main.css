@@ -5,6 +5,10 @@
 @tailwind utilities;
 
 @layer base {
+  * {
+    font-family: 'Poppins', sans-serif;
+  }
+
   legend {
     @apply font-semibold px-1 text-sm lg:text-base md:text-base sm:text-sm !important;
   }
@@ -784,6 +788,26 @@ details {
   color: var(--text-secondary) !important;
 }
 
+/* Disabled primary/success buttons keep neutral text for contrast */
+.el-button.is-disabled.el-button--primary,
+.el-button.is-disabled.el-button--success {
+  background-color: var(--bg-secondary) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-secondary) !important;
+}
+
+/* Override child element color overrides inside disabled buttons */
+.el-button.is-disabled span,
+.el-button.is-disabled div,
+.el-button.is-disabled p {
+  color: var(--text-secondary) !important;
+}
+
+/* Native HTML disabled buttons */
+button:disabled {
+  color: var(--text-secondary) !important;
+}
+
 /* Segmented Toggle */
 .el-segmented {
   background-color: var(--bg-secondary) !important;
@@ -857,6 +881,9 @@ details {
   border-radius: 12px;
   padding: 0.75rem 0.85rem;
   box-shadow: 0 8px 24px -16px rgba(34, 197, 94, 0.25);
+  /* Counteract el-row's negative gutter margins so the bar aligns with siblings */
+  margin-left: 0 !important;
+  margin-right: 0 !important;
 }
 
 .dark-theme .filter-bar {
@@ -1026,11 +1053,24 @@ details {
   transform: scale(0.95);
 }
 
-/* Hide navigation arrows */
-/* .el-tabs__nav-prev,
+/* Arrow buttons */
+.el-tabs__nav-prev,
 .el-tabs__nav-next {
+  color: #000000;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.el-tabs__nav-prev:hover,
+.el-tabs__nav-next:hover {
+  color: #374151;
+}
+
+/* Hide arrows when at the start or end (no more tabs in that direction) */
+.el-tabs__nav-prev.is-disabled,
+.el-tabs__nav-next.is-disabled {
   display: none !important;
-} */
+}
 
 .loading-wrapper {
   display: flex;
@@ -1044,16 +1084,10 @@ details {
   color: white !important;
 }
 
+/* Use El Plus's own transform-scroll — no native overflow scroll to prevent empty-space overscroll */
 .el-tabs__nav-wrap {
-  overflow-x: auto;
-  overflow-y: hidden;
-  scroll-behavior: smooth;
-  -webkit-overflow-scrolling: touch;
-  background: linear-gradient(
-    to right,
-    var(--tab-gradient-start),
-    var(--tab-gradient-end)
-  );
+  overflow: hidden;
+  background: var(--tab-gradient-start);
 }
 
 /* Tab items bold */
@@ -1080,32 +1114,6 @@ details {
   color: inherit;
 }
 
-/* Minimal scrollbar styling */
-.el-tabs__nav-wrap::-webkit-scrollbar {
-  height: 3px;
-}
-
-.el-tabs__nav-wrap::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.el-tabs__nav-wrap::-webkit-scrollbar-thumb {
-  background: var(--scrollbar-thumb);
-  border-radius: 2px;
-}
-
-.el-tabs__nav-wrap::-webkit-scrollbar-thumb:hover {
-  background: var(--scrollbar-thumb-hover);
-}
-
-/* Firefox scrollbar */
-.el-tabs__nav-wrap {
-  scrollbar-width: thin;
-  scrollbar-color: var(--scrollbar-thumb) transparent;
-}
-
 .el-tabs__nav-scroll {
   display: flex;
-  overflow-x: auto;
-  scroll-behavior: smooth;
 }

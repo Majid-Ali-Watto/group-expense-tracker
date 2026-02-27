@@ -2,15 +2,12 @@
   <Suspense>
     <template #default>
       <div>
-        <!-- Floating Theme Toggle Button -->
-        <FloatingThemeButton
-          :isDarkTheme="isDarkTheme"
-          :toggleTheme="toggleTheme"
-        />
         <Header
           @click-log="setLoggedInStatus"
           :loggedIn="loggedIn"
           :user="tabStore.getActiveUser"
+          :isDarkTheme="isDarkTheme"
+          :toggleTheme="toggleTheme"
         />
         <div
           v-if="!loggedIn"
@@ -41,7 +38,7 @@
               :label="tab"
               :name="tab"
               lazy
-              class="py-2 px-3"
+              class="py-2 px-3 sm:px-0"
             >
               <keep-alive>
                 <HOC :componentToBeRendered="activeTabComponent(tab)" />
@@ -68,7 +65,6 @@
 
 <script setup>
 import { svg } from './assets/loader-svg'
-import FloatingThemeButton from './components/generic-components/FloatingThemeButton.vue'
 import WelcomeBanner from './components/generic-components/WelcomeBanner.vue'
 import { App } from './scripts/app'
 
