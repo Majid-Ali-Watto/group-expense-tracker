@@ -29,7 +29,13 @@ export const Table = (props) => {
   const activeTabComponent = () => getEditComponent(activeTab.value)
 
   const dialogComponentProps = computed(() => {
-    const base = { row: state.row }
+    const base = {
+      row: {
+        ...state.row,
+        loanGiverMobile: state.row?.loanGiver || '',
+        loanReceiverMobile: state.row?.loanReceiver || ''
+      }
+    }
     if (activeTab.value === Tabs.PERSONAL_LOANS) {
       return {
         ...base,
@@ -115,6 +121,11 @@ export const Table = (props) => {
 
   const headers = computed(() => {
     if (props.rows.length > 0) {
+      const isSharedExpenses = activeTab.value === Tabs.SHARED_EXPENSES
+      const isSharedLoans = activeTab.value === Tabs.SHARED_LOANS
+      const isPersonalExpenses = activeTab.value === Tabs.PERSONAL_EXPENSES
+      const isPersonalLoans = activeTab.value === Tabs.PERSONAL_LOANS
+
       const excludedCols = [
         'whenAdded',
         'whoAdded',
@@ -130,12 +141,9 @@ export const Table = (props) => {
         'receiptUrls',
         'receiptUrl'
       ]
+      if (isSharedLoans) excludedCols.push('giverName', 'receiverName')
 
       const rowKeys = Object.keys(props.rows[0])
-      const isSharedExpenses = activeTab.value === Tabs.SHARED_EXPENSES
-      const isSharedLoans = activeTab.value === Tabs.SHARED_LOANS
-      const isPersonalExpenses = activeTab.value === Tabs.PERSONAL_EXPENSES
-      const isPersonalLoans = activeTab.value === Tabs.PERSONAL_LOANS
 
       const cols = rowKeys.filter((col) => !excludedCols.includes(col))
 
@@ -178,7 +186,6 @@ export const Table = (props) => {
     state.row = { ...rowS, date, id: props.keys[rowIndex] }
   }
 
- 
   const handleDoubleClick = (row) => {
     const addedBy = row?.whoAdded || 'N/A'
     const when = row?.whenAdded || 'N/A'
@@ -210,7 +217,10 @@ export const Table = (props) => {
     if (timeSinceLastClick < doubleClickThreshold) {
       handleDoubleClick(rowS)
     } else {
-      clickTimeout.value = setTimeout(() => handleClick(rowS, rowIndex), doubleClickThreshold)
+      clickTimeout.value = setTimeout(
+        () => handleClick(rowS, rowIndex),
+        doubleClickThreshold
+      )
     }
   }
 

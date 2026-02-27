@@ -120,6 +120,22 @@ export const rules = {
       trigger: 'blur'
     }
   ],
+  loanGiverMobile: [
+    { required: true, message: 'Giver mobile is required', trigger: 'blur' },
+    {
+      pattern: /^03\d{9}$/,
+      message: 'Mobile must be 11 digits starting with 03',
+      trigger: 'blur'
+    }
+  ],
+  loanReceiverMobile: [
+    { required: true, message: 'Receiver mobile is required', trigger: 'blur' },
+    {
+      pattern: /^03\d{9}$/,
+      message: 'Mobile must be 11 digits starting with 03',
+      trigger: 'blur'
+    }
+  ],
 
   salary: [
     { required: true, message: 'Salary is required', trigger: 'blur' },

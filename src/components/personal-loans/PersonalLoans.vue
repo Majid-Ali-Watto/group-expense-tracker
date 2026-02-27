@@ -40,7 +40,46 @@
       </el-descriptions>
 
       <!-- Month Filter -->
-      <el-row :gutter="20" class="mb-3 mt-4">
+      <div class="flex items-center justify-between mb-2 mt-4">
+        <span class="text-sm font-semibold text-gray-700">Filters</span>
+        <el-button
+          circle
+          type="primary"
+          size="small"
+          class="sm:hidden"
+          :icon="Filter"
+          @click="showFilters = !showFilters"
+        />
+      </div>
+      <el-row
+        :gutter="20"
+        class="filter-bar mb-3 mt-4 hidden sm:flex"
+      >
+        <el-col :lg="8" :md="12" :sm="24">
+          <el-form-item label="Select Month" class="w-full">
+            <el-select
+              filterable
+              v-model="selectedMonth"
+              placeholder="Select Month"
+              class="w-full"
+              @change="fetchLoans"
+            >
+              <el-option value="All" label="All Months" />
+              <el-option
+                v-for="month in months"
+                :key="month"
+                :value="month"
+                :label="month"
+              />
+            </el-select>
+          </el-form-item>
+        </el-col>
+      </el-row>
+      <el-row
+        v-if="showFilters"
+        :gutter="20"
+        class="filter-bar mb-3 mt-2 sm:hidden"
+      >
         <el-col :lg="8" :md="12" :sm="24">
           <el-form-item label="Select Month" class="w-full">
             <el-select
@@ -98,6 +137,8 @@
 </template>
 
 <script setup>
+import { ref } from 'vue'
+import { Filter } from '@element-plus/icons-vue'
 import LoanForm from '../LoanForm.vue'
 import Table from '../Table.vue'
 import { PersonalLoans } from '../../scripts/personal-loans'
@@ -116,6 +157,8 @@ const {
   netPosition,
   pairwiseSettlements
 } = PersonalLoans()
+
+const showFilters = ref(false)
 </script>
 
 <style scoped>

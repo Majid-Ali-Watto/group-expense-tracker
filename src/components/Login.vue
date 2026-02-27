@@ -10,8 +10,8 @@
       label-position="top"
       class="w-full"
     >
-      <fieldset class="w-full p-4 border rounded-lg">
-        <legend>Login / Register</legend>
+      <!-- <fieldset class="w-full p-4 border rounded-lg"> -->
+        <!-- <legend>Login / Register</legend> -->
 
         <!-- Mode Toggle -->
         <div class="mb-4">
@@ -22,111 +22,124 @@
               { label: 'Register', value: 'register' }
             ]"
             size="small"
-            class="w-full"
+            class="w-full auth-segment"
           />
         </div>
 
-        <!-- Info Label -->
-        <el-alert
-          :title="mode === 'register' ? 'Registration' : 'Login'"
-          :type="mode === 'register' ? 'success' : 'info'"
-          :closable="false"
-          class="mb-4"
-        >
-          <template #default>
-            <span class="text-sm">
-              <template v-if="mode === 'register'">
-                Create a new account with your name, mobile, email, and login
-                code.
-                <strong
-                  >You must verify your email within 48 hours to activate your
-                  account.</strong
-                >
+        <transition name="auth-switch" mode="out-in">
+          <div :key="mode" class="space-y-4">
+            <!-- Info Label -->
+            <el-alert
+              :title="mode === 'register' ? 'Registration' : 'Login'"
+              :type="mode === 'register' ? 'success' : 'info'"
+              :closable="false"
+              class="mb-4"
+            >
+              <template #default>
+                <span class="text-sm">
+                  <template v-if="mode === 'register'">
+                    Create a new account with your name, mobile, email, and
+                    login code.
+                    <strong
+                      >You must verify your email within 48 hours to activate
+                      your account.</strong
+                    >
+                  </template>
+                  <template v-else> Login with your email and password. </template>
+                </span>
               </template>
-              <template v-else> Login with your email and password. </template>
-            </span>
-          </template>
-        </el-alert>
+            </el-alert>
 
-        <!-- Full Name (only in register mode) -->
-        <el-form-item v-if="mode === 'register'" label="Full Name" prop="name">
-          <el-input
-            v-model="form.name"
-            placeholder="Enter your full name"
-            class="w-full"
-            size="small"
-            :maxlength="50"
-          />
-        </el-form-item>
+            <!-- Full Name (only in register mode) -->
+            <el-form-item v-if="mode === 'register'" label="Full Name" prop="name">
+              <el-input
+                v-model="form.name"
+                placeholder="Enter your full name"
+                class="w-full"
+                size="small"
+                :maxlength="50"
+              />
+            </el-form-item>
 
-        <!-- Mobile Number (only in register mode) -->
-        <el-form-item
-          v-if="mode === 'register'"
-          label="Mobile Number"
-          prop="mobile"
-        >
-          <el-input
-            v-model="form.mobile"
-            placeholder="Enter your mobile number"
-            class="w-full"
-            size="small"
-            :maxlength="11"
-            @input="form.mobile = form.mobile.replace(/\D/g, '')"
-          />
-        </el-form-item>
+            <!-- Mobile Number (only in register mode) -->
+            <el-form-item
+              v-if="mode === 'register'"
+              label="Mobile Number"
+              prop="mobile"
+            >
+              <el-input
+                v-model="form.mobile"
+                placeholder="Enter your mobile number"
+                class="w-full"
+                size="small"
+                :maxlength="11"
+                @input="form.mobile = form.mobile.replace(/\D/g, '')"
+              />
+            </el-form-item>
 
-        <!-- Email -->
-        <el-form-item label="Email" prop="email">
-          <el-input
-            v-model="form.email"
-            type="email"
-            placeholder="Enter your email address"
-            class="w-full"
-            size="small"
-          />
-        </el-form-item>
+            <!-- Email -->
+            <el-form-item label="Email" prop="email">
+              <el-input
+                v-model="form.email"
+                type="email"
+                placeholder="Enter your email address"
+                class="w-full"
+                size="small"
+              />
+            </el-form-item>
 
-        <!-- Password -->
-        <el-form-item label="Password" prop="loginCode">
-          <el-input
-            v-model="form.loginCode"
-            type="password"
-            placeholder="Enter your password (6-15 characters)"
-            class="w-full"
-            size="small"
-            show-password
-            :maxlength="15"
-          />
-        </el-form-item>
+            <!-- Password -->
+            <el-form-item label="Password" prop="loginCode">
+              <el-input
+                v-model="form.loginCode"
+                type="password"
+                placeholder="Enter your password (6-15 characters)"
+                class="w-full"
+                size="small"
+                show-password
+                :maxlength="15"
+              />
+            </el-form-item>
 
-        <!-- Forgot Password Link (only in login mode) -->
-        <div v-if="mode === 'login'" class="flex flex-col items-end gap-1 mb-3">
-          <el-button
-            v-if="showResendVerification"
-            type="text"
-            size="small"
-            @click="handleResendVerification"
-          >
-            Resend Verification Email
-          </el-button>
-          <el-button type="text" size="small" @click="handleForgotCode">
-            Forgot Password?
-          </el-button>
-        </div>
+            <!-- Forgot Password Link (only in login mode) -->
+            <div
+              v-if="mode === 'login'"
+              class="flex flex-col items-end gap-1 mb-3"
+            >
+              <el-button
+                v-if="showResendVerification"
+                type="text"
+                size="small"
+                class="forgot-link"
+                @click="handleResendVerification"
+              >
+                Resend Verification Email
+              </el-button>
+              <el-button
+                type="text"
+                size="small"
+                class="forgot-link"
+                @click="handleForgotCode"
+              >
+                Forgot Password?
+              </el-button>
+            </div>
 
-        <div class="flex justify-between">
-          <!-- Remember Me -->
-          <el-checkbox
-            v-model="form.rememberMe"
-            label="Remember Me"
-            class="text-sm text-gray-700 mb-4"
-          ></el-checkbox>
-          <!-- Submit Button -->
-          <GenericButton @click="handleSubmit" type="success">
-            {{ mode === 'register' ? 'Register' : 'Login' }}
-          </GenericButton>
-        </div>
-      </fieldset>
+            <div class="flex flex-col">
+              <!-- Remember Me -->
+              <el-checkbox
+                v-model="form.rememberMe"
+                label="Remember Me"
+                class="text-sm text-gray-700 mb-4"
+              ></el-checkbox>
+              <!-- Submit Button -->
+              <GenericButton @click="handleSubmit" type="success">
+                {{ mode === 'register' ? 'Register' : 'Login' }}
+              </GenericButton>
+            </div>
+          </div>
+        </transition>
+      <!-- </fieldset> -->
     </el-form>
 
     <!-- ── Email Reset Dialog ──────────────────────────────────── -->

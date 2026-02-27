@@ -39,13 +39,13 @@
 
       <!-- Pending Approval Requests Section -->
       <div v-if="pendingRequests && pendingRequests.length > 0" class="mb-6">
-        <h3 class="text-lg font-semibold mb-3 text-orange-600">
+        <h3 class="pending-title text-lg font-semibold mb-3 text-orange-600">
           ⚠️ Pending Approval Requests
         </h3>
         <div
           v-for="(request, index) in pendingRequests"
           :key="index"
-          class="border border-orange-300 rounded-lg p-4 mb-3 bg-orange-50"
+          class="pending-card pending-request-card rounded-lg p-4 mb-3"
         >
           <div class="flex justify-between items-start mb-2">
             <div>
@@ -133,9 +133,71 @@
           </div>
         </div>
       </div>
+      <!-- Mobile filter toggle -->
+      <div class="flex items-center justify-between mb-2 mt-4">
+        <span class="text-sm font-semibold text-gray-700">Filters</span>
+        <el-button
+          circle
+          type="primary"
+          size="small"
+          class="sm:hidden"
+          :icon="Filter"
+          @click="showFilters = !showFilters"
+        />
+      </div>
       <!-- Filters -->
-      <el-row :gutter="20" class="mb-3 mt-4" justify="space-between">
+      <el-row
+        :gutter="20"
+        class="filter-bar mb-3 mt-4 hidden sm:flex"
+        justify="space-between"
+      >
         <!-- Month Selection -->
+        <el-col :lg="6" :md="6" :sm="12" :xs="12">
+          <el-form-item label="Month" class="w-full">
+            <el-select
+              filterable
+              v-model="selectedMonth"
+              placeholder="Select Month"
+              class="w-full"
+              size="small"
+            >
+              <el-option
+                v-for="month in months"
+                :key="month"
+                :value="month"
+                :label="month"
+              />
+            </el-select>
+          </el-form-item>
+        </el-col>
+        <el-col :lg="6" :md="6" :sm="12" :xs="12">
+          <!-- Giver Selection -->
+          <el-form-item label="Loan Giver" class="w-full">
+            <el-select
+              filterable
+              v-model="selectedGiver"
+              placeholder="Select Giver"
+              class="w-full"
+              size="small"
+            >
+              <el-option value="All" label="All" />
+              <el-option
+                v-for="opt in usersOptions"
+                :key="opt.value"
+                :value="opt.value"
+                :label="opt.label"
+              />
+            </el-select>
+          </el-form-item>
+        </el-col>
+      </el-row>
+      <!-- Mobile filters (toggle) -->
+      <el-row
+        v-if="showFilters"
+        :gutter="20"
+        class="filter-bar mb-3 mt-2 sm:hidden"
+        justify="space-between"
+      >
         <el-col :lg="6" :md="6" :sm="12" :xs="12">
           <el-form-item label="Month" class="w-full">
             <el-select
@@ -206,6 +268,8 @@
 </template>
 
 <script setup>
+import { ref } from 'vue'
+import { Filter } from '@element-plus/icons-vue'
 import Table from './Table.vue'
 import LoanForm from './LoanForm.vue'
 import { Loans } from '../scripts/loans'
@@ -235,4 +299,6 @@ const {
   approveRequest,
   rejectRequest
 } = Loans()
+
+const showFilters = ref(false)
 </script>

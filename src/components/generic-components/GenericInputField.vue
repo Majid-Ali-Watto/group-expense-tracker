@@ -8,7 +8,8 @@
       :placeholder="placeholder"
       :type="type"
       :maxlength="maxlength"
-      @input="$emit('update:modelValue', internalValue)"
+      @input="emit('update:modelValue', internalValue)"
+      @blur="emit('blur', internalValue)"
     />
   </el-form-item>
 </template>
@@ -51,8 +52,7 @@ const props = defineProps({
   }
 })
 
-// Emit event for two-way binding
-defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue', 'blur'])
 
 // Internal value for syncing
 const internalValue = ref(props.modelValue)

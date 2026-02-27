@@ -37,7 +37,7 @@
         </template>
       </el-input>
     </div>
-
+    <el-divider v-if="joinedGroups.length > 0" />
     <!-- Existing Groups -->
     <!-- Your Groups (joined) -->
     <h4>Joined Groups</h4>

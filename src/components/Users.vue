@@ -4,11 +4,11 @@
 
     <!-- Pending Approvals -->
     <div v-if="myPendingApprovals.length > 0" class="mb-4">
-      <h4 class="mb-2">Pending Approvals</h4>
+      <h4 class="pending-title mb-2">Pending Approvals</h4>
       <div
         v-for="item in myPendingApprovals"
         :key="`${item.user.mobile}-${item.type}`"
-        class="border border-yellow-300 bg-yellow-50 rounded-lg p-3 mb-2"
+        class="pending-card rounded-lg p-3 mb-2"
       >
         <div class="flex items-start justify-between gap-2">
           <div class="flex-1 min-w-0">
@@ -141,6 +141,9 @@
                 }})
               </el-button>
             </template>
+            <template v-else>
+              <span class="text-gray-400 text-xs">No Actions</span>
+            </template>
           </div>
         </div>
       </div>
@@ -232,4 +235,3 @@ function handleEditUserSave() {
   })
 }
 </script>
-

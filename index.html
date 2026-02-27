@@ -7,22 +7,27 @@
 		<title>FinTrack</title>
 		<!-- Apply theme immediately to prevent flash -->
 		<script>
-			(function() {
-				const savedTheme = localStorage.getItem('theme') || 'light';
-				const htmlElement = document.documentElement;
-				const bodyElement = document.body;
+			(function () {
+				const applyTheme = () => {
+					const savedTheme = localStorage.getItem('theme') || 'light';
+					const htmlElement = document.documentElement;
+					const bodyElement = document.body;
+					if (!bodyElement) return;
 
-				if (savedTheme === 'dark') {
-					htmlElement.classList.add('dark-theme');
-					htmlElement.classList.remove('light-theme');
-					bodyElement.classList.add('dark-theme');
-					bodyElement.classList.remove('light-theme');
-				} else {
-					htmlElement.classList.add('light-theme');
-					htmlElement.classList.remove('dark-theme');
-					bodyElement.classList.add('light-theme');
-					bodyElement.classList.remove('dark-theme');
-				}
+					if (savedTheme === 'dark') {
+						htmlElement.classList.add('dark-theme');
+						htmlElement.classList.remove('light-theme');
+						bodyElement.classList.add('dark-theme');
+						bodyElement.classList.remove('light-theme');
+					} else {
+						htmlElement.classList.add('light-theme');
+						htmlElement.classList.remove('dark-theme');
+						bodyElement.classList.add('light-theme');
+						bodyElement.classList.remove('dark-theme');
+					}
+				};
+
+				document.addEventListener('DOMContentLoaded', applyTheme);
 			})();
 		</script>
 	</head>

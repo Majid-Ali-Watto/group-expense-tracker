@@ -56,6 +56,7 @@ export const Loans = () => {
   const loanContent = ref(null)
 
   let loansListener = null
+  let currentLoansRef = null
 
   // Fetch available months
   const fetchMonths = async () => {
@@ -72,7 +73,8 @@ export const Loans = () => {
   const fetchLoans = () => {
     const groupId = userStore.getActiveGroup || 'global'
     const loansRef = dbRef(`loans/${groupId}/${selectedMonth.value}`)
-    if (loansListener) off(loansRef, 'value', loansListener)
+    if (loansListener && currentLoansRef) off(currentLoansRef, 'value', loansListener)
+    currentLoansRef = loansRef
 
     loansListener = onValue(
       loansRef,
@@ -126,7 +128,7 @@ export const Loans = () => {
 
   onUnmounted(() => {
     if (loansListener) {
-      off(loansListener)
+      if (currentLoansRef) off(currentLoansRef, 'value', loansListener)
     }
   })
 

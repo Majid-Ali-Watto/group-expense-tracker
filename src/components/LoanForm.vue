@@ -58,6 +58,18 @@
             <GenericInput
               v-if="isPersonal"
               :rows="1"
+              v-model="formData.loanGiverMobile"
+              label="Loan Giver Mobile"
+              prop="loanGiverMobile"
+              required
+              type="textarea"
+              placeholder="e.g. 03001234567"
+              :maxlength="15"
+              @blur="onGiverMobileBlur"
+            />
+            <GenericInput
+              v-if="isPersonal"
+              :rows="1"
               v-model="formData.loanGiver"
               label="Loan Giver"
               prop="loanGiver"
@@ -65,6 +77,18 @@
               type="textarea"
               placeholder="Loan Giver Name"
               :maxlength="50"
+            />
+            <GenericInput
+              v-if="isPersonal"
+              :rows="1"
+              v-model="formData.loanReceiverMobile"
+              label="Loan Receiver Mobile"
+              prop="loanReceiverMobile"
+              required
+              type="textarea"
+              placeholder="e.g. 03001234567"
+              :maxlength="15"
+              @blur="onReceiverMobileBlur"
             />
             <GenericInput
               v-if="isPersonal"
@@ -96,7 +120,9 @@
         <div class="mb-4">
           <p class="text-sm font-medium receipt-label mb-1">
             Receipt
-            <span class="text-gray-400 dark:text-gray-500 font-normal text-xs">(optional)</span>
+            <span class="text-gray-400 dark:text-gray-500 font-normal text-xs"
+              >(optional)</span
+            >
             <span class="block text-xs text-gray-500 dark:text-gray-400 mt-1">
               Only image files (JPG, PNG, GIF, BMP, WEBP) are allowed. Max size:
               1MB per file.
@@ -116,7 +142,9 @@
             >
               {{ receiptFile.name }}
             </span>
-            <span v-else class="text-sm text-gray-400 dark:text-gray-500">No file chosen</span>
+            <span v-else class="text-sm text-gray-400 dark:text-gray-500"
+              >No file chosen</span
+            >
             <el-button
               v-if="receiptFile"
               size="small"
@@ -143,7 +171,9 @@
           >
         </div>
         <div v-if="!isEditMode" class="flex justify-end gap-2">
-          <el-button type="info" plain size="small" @click="closeForm"> Cancel </el-button>
+          <el-button type="info" plain size="small" @click="closeForm">
+            Cancel
+          </el-button>
           <el-button
             v-if="isVisible"
             type="success"
@@ -192,7 +222,9 @@ const {
   existingReceiptUrl,
   triggerFileInput,
   handleReceiptChange,
-  removeReceipt
+  removeReceipt,
+  onGiverMobileBlur,
+  onReceiverMobileBlur
 } = LoanForm(props, emit)
 
 defineExpose({

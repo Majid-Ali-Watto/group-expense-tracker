@@ -49,19 +49,19 @@
         !isHistory &&
         settlements.length > 0
       "
-      class="mt-4 pt-3 border-t border-blue-200 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/20 p-3 rounded"
+      class="pending-card mt-4 pt-3 p-3 rounded"
     >
-      <div class="text-sm font-medium text-blue-800 dark:text-blue-300 mb-2">
+      <div class="pending-title text-sm font-medium mb-2">
         📋 Settlement Request
       </div>
-      <div class="text-xs text-blue-700 dark:text-blue-300 mb-2">
+      <div class="text-xs mb-2">
         Requested by: {{ group.settlementRequest.requestedByName }} for
         {{ group.settlementRequest.month }}
       </div>
-      <div class="text-xs text-blue-700 dark:text-blue-300 mb-2">
+      <div class="text-xs mb-2">
         All members must approve before settlement can be finalized.
       </div>
-      <div class="text-sm text-blue-700 dark:text-blue-300 mb-2">
+      <div class="text-sm mb-2">
         Approvals: {{ getSettlementApprovals.length }} /
         {{ getAllSettlementMembers.length }}
       </div>
@@ -96,7 +96,7 @@
         <el-button
           v-if="group.settlementRequest.requestedBy === user"
           size="small"
-          type="danger"
+          type="warning"
           plain
           @click="rejectSettlement"
         >
@@ -125,7 +125,7 @@
         <el-button type="primary" size="small" @click="addPaymentsBatch">
           Finalize Settlement Now
         </el-button>
-        <el-button type="danger" plain size="small" @click="rejectSettlement">
+        <el-button type="warning" plain size="small" @click="rejectSettlement">
           Cancel Settlement Request
         </el-button>
       </div>
@@ -139,7 +139,7 @@
         "
         class="mt-2"
       >
-        <el-button size="small" type="danger" plain @click="rejectSettlement">
+        <el-button size="small" type="warning" plain @click="rejectSettlement">
           Cancel Settlement Request
         </el-button>
       </div>

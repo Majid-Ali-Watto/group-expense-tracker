@@ -1,17 +1,13 @@
 <template>
-  <div class="mb-1">
-    <div
-      class="bg-gradient-to-r from-green-50 to-blue-50 shadow-sm border-green-100 p-2 sm:p-3"
-    >
+  <div class="mb-0">
+    <div class="banner-card shadow-sm p-2 sm:p-3">
       <div
         class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
       >
         <!-- User Info -->
         <div class="flex items-center gap-3">
           <div class="flex-shrink-0">
-            <div
-              class="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center shadow-md"
-            >
+            <div class="avatar-circle">
               <svg
                 class="w-4 h-4 sm:w-5 sm:h-5 text-white"
                 fill="none"
@@ -41,12 +37,8 @@
         <div class="flex items-center gap-3 sm:ml-4">
           <div class="flex-shrink-0">
             <div
-              class="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center shadow-md"
-              :class="
-                userStore.getActiveGroup
-                  ? 'bg-gradient-to-br from-blue-400 to-blue-600'
-                  : 'bg-gray-300'
-              "
+              class="group-circle"
+              :class="userStore.getActiveGroup ? '' : 'group-circle--empty'"
             >
               <svg
                 class="w-4 h-4 sm:w-5 sm:h-5 text-white"
@@ -123,3 +115,41 @@ function handleSelectGroup(id) {
   showSuccess(`Selected group: ${group.name}`)
 }
 </script>
+
+<style scoped>
+.banner-card {
+  background: var(--tab-gradient-start);
+  /* linear-gradient(
+    90deg,
+    var(--success-50),
+    var(--tab-gradient-start),
+    var(--tab-gradient-end)
+  ); */
+  border: 1px solid var(--success-100);
+  /* border-radius: 12px; */
+}
+
+.avatar-circle,
+.group-circle {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 18px -12px rgba(34, 197, 94, 0.5);
+}
+
+.avatar-circle {
+  background: linear-gradient(135deg, var(--success-400), var(--success-600));
+}
+
+.group-circle {
+  background: linear-gradient(135deg, var(--success-400), var(--success-600));
+}
+
+.group-circle--empty {
+  background: #d1d5db;
+  box-shadow: none;
+}
+</style>

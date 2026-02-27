@@ -22,6 +22,7 @@ export const PersonalLoans = () => {
   }
 
   let loansListener = null
+  let currentLoansRef = null
 
   const activeUser = computed(() => userStore.getActiveUser)
 
@@ -45,15 +46,14 @@ export const PersonalLoans = () => {
   const fetchLoans = () => {
     const basePath = `personal-loans/${activeUser.value}`
 
-    if (loansListener) {
-      off(loansListener)
+    if (loansListener && currentLoansRef) {
+      off(currentLoansRef, 'value', loansListener)
     }
 
     if (selectedMonth.value === 'All') {
       const allLoansRef = dbRef(basePath)
 
-      loansListener = allLoansRef
-      onValue(allLoansRef, (snapshot) => {
+      const handleAll = (snapshot) => {
         if (!snapshot.exists()) {
           loans.value = []
           loanKeys.value = []
@@ -78,13 +78,15 @@ export const PersonalLoans = () => {
 
         loans.value = allLoans
         loanKeys.value = allKeys
-      })
+      }
+      loansListener = handleAll
+      currentLoansRef = allLoansRef
+      onValue(allLoansRef, handleAll)
     } else {
       const monthPath = `${basePath}/${selectedMonth.value}`
       const monthLoansRef = dbRef(monthPath)
 
-      loansListener = monthLoansRef
-      onValue(monthLoansRef, (snapshot) => {
+      const handleMonth = (snapshot) => {
         if (!snapshot.exists()) {
           loans.value = []
           loanKeys.value = []
@@ -105,7 +107,10 @@ export const PersonalLoans = () => {
 
         loans.value = loansArray
         loanKeys.value = keysArray
-      })
+      }
+      loansListener = handleMonth
+      currentLoansRef = monthLoansRef
+      onValue(monthLoansRef, handleMonth)
     }
   }
 
@@ -128,14 +133,14 @@ export const PersonalLoans = () => {
   })
 
   onUnmounted(() => {
-    if (loansListener) {
-      off(loansListener)
+    if (loansListener && currentLoansRef) {
+      off(currentLoansRef, 'value', loansListener)
     }
   })
 
   const totalLending = computed(() => {
     return loans.value.reduce((total, loan) => {
-      if (loan.giver === activeUser.value) {
+      if (loan.loanGiver === activeUser.value) {
         return total + Number(loan.amount || 0)
       }
       return total
@@ -144,7 +149,7 @@ export const PersonalLoans = () => {
 
   const totalDebting = computed(() => {
     return loans.value.reduce((total, loan) => {
-      if (loan.receiver === activeUser.value) {
+      if (loan.loanReceiver === activeUser.value) {
         return total + Number(loan.amount || 0)
       }
       return total
@@ -158,45 +163,50 @@ export const PersonalLoans = () => {
   const pairwiseSettlements = computed(() => {
     const pairMap = {}
 
-    loans.value.forEach(({ giver, receiver, amount }) => {
-      if (!giver || !receiver || !amount) return
+    loans.value.forEach(
+      (loan) => {
+        const { loanGiver, giverName, loanReceiver, receiverName, amount } = loan
+        if (!loanGiver || !loanReceiver || !amount) return
 
-      const v = Number(amount)
+        const v = Number(amount)
 
-      const [a, b] = [giver, receiver].sort()
-      const key = `${a}__${b}`
+        const [a, b] = [
+          { loanGiver, giverName },
+          { loanReceiver, receiverName }
+        ].sort((x, y) => (x.loanGiver - y.loanReceiver ))
+        const key = `${a.loanGiver}__${b.loanReceiver}`
 
-      if (!pairMap[key]) {
-        pairMap[key] = {
-          a,
-          b,
-          aToB: 0,
-          bToA: 0
+        if (!pairMap[key]) {
+          pairMap[key] = {
+            a,
+            b,
+            aToB: 0,
+            bToA: 0
+          }
+        }
+
+        if (loanGiver === a.loanGiver && loanReceiver === b.loanReceiver) {
+          pairMap[key].bToA += v
+        } else {
+          pairMap[key].aToB += v
         }
       }
-
-      if (giver === a && receiver === b) {
-        pairMap[key].bToA += v
-      } else {
-        pairMap[key].aToB += v
-      }
-    })
+    )
 
     const result = []
 
     Object.values(pairMap).forEach(({ a, b, aToB, bToA }) => {
       const net = aToB - bToA
-
       if (net > 0) {
         result.push({
-          from: userStore.getUserByMobile(a)?.name || a,
-          to: userStore.getUserByMobile(b)?.name || b,
+          from: a.giverName || a.loanGiver,
+          to: b.receiverName || b.loanReceiver,
           amount: net
         })
       } else if (net < 0) {
         result.push({
-          from: userStore.getUserByMobile(b)?.name || b,
-          to: userStore.getUserByMobile(a)?.name || a,
+          from: b.receiverName || b.loanReceiver,
+          to: a.giverName || a.loanGiver,
           amount: Math.abs(net)
         })
       }

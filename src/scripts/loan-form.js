@@ -20,6 +20,8 @@ export const LoanForm = (props, emit) => {
       amount: null,
       loanGiver: '',
       loanReceiver: '',
+      loanGiverMobile: '',
+      loanReceiverMobile: '',
       description: ''
     }
     receiptFile.value = null
@@ -69,15 +71,25 @@ export const LoanForm = (props, emit) => {
     amount: null,
     loanGiver: '',
     loanReceiver: '',
+    loanGiverMobile: '',
+    loanReceiverMobile: '',
     description: ''
   })
+
+  const activeUser = computed(() => userStore.getActiveUser)
+  const activeUserName = computed(
+    () => userStore.getUserByMobile(activeUser.value)?.name || ''
+  )
 
   watch(
     () => props.row,
     (newRow) => {
       formData.value.amount = newRow?.amount ?? null
-      formData.value.loanGiver = newRow?.giver ?? ''
-      formData.value.loanReceiver = newRow?.receiver ?? ''
+      formData.value.loanGiver = newRow?.giverName ?? newRow?.giver ?? ''
+      formData.value.loanReceiver = newRow?.receiverName ?? newRow?.receiver ?? ''
+      formData.value.loanGiverMobile = newRow?.giverMobile ?? newRow?.giver ?? newRow?.loanGiverMobile ?? ''
+      formData.value.loanReceiverMobile =
+        newRow?.receiverMobile ?? newRow?.receiver ?? newRow?.loanReceiverMobile ?? ''
       formData.value.description = newRow?.description ?? ''
       isVisible.value = !newRow?.amount
       receiptFile.value = null
@@ -86,9 +98,54 @@ export const LoanForm = (props, emit) => {
     { immediate: true }
   )
 
+  const onGiverMobileBlur = () => {
+    if (formData.value.loanGiverMobile == activeUser.value) {
+      formData.value.loanGiver =
+        activeUserName.value || formData.value.loanGiver
+    }
+  }
+
+  const onReceiverMobileBlur = () => {
+    if (formData.value.loanReceiverMobile == activeUser.value) {
+      formData.value.loanReceiver =
+        activeUserName.value || formData.value.loanReceiver
+    }
+  }
+
   const validateForm = (whatTask = 'Save') => {
     loanForm.value.validate(async (valid) => {
       if (valid) {
+        // Personal loan guard: logged-in user must be either giver or receiver
+        if (props.isPersonal) {
+          const giverMobile =
+            formData.value.loanGiverMobile || formData.value.loanGiver
+          const receiverMobile =
+            formData.value.loanReceiverMobile || formData.value.loanReceiver
+          if (giverMobile === receiverMobile) {
+            showError('Giver and Receiver cannot be the same person.')
+            return
+          }
+          if (giverMobile !== activeUser.value && receiverMobile !== activeUser.value) {
+            showError(
+              'For personal loans, either Giver or Receiver must be your own mobile.'
+            )
+            return
+          }
+
+          if (giverMobile === activeUser.value && formData.value.loanGiver) {
+            if (formData.value.loanGiver !== activeUserName.value) {
+              showError('Giver name must match your account name when using your mobile.')
+              return
+            }
+          }
+          if (receiverMobile === activeUser.value && formData.value.loanReceiver) {
+            if (formData.value.loanReceiver !== activeUserName.value) {
+              showError('Receiver name must match your account name when using your mobile.')
+              return
+            }
+          }
+        }
+
         let loanPath
         const date = new Date()
         const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
@@ -272,11 +329,23 @@ export const LoanForm = (props, emit) => {
   }
 
   function getLoanData(receiptUrl = null, receiptMeta = null) {
+    const giverMobile =
+      props.isPersonal && formData.value.loanGiverMobile
+        ? formData.value.loanGiverMobile
+        : formData.value.loanGiver
+
+    const receiverMobile =
+      props.isPersonal && formData.value.loanReceiverMobile
+        ? formData.value.loanReceiverMobile
+        : formData.value.loanReceiver
+   
     const loan = {
       amount: formData.value.amount,
       description: formData.value.description,
-      giver: formData.value.loanGiver,
-      receiver: formData.value.loanReceiver,
+      [!props.isPersonal ? 'giver' : 'loanGiver']: giverMobile,
+      [!props.isPersonal ? 'receiver' : 'loanReceiver']: receiverMobile,
+      giverName: formData.value.loanGiver,
+      receiverName: formData.value.loanReceiver,
       date:
         new Date().toLocaleDateString('en-PK') +
         ' ' +
@@ -303,6 +372,8 @@ export const LoanForm = (props, emit) => {
     existingReceiptUrl,
     triggerFileInput,
     handleReceiptChange,
-    removeReceipt
+    removeReceipt,
+    onGiverMobileBlur,
+    onReceiverMobileBlur
   }
 }

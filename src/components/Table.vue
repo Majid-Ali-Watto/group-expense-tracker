@@ -6,14 +6,12 @@
       style="width: 100% !important; min-width: 800px !important"
     >
       <thead>
-        <tr
-          class="bg-gradient-to-r from-gray-800 to-black dark:from-gray-900 dark:to-gray-800 text-white text-left"
-        >
+        <tr class="bg-green-500 dark:bg-green-600 text-white text-left">
           <!-- Render table headers -->
           <th
             v-for="(header, index) in headers"
             :key="index"
-            class="px-6 py-3 border border-gray-700 dark:border-gray-600 font-semibold text-sm uppercase tracking-wide"
+            class="px-6 py-3 border border-green-600 dark:border-green-700 font-semibold text-sm uppercase tracking-wide"
           >
             {{ header.label }}
           </th>
@@ -203,7 +201,7 @@
     width="95%"
     destroy-on-close
   >
-    <ol class="list-decimal pl-4 space-y-2 text-black dark:text-gray-300 ">
+    <ol class="list-decimal pl-4 space-y-2 text-black dark:text-gray-300">
       <li
         v-for="(item, idx) in showMoreItems"
         :key="idx"

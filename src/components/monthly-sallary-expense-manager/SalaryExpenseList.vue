@@ -6,7 +6,60 @@
         >{{ selectedMonth }}:<el-text tag="b"> Transactions</el-text>
       </el-badge>
     </div>
-    <el-row :gutter="30" class="mb-4 flex items-center">
+    <div class="flex items-center justify-between mb-2 mt-2">
+      <span class="text-sm font-semibold text-gray-700">Filters</span>
+      <el-button
+        circle
+        type="primary"
+        size="small"
+        class="sm:hidden"
+        :icon="Filter"
+        @click="showFilters = !showFilters"
+      />
+    </div>
+    <el-row
+      :gutter="30"
+      class="filter-bar mb-4 flex items-center hidden sm:flex"
+    >
+      <el-col :lg="12" :md="12" :sm="24" class="space-y-2">
+        <el-row>
+          <el-col :lg="12" :md="12" :sm="12" :xs="12" class="space-y-2">
+            <el-statistic :value="totalSpent" :formatter="formatAmount">
+              <template #title>Total Spent</template>
+            </el-statistic>
+          </el-col>
+
+          <el-col :lg="12" :md="12" :sm="12" :xs="12" class="space-y-2">
+            <el-statistic :value="remaining" :formatter="formatAmount">
+              <template #title>Remaining</template>
+            </el-statistic>
+          </el-col>
+        </el-row>
+      </el-col>
+      <el-col :lg="12" :md="12" :sm="24" class="space-y-2">
+        <el-form-item label="Select Month" class="w-full">
+          <el-select
+            filterable
+            class="w-full"
+            v-model="selectedMonth"
+            @change="fetchExpenses"
+            placeholder="Select month"
+          >
+            <el-option
+              v-for="month in months"
+              :key="month"
+              :label="month"
+              :value="month"
+            />
+          </el-select>
+        </el-form-item>
+      </el-col>
+    </el-row>
+    <el-row
+      v-if="showFilters"
+      :gutter="30"
+      class="filter-bar mb-4 flex items-center sm:hidden"
+    >
       <el-col :lg="12" :md="12" :sm="24" class="space-y-2">
         <el-row>
           <el-col :lg="12" :md="12" :sm="12" :xs="12" class="space-y-2">
@@ -51,6 +104,8 @@
   </div>
 </template>
 <script setup>
+import { ref } from 'vue'
+import { Filter } from '@element-plus/icons-vue'
 import Table from '../Table.vue'
 import { SalaryExpenseList } from '../../scripts/salary-expense-list'
 
@@ -65,4 +120,6 @@ const {
   content,
   fetchExpenses
 } = SalaryExpenseList()
+
+const showFilters = ref(false)
 </script>

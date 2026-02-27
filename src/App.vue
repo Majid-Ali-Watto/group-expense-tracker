@@ -12,12 +12,17 @@
           :loggedIn="loggedIn"
           :user="tabStore.getActiveUser"
         />
-        <div class="container my-auto mx-auto mt-16 p-4" v-if="!loggedIn">
-          <Login />
+        <div
+          v-if="!loggedIn"
+          class="container min-h-screen flex items-center justify-center mx-auto px-4 pt-24 pb-12"
+        >
+          <div>
+            <Login />
+          </div>
         </div>
         <div
           v-if="loggedIn"
-          class="container mx-auto mt-16 sm:mt-16 md:16 lg:mt-16"
+          class="container mx-auto mt-20"
         >
           <!-- Welcome Banner -->
           <WelcomeBanner :displayName="displayName" />
