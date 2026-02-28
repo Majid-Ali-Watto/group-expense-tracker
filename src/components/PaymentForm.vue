@@ -161,12 +161,20 @@
             <div class="mb-4">
               <p class="text-sm font-medium receipt-label mb-1">
                 Receipt
-                <span class="text-gray-400 dark:text-gray-500 font-normal text-xs"
+                <span
+                  class="text-gray-400 dark:text-gray-500 font-normal text-xs"
                   >(optional)</span
                 >
-                <span class="block text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  Only image files (JPG, PNG, GIF, BMP, WEBP) are allowed. Max size: 1MB per file.
-                  {{ formData.payerMode === 'multiple' ? 'You can upload multiple files.' : 'Single file only.' }}
+                <span
+                  class="block text-xs text-gray-500 dark:text-gray-400 mt-1"
+                >
+                  Only image files (JPG, PNG, GIF, BMP, WEBP) are allowed. Max
+                  size: 1MB per file.
+                  {{
+                    formData.payerMode === 'multiple'
+                      ? 'You can upload multiple files.'
+                      : 'Single file only.'
+                  }}
                 </span>
               </p>
               <div class="flex items-center gap-2 flex-wrap">
@@ -190,7 +198,9 @@
                         ' more'
                   }}
                 </span>
-                <span v-else class="text-sm text-gray-400 dark:text-gray-500">No file chosen</span>
+                <span v-else class="text-sm text-gray-400 dark:text-gray-500"
+                  >No file chosen</span
+                >
                 <el-button
                   v-if="receiptFiles.length"
                   size="small"
@@ -346,7 +356,9 @@
 
         <!-- Buttons (only for add mode, not dialog edit mode) -->
         <div v-if="!isEditMode" class="flex justify-end gap-2">
-          <el-button type="info" plain size="small" @click="closeForm"> Cancel </el-button>
+          <el-button type="info" plain size="small" @click="closeForm">
+            Cancel
+          </el-button>
           <el-button
             type="success"
             size="small"

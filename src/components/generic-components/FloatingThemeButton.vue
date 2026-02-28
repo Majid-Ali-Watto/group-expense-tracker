@@ -38,11 +38,11 @@
 defineProps({
   isDarkTheme: {
     type: Boolean,
-    required: true,
+    required: true
   },
   toggleTheme: {
     type: Function,
-    required: true,
-  },
-});
+    required: true
+  }
+})
 </script>

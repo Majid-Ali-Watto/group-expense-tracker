@@ -32,10 +32,18 @@
         </el-form-item>
 
         <div class="flex justify-between">
-          <GenericButton :disabled="isSaveEnbl" type="success" @click="addSalary">
+          <GenericButton
+            :disabled="isSaveEnbl"
+            type="success"
+            @click="addSalary"
+          >
             Save Salary
           </GenericButton>
-          <GenericButton :disabled="isUpdateEnbl" type="warning" @click="updateSalary">
+          <GenericButton
+            :disabled="isUpdateEnbl"
+            type="warning"
+            @click="updateSalary"
+          >
             Update Salary
           </GenericButton>
         </div>

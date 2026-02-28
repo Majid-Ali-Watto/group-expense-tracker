@@ -11,148 +11,164 @@
       class="w-full"
     >
       <!-- <fieldset class="w-full p-4 border rounded-lg"> -->
-        <!-- <legend>Login / Register</legend> -->
+      <!-- <legend>Login / Register</legend> -->
 
-        <!-- Mode Toggle -->
-        <div class="mb-4">
-          <el-segmented
-            v-model="mode"
-            :options="[
-              { label: 'Login', value: 'login' },
-              { label: 'Register', value: 'register' }
-            ]"
-            size="small"
-            class="w-full auth-segment"
-          />
-        </div>
+      <!-- Mode Toggle -->
+      <div class="mb-4">
+        <el-segmented
+          v-model="mode"
+          :options="[
+            { label: 'Login', value: 'login' },
+            { label: 'Register', value: 'register' }
+          ]"
+          size="small"
+          class="w-full auth-segment"
+        />
+      </div>
 
-        <transition name="auth-switch" mode="out-in">
-          <div :key="mode" class="space-y-4">
-            <!-- Info Label -->
-            <el-alert
-              :title="''"
-              :type="mode === 'register' ? 'success' : 'info'"
-              :closable="false"
-              class="mb-4"
+      <transition name="auth-switch" mode="out-in">
+        <div :key="mode" class="space-y-4">
+          <!-- Info Label -->
+          <el-alert
+            :title="''"
+            :type="mode === 'register' ? 'success' : 'info'"
+            :closable="false"
+            class="mb-4"
+          >
+            <template #default>
+              <span class="text-sm">
+                <template v-if="mode === 'register'">
+                  Create a new account with your name, mobile, email, and login
+                  code.
+                  <strong
+                    >You must verify your email within 48 hours to activate your
+                    account.</strong
+                  >
+                </template>
+                <template v-else>
+                  Login with your email and password.
+                </template>
+              </span>
+            </template>
+          </el-alert>
+
+          <!-- Full Name (only in register mode) -->
+          <el-form-item
+            v-if="mode === 'register'"
+            label="Full Name"
+            prop="name"
+          >
+            <el-input
+              v-model="form.name"
+              placeholder="Enter your full name"
+              class="w-full"
+              size="small"
+              :maxlength="50"
+            />
+          </el-form-item>
+
+          <!-- Mobile Number (only in register mode) -->
+          <el-form-item
+            v-if="mode === 'register'"
+            label="Mobile Number"
+            prop="mobile"
+          >
+            <el-input
+              v-model="form.mobile"
+              placeholder="Enter your mobile number"
+              class="w-full"
+              size="small"
+              :maxlength="11"
+              @input="form.mobile = form.mobile.replace(/\D/g, '')"
+            />
+          </el-form-item>
+
+          <!-- Email -->
+          <el-form-item label="Email" prop="email">
+            <el-input
+              v-model="form.email"
+              type="email"
+              placeholder="Enter your email address"
+              class="w-full"
+              size="small"
+            />
+          </el-form-item>
+
+          <!-- Password -->
+          <el-form-item label="Password" prop="loginCode">
+            <el-input
+              v-model="form.loginCode"
+              type="password"
+              placeholder="Enter your password (6-15 characters)"
+              class="w-full"
+              size="small"
+              show-password
+              :maxlength="15"
+            />
+          </el-form-item>
+
+          <!-- Forgot Password Link (only in login mode) -->
+          <div
+            v-if="mode === 'login'"
+            class="flex flex-col items-end gap-1 -mt-1 mb-2"
+          >
+            <button
+              v-if="showResendVerification"
+              type="button"
+              class="forgot-link"
+              @click="handleResendVerification"
             >
-              <template #default>
-                <span class="text-sm">
-                  <template v-if="mode === 'register'">
-                    Create a new account with your name, mobile, email, and
-                    login code.
-                    <strong
-                      >You must verify your email within 48 hours to activate
-                      your account.</strong
-                    >
-                  </template>
-                  <template v-else> Login with your email and password. </template>
-                </span>
-              </template>
-            </el-alert>
-
-            <!-- Full Name (only in register mode) -->
-            <el-form-item v-if="mode === 'register'" label="Full Name" prop="name">
-              <el-input
-                v-model="form.name"
-                placeholder="Enter your full name"
-                class="w-full"
-                size="small"
-                :maxlength="50"
-              />
-            </el-form-item>
-
-            <!-- Mobile Number (only in register mode) -->
-            <el-form-item
-              v-if="mode === 'register'"
-              label="Mobile Number"
-              prop="mobile"
-            >
-              <el-input
-                v-model="form.mobile"
-                placeholder="Enter your mobile number"
-                class="w-full"
-                size="small"
-                :maxlength="11"
-                @input="form.mobile = form.mobile.replace(/\D/g, '')"
-              />
-            </el-form-item>
-
-            <!-- Email -->
-            <el-form-item label="Email" prop="email">
-              <el-input
-                v-model="form.email"
-                type="email"
-                placeholder="Enter your email address"
-                class="w-full"
-                size="small"
-              />
-            </el-form-item>
-
-            <!-- Password -->
-            <el-form-item label="Password" prop="loginCode">
-              <el-input
-                v-model="form.loginCode"
-                type="password"
-                placeholder="Enter your password (6-15 characters)"
-                class="w-full"
-                size="small"
-                show-password
-                :maxlength="15"
-              />
-            </el-form-item>
-
-            <!-- Forgot Password Link (only in login mode) -->
-            <div
-              v-if="mode === 'login'"
-              class="flex flex-col items-end gap-1 -mt-1 mb-2"
-            >
-              <button
-                v-if="showResendVerification"
-                type="button"
-                class="forgot-link"
-                @click="handleResendVerification"
-              >
-                Resend Verification Email
-              </button>
-              <button
-                type="button"
-                class="forgot-link"
-                @click="handleForgotCode"
-              >
-                Forgot Password?
-              </button>
-            </div>
-
-            <div class="flex flex-col">
-              <!-- Remember Me -->
-              <el-checkbox
-                v-model="form.rememberMe"
-                label="Remember Me"
-                class="text-sm text-gray-700 mb-4"
-              ></el-checkbox>
-              <!-- Submit Button -->
-              <GenericButton @click="handleSubmit" type="success">
-                {{ mode === 'register' ? 'Register' : 'Login' }}
-              </GenericButton>
-
-              <!-- Switch to Register -->
-              <p v-if="mode === 'login'" class="text-center text-xs text-gray-500 mt-3">
-                New to Kharchafy?
-                <button type="button" class="forgot-link font-medium" @click="mode = 'register'">
-                  Register
-                </button>
-              </p>
-
-              <!-- Switch to Login -->
-              <p v-if="mode === 'register'" class="text-center text-xs text-gray-500 mt-3">
-                Already have an account?
-                <button type="button" class="forgot-link font-medium" @click="mode = 'login'">
-                  Login
-                </button>
-              </p>
-            </div>
+              Resend Verification Email
+            </button>
+            <button type="button" class="forgot-link" @click="handleForgotCode">
+              Forgot Password?
+            </button>
           </div>
-        </transition>
+
+          <div class="flex flex-col">
+            <!-- Remember Me -->
+            <el-checkbox
+              v-model="form.rememberMe"
+              label="Remember Me"
+              class="text-sm text-gray-700 mb-4"
+            ></el-checkbox>
+            <!-- Submit Button -->
+            <GenericButton @click="handleSubmit" type="success">
+              {{ mode === 'register' ? 'Register' : 'Login' }}
+            </GenericButton>
+
+            <!-- Switch to Register -->
+            <p
+              v-if="mode === 'login'"
+              class="text-center text-xs text-gray-500 mt-3"
+            >
+              New to Kharchafy?
+              <button
+                type="button"
+                class="forgot-link font-medium"
+                @click="mode = 'register'"
+              >
+                Register
+              </button>
+            </p>
+
+            <!-- Switch to Login -->
+            <p
+              v-if="mode === 'register'"
+              class="text-center text-xs text-gray-500 mt-3"
+            >
+              Already have an account?
+              <button
+                type="button"
+                class="forgot-link font-medium"
+                @click="mode = 'login'"
+              >
+                Login
+              </button>
+            </p>
+          </div>
+        </div>
+      </transition>
       <!-- </fieldset> -->
     </el-form>
 
@@ -240,7 +256,9 @@ const {
   cursor: pointer;
   text-decoration: none;
   text-underline-offset: 2px;
-  transition: color 0.15s ease, text-decoration 0.15s ease;
+  transition:
+    color 0.15s ease,
+    text-decoration 0.15s ease;
 }
 
 .forgot-link:hover {

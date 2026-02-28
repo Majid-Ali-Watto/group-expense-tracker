@@ -163,35 +163,33 @@ export const PersonalLoans = () => {
   const pairwiseSettlements = computed(() => {
     const pairMap = {}
 
-    loans.value.forEach(
-      (loan) => {
-        const { loanGiver, giverName, loanReceiver, receiverName, amount } = loan
-        if (!loanGiver || !loanReceiver || !amount) return
+    loans.value.forEach((loan) => {
+      const { loanGiver, giverName, loanReceiver, receiverName, amount } = loan
+      if (!loanGiver || !loanReceiver || !amount) return
 
-        const v = Number(amount)
+      const v = Number(amount)
 
-        const [a, b] = [
-          { loanGiver, giverName },
-          { loanReceiver, receiverName }
-        ].sort((x, y) => (x.loanGiver - y.loanReceiver ))
-        const key = `${a.loanGiver}__${b.loanReceiver}`
+      const [a, b] = [
+        { loanGiver, giverName },
+        { loanReceiver, receiverName }
+      ].sort((x, y) => x.loanGiver - y.loanReceiver)
+      const key = `${a.loanGiver}__${b.loanReceiver}`
 
-        if (!pairMap[key]) {
-          pairMap[key] = {
-            a,
-            b,
-            aToB: 0,
-            bToA: 0
-          }
-        }
-
-        if (loanGiver === a.loanGiver && loanReceiver === b.loanReceiver) {
-          pairMap[key].bToA += v
-        } else {
-          pairMap[key].aToB += v
+      if (!pairMap[key]) {
+        pairMap[key] = {
+          a,
+          b,
+          aToB: 0,
+          bToA: 0
         }
       }
-    )
+
+      if (loanGiver === a.loanGiver && loanReceiver === b.loanReceiver) {
+        pairMap[key].bToA += v
+      } else {
+        pairMap[key].aToB += v
+      }
+    })
 
     const result = []
 

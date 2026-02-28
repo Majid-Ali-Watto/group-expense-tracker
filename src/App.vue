@@ -4,6 +4,7 @@
       <div>
         <Header
           @click-log="setLoggedInStatus"
+          @show-net-position="handleShowNetPosition"
           :loggedIn="loggedIn"
           :user="tabStore.getActiveUser"
           :isDarkTheme="isDarkTheme"
@@ -17,10 +18,7 @@
             <Login />
           </div>
         </div>
-        <div
-          v-if="loggedIn"
-          class="container mx-auto mt-20"
-        >
+        <div v-if="loggedIn" class="container mx-auto mt-20">
           <!-- Welcome Banner -->
           <WelcomeBanner :displayName="displayName" />
 
@@ -46,6 +44,12 @@
             </el-tab-pane>
           </el-tabs>
         </div>
+
+        <!-- Expenses Summary Dialog -->
+        <NetPositionDialog
+          v-model="showNetPositionDialog"
+          :summary="netPositionSummary"
+        />
       </div>
     </template>
     <template #fallback>
@@ -66,6 +70,7 @@
 <script setup>
 import { svg } from './assets/loader-svg'
 import WelcomeBanner from './components/generic-components/WelcomeBanner.vue'
+import NetPositionDialog from './components/generic-components/NetPositionDialog.vue'
 import { App } from './scripts/app'
 
 const {
@@ -81,6 +86,9 @@ const {
   handleActiveTab,
   activeTabComponent,
   isDarkTheme,
-  toggleTheme
+  toggleTheme,
+  showNetPositionDialog,
+  netPositionSummary,
+  handleShowNetPosition
 } = App()
 </script>

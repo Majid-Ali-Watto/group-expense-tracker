@@ -19,7 +19,6 @@ export const Users = () => {
 
   const searchQuery = ref('')
 
-
   const activeGroupMobiles = computed(() => {
     const groupId = userStore.getActiveGroup
     const group = groupId ? userStore.getGroupById(groupId) : null
@@ -205,7 +204,7 @@ export const Users = () => {
         userStore.setUsers(
           [...userStore.getUsers].filter((u) => u.mobile !== mobile)
         )
-        
+
         // If user is deleting themselves, also delete from Firebase Auth
         if (mobile === me) {
           try {
@@ -216,9 +215,11 @@ export const Users = () => {
             }
           } catch (authError) {
             console.error('Error deleting user from Firebase Auth:', authError)
-            showError('Account deleted from database but Firebase Authentication deletion failed. You may need to sign in again to complete deletion.')
+            showError(
+              'Account deleted from database but Firebase Authentication deletion failed. You may need to sign in again to complete deletion.'
+            )
           }
-          
+
           userStore.setActiveUser(null)
           userStore.setActiveGroup(null)
           userStore.setSessionToken(null)
@@ -270,7 +271,7 @@ export const Users = () => {
       userStore.setUsers(
         [...userStore.getUsers].filter((u) => u.mobile !== userMobile)
       )
-      
+
       // If user is deleting themselves, also delete from Firebase Auth
       if (userMobile === me) {
         try {
@@ -281,9 +282,11 @@ export const Users = () => {
           }
         } catch (authError) {
           console.error('Error deleting user from Firebase Auth:', authError)
-          showError('Account deleted from database but Firebase Authentication deletion failed.')
+          showError(
+            'Account deleted from database but Firebase Authentication deletion failed.'
+          )
         }
-        
+
         userStore.setActiveUser(null)
         userStore.setActiveGroup(null)
         userStore.setSessionToken(null)

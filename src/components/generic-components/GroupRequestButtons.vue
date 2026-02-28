@@ -351,7 +351,11 @@
       "
       class="mt-2"
     >
-      <el-button type="primary" size="small" @click="finalizeAddMember(group.id)">
+      <el-button
+        type="primary"
+        size="small"
+        @click="finalizeAddMember(group.id)"
+      >
         Add Member Now
       </el-button>
     </div>

@@ -67,7 +67,7 @@ export default function useFireBase() {
    * displayed to indicate a successful operation after updating the data in the database.
    */
   async function updateData(url, getData, message) {
-    console.log("🚀 ~ updateData ~ url:", url)
+    console.log('🚀 ~ updateData ~ url:', url)
     const loading = startLoading()
     try {
       await update(dbRef(url), getData())

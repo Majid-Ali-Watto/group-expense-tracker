@@ -865,7 +865,9 @@ button:disabled {
 /* Auth mode switch animation */
 .auth-switch-enter-active,
 .auth-switch-leave-active {
-  transition: opacity 0.25s ease, transform 0.25s ease;
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s ease;
 }
 
 .auth-switch-enter-from,
@@ -903,7 +905,9 @@ button:disabled {
 
 /* Pending approval cards (shared loans) */
 .pending-request-card {
-  transition: background-color 0.2s ease, border-color 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .pending-card {

@@ -27,7 +27,11 @@ export async function uploadToCloudinary(file) {
   }
 
   const data = await res.json()
-  return { url: data.secure_url, publicId: data.public_id, resourceType: data.resource_type }
+  return {
+    url: data.secure_url,
+    publicId: data.public_id,
+    resourceType: data.resource_type
+  }
 }
 
 // Fire-and-forget — does not block the caller

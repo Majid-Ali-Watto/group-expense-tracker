@@ -36,7 +36,9 @@
       <div class="mb-4">
         <p class="text-sm font-medium receipt-label mb-1">
           Receipt
-          <span class="text-gray-400 dark:text-gray-500 font-normal text-xs">(optional)</span>
+          <span class="text-gray-400 dark:text-gray-500 font-normal text-xs"
+            >(optional)</span
+          >
           <span class="block text-xs text-gray-500 dark:text-gray-400 mt-1">
             Only image files (JPG, PNG, GIF, BMP, WEBP) are allowed. Max size:
             1MB per file.
@@ -56,7 +58,9 @@
           >
             {{ receiptFile.name }}
           </span>
-          <span v-else class="text-sm text-gray-400 dark:text-gray-500">No file chosen</span>
+          <span v-else class="text-sm text-gray-400 dark:text-gray-500"
+            >No file chosen</span
+          >
           <el-button
             v-if="receiptFile"
             size="small"
@@ -122,7 +126,6 @@ const {
   handleReceiptChange,
   removeReceipt
 } = ExpenseForm(props, emit)
-
 
 defineExpose({
   validateForm,

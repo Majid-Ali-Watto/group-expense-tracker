@@ -25,7 +25,7 @@
             formatAmount(totalDebting)
           }}</span>
         </el-descriptions-item>
-        <el-descriptions-item label="Net Position">
+        <el-descriptions-item label="Expenses Summary">
           <span
             :class="netPosition >= 0 ? 'text-green-500' : 'text-red-500'"
             class="font-bold"
@@ -51,10 +51,7 @@
           @click="showFilters = !showFilters"
         />
       </div>
-      <el-row
-        :gutter="20"
-        class="filter-bar mb-3 mt-4 hidden sm:flex"
-      >
+      <el-row :gutter="20" class="filter-bar mb-3 mt-4 hidden sm:flex">
         <el-col :lg="8" :md="12" :sm="24">
           <el-form-item label="Select Month" class="w-full">
             <el-select
@@ -107,17 +104,23 @@
       <el-table :data="pairwiseSettlements" border>
         <el-table-column prop="from" label="Debtor">
           <template #default="{ row }">
-            <span class="text-red-600 dark:text-red-400 font-medium">{{ row.from }}</span>
+            <span class="text-red-600 dark:text-red-400 font-medium">{{
+              row.from
+            }}</span>
           </template>
         </el-table-column>
         <el-table-column prop="to" label="Lender">
           <template #default="{ row }">
-            <span class="text-green-600 dark:text-green-400 font-medium">{{ row.to }}</span>
+            <span class="text-green-600 dark:text-green-400 font-medium">{{
+              row.to
+            }}</span>
           </template>
         </el-table-column>
         <el-table-column label="Amount">
           <template #default="{ row }">
-            <span class="text-orange-600 dark:text-orange-400 font-bold">{{ formatAmount(row.amount) }}</span>
+            <span class="text-orange-600 dark:text-orange-400 font-bold">{{
+              formatAmount(row.amount)
+            }}</span>
           </template>
         </el-table-column>
       </el-table>

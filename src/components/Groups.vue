@@ -87,17 +87,15 @@
                   </el-dropdown-item>
                   <!-- Group actions -->
                   <el-dropdown-item
-                      v-for="action in getGroupActions(group)"
-                      :key="action.label"
-                      :disabled="action.disabled"
-                      @click="action.onClick"
-                    >
-                      <span
-                        :class="{ 'text-red-500': action.type === 'danger' }"
-                      >
-                        {{ action.label }}
-                      </span>
-                    </el-dropdown-item>
+                    v-for="action in getGroupActions(group)"
+                    :key="action.label"
+                    :disabled="action.disabled"
+                    @click="action.onClick"
+                  >
+                    <span :class="{ 'text-red-500': action.type === 'danger' }">
+                      {{ action.label }}
+                    </span>
+                  </el-dropdown-item>
                 </template>
               </el-dropdown>
             </div>

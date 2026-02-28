@@ -42,8 +42,12 @@
     </el-dialog>
   </div>
   <div v-if="isDownloadAvailable" class="mt-2 flex justify-between">
-    <GenericButton type="success" @click="downloadPdfData">Download PDF</GenericButton>
-    <GenericButton type="warning" @click="downloadExcelData">Download Excel</GenericButton>
+    <GenericButton type="success" @click="downloadPdfData"
+      >Download PDF</GenericButton
+    >
+    <GenericButton type="warning" @click="downloadExcelData"
+      >Download Excel</GenericButton
+    >
   </div>
 </template>
 
@@ -185,8 +189,8 @@ function renderCell(key, cellData, rowData) {
     }
     return h(
       'span',
-      tabStore.getUserByMobile(rowData.payer)?.name +
-        ` (${rowData.payer})` || rowData.payer
+      tabStore.getUserByMobile(rowData.payer)?.name + ` (${rowData.payer})` ||
+        rowData.payer
     )
   }
 

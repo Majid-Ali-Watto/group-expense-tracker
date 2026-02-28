@@ -11,7 +11,10 @@ import {
   sendEmailVerification,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
-  updateProfile
+  updateProfile,
+  setPersistence,
+  browserLocalPersistence,
+  browserSessionPersistence
 } from '../firebase'
 
 export const Login = () => {
@@ -240,7 +243,7 @@ export const Login = () => {
 
       if (error.code === 'auth/email-already-in-use') {
         showError(
-          'This email is already registered. If you registered recently but haven\'t verified, check your email for the verification link. If the email doesn\'t belong to you or you need help, please contact support.'
+          "This email is already registered. If you registered recently but haven't verified, check your email for the verification link. If the email doesn't belong to you or you need help, please contact support."
         )
       } else if (error.code === 'auth/weak-password') {
         showError('Password is too weak. Please use at least 6 characters.')
@@ -268,8 +271,18 @@ export const Login = () => {
     }
 
     try {
+      // Set persistence based on Remember Me
+      await setPersistence(
+        auth,
+        rememberMe ? browserLocalPersistence : browserSessionPersistence
+      )
+
       // Authenticate with Firebase
-      const userCredential = await signInWithEmailAndPassword(auth, emailValue, loginCode)
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        emailValue,
+        loginCode
+      )
 
       // Check if email is verified
       // NOTE: Unverified accounts created by mistake (e.g., random emails) will exist
@@ -287,7 +300,9 @@ export const Login = () => {
       const user = await findUserByEmail(emailValue)
 
       if (!user) {
-        return showError('User data not found in database. Please contact support.')
+        return showError(
+          'User data not found in database. Please contact support.'
+        )
       }
 
       // Mark user as verified in database (since they passed email verification check)
@@ -317,7 +332,10 @@ export const Login = () => {
     } catch (error) {
       console.error('Login error:', error)
 
-      if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+      if (
+        error.code === 'auth/wrong-password' ||
+        error.code === 'auth/invalid-credential'
+      ) {
         showError('Incorrect password')
       } else if (error.code === 'auth/user-not-found') {
         showError('No account found with this email')
@@ -332,7 +350,8 @@ export const Login = () => {
   // ── Forgot password (email reset) ───────────────────────────────────────
 
   async function handleResendVerification() {
-    const email = lastRegisteredEmail.value || form.value.email.trim().toLowerCase()
+    const email =
+      lastRegisteredEmail.value || form.value.email.trim().toLowerCase()
 
     if (!email) {
       return showError('Email address not found. Please enter your email.')
@@ -360,16 +379,23 @@ export const Login = () => {
       console.error('Error resending verification email:', error)
 
       if (error.code === 'auth/too-many-requests') {
-        showError('Too many requests. Please wait a few minutes before trying again.')
-      } else if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-        showError('Incorrect password. Please enter your correct password to resend verification.')
+        showError(
+          'Too many requests. Please wait a few minutes before trying again.'
+        )
+      } else if (
+        error.code === 'auth/wrong-password' ||
+        error.code === 'auth/invalid-credential'
+      ) {
+        showError(
+          'Incorrect password. Please enter your correct password to resend verification.'
+        )
       } else {
         showError(error.message || 'Failed to resend verification email.')
       }
     }
   }
 
-  async function handleForgotCode() {
+  function handleForgotCode() {
     emailResetDialogVisible.value = true
   }
 

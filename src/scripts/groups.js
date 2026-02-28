@@ -1608,7 +1608,10 @@ export const Groups = () => {
       },
       {
         label: `Leave Pending (${getLeaveApprovals(group, userStore.getActiveUser).length}/${group.members.length})`,
-        show: isMember && hasLeaveReq && !allMembersApprovedLeave(group, userStore.getActiveUser),
+        show:
+          isMember &&
+          hasLeaveReq &&
+          !allMembersApprovedLeave(group, userStore.getActiveUser),
         disabled: true,
         type: ''
       },
@@ -1669,6 +1672,6 @@ export const Groups = () => {
         type: 'danger',
         onClick: () => requestGroupDeletion(group.id)
       }
-    ].filter(action => action.show)
+    ].filter((action) => action.show)
   }
 }

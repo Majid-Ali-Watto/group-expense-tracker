@@ -41,9 +41,43 @@ export const Summary = (props) => {
       : []
   })
 
-  const averageSpent = computed(() =>
-    usersList.value.length ? totalSpent.value / usersList.value.length : 0
+  const hasCustomSplits = computed(() =>
+    filteredPayments.value.some((p) => (p.splitMode || 'equal') === 'custom')
   )
+
+  const averageSpent = computed(() => {
+    const participants = new Set()
+    filteredPayments.value.forEach((payment) => {
+      if (payment.split?.length) {
+        payment.split.forEach((s) => {
+          if (s.mobile && (s.amount || 0) > 0) participants.add(s.mobile)
+        })
+      } else if (payment.participants?.length) {
+        payment.participants.forEach((mobile) => participants.add(mobile))
+      }
+    })
+    return participants.size ? totalSpent.value / participants.size : 0
+  })
+
+  // Per-person owed totals built from split arrays (used when custom splits exist)
+  const perPersonOwed = computed(() => {
+    const totals = {}
+    filteredPayments.value.forEach((payment) => {
+      if (!payment.split?.length) return
+      payment.split.forEach((s) => {
+        if (!s.mobile || !(s.amount > 0)) return
+        if (!totals[s.mobile]) {
+          totals[s.mobile] = {
+            name:
+              s.name || userStore.getUserByMobile(s.mobile)?.name || s.mobile,
+            amount: 0
+          }
+        }
+        totals[s.mobile].amount += s.amount
+      })
+    })
+    return Object.values(totals)
+  })
 
   const friendTotals = computed(() =>
     usersList.value.map((user) => ({
@@ -63,6 +97,8 @@ export const Summary = (props) => {
     formatAmount,
     totalSpent,
     averageSpent,
+    hasCustomSplits,
+    perPersonOwed,
     friendTotals
   }
 }

@@ -1,7 +1,6 @@
 <!-- eslint-disable vue/multi-word-component-names -->
 <template>
   <div>
-
     <!-- Pending Approvals -->
     <div v-if="myPendingApprovals.length > 0" class="mb-4">
       <h4 class="pending-title mb-2">Pending Approvals</h4>
@@ -63,7 +62,9 @@
       <template #prefix><span class="text-gray-400">🔍</span></template>
     </el-input>
     <!-- Header row — visible only on larger screens -->
-    <div class="hidden sm:flex sm:items-center gap-3 px-3 mt-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+    <div
+      class="hidden sm:flex sm:items-center gap-3 px-3 mt-3 text-xs font-semibold text-gray-500 uppercase tracking-wide"
+    >
       <div class="flex-1 min-w-0">Name / Mobile</div>
       <div class="flex-1">Groups</div>
       <div class="flex-shrink-0 w-48">Actions</div>
@@ -78,14 +79,24 @@
         <div class="flex flex-col sm:flex-row sm:items-center gap-3">
           <!-- Name & Mobile -->
           <div class="flex-1 min-w-0">
-            <div class="text-xs font-semibold text-gray-400 uppercase tracking-wide sm:hidden mb-1">Name / Mobile</div>
+            <div
+              class="text-xs font-semibold text-gray-400 uppercase tracking-wide sm:hidden mb-1"
+            >
+              Name / Mobile
+            </div>
             <div class="font-semibold text-gray-800">{{ row.name }}</div>
-            <div class="text-sm text-gray-500">{{ displayMobile(row.mobile) }}</div>
+            <div class="text-sm text-gray-500">
+              {{ displayMobile(row.mobile) }}
+            </div>
           </div>
 
           <!-- Groups -->
           <div class="flex flex-wrap gap-1 sm:flex-1">
-            <div class="w-full text-xs font-semibold text-gray-400 uppercase tracking-wide sm:hidden mb-1">Groups</div>
+            <div
+              class="w-full text-xs font-semibold text-gray-400 uppercase tracking-wide sm:hidden mb-1"
+            >
+              Groups
+            </div>
             <template v-if="getUserGroups(row.mobile).length > 0">
               <el-tag
                 v-for="group in getUserGroups(row.mobile).slice(0, 3)"
@@ -110,12 +121,20 @@
 
           <!-- Actions -->
           <div class="flex flex-wrap gap-1 flex-shrink-0 sm:w-48">
-            <div class="w-full text-xs font-semibold text-gray-400 uppercase tracking-wide sm:hidden mb-1">Actions</div>
+            <div
+              class="w-full text-xs font-semibold text-gray-400 uppercase tracking-wide sm:hidden mb-1"
+            >
+              Actions
+            </div>
 
             <template v-if="canManage(row)">
               <!-- No pending request: show edit & delete -->
               <template v-if="!row.deleteRequest && !row.updateRequest">
-                <el-button size="small" type="primary" @click="openEditUser(row)">
+                <el-button
+                  size="small"
+                  type="primary"
+                  @click="openEditUser(row)"
+                >
                   Edit
                 </el-button>
                 <el-button
@@ -129,16 +148,16 @@
 
               <!-- Delete pending -->
               <el-button v-else-if="row.deleteRequest" size="small" disabled>
-                Delete Pending ({{ row.deleteRequest.approvals?.length || 0 }}/{{
-                  row.deleteRequest.requiredApprovals?.length || 0
-                }})
+                Delete Pending ({{
+                  row.deleteRequest.approvals?.length || 0
+                }}/{{ row.deleteRequest.requiredApprovals?.length || 0 }})
               </el-button>
 
               <!-- Update pending -->
               <el-button v-else-if="row.updateRequest" size="small" disabled>
-                Update Pending ({{ row.updateRequest.approvals?.length || 0 }}/{{
-                  row.updateRequest.requiredApprovals?.length || 0
-                }})
+                Update Pending ({{
+                  row.updateRequest.approvals?.length || 0
+                }}/{{ row.updateRequest.requiredApprovals?.length || 0 }})
               </el-button>
             </template>
             <template v-else>
@@ -162,7 +181,9 @@
           :key="i"
           class="flex items-center gap-2 py-2 border-b border-gray-100 last:border-0"
         >
-          <div class="w-6 h-6 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-xs font-semibold shrink-0">
+          <div
+            class="w-6 h-6 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-xs font-semibold shrink-0"
+          >
             {{ group.charAt(0).toUpperCase() }}
           </div>
           <div class="text-sm text-gray-700">{{ group }}</div>
@@ -177,18 +198,32 @@
       width="90%"
       style="max-width: 400px"
     >
-      <el-form :model="editForm" :rules="rules" ref="editUserFormRef" label-position="top">
+      <el-form
+        :model="editForm"
+        :rules="rules"
+        ref="editUserFormRef"
+        label-position="top"
+      >
         <el-form-item label="Mobile Number">
           <el-input :value="editForm.mobile" size="small" disabled />
         </el-form-item>
         <el-form-item label="Full Name" prop="name">
-          <el-input v-model="editForm.name" placeholder="Full name" size="small" :maxlength="50" />
+          <el-input
+            v-model="editForm.name"
+            placeholder="Full name"
+            size="small"
+            :maxlength="50"
+          />
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="flex gap-2 justify-end">
-          <el-button size="small" @click="editDialogVisible = false">Cancel</el-button>
-          <el-button type="primary" size="small" @click="handleEditUserSave">Save</el-button>
+          <el-button size="small" @click="editDialogVisible = false"
+            >Cancel</el-button
+          >
+          <el-button type="primary" size="small" @click="handleEditUserSave"
+            >Save</el-button
+          >
         </div>
       </template>
     </el-dialog>

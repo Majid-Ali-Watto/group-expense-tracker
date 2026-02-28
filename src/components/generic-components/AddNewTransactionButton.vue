@@ -51,7 +51,9 @@ defineProps({
   border-color: #22c55e !important;
   color: #ffffff !important;
   box-shadow: 0 12px 30px -14px rgba(34, 197, 94, 0.7);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .add-pill:hover {

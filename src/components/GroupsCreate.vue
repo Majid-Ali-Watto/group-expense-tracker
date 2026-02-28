@@ -41,7 +41,9 @@
           </el-select>
         </el-form-item>
         <div class="flex flex-col sm:flex-row sm:justify-end gap-2">
-          <el-button type="primary" size="small" @click="createGroup">Create</el-button>
+          <el-button type="primary" size="small" @click="createGroup"
+            >Create</el-button
+          >
         </div>
         <br />
         <slot name="clear"></slot>

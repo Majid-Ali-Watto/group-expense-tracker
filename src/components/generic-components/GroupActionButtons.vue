@@ -12,7 +12,6 @@
         {{ action.label }}
       </el-button>
     </div>
-
   </div>
 </template>
 <script setup>
@@ -21,5 +20,5 @@ defineProps({
     type: Array,
     required: true
   }
-});
+})
 </script>

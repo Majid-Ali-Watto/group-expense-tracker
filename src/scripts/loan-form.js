@@ -86,10 +86,15 @@ export const LoanForm = (props, emit) => {
     (newRow) => {
       formData.value.amount = newRow?.amount ?? null
       formData.value.loanGiver = newRow?.giverName ?? newRow?.giver ?? ''
-      formData.value.loanReceiver = newRow?.receiverName ?? newRow?.receiver ?? ''
-      formData.value.loanGiverMobile = newRow?.giverMobile ?? newRow?.giver ?? newRow?.loanGiverMobile ?? ''
+      formData.value.loanReceiver =
+        newRow?.receiverName ?? newRow?.receiver ?? ''
+      formData.value.loanGiverMobile =
+        newRow?.giverMobile ?? newRow?.giver ?? newRow?.loanGiverMobile ?? ''
       formData.value.loanReceiverMobile =
-        newRow?.receiverMobile ?? newRow?.receiver ?? newRow?.loanReceiverMobile ?? ''
+        newRow?.receiverMobile ??
+        newRow?.receiver ??
+        newRow?.loanReceiverMobile ??
+        ''
       formData.value.description = newRow?.description ?? ''
       isVisible.value = !newRow?.amount
       receiptFile.value = null
@@ -125,7 +130,10 @@ export const LoanForm = (props, emit) => {
             showError('Giver and Receiver cannot be the same person.')
             return
           }
-          if (giverMobile !== activeUser.value && receiverMobile !== activeUser.value) {
+          if (
+            giverMobile !== activeUser.value &&
+            receiverMobile !== activeUser.value
+          ) {
             showError(
               'For personal loans, either Giver or Receiver must be your own mobile.'
             )
@@ -134,13 +142,20 @@ export const LoanForm = (props, emit) => {
 
           if (giverMobile === activeUser.value && formData.value.loanGiver) {
             if (formData.value.loanGiver !== activeUserName.value) {
-              showError('Giver name must match your account name when using your mobile.')
+              showError(
+                'Giver name must match your account name when using your mobile.'
+              )
               return
             }
           }
-          if (receiverMobile === activeUser.value && formData.value.loanReceiver) {
+          if (
+            receiverMobile === activeUser.value &&
+            formData.value.loanReceiver
+          ) {
             if (formData.value.loanReceiver !== activeUserName.value) {
-              showError('Receiver name must match your account name when using your mobile.')
+              showError(
+                'Receiver name must match your account name when using your mobile.'
+              )
               return
             }
           }
@@ -338,7 +353,7 @@ export const LoanForm = (props, emit) => {
       props.isPersonal && formData.value.loanReceiverMobile
         ? formData.value.loanReceiverMobile
         : formData.value.loanReceiver
-   
+
     const loan = {
       amount: formData.value.amount,
       description: formData.value.description,

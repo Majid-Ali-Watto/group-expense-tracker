@@ -15,10 +15,13 @@ import {
   signInWithEmailAndPassword,
   sendPasswordResetEmail,
   sendEmailVerification,
-  verifyPasswordResetCode,
-  confirmPasswordReset,
   updateProfile,
-  deleteUser
+  deleteUser,
+  setPersistence,
+  browserLocalPersistence,
+  browserSessionPersistence,
+  onAuthStateChanged,
+  signOut
 } from 'firebase/auth'
 
 const firebaseConfig = {
@@ -48,8 +51,11 @@ export {
   sendPasswordResetEmail,
   sendEmailVerification,
   signInWithEmailAndPassword,
-  verifyPasswordResetCode,
-  confirmPasswordReset,
   updateProfile,
-  deleteUser
+  deleteUser,
+  setPersistence,
+  browserLocalPersistence,
+  browserSessionPersistence,
+  onAuthStateChanged,
+  signOut
 }

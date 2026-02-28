@@ -13,8 +13,8 @@
     <div v-else class="space-y-2 text-sm">
       <div class="flex items-center justify-between">
         <span class="position-text">Shared Expenses</span>
-        <el-tag 
-          :type="expenseState.type" 
+        <el-tag
+          :type="expenseState.type"
           size="small"
           :class="expenseState.customClass"
         >
@@ -26,8 +26,8 @@
       </div>
       <div class="flex items-center justify-between">
         <span class="position-text">Shared Loans</span>
-        <el-tag 
-          :type="loanState.type" 
+        <el-tag
+          :type="loanState.type"
           size="small"
           :class="loanState.customClass"
         >
@@ -40,8 +40,8 @@
       <el-divider class="!my-2" />
       <div class="flex items-center justify-between">
         <span class="position-label">Net Amount</span>
-        <el-tag 
-          :type="netState.type" 
+        <el-tag
+          :type="netState.type"
           size="small"
           :class="netState.customClass"
         >
@@ -77,13 +77,21 @@ const props = defineProps({
 
 const balance = computed(() => props.getGroupBalances(props.group.id) || {})
 
-const makeState = (val, { pos = 'Lender', neg = 'Debtor', zero = 'Settled' } = {}) => {
+const makeState = (
+  val,
+  { pos = 'Lender', neg = 'Debtor', zero = 'Settled' } = {}
+) => {
   const num = Number(val || 0)
   return {
     type: num > 0 ? 'success' : num < 0 ? 'danger' : 'info',
     label: num > 0 ? pos : num < 0 ? neg : zero,
     abs: Math.abs(num).toFixed(2),
-    textClass: num < 0 ? 'text-red-600 dark:text-red-400' : num > 0 ? 'text-green-600 dark:text-green-400' : 'text-gray-600 dark:text-gray-400',
+    textClass:
+      num < 0
+        ? 'text-red-600 dark:text-red-400'
+        : num > 0
+          ? 'text-green-600 dark:text-green-400'
+          : 'text-gray-600 dark:text-gray-400',
     customClass: num < 0 ? 'tag-owe' : num > 0 ? 'tag-receive' : ''
   }
 }

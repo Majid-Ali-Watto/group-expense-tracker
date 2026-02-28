@@ -73,7 +73,8 @@ export const Loans = () => {
   const fetchLoans = () => {
     const groupId = userStore.getActiveGroup || 'global'
     const loansRef = dbRef(`loans/${groupId}/${selectedMonth.value}`)
-    if (loansListener && currentLoansRef) off(currentLoansRef, 'value', loansListener)
+    if (loansListener && currentLoansRef)
+      off(currentLoansRef, 'value', loansListener)
     currentLoansRef = loansRef
 
     loansListener = onValue(

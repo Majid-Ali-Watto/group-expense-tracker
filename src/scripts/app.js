@@ -1,11 +1,26 @@
-import { defineAsyncComponent, ref, onUnmounted, onMounted, computed, watch } from 'vue'
+import {
+  defineAsyncComponent,
+  ref,
+  onUnmounted,
+  onMounted,
+  computed,
+  watch
+} from 'vue'
 import { store } from '../stores/store'
 import useFireBase from '../api/firebase-apis'
 import { tabs as allTabs } from '../assets/data'
 import { Tabs } from '../assets/enums'
 import { getActiveTab } from '../utils/active-tab'
 import { showError } from '../utils/showAlerts'
-import { decryptFromSession, decryptFromStore } from '../utils/sessionCrypto'
+import {
+  decryptFromSession,
+  decryptFromStore,
+  encryptForSession,
+  encryptForStore
+} from '../utils/sessionCrypto'
+import { generateUUID } from '../utils/uuid'
+import { auth, onAuthStateChanged, signOut } from '../firebase'
+import { NetPosition } from './net-position'
 
 export const App = () => {
   // Lazy-loaded components
@@ -14,6 +29,15 @@ export const App = () => {
   const Header = defineAsyncComponent(() => import('@/components/Header.vue'))
 
   const tabStore = store()
+
+  // Holds the saved tab to restore after HOC loads groups/users data
+  const pendingTabRestore = ref(null)
+
+  // Expenses Summary state
+  const showNetPositionDialog = ref(false)
+  const netPositionSummary = ref(null)
+  const { showNetPositionConfirmation, calculateCompleteNetPosition } =
+    NetPosition()
 
   // Theme management - Initialize immediately
   const savedTheme = localStorage.getItem('theme')
@@ -43,9 +67,47 @@ export const App = () => {
     applyTheme()
   }
 
-  // Apply theme on mount as well
+  // Apply theme on mount and restore session if Firebase Auth is still active
   onMounted(() => {
     applyTheme()
+
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (!firebaseUser || !firebaseUser.emailVerified || loggedIn.value) return
+
+      try {
+        const usersData = await read('users', false)
+        if (!usersData) return
+
+        const entry = Object.entries(usersData).find(
+          ([, data]) =>
+            data.email?.toLowerCase() === firebaseUser.email.toLowerCase()
+        )
+        if (!entry) return
+
+        const [mobile, userData] = entry
+        const token = generateUUID()
+        const [encryptedSession, encryptedStore] = await Promise.all([
+          encryptForSession({ name: userData.name, mobile, token }),
+          encryptForStore({ name: userData.name, mobile, token })
+        ])
+
+        sessionStorage.setItem('_session', encryptedSession)
+        tabStore.setActiveUser(mobile)
+        tabStore.setSessionToken(encryptedStore)
+        tabStore.setActiveLoginCode('')
+
+        // Queue the saved tab — Groups opens first so HOC can load data,
+        // then the watcher below applies the restore once users are ready
+        const savedTab = sessionStorage.getItem('_activeTab')
+        if (savedTab && allTabs.includes(savedTab)) {
+          pendingTabRestore.value = savedTab
+        }
+      } catch (e) {
+        console.error('Auto session restore failed:', e)
+      }
+    })
+
+    onUnmounted(() => unsubscribe())
   })
 
   // loggedIn is a computed — cannot be manually overridden via DevTools.
@@ -80,14 +142,33 @@ export const App = () => {
   // Current active tab from store
   const activeTab = ref(tabStore.getActiveTab || tabs.value[0])
 
-  function logout() {
+  // Once HOC loads users (signal that group/user data is ready), apply the queued tab restore
+  const stopTabRestoreWatch = watch(
+    () => tabStore.users.length,
+    (len) => {
+      if (len > 0 && pendingTabRestore.value) {
+        const tab = pendingTabRestore.value
+        pendingTabRestore.value = null
+        if (tabs.value.includes(tab)) {
+          activeTab.value = tab
+          tabStore.setActiveTab(tab)
+        }
+        stopTabRestoreWatch()
+      }
+    }
+  )
+
+  async function logout() {
     tabStore.setActiveUser(null)
     tabStore.setActiveGroup(null)
     tabStore.setSessionToken(null)
     tabStore.setActiveLoginCode(null)
     sessionStorage.removeItem('_session')
+    sessionStorage.removeItem('_activeTab')
+    pendingTabRestore.value = null
     // rememberMeData (name + mobile) is intentionally kept if Remember Me was enabled.
     // It was already cleared during login when Remember Me is OFF.
+    await signOut(auth)
   }
 
   // Header emits false on logout click; any other caller also uses this
@@ -130,6 +211,7 @@ export const App = () => {
   async function handleActiveTab(tab) {
     activeTab.value = tab
     tabStore.setActiveTab(tab)
+    sessionStorage.setItem('_activeTab', tab)
 
     const verified = await verifyUser()
     if (!verified) {
@@ -173,6 +255,18 @@ export const App = () => {
     return getActiveTab(activeTab)
   }
 
+  // Handle Expenses Summary button click
+  async function handleShowNetPosition() {
+    const confirmed = await showNetPositionConfirmation()
+    if (!confirmed) return
+
+    // Run calculations in background and show dialog when complete
+    calculateCompleteNetPosition().then((summary) => {
+      netPositionSummary.value = summary
+      showNetPositionDialog.value = true
+    })
+  }
+
   return {
     HOC,
     Login,
@@ -187,6 +281,9 @@ export const App = () => {
     handleActiveTab,
     activeTabComponent,
     isDarkTheme,
-    toggleTheme
+    toggleTheme,
+    showNetPositionDialog,
+    netPositionSummary,
+    handleShowNetPosition
   }
 }

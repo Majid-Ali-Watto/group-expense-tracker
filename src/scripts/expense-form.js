@@ -3,7 +3,10 @@ import { store } from '../stores/store'
 import getCurrentMonth from '../utils/getCurrentMonth'
 import getWhoAddedTransaction from '../utils/whoAdded'
 import useFireBase from '../api/firebase-apis'
-import { uploadToCloudinary, deleteFromCloudinary } from '../utils/cloudinaryUpload'
+import {
+  uploadToCloudinary,
+  deleteFromCloudinary
+} from '../utils/cloudinaryUpload'
 import { showError } from '../utils/showAlerts'
 
 export const ExpenseForm = (props, emit) => {
@@ -76,10 +79,17 @@ export const ExpenseForm = (props, emit) => {
             receiptUploading.value = true
             const uploaded = await uploadReceiptToStorage(receiptFile.value)
             receiptUrl = uploaded.url
-            receiptMeta = { url: uploaded.url, publicId: uploaded.publicId, resourceType: uploaded.resourceType }
+            receiptMeta = {
+              url: uploaded.url,
+              publicId: uploaded.publicId,
+              resourceType: uploaded.resourceType
+            }
             // Delete old Cloudinary file when replacing on update
             if (whatTask === 'Update' && existingReceiptMeta.value) {
-              deleteFromCloudinary(existingReceiptMeta.value.publicId, existingReceiptMeta.value.resourceType)
+              deleteFromCloudinary(
+                existingReceiptMeta.value.publicId,
+                existingReceiptMeta.value.resourceType
+              )
             }
           } catch {
             showError('Failed to upload receipt. Please try again.')
@@ -110,7 +120,10 @@ export const ExpenseForm = (props, emit) => {
           emit('closeModal')
         } else if (whatTask == 'Delete') {
           if (existingReceiptMeta.value) {
-            deleteFromCloudinary(existingReceiptMeta.value.publicId, existingReceiptMeta.value.resourceType)
+            deleteFromCloudinary(
+              existingReceiptMeta.value.publicId,
+              existingReceiptMeta.value.resourceType
+            )
           }
           deleteData(
             `expenses/${activeUser.value}/${selectedMonth.value}/${props.row.id}`,
@@ -133,7 +146,13 @@ export const ExpenseForm = (props, emit) => {
       return
     }
     // Validate file type
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/bmp', 'image/webp']
+    const allowedTypes = [
+      'image/jpeg',
+      'image/png',
+      'image/gif',
+      'image/bmp',
+      'image/webp'
+    ]
     if (!allowedTypes.includes(file.type)) {
       showError('Only image files (JPG, PNG, GIF, BMP, WEBP) are allowed.')
       if (fileInputRef.value) fileInputRef.value.value = ''
