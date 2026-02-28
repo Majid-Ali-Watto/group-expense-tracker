@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://g-exp-trk.netlify.app/sitemap.xml

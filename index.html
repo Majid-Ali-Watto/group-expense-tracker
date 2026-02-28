@@ -4,7 +4,78 @@
 		<meta charset="UTF-8" />
 		<link rel="icon" type="image/*" href="/expenses.png" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Kharchafy</title>
+		<title>Kharchafy | Group Expense & Budget Tracker</title>
+		<meta
+			name="description"
+			content="Kharchafy is a Vue-powered group expense, shared loan, and personal budgeting app that keeps settlements transparent and receipts organized."
+		/>
+		<meta
+			name="keywords"
+			content="Kharchafy, group expense tracker, split bills, shared loans, personal budget, expense manager, bill splitting app, PWA expense tracker"
+		/>
+		<meta name="author" content="Kharchafy" />
+		<meta name="robots" content="index, follow" />
+		<meta name="theme-color" content="#1f2937" />
+		<link rel="canonical" href="https://g-exp-trk.netlify.app/" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<meta name="application-name" content="Kharchafy" />
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+		<meta name="apple-mobile-web-app-title" content="Kharchafy" />
+		<script>
+			// Keep canonical aligned to current host when deployed under custom domains.
+			(() => {
+				const canonical = document.querySelector('link[rel=\"canonical\"]');
+				if (canonical && window?.location) {
+					const { origin, pathname } = window.location;
+					canonical.setAttribute('href', `${origin}${pathname}`);
+				}
+			})();
+		</script>
+
+		<!-- Open Graph / Facebook -->
+		<meta property="og:type" content="website" />
+		<meta property="og:title" content="Kharchafy | Group Expense & Budget Tracker" />
+		<meta
+			property="og:description"
+			content="Track shared expenses, loans, and personal budgets with approvals, receipts, and exports in one secure place."
+		/>
+		<meta property="og:url" content="https://g-exp-trk.netlify.app/" />
+		<meta property="og:site_name" content="Kharchafy" />
+		<meta property="og:image" content="https://g-exp-trk.netlify.app/expenses.png" />
+		<meta property="og:locale" content="en_US" />
+
+		<!-- Twitter -->
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:title" content="Kharchafy | Group Expense & Budget Tracker" />
+		<meta
+			name="twitter:description"
+			content="Split bills, manage group loans, and stay on top of personal budgets with Kharchafy."
+		/>
+		<meta name="twitter:image" content="https://g-exp-trk.netlify.app/expenses.png" />
+		<meta name="twitter:creator" content="@Kharchafy" />
+
+		<!-- Structured Data -->
+		<script type="application/ld+json">
+			{
+				"@context": "https://schema.org",
+				"@type": "WebApplication",
+				"name": "Kharchafy | Group Expense & Budget Tracker",
+				"url": "https://g-exp-trk.netlify.app/",
+				"description": "Kharchafy keeps shared expenses, loans, and personal budgets organized with approvals, receipts, and exports.",
+				"applicationCategory": "FinanceApplication",
+				"operatingSystem": "Web",
+				"image": "https://g-exp-trk.netlify.app/expenses.png",
+				"publisher": {
+					"@type": "Organization",
+					"name": "Kharchafy"
+				},
+				"potentialAction": {
+					"@type": "UseAction",
+					"target": "https://g-exp-trk.netlify.app/"
+				}
+			}
+		</script>
 		<!-- Apply theme immediately to prevent flash -->
 		<script>
 			(function () {
