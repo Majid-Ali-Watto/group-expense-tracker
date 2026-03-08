@@ -1,5 +1,5 @@
 <template>
-  <div class="flex justify-between space-x-4">
+  <div class="flex justify-between flex-wrap gap-y-2 space-x-4 min-[410px]:flex-nowrap">
     <el-button
       @click="confirmUpdate"
       type="warning"
@@ -42,3 +42,9 @@ const emit = defineEmits(['update', 'delete', 'duplicate', 'cancel'])
 
 const { confirmUpdate, confirmDelete, confirmDuplicate } = BottomButtons(emit)
 </script>
+
+<style scoped>
+div :deep(.el-button + .el-button) {
+  margin-left: 0;
+}
+</style>

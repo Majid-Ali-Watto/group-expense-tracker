@@ -40,24 +40,37 @@
             />
           </el-select>
         </el-form-item>
-        <div class="flex flex-col sm:flex-row sm:justify-end gap-2">
+        <div class="flex flex-row justify-end gap-2">
+          <slot name="clear"></slot>
           <el-button type="primary" size="small" @click="createGroup"
             >Create</el-button
           >
         </div>
-        <br />
-        <slot name="clear"></slot>
       </el-form>
     </fieldset>
   </div>
 </template>
 
 <script setup>
+import { watch } from 'vue'
 import { groupRules } from '../assets/validation-rules'
 import { GroupsCreate } from '../scripts/groups-create'
 
 const emit = defineEmits(['groupCreated'])
+const props = defineProps({
+  preselectedMember: { type: String, default: null }
+})
 
 const { groupForm, groupFormRef, usersOptions, createGroup, getUserLabel } =
   GroupsCreate(emit)
+
+watch(
+  () => props.preselectedMember,
+  (val) => {
+    if (val && !groupForm.value.members.includes(val)) {
+      groupForm.value.members = [val]
+    }
+  },
+  { immediate: true }
+)
 </script>

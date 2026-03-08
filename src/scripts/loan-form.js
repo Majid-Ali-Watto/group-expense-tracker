@@ -9,6 +9,7 @@ import {
 } from '../utils/cloudinaryUpload'
 import { showError } from '../utils/showAlerts'
 import { buildRequestMeta } from '../utils/buildRequestMeta'
+import getCurrentMonth from '../utils/getCurrentMonth'
 
 export const LoanForm = (props, emit) => {
   const userStore = store()
@@ -28,6 +29,7 @@ export const LoanForm = (props, emit) => {
     }
     isMeGiver.value = false
     isMeReceiver.value = false
+    copyToExpenses.value = false
     receiptFile.value = null
     if (fileInputRef.value) fileInputRef.value.value = ''
     setTimeout(() => {
@@ -66,6 +68,20 @@ export const LoanForm = (props, emit) => {
   const activeUserName = computed(
     () => userStore.getUserByMobile(activeUser.value)?.name || ''
   )
+
+  // ========== Copy to Personal Expenses ==========
+  const copyToExpenses = ref(false)
+
+  const getOtherPartyName = () => {
+    if (isMeGiver.value) {
+      return props.isPersonal
+        ? formData.value.loanReceiver
+        : userStore.getUserByMobile(formData.value.loanReceiver)?.name || formData.value.loanReceiver
+    }
+    return props.isPersonal
+      ? formData.value.loanGiver
+      : userStore.getUserByMobile(formData.value.loanGiver)?.name || formData.value.loanGiver
+  }
 
   // ========== ME? Checkboxes ==========
   const isMeGiver = ref(false)
@@ -245,12 +261,36 @@ export const LoanForm = (props, emit) => {
         }
 
         if (whatTask == 'Save') {
+          // Capture expense data before saveData resets the form
+          const expenseCopy = copyToExpenses.value
+            ? {
+                amount: formData.value.amount,
+                description: formData.value.description,
+                location: 'Loan',
+                recipient: getOtherPartyName(),
+                month: getCurrentMonth(),
+                whoAdded: getWhoAddedTransaction(),
+                date: new Date().toLocaleString('en-PK'),
+                whenAdded: new Date().toLocaleString('en-PK')
+              }
+            : null
+
           saveData(
             loanPath,
             () => getLoanData(receiptUrl, receiptMeta),
             loanForm,
             'Loan added successfully.',
             () => {
+              if (expenseCopy) {
+                const mockFormRef = { value: { resetFields: () => {} } }
+                saveData(
+                  `expenses/${activeUser.value}/${getCurrentMonth()}`,
+                  () => expenseCopy,
+                  mockFormRef,
+                  'Expense copy added to Personal Expenses.',
+                  null
+                )
+              }
               receiptFile.value = null
               if (fileInputRef.value) fileInputRef.value.value = ''
               if (isEditMode.value) {
@@ -422,6 +462,7 @@ export const LoanForm = (props, emit) => {
     onGiverMobileBlur,
     onReceiverMobileBlur,
     isMeGiver,
-    isMeReceiver
+    isMeReceiver,
+    copyToExpenses
   }
 }

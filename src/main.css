@@ -850,13 +850,25 @@ button:disabled {
   background-color: var(--bg-secondary) !important;
 }
 
+/* Inactive hover: dark mode only */
+.dark-theme .el-segmented__item:not(.is-selected):hover {
+  background-color: #374151 !important;
+  color: #ffffff !important;
+}
+
 .el-segmented__item.is-selected {
-  background-color: #22c55e !important; /* green for active state */
+  background-color: #22c55e !important;
   color: #ffffff !important;
   border-color: #22c55e !important;
 }
 
 .el-segmented__item.is-selected .el-segmented__item-label {
+  color: #ffffff !important;
+}
+
+/* Active hover: keep text white, not green */
+.el-segmented__item.is-selected:hover .el-segmented__item-label,
+.el-segmented__item.is-selected .el-segmented__item-label:hover {
   color: #ffffff !important;
 }
 
@@ -866,9 +878,14 @@ button:disabled {
   box-shadow: 0 8px 24px -12px rgba(34, 197, 94, 0.35);
 }
 
-.auth-segment .el-segmented__item:hover:not(.is-selected) {
-  color: #22c55e !important;
+/* Auth inactive hover: light mode = green tint, dark mode = dark bg */
+.auth-segment .el-segmented__item:not(.is-selected):hover {
   background-color: var(--success-100) !important;
+  color: #15803d !important;
+}
+.dark-theme .auth-segment .el-segmented__item:not(.is-selected):hover {
+  background-color: #374151 !important;
+  color: #ffffff !important;
 }
 
 /* Forgot password / resend links */

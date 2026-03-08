@@ -64,7 +64,10 @@ export const GroupsCreate = (emit) => {
       (g) => g.name.trim().toLowerCase() === newName
     )
     const memberConflict = sameNameGroups.some((g) => {
-      const existingMobiles = (g.members || []).map((m) => m.mobile)
+      const existingMobiles = [
+        ...(g.members || []),
+        ...(g.pendingMembers || [])
+      ].map((m) => m.mobile)
       return otherMembers.some((m) => existingMobiles.includes(m))
     })
     if (memberConflict) {
@@ -74,18 +77,20 @@ export const GroupsCreate = (emit) => {
     }
 
     const id = Date.now().toString()
+    const allSelected = groupForm.value.members || []
     const payload = {
       id,
       name: groupForm.value.name,
       description: groupForm.value.description || '',
       ownerMobile: userStore.getActiveUser,
-      members: (groupForm.value.members || []).map((m) => ({
-        mobile: m,
-        name: userStore.getUserByMobile(m)?.name || m
-      }))
+      // Only the creator joins immediately; all others receive an invitation
+      members: [{ mobile: creatorMobile, name: userStore.getUserByMobile(creatorMobile)?.name || creatorMobile }],
+      pendingMembers: allSelected
+        .filter((m) => m !== creatorMobile)
+        .map((m) => ({ mobile: m, name: userStore.getUserByMobile(m)?.name || m }))
     }
     try {
-      await updateData(`groups/${id}`, () => payload, 'Group created')
+      await updateData(`groups/${id}`, () => payload, 'Group created — invitations sent to selected members')
       userStore.addGroup(payload)
       groupForm.value = { name: '', description: '', members: [] }
       if (emit) emit('groupCreated')

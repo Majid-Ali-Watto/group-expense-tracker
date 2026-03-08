@@ -86,14 +86,19 @@
           >View current receipt</a
         >
       </div>
-      <div class="flex justify-end" v-if="!isEditMode">
-        <GenericButton v-if="showForm" type="info" @click="$emit('click')"
+      <div class="flex justify-end gap-2" v-if="!isEditMode">
+        <GenericButton
+          v-if="showForm"
+          type="info"
+          @click="$emit('click')"
+          size="small"
           >Cancel</GenericButton
         >
         <el-button
           type="success"
           :loading="receiptUploading"
           @click="() => validateForm()"
+          size="small"
         >
           {{ receiptUploading ? 'Uploading...' : 'Add Expense' }}
         </el-button>

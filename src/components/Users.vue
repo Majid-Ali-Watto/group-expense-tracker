@@ -127,6 +127,16 @@
               Actions
             </div>
 
+            <el-button
+              v-if="row.mobile !== activeUser"
+              size="small"
+              type="success"
+              plain
+              @click="openCreateGroup(row.mobile)"
+            >
+              Create Group
+            </el-button>
+
             <template v-if="canManage(row)">
               <!-- No pending request: show edit & delete -->
               <template v-if="!row.deleteRequest && !row.updateRequest">
@@ -160,9 +170,6 @@
                 }}/{{ row.updateRequest.requiredApprovals?.length || 0 }})
               </el-button>
             </template>
-            <template v-else>
-              <span class="text-gray-400 text-xs">No Actions</span>
-            </template>
           </div>
         </div>
       </div>
@@ -189,6 +196,24 @@
           <div class="text-sm text-gray-700">{{ group }}</div>
         </div>
       </div>
+    </el-dialog>
+
+    <!-- Create Group Dialog -->
+    <el-dialog
+      v-model="createGroupDialogVisible"
+      title="Create Group"
+      width="90%"
+      style="max-width: 500px"
+      destroy-on-close
+    >
+      <GroupsCreate
+        :preselectedMember="createGroupForMobile"
+        @groupCreated="createGroupDialogVisible = false"
+      >
+        <template #clear>
+          <el-button size="small" @click="createGroupDialogVisible = false">Cancel</el-button>
+        </template>
+      </GroupsCreate>
     </el-dialog>
 
     <!-- Edit User Dialog -->
@@ -234,6 +259,7 @@
 import { ref } from 'vue'
 import { loginRules as rules } from '../assets/validation-rules'
 import { Users } from '../scripts/users'
+import GroupsCreate from './GroupsCreate.vue'
 
 const {
   searchQuery,
@@ -244,6 +270,7 @@ const {
   displayMobile,
   getUserGroups,
   canManage,
+  activeUser,
   openEditUser,
   submitUpdateUser,
   requestDeleteUser,
@@ -252,6 +279,13 @@ const {
 } = Users()
 
 const editUserFormRef = ref(null)
+const createGroupDialogVisible = ref(false)
+const createGroupForMobile = ref(null)
+
+function openCreateGroup(mobile) {
+  createGroupForMobile.value = mobile
+  createGroupDialogVisible.value = true
+}
 
 const groupsDialogVisible = ref(false)
 const selectedUserGroups = ref([])

@@ -93,9 +93,47 @@ export const Groups = () => {
     return [...pinned, ...unpinned]
   })
 
+  // Groups where the current user has a pending invitation (was added but hasn't accepted yet)
+  const pendingInvitations = computed(() => {
+    const me = userStore.getActiveUser
+    return filteredGroups.value.filter(
+      (g) => !isMemberOfGroup(g) && (g.pendingMembers || []).some((m) => m.mobile === me)
+    )
+  })
+
+  const pendingInvitationIds = computed(() => new Set(pendingInvitations.value.map((g) => g.id)))
+
   const otherGroups = computed(() =>
-    filteredGroups.value.filter((g) => !isMemberOfGroup(g))
+    filteredGroups.value.filter((g) => !isMemberOfGroup(g) && !pendingInvitationIds.value.has(g.id))
   )
+
+  async function acceptInvitation(groupId) {
+    const group = groups.value.find((g) => g.id === groupId)
+    if (!group) return
+    const me = userStore.getActiveUser
+    const myName = userStore.getUserByMobile(me)?.name || me
+    const newMembers = [...(group.members || []), { mobile: me, name: myName }]
+    const newPending = (group.pendingMembers || []).filter((m) => m.mobile !== me)
+    await updateData(
+      `groups/${groupId}`,
+      () => ({ members: newMembers, pendingMembers: newPending.length ? newPending : null }),
+      'You have joined the group!'
+    )
+    userStore.addGroup({ ...group, members: newMembers, pendingMembers: newPending })
+  }
+
+  async function rejectInvitation(groupId) {
+    const group = groups.value.find((g) => g.id === groupId)
+    if (!group) return
+    const me = userStore.getActiveUser
+    const newPending = (group.pendingMembers || []).filter((m) => m.mobile !== me)
+    await updateData(
+      `groups/${groupId}`,
+      () => ({ pendingMembers: newPending.length ? newPending : null }),
+      'Invitation declined.'
+    )
+    userStore.addGroup({ ...group, pendingMembers: newPending })
+  }
 
   const editDialogVisible = ref(false)
   const editingGroupId = ref(null)
@@ -1520,6 +1558,9 @@ export const Groups = () => {
     filteredGroups,
     joinedGroups,
     otherGroups,
+    pendingInvitations,
+    acceptInvitation,
+    rejectInvitation,
     editDialogVisible,
     editForm,
     transferDialogVisible,

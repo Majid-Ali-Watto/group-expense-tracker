@@ -222,7 +222,7 @@ export const Login = () => {
       lastRegisteredEmail.value = emailValue
 
       await ElMessageBox.alert(
-        `Account created successfully!<br><br>A verification email has been sent to <strong>${emailValue}</strong>.<br><br><strong>Important:</strong> You must verify your email within 48 hours by clicking the link in the email. After verification, you can login.<br><br>If you don't verify within 48 hours, you may need to contact support to complete registration.`,
+        `Account created successfully!<br><br>A verification email has been sent to <strong>${emailValue}</strong>.<br><br><strong>Important:</strong> You must verify your email within 48 hours by clicking the link in the email. After verification, you can login.<br><br>If you don't receive the email, please check your <strong>spam or junk folder</strong>.<br><br>If you don't verify within 48 hours, you may need to contact support to complete registration.`,
         'Registration Successful - Verify Your Email',
         {
           confirmButtonText: 'OK',
@@ -307,11 +307,14 @@ export const Login = () => {
 
       // Mark user as verified in database (since they passed email verification check)
       if (!user.emailVerified) {
-        await updateData(
-          `users/${user.mobile}`,
-          (currentData) => ({ ...currentData, emailVerified: true }),
-          ''
-        )
+        const verifiedUserData = {
+          name: user.name,
+          email: user.email,
+          mobile: user.mobile,
+          emailVerified: true,
+          ...(user.addedBy ? { addedBy: user.addedBy } : {})
+        }
+        await updateData(`users/${user.mobile}`, () => verifiedUserData, '')
       }
 
       // Hide resend verification option on successful login

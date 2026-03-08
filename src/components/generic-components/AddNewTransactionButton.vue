@@ -27,7 +27,7 @@ defineProps({
   justify-content: space-between;
   gap: 1rem;
   padding: 0.85rem;
-  border-radius: 12px;
+  /* border-radius: 12px; */
   background: var(--tab-gradient-start);
   /* background:
    linear-gradient(

@@ -355,6 +355,7 @@ export const Users = () => {
     displayMobile,
     getUserGroups,
     canManage,
+    activeUser,
     openEditUser,
     submitUpdateUser,
     requestDeleteUser,

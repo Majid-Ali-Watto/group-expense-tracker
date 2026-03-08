@@ -205,6 +205,11 @@
             >View current receipt</a
           >
         </div>
+        <div v-if="!isEditMode" class="mb-3">
+          <el-checkbox v-model="copyToExpenses" size="small">
+            Also add a copy to Personal Expenses
+          </el-checkbox>
+        </div>
         <div v-if="!isEditMode" class="flex justify-end gap-2">
           <el-button type="info" plain size="small" @click="closeForm">
             Cancel
@@ -261,7 +266,8 @@ const {
   onGiverMobileBlur,
   onReceiverMobileBlur,
   isMeGiver,
-  isMeReceiver
+  isMeReceiver,
+  copyToExpenses
 } = LoanForm(props, emit)
 
 defineExpose({

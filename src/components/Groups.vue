@@ -13,11 +13,9 @@
     <div v-else>
       <groups-create @group-created="closeCreateGroup">
         <template #clear>
-          <div class="flex flex-col sm:flex-row sm:justify-end gap-2">
             <el-button type="info" plain size="small" @click="closeCreateGroup">
               Cancel
             </el-button>
-          </div>
         </template>
       </groups-create>
     </div>
@@ -37,6 +35,42 @@
         </template>
       </el-input>
     </div>
+    <!-- Pending Invitations -->
+    <div v-if="pendingInvitations.length > 0" class="mb-4">
+      <h4 class="mb-2">
+        Pending Invitations
+        <el-badge :value="pendingInvitations.length" type="warning" class="ml-1" />
+      </h4>
+      <div
+        v-for="group in pendingInvitations"
+        :key="group.id"
+        class="border border-orange-200 dark:border-orange-800 rounded-lg p-4 mb-3 bg-orange-50 dark:bg-orange-900/10"
+      >
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <div class="font-semibold text-gray-800 dark:text-gray-100">{{ group.name }}</div>
+            <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+              Invited by
+              <span class="font-medium">
+                {{ userStore.getUserByMobile(group.ownerMobile)?.name || group.ownerMobile }}
+              </span>
+            </div>
+            <div v-if="group.description" class="text-xs text-gray-400 dark:text-gray-500 mt-0.5 italic">
+              {{ group.description }}
+            </div>
+          </div>
+          <div class="flex gap-2 flex-shrink-0">
+            <el-button size="small" type="success" @click="acceptInvitation(group.id)">
+              Accept
+            </el-button>
+            <el-button size="small" type="danger" plain @click="rejectInvitation(group.id)">
+              Decline
+            </el-button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <el-divider v-if="joinedGroups.length > 0" />
     <!-- Existing Groups -->
     <!-- Your Groups (joined) -->
@@ -406,6 +440,9 @@ const {
   searchQuery,
   joinedGroups,
   otherGroups,
+  pendingInvitations,
+  acceptInvitation,
+  rejectInvitation,
   editDialogVisible,
   editForm,
   transferDialogVisible,
