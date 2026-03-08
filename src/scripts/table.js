@@ -76,10 +76,7 @@ export const Table = (props) => {
       ElMessage.error('Form is not ready. Please try again.')
       return
     }
-    childRef.value.componentRef.validateForm(
-      'Update',
-      childRef.value.componentRef
-    )
+    childRef.value.componentRef.validateForm('Update')
   }
 
   async function remove() {
@@ -96,10 +93,23 @@ export const Table = (props) => {
       ElMessage.error('Form is not ready. Please try again.')
       return
     }
-    childRef.value.componentRef.validateForm(
-      'Delete',
-      childRef.value.componentRef
-    )
+    childRef.value.componentRef.validateForm('Delete')
+  }
+
+  async function duplicate() {
+    await nextTick()
+
+    let retries = 0
+    while (!childRef.value?.componentRef && retries < 10) {
+      await new Promise((resolve) => setTimeout(resolve, 50))
+      retries++
+    }
+
+    if (!childRef.value?.componentRef) {
+      ElMessage.error('Form is not ready. Please try again.')
+      return
+    }
+    childRef.value.componentRef.validateForm('Save')
   }
 
   function updateScreenWidth() {
@@ -264,6 +274,7 @@ export const Table = (props) => {
     headers,
     update,
     remove,
+    duplicate,
     handleRowClick,
     downloadExcelData,
     downloadPdfData,

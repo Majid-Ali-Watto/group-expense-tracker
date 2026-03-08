@@ -1,11 +1,11 @@
 <!-- eslint-disable vue/multi-word-component-names -->
 <template>
-  <div class="w-full overflow-x-auto">
+  <div class="w-full overflow-x-auto overflow-y-auto max-h-[60vh]">
     <table
-      class="w-full border-collapse rounded-md shadow-md overflow-hidden"
+      class="w-full border-collapse rounded-md shadow-md"
       style="width: 100% !important; min-width: 800px !important"
     >
-      <thead>
+      <thead class="sticky top-0 z-10">
         <tr class="bg-green-500 dark:bg-green-600 text-white text-left">
           <!-- Render table headers -->
           <th
@@ -180,6 +180,7 @@
           <BottomButtons
             @update="update"
             @delete="remove"
+            @duplicate="duplicate"
             @cancel="dialogFormVisible = false"
           />
         </div>
@@ -256,6 +257,7 @@ const {
   headers,
   update,
   remove,
+  duplicate,
   handleRowClick,
   downloadExcelData,
   downloadPdfData,

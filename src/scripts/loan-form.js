@@ -1,4 +1,5 @@
 import { ref, watch, computed } from 'vue'
+import { useUsersOptions } from '../utils/useUsersOptions'
 import getWhoAddedTransaction from '../utils/whoAdded'
 import useFireBase from '../api/firebase-apis'
 import { store } from '../stores/store'
@@ -7,6 +8,7 @@ import {
   deleteFromCloudinary
 } from '../utils/cloudinaryUpload'
 import { showError } from '../utils/showAlerts'
+import { buildRequestMeta } from '../utils/buildRequestMeta'
 
 export const LoanForm = (props, emit) => {
   const userStore = store()
@@ -24,6 +26,8 @@ export const LoanForm = (props, emit) => {
       loanReceiverMobile: '',
       description: ''
     }
+    isMeGiver.value = false
+    isMeReceiver.value = false
     receiptFile.value = null
     if (fileInputRef.value) fileInputRef.value.value = ''
     setTimeout(() => {
@@ -34,25 +38,7 @@ export const LoanForm = (props, emit) => {
     emit('closeForm')
   }
 
-  const options = computed(() => {
-    const activeGroup = userStore.getActiveGroup
-    const group = activeGroup ? userStore.getGroupById(activeGroup) : null
-    if (group && group.members && group.members.length)
-      return group.members.map((m) => ({
-        label: `${m.name} (${m.mobile})`,
-        value: m.mobile
-      }))
-
-    const users =
-      userStore.getUsers && userStore.getUsers.length ? userStore.getUsers : []
-    if (users.length)
-      return users.map((u) => ({
-        label: `${u.name} (${u.mobile})`,
-        value: u.mobile
-      }))
-
-    return []
-  })
+  const { usersOptions: options } = useUsersOptions()
 
   const { deleteData, updateData, saveData } = useFireBase()
 
@@ -81,6 +67,47 @@ export const LoanForm = (props, emit) => {
     () => userStore.getUserByMobile(activeUser.value)?.name || ''
   )
 
+  // ========== ME? Checkboxes ==========
+  const isMeGiver = ref(false)
+  const isMeReceiver = ref(false)
+
+  watch(isMeGiver, (val) => {
+    if (val) {
+      isMeReceiver.value = false
+      if (props.isPersonal) {
+        formData.value.loanGiverMobile = activeUser.value
+        formData.value.loanGiver = activeUserName.value
+      } else {
+        formData.value.loanGiver = activeUser.value
+      }
+    } else {
+      if (props.isPersonal) {
+        formData.value.loanGiverMobile = ''
+        formData.value.loanGiver = ''
+      } else {
+        formData.value.loanGiver = ''
+      }
+    }
+  })
+
+  watch(isMeReceiver, (val) => {
+    if (val) {
+      if (props.isPersonal) {
+        formData.value.loanReceiverMobile = activeUser.value
+        formData.value.loanReceiver = activeUserName.value
+      } else {
+        formData.value.loanReceiver = activeUser.value
+      }
+    } else {
+      if (props.isPersonal) {
+        formData.value.loanReceiverMobile = ''
+        formData.value.loanReceiver = ''
+      } else {
+        formData.value.loanReceiver = ''
+      }
+    }
+  })
+
   watch(
     () => props.row,
     (newRow) => {
@@ -99,6 +126,20 @@ export const LoanForm = (props, emit) => {
       isVisible.value = !newRow?.amount
       receiptFile.value = null
       if (fileInputRef.value) fileInputRef.value.value = ''
+      // Auto-tick ME? checkbox in edit mode
+      if (newRow?.amount) {
+        const giverMobile = props.isPersonal
+          ? formData.value.loanGiverMobile || formData.value.loanGiver
+          : formData.value.loanGiver
+        const receiverMobile = props.isPersonal
+          ? formData.value.loanReceiverMobile || formData.value.loanReceiver
+          : formData.value.loanReceiver
+        isMeGiver.value = giverMobile === activeUser.value
+        isMeReceiver.value = receiverMobile === activeUser.value
+      } else {
+        isMeGiver.value = false
+        isMeReceiver.value = false
+      }
     },
     { immediate: true }
   )
@@ -212,7 +253,11 @@ export const LoanForm = (props, emit) => {
             () => {
               receiptFile.value = null
               if (fileInputRef.value) fileInputRef.value.value = ''
-              emit('closeForm')
+              if (isEditMode.value) {
+                emit('closeModal')
+              } else {
+                emit('closeForm')
+              }
             }
           )
         } else if (whatTask == 'Update') {
@@ -301,15 +346,7 @@ export const LoanForm = (props, emit) => {
   }
 
   const createDeleteRequest = (loanPath) => {
-    const activeUser = userStore.getActiveUser
-    const userName = userStore.getUserByMobile(activeUser)?.name || activeUser
-
-    const deleteRequest = {
-      requestedBy: activeUser,
-      requestedByName: userName,
-      approvals: [activeUser],
-      requestedAt: new Date().toLocaleString('en-PK')
-    }
+    const deleteRequest = buildRequestMeta(userStore)
 
     updateData(
       `${loanPath}/deleteRequest`,
@@ -324,15 +361,9 @@ export const LoanForm = (props, emit) => {
     receiptUrl = null,
     receiptMeta = null
   ) => {
-    const activeUser = userStore.getActiveUser
-    const userName = userStore.getUserByMobile(activeUser)?.name || activeUser
-
     const updateRequest = {
       changes: getLoanData(receiptUrl, receiptMeta),
-      requestedBy: activeUser,
-      requestedByName: userName,
-      approvals: [activeUser],
-      requestedAt: new Date().toLocaleString('en-PK')
+      ...buildRequestMeta(userStore)
     }
 
     updateData(
@@ -389,6 +420,8 @@ export const LoanForm = (props, emit) => {
     handleReceiptChange,
     removeReceipt,
     onGiverMobileBlur,
-    onReceiverMobileBlur
+    onReceiverMobileBlur,
+    isMeGiver,
+    isMeReceiver
   }
 }

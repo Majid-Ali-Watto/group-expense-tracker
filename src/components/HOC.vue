@@ -5,7 +5,6 @@
         :is="componentToBeRendered"
         v-bind="componentProps"
         v-on="listenersToPass"
-        @click.stop="$emit('click')"
         ref="componentRef"
       />
     </template>

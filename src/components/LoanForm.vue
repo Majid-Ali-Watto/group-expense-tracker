@@ -37,70 +37,105 @@
         <el-row :gutter="20">
           <el-col :lg="12" :md="12" :sm="24">
             <AmountInput v-model="formData.amount" required />
-            <GenericDropDown
-              v-if="!isPersonal"
-              v-model="formData.loanGiver"
-              label="Loan Giver"
-              prop="loanGiver"
-              :options="options"
-              placeholder="Select loan giver"
-              required
-            />
-            <GenericDropDown
-              v-if="!isPersonal"
-              v-model="formData.loanReceiver"
-              label="Loan Receiver"
-              prop="loanReceiver"
-              :options="options"
-              placeholder="Select loan receiver"
-              required
-            />
-            <GenericInput
-              v-if="isPersonal"
-              :rows="1"
-              v-model="formData.loanGiverMobile"
-              label="Loan Giver Mobile"
-              prop="loanGiverMobile"
-              required
-              type="textarea"
-              placeholder="e.g. 03001234567"
-              :maxlength="15"
-              @blur="onGiverMobileBlur"
-            />
-            <GenericInput
-              v-if="isPersonal"
-              :rows="1"
-              v-model="formData.loanGiver"
-              label="Loan Giver"
-              prop="loanGiver"
-              required
-              type="textarea"
-              placeholder="Loan Giver Name"
-              :maxlength="50"
-            />
-            <GenericInput
-              v-if="isPersonal"
-              :rows="1"
-              v-model="formData.loanReceiverMobile"
-              label="Loan Receiver Mobile"
-              prop="loanReceiverMobile"
-              required
-              type="textarea"
-              placeholder="e.g. 03001234567"
-              :maxlength="15"
-              @blur="onReceiverMobileBlur"
-            />
-            <GenericInput
-              v-if="isPersonal"
-              :rows="1"
-              v-model="formData.loanReceiver"
-              label="Loan Receiver"
-              prop="loanReceiver"
-              required
-              type="textarea"
-              placeholder="Loan Receiver Name"
-              :maxlength="50"
-            />
+            <div v-if="!isPersonal" class="relative">
+              <el-checkbox
+                v-model="isMeGiver"
+                :disabled="isMeReceiver"
+                size="small"
+                class="absolute top-0 right-0 z-10 text-xs"
+              >ME?</el-checkbox>
+              <GenericDropDown
+                v-model="formData.loanGiver"
+                label="Loan Giver"
+                prop="loanGiver"
+                :options="options"
+                placeholder="Select loan giver"
+                :disabled="isMeGiver"
+                required
+              />
+            </div>
+            <div v-if="!isPersonal" class="relative">
+              <el-checkbox
+                v-model="isMeReceiver"
+                :disabled="isMeGiver"
+                size="small"
+                class="absolute top-0 right-0 z-10 text-xs"
+              >ME?</el-checkbox>
+              <GenericDropDown
+                v-model="formData.loanReceiver"
+                label="Loan Receiver"
+                prop="loanReceiver"
+                :options="options"
+                placeholder="Select loan receiver"
+                :disabled="isMeReceiver"
+                required
+              />
+            </div>
+            <div v-if="isPersonal" class="relative">
+              <el-checkbox
+                v-model="isMeGiver"
+                :disabled="isMeReceiver"
+                size="small"
+                class="absolute top-0 right-0 z-10 text-xs"
+              >ME?</el-checkbox>
+              <GenericInput
+                :rows="1"
+                v-model="formData.loanGiverMobile"
+                label="Loan Giver Mobile"
+                prop="loanGiverMobile"
+                required
+                type="textarea"
+                placeholder="e.g. 03001234567"
+                :maxlength="15"
+                :disabled="isMeGiver"
+                @blur="onGiverMobileBlur"
+              />
+              <GenericInput
+                :rows="1"
+                v-model="formData.loanGiver"
+                label="Loan Giver"
+                prop="loanGiver"
+                required
+                type="textarea"
+                placeholder="Loan Giver Name"
+                :maxlength="50"
+                :disabled="isMeGiver"
+              />
+            </div>
+
+            <!-- Personal loans: Receiver -->
+            <div v-if="isPersonal" class="relative">
+              <el-checkbox
+                v-model="isMeReceiver"
+                :disabled="isMeGiver"
+                size="small"
+                class="absolute top-0 right-0 z-10 text-xs"
+              >ME?</el-checkbox>
+              <GenericInput
+                :rows="1"
+                v-model="formData.loanReceiverMobile"
+                label="Loan Receiver Mobile"
+                prop="loanReceiverMobile"
+                required
+                type="textarea"
+                placeholder="e.g. 03001234567"
+                :maxlength="15"
+                :disabled="isMeReceiver"
+                @blur="onReceiverMobileBlur"
+              />
+              <GenericInput
+                :rows="1"
+                v-model="formData.loanReceiver"
+                label="Loan Receiver"
+                prop="loanReceiver"
+                required
+                type="textarea"
+                placeholder="Loan Receiver Name"
+                :maxlength="50"
+                :disabled="isMeReceiver"
+              />
+            </div>
+
           </el-col>
           <el-col :lg="12" :md="12" :sm="24">
             <GenericInput
@@ -224,7 +259,9 @@ const {
   handleReceiptChange,
   removeReceipt,
   onGiverMobileBlur,
-  onReceiverMobileBlur
+  onReceiverMobileBlur,
+  isMeGiver,
+  isMeReceiver
 } = LoanForm(props, emit)
 
 defineExpose({

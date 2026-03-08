@@ -6,6 +6,7 @@
       :placeholder="placeholder"
       class="w-full"
       clearable
+      :disabled="disabled"
       @change="$emit('update:modelValue', internalValue)"
     >
       <el-option
@@ -45,6 +46,10 @@ const props = defineProps({
   options: {
     type: Array,
     default: () => []
+  },
+  disabled: {
+    type: Boolean,
+    default: false
   },
   labelKey: {
     type: String,

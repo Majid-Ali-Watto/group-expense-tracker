@@ -283,8 +283,30 @@ header > span {
 .dark-theme .border-green-200,
 .dark-theme .border-blue-100,
 .dark-theme .border-blue-200,
+.dark-theme .border-red-200,
 .dark-theme .border-white {
   border-color: var(--border-color) !important;
+}
+
+/* Notification / alert colors in dark theme */
+.dark-theme .bg-green-50 {
+  background-color: rgba(34, 197, 94, 0.12) !important;
+}
+
+.dark-theme .bg-red-50 {
+  background-color: rgba(239, 68, 68, 0.12) !important;
+}
+
+.dark-theme .bg-blue-50 {
+  background-color: rgba(59, 130, 246, 0.12) !important;
+}
+
+.dark-theme .text-red-800 {
+  color: #f87171 !important; /* red-400 — readable on dark backgrounds */
+}
+
+.dark-theme .text-blue-800 {
+  color: #60a5fa !important; /* blue-400 — readable on dark backgrounds */
 }
 
 /* Override hover background colors */
@@ -1068,6 +1090,16 @@ button:disabled {
 .el-tabs__nav-prev:hover,
 .el-tabs__nav-next:hover {
   color: #374151;
+}
+
+.dark-theme .el-tabs__nav-prev,
+.dark-theme .el-tabs__nav-next {
+  color: #ffffff;
+}
+
+.dark-theme .el-tabs__nav-prev:hover,
+.dark-theme .el-tabs__nav-next:hover {
+  color: #d1d5db;
 }
 
 /* Hide arrows when at the start or end (no more tabs in that direction) */

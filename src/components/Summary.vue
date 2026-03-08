@@ -9,7 +9,7 @@
       </template>
 
       <div class="w-full mx-auto px-2 pb-2">
-        <el-descriptions direction="vertical" :column="2" :border="true">
+        <el-descriptions direction="vertical" :column="isMobileScreen ? 1 : 2" :border="true">
           <el-descriptions-item label="Total Spent">
             {{ formatAmount(totalSpent) }}
           </el-descriptions-item>
@@ -44,6 +44,7 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useMobileScreen } from '../utils/useMobileScreen'
 import { Summary } from '../scripts/summary'
 
 const props = defineProps({
@@ -51,6 +52,7 @@ const props = defineProps({
 })
 
 const activePanel = ref([])
+const { isMobileScreen } = useMobileScreen()
 
 const {
   formatAmount,

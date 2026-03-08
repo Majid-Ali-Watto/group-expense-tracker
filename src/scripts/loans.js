@@ -3,7 +3,7 @@ import { onValue, off } from '../firebase'
 import { store } from '../stores/store'
 import useFireBase from '../api/firebase-apis'
 import { ElMessageBox } from 'element-plus'
-import { deleteFromCloudinary } from '../utils/cloudinaryUpload'
+import { deleteFromCloudinary, cleanupOldReceipts } from '../utils/cloudinaryUpload'
 import getCurrentMonth from '../utils/getCurrentMonth'
 import { showError } from '../utils/showAlerts'
 
@@ -420,16 +420,7 @@ export const Loans = () => {
     } else if (request.type === 'update') {
       const oldMeta = rawLoansData.value[request.loanId]?.receiptMeta
       const newMeta = request.changes?.receiptMeta
-      if (oldMeta && newMeta) {
-        const oldMetas = Array.isArray(oldMeta) ? oldMeta : [oldMeta]
-        const newUrls = new Set(
-          (Array.isArray(newMeta) ? newMeta : [newMeta]).map((m) => m.url)
-        )
-        oldMetas.forEach((m) => {
-          if (!newUrls.has(m.url))
-            deleteFromCloudinary(m.publicId, m.resourceType)
-        })
-      }
+      cleanupOldReceipts(oldMeta, newMeta)
 
       const updatedLoan = {
         ...rawLoansData.value[request.loanId],

@@ -1,4 +1,5 @@
 import { ref, watch, computed } from 'vue'
+import { useUsersOptions } from '../utils/useUsersOptions'
 import getWhoAddedTransaction from '../utils/whoAdded'
 import { store } from '../stores/store'
 import useFireBase from '../api/firebase-apis'
@@ -7,6 +8,7 @@ import {
   deleteFromCloudinary
 } from '../utils/cloudinaryUpload'
 import { showError } from '../utils/showAlerts'
+import { buildRequestMeta } from '../utils/buildRequestMeta'
 
 export const PaymentForm = (props, emit) => {
   const { updateData, saveData } = useFireBase()
@@ -83,23 +85,22 @@ export const PaymentForm = (props, emit) => {
 
   const closeForm = () => {
     showTransactionForm.value = false
+    isMePayer.value = false
   }
 
-  const usersOptions = computed(() => {
-    const activeGroup = userStore.getActiveGroup
-    const group = activeGroup ? userStore.getGroupById(activeGroup) : null
-    if (group && group.members && group.members.length) {
-      return group.members.map((m) => ({
-        label: `${m.name} (${m.mobile})`,
-        value: m.mobile
-      }))
+  const { usersOptions } = useUsersOptions()
+
+  const activeUser = computed(() => userStore.getActiveUser)
+
+  // ========== ME? Checkbox (single payer) ==========
+  const isMePayer = ref(false)
+
+  watch(isMePayer, (val) => {
+    if (val) {
+      formData.value.payer = activeUser.value
+    } else {
+      formData.value.payer = ''
     }
-    const users =
-      userStore.getUsers && userStore.getUsers.length ? userStore.getUsers : []
-    return users.map((u) => ({
-      label: `${u.name} (${u.mobile})`,
-      value: u.mobile
-    }))
   })
 
   const formData = ref({
@@ -136,6 +137,12 @@ export const PaymentForm = (props, emit) => {
       formData.value.splitItems = newRow?.splitItems ?? []
       isVisible.value = !newRow?.amount
       receiptFiles.value = []
+      // Auto-tick ME? checkbox in edit mode (single payer only)
+      if (newRow?.amount && newRow?.payerMode !== 'multiple') {
+        isMePayer.value = formData.value.payer === activeUser.value
+      } else {
+        isMePayer.value = false
+      }
     },
     { immediate: true }
   )
@@ -145,6 +152,9 @@ export const PaymentForm = (props, emit) => {
     (mode) => {
       if (mode === 'single' && receiptFiles.value.length > 1) {
         receiptFiles.value = receiptFiles.value.slice(0, 1)
+      }
+      if (mode !== 'single') {
+        isMePayer.value = false
       }
     }
   )
@@ -230,20 +240,24 @@ export const PaymentForm = (props, emit) => {
             transactionForm,
             'Transaction successfully saved.',
             () => {
-              // Reset all form fields and hide the form
-              formData.value.amount = null
-              formData.value.description = ''
-              formData.value.payerMode = 'single'
-              formData.value.payer = ''
-              formData.value.payers = []
-              formData.value.participants = [
-                ...usersOptions.value.map((u) => u.value)
-              ]
-              formData.value.date = ''
-              formData.value.splitMode = 'equal'
-              formData.value.splitItems = []
               receiptFiles.value = []
-              showTransactionForm.value = false
+              if (isEditMode.value) {
+                emit('closeModal')
+              } else {
+                // Reset all form fields and hide the form
+                formData.value.amount = null
+                formData.value.description = ''
+                formData.value.payerMode = 'single'
+                formData.value.payer = ''
+                formData.value.payers = []
+                formData.value.participants = [
+                  ...usersOptions.value.map((u) => u.value)
+                ]
+                formData.value.date = ''
+                formData.value.splitMode = 'equal'
+                formData.value.splitItems = []
+                showTransactionForm.value = false
+              }
             }
           )
         } else if (whatTask == 'Update') {
@@ -262,15 +276,7 @@ export const PaymentForm = (props, emit) => {
   }
 
   const createDeleteRequest = (paymentPath) => {
-    const activeUser = userStore.getActiveUser
-    const userName = userStore.getUserByMobile(activeUser)?.name || activeUser
-
-    const deleteRequest = {
-      requestedBy: activeUser,
-      requestedByName: userName,
-      approvals: [activeUser],
-      requestedAt: new Date().toLocaleString('en-PK')
-    }
+    const deleteRequest = buildRequestMeta(userStore)
 
     updateData(
       `${paymentPath}/deleteRequest`,
@@ -285,15 +291,9 @@ export const PaymentForm = (props, emit) => {
     receiptUrls = [],
     receiptMeta = []
   ) => {
-    const activeUser = userStore.getActiveUser
-    const userName = userStore.getUserByMobile(activeUser)?.name || activeUser
-
     const updateRequest = {
       changes: getPaymentData(receiptUrls, receiptMeta),
-      requestedBy: activeUser,
-      requestedByName: userName,
-      approvals: [activeUser],
-      requestedAt: new Date().toLocaleString('en-PK')
+      ...buildRequestMeta(userStore)
     }
 
     updateData(
@@ -412,6 +412,7 @@ export const PaymentForm = (props, emit) => {
     isVisible,
     isEditMode,
     showTransactionForm,
+    isMePayer,
     openForm,
     closeForm,
     usersOptions,

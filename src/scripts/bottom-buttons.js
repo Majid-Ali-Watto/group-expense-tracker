@@ -44,8 +44,28 @@ export const BottomButtons = (emit) => {
     }
   }
 
+  const confirmDuplicate = async () => {
+    try {
+      await ElMessageBox.confirm(
+        'Save the current values as a new record?',
+        'Duplicate',
+        {
+          confirmButtonText: 'Duplicate',
+          cancelButtonText: 'Cancel',
+          type: 'info'
+        }
+      )
+      emit('duplicate')
+    } catch (error) {
+      if (error !== 'cancel') {
+        console.error(error)
+      }
+    }
+  }
+
   return {
     confirmUpdate,
-    confirmDelete
+    confirmDelete,
+    confirmDuplicate
   }
 }

@@ -53,3 +53,15 @@ export async function deleteFromCloudinary(publicId, resourceType = 'image') {
     { method: 'POST', body: formData }
   ).catch(() => {})
 }
+
+// Deletes Cloudinary files that existed before an update but are no longer present after
+export function cleanupOldReceipts(oldMeta, newMeta) {
+  if (!oldMeta || !newMeta) return
+  const oldMetas = Array.isArray(oldMeta) ? oldMeta : [oldMeta]
+  const newUrls = new Set(
+    (Array.isArray(newMeta) ? newMeta : [newMeta]).map((m) => m.url)
+  )
+  oldMetas.forEach((m) => {
+    if (!newUrls.has(m.url)) deleteFromCloudinary(m.publicId, m.resourceType)
+  })
+}

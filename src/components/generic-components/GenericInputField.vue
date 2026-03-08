@@ -8,6 +8,7 @@
       :placeholder="placeholder"
       :type="type"
       :maxlength="maxlength"
+      :disabled="disabled"
       @input="emit('update:modelValue', internalValue)"
       @blur="emit('blur', internalValue)"
     />
@@ -49,6 +50,10 @@ const props = defineProps({
   maxlength: {
     type: Number,
     default: undefined
+  },
+  disabled: {
+    type: Boolean,
+    default: false
   }
 })
 

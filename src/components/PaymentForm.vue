@@ -48,15 +48,22 @@
             </div>
 
             <!-- Single Payer -->
-            <GenericDropDown
-              v-if="formData.payerMode === 'single'"
-              label="Payer"
-              prop="payer"
-              v-model="formData.payer"
-              placeholder="Select payer"
-              :options="usersOptions"
-              required
-            />
+            <div v-if="formData.payerMode === 'single'" class="relative">
+              <el-checkbox
+                v-model="isMePayer"
+                size="small"
+                class="absolute top-0 right-0 z-10 text-xs"
+              >ME?</el-checkbox>
+              <GenericDropDown
+                label="Payer"
+                prop="payer"
+                v-model="formData.payer"
+                placeholder="Select payer"
+                :options="usersOptions"
+                :disabled="isMePayer"
+                required
+              />
+            </div>
 
             <!-- Multiple Payers -->
             <div v-else class="space-y-2 mb-4">
@@ -416,7 +423,8 @@ const {
   existingReceiptUrls,
   triggerFileInput,
   handleReceiptChange,
-  removeReceipt
+  removeReceipt,
+  isMePayer
 } = PaymentForm(props, emit)
 
 defineExpose({

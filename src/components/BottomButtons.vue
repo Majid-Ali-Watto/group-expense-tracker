@@ -3,6 +3,7 @@
     <el-button
       @click="confirmUpdate"
       type="warning"
+      size="small"
       class="text-white py-2 px-4 rounded-lg"
     >
       Update
@@ -10,13 +11,23 @@
     <el-button
       @click="confirmDelete"
       type="danger"
+      size="small"
       class="text-white py-2 px-4 rounded-lg"
     >
       Delete
     </el-button>
     <el-button
+      @click="confirmDuplicate"
+      type="primary"
+      size="small"
+      class="py-2 px-4 rounded-lg"
+    >
+      Duplicate
+    </el-button>
+    <el-button
       @click="$emit('cancel')"
       type="success"
+      size="small"
       class="py-2 px-4 rounded-lg"
     >
       Cancel
@@ -27,7 +38,7 @@
 <script setup>
 import { BottomButtons } from '../scripts/bottom-buttons'
 
-const emit = defineEmits(['update', 'delete', 'cancel'])
+const emit = defineEmits(['update', 'delete', 'duplicate', 'cancel'])
 
-const { confirmUpdate, confirmDelete } = BottomButtons(emit)
+const { confirmUpdate, confirmDelete, confirmDuplicate } = BottomButtons(emit)
 </script>

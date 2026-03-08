@@ -1,11 +1,12 @@
 import { computed, onMounted, onUnmounted, ref, watch, inject } from 'vue'
+import { useUsersOptions } from '../utils/useUsersOptions'
 import { store } from '../stores/store'
 import { onValue, off } from '../firebase'
 import useFireBase from '../api/firebase-apis'
 import { checkDaily } from '../utils/notifications'
 import getCurrentMonth from '../utils/getCurrentMonth'
 import { showError } from '../utils/showAlerts'
-import { deleteFromCloudinary } from '../utils/cloudinaryUpload'
+import { deleteFromCloudinary, cleanupOldReceipts } from '../utils/cloudinaryUpload'
 import { ElMessageBox } from 'element-plus'
 
 export const ExpenseList = (props) => {
@@ -13,22 +14,7 @@ export const ExpenseList = (props) => {
   const { dbRef, readShallow, updateData, deleteData } = useFireBase()
   const formatAmount = inject('formatAmount')
 
-  const usersOptions = computed(() => {
-    const activeGroup = userStore.getActiveGroup
-    const group = activeGroup ? userStore.getGroupById(activeGroup) : null
-    if (group && group.members && group.members.length) {
-      return group.members.map((m) => ({
-        label: `${m.name} (${m.mobile})`,
-        value: m.mobile
-      }))
-    }
-    const users =
-      userStore.getUsers && userStore.getUsers.length ? userStore.getUsers : []
-    return users.map((u) => ({
-      label: `${u.name} (${u.mobile})`,
-      value: u.mobile
-    }))
-  })
+  const { usersOptions } = useUsersOptions()
 
   const pdfContent = ref(null)
   const months = ref([])
@@ -422,16 +408,7 @@ export const ExpenseList = (props) => {
     } else if (request.type === 'update') {
       const oldMeta = rawPaymentsData.value[request.paymentId]?.receiptMeta
       const newMeta = request.changes?.receiptMeta
-      if (oldMeta && newMeta) {
-        const oldMetas = Array.isArray(oldMeta) ? oldMeta : [oldMeta]
-        const newUrls = new Set(
-          (Array.isArray(newMeta) ? newMeta : [newMeta]).map((m) => m.url)
-        )
-        oldMetas.forEach((m) => {
-          if (!newUrls.has(m.url))
-            deleteFromCloudinary(m.publicId, m.resourceType)
-        })
-      }
+      cleanupOldReceipts(oldMeta, newMeta)
 
       const updatedPayment = {
         ...rawPaymentsData.value[request.paymentId],

@@ -121,6 +121,7 @@ export default function useFireBase() {
         if (onSuccess) onSuccess()
       })
       .catch((error) => {
+        console.error(error)
         showError(error.message)
       })
       .finally(() => {

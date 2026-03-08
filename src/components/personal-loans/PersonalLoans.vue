@@ -11,7 +11,7 @@
       <!-- Summary Statistics -->
       <el-descriptions
         title="Loan Summary"
-        :column="2"
+        :column="isMobileScreen ? 1 : 2"
         :border="true"
         class="mt-4"
       >
@@ -141,6 +141,7 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useMobileScreen } from '../../utils/useMobileScreen'
 import { Filter } from '@element-plus/icons-vue'
 import LoanForm from '../LoanForm.vue'
 import Table from '../Table.vue'
@@ -162,6 +163,7 @@ const {
 } = PersonalLoans()
 
 const showFilters = ref(false)
+const { isMobileScreen } = useMobileScreen()
 </script>
 
 <style scoped>
