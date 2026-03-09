@@ -154,21 +154,21 @@
   <!-- Leave Requests (visible to all members) -->
   <div
     v-if="getLeaveRequests(group).length > 0 && isMemberOfGroup(group)"
-    class="mt-3 pt-3 border-t border-orange-200 bg-orange-50 p-3 rounded"
+    class="mt-3 pt-3 border-t border-orange-200 dark:border-orange-700 bg-orange-50 dark:bg-orange-900/20 p-3 rounded"
   >
-    <div class="text-sm font-medium text-orange-800 mb-2">
+    <div class="text-sm font-medium text-orange-800 dark:text-orange-300 mb-2">
       🚪 Leave Group Requests
     </div>
     <div class="space-y-2">
       <div
         v-for="leaveReq in getLeaveRequests(group)"
         :key="leaveReq.mobile"
-        class="bg-white p-2 rounded border border-orange-200"
+        class="bg-white dark:bg-gray-800 p-2 rounded border border-orange-200 dark:border-orange-700"
       >
-        <div class="text-sm font-medium mb-1">
+        <div class="text-sm font-medium text-gray-800 dark:text-gray-200 mb-1">
           {{ leaveReq.name }} wants to leave
         </div>
-        <div class="text-xs text-gray-600 mb-1">
+        <div class="text-xs text-gray-600 dark:text-gray-400 mb-1">
           Approvals: {{ leaveReq.approvals?.length || 0 }} /
           {{ group.members.length }}
         </div>
@@ -206,11 +206,11 @@
         </div>
         <div
           v-else-if="leaveReq.mobile === userStore.getActiveUser"
-          class="text-xs text-blue-700"
+          class="text-xs text-blue-700 dark:text-blue-300"
         >
           Waiting for members approval...
         </div>
-        <div v-else class="text-xs text-green-700">✓ You have approved</div>
+        <div v-else class="text-xs text-green-700 dark:text-green-400">✓ You have approved</div>
       </div>
     </div>
   </div>

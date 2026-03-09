@@ -5,10 +5,13 @@
         <Header
           @click-log="setLoggedInStatus"
           @show-net-position="handleShowNetPosition"
+          @navigate-to-tab="({ tab, groupId }) => navigateToTab(tab, groupId)"
           :loggedIn="loggedIn"
           :user="tabStore.getActiveUser"
           :isDarkTheme="isDarkTheme"
           :toggleTheme="toggleTheme"
+          :notifications="allNotifications"
+          :notificationCount="notificationCount"
         />
         <div
           v-if="!loggedIn"
@@ -68,10 +71,12 @@
 </template>
 
 <script setup>
+import { ref, computed, watch, nextTick } from 'vue'
 import { svg } from './assets/loader-svg'
 import WelcomeBanner from './components/generic-components/WelcomeBanner.vue'
 import NetPositionDialog from './components/generic-components/NetPositionDialog.vue'
 import { App } from './scripts/app'
+import { useGlobalNotifications } from './utils/useGlobalNotifications'
 
 const {
   HOC,
@@ -89,6 +94,45 @@ const {
   toggleTheme,
   showNetPositionDialog,
   netPositionSummary,
-  handleShowNetPosition
+  handleShowNetPosition,
+  navigateToTab
 } = App()
+
+// Initialize notification system only after successful login
+const allNotifications = ref([])
+const notificationCount = computed(() => allNotifications.value.length)
+let notificationCleanup = null
+
+// Watch for login state changes
+watch(
+  loggedIn,
+  (isLoggedIn) => {
+    if (isLoggedIn) {
+      // User logged in - initialize notifications in next tick to avoid blocking UI
+      nextTick(() => {
+        const { allNotifications: notifs, cleanup } = useGlobalNotifications()
+        
+        // Update refs reactively
+        watch(
+          notifs,
+          (newNotifs) => {
+            allNotifications.value = newNotifs
+          },
+          { immediate: true }
+        )
+        
+        // Store cleanup function
+        notificationCleanup = cleanup
+      })
+    } else {
+      // User logged out - cleanup notifications
+      if (notificationCleanup) {
+        notificationCleanup()
+        notificationCleanup = null
+      }
+      allNotifications.value = []
+    }
+  },
+  { immediate: true }
+)
 </script>

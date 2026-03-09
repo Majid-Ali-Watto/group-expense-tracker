@@ -162,51 +162,41 @@ export const PersonalLoans = () => {
 
   const pairwiseSettlements = computed(() => {
     const pairMap = {}
+    const nameMap = {}
 
     loans.value.forEach((loan) => {
       const { loanGiver, giverName, loanReceiver, receiverName, amount } = loan
       if (!loanGiver || !loanReceiver || !amount) return
 
-      const v = Number(amount)
+      if (giverName) nameMap[loanGiver] = giverName
+      if (receiverName) nameMap[loanReceiver] = receiverName
 
-      const [a, b] = [
-        { loanGiver, giverName },
-        { loanReceiver, receiverName }
-      ].sort((x, y) => x.loanGiver - y.loanReceiver)
-      const key = `${a.loanGiver}__${b.loanReceiver}`
+      const v = Number(amount)
+      // Canonical key: always sort mobiles lexicographically so each pair has one stable key
+      const [first, second] = [loanGiver, loanReceiver].sort()
+      const key = `${first}__${second}`
 
       if (!pairMap[key]) {
-        pairMap[key] = {
-          a,
-          b,
-          aToB: 0,
-          bToA: 0
-        }
+        pairMap[key] = { first, second, firstGaveToSecond: 0, secondGaveToFirst: 0 }
       }
 
-      if (loanGiver === a.loanGiver && loanReceiver === b.loanReceiver) {
-        pairMap[key].bToA += v
+      if (loanGiver === first) {
+        pairMap[key].firstGaveToSecond += v
       } else {
-        pairMap[key].aToB += v
+        pairMap[key].secondGaveToFirst += v
       }
     })
 
     const result = []
 
-    Object.values(pairMap).forEach(({ a, b, aToB, bToA }) => {
-      const net = aToB - bToA
+    Object.values(pairMap).forEach(({ first, second, firstGaveToSecond, secondGaveToFirst }) => {
+      const net = firstGaveToSecond - secondGaveToFirst
       if (net > 0) {
-        result.push({
-          from: a.giverName || a.loanGiver,
-          to: b.receiverName || b.loanReceiver,
-          amount: net
-        })
+        // first lent more → second (debtor) owes first (lender)
+        result.push({ from: nameMap[second] || second, to: nameMap[first] || first, amount: net })
       } else if (net < 0) {
-        result.push({
-          from: b.receiverName || b.loanReceiver,
-          to: a.giverName || a.loanGiver,
-          amount: Math.abs(net)
-        })
+        // second lent more → first (debtor) owes second (lender)
+        result.push({ from: nameMap[first] || first, to: nameMap[second] || second, amount: Math.abs(net) })
       }
     })
 

@@ -11,6 +11,7 @@ export const store = defineStore('tab', {
     activeLoginCode: null,
     groups: [],
     activeGroup: null,
+    scrollToGroupTrigger: null,
     users: [],
     expenseRef: null,
     loansRef: null,
@@ -47,6 +48,9 @@ export const store = defineStore('tab', {
     setActiveGroup(groupId) {
       this.activeGroup = groupId
     },
+    setScrollToGroupTrigger(trigger) {
+      this.scrollToGroupTrigger = trigger
+    },
     setUsers(users) {
       this.users = users || []
     },
@@ -82,6 +86,7 @@ export const store = defineStore('tab', {
       state.users.find((u) => u.mobile === mobile) || null,
     getGroups: (state) => state.groups,
     getActiveGroup: (state) => state.activeGroup,
+    getScrollToGroupTrigger: (state) => state.scrollToGroupTrigger,
     getGroupById: (state) => (id) =>
       state.groups.find((g) => g.id === id) || null,
     getExpenseRef: (state) => state.expenseRef,

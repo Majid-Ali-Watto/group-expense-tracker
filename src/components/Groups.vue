@@ -85,6 +85,7 @@
       <div
         v-for="group in joinedGroups"
         :key="group.id"
+        :id="`group-card-${group.id}`"
         class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
       >
         <!-- Group Header -->
@@ -314,13 +315,13 @@
       </el-form>
 
       <template #footer>
-        <div class="flex flex-col sm:flex-row gap-2 sm:justify-end">
-          <el-button size="small" @click="editDialogVisible = false"
-            >Cancel</el-button
-          >
-          <el-button type="primary" size="small" @click="handleEditSave"
-            >Save</el-button
-          >
+        <div class="flex justify-end gap-2">
+          <el-button size="small" @click="editDialogVisible = false" style="min-width: 80px">
+            Cancel
+          </el-button>
+          <el-button type="primary" size="small" @click="handleEditSave" style="min-width: 80px">
+            Save
+          </el-button>
         </div>
       </template>
     </el-dialog>
@@ -357,13 +358,13 @@
       </el-form>
 
       <template #footer>
-        <div class="flex flex-col sm:flex-row gap-2 sm:justify-end">
-          <el-button size="small" @click="addMemberDialogVisible = false"
-            >Cancel</el-button
-          >
-          <el-button type="primary" size="small" @click="submitAddMemberRequest"
-            >Send Request</el-button
-          >
+        <div class="flex justify-end gap-2">
+          <el-button size="small" @click="addMemberDialogVisible = false" style="min-width: 100px">
+            Cancel
+          </el-button>
+          <el-button type="primary" size="small" @click="submitAddMemberRequest" style="min-width: 100px">
+            Send Request
+          </el-button>
         </div>
       </template>
     </el-dialog>
@@ -400,16 +401,13 @@
       </el-form>
 
       <template #footer>
-        <div class="flex flex-col sm:flex-row gap-2 sm:justify-end">
-          <el-button size="small" @click="transferDialogVisible = false"
-            >Cancel</el-button
-          >
-          <el-button
-            type="primary"
-            size="small"
-            @click="requestOwnershipTransfer"
-            >Request Transfer</el-button
-          >
+        <div class="flex justify-end gap-2">
+          <el-button size="small" @click="transferDialogVisible = false" style="min-width: 120px">
+            Cancel
+          </el-button>
+          <el-button type="primary" size="small" @click="requestOwnershipTransfer" style="min-width: 120px">
+            Request Transfer
+          </el-button>
         </div>
       </template>
     </el-dialog>
@@ -417,10 +415,11 @@
 </template>
 
 <script setup>
-import { defineAsyncComponent, ref } from 'vue'
+import { defineAsyncComponent, ref, watch, nextTick } from 'vue'
 import { displayMasked } from '../helpers/users'
 import { groupRules } from '../assets/validation-rules'
 import { Groups } from '../scripts/groups.js'
+import { store } from '../stores/store'
 import GroupDetailsAccordion from './generic-components/GroupDetailsAccordion.vue'
 import YourPositionInGroup from './generic-components/YourPositionInGroup.vue'
 import GroupActionButtons from './generic-components/GroupActionButtons.vue'
@@ -504,6 +503,30 @@ const {
 } = Groups()
 
 const editFormRef = ref(null)
+const tabStore = store()
+
+// Watch for scroll trigger from notifications
+watch(
+  () => tabStore.getScrollToGroupTrigger,
+  (trigger) => {
+    if (trigger && trigger.groupId) {
+      nextTick(() => {
+        scrollToGroup(trigger.groupId)
+        // Clear the trigger after scrolling
+        tabStore.setScrollToGroupTrigger(null)
+      })
+    }
+  }
+)
+
+function scrollToGroup(groupId) {
+  const el = document.getElementById(`group-card-${groupId}`)
+  if (!el) return
+  el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  el.style.transition = 'box-shadow 0.3s ease'
+  el.style.boxShadow = '0 0 0 3px #22c55e'
+  setTimeout(() => { el.style.boxShadow = '' }, 2000)
+}
 
 function handleEditSave() {
   editFormRef.value.validate((valid) => {

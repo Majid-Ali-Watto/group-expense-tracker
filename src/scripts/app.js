@@ -267,6 +267,17 @@ export const App = () => {
     })
   }
 
+  function navigateToTab(tab, groupId) {
+    if (groupId) {
+      tabStore.setActiveGroup(groupId)
+      // Trigger scroll to group with timestamp to ensure reactivity
+      tabStore.setScrollToGroupTrigger({ groupId, timestamp: Date.now() })
+    }
+    activeTab.value = tab
+    tabStore.setActiveTab(tab)
+    sessionStorage.setItem('_activeTab', tab)
+  }
+
   return {
     HOC,
     Login,
@@ -284,6 +295,7 @@ export const App = () => {
     toggleTheme,
     showNetPositionDialog,
     netPositionSummary,
-    handleShowNetPosition
+    handleShowNetPosition,
+    navigateToTab
   }
 }

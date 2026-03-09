@@ -11,14 +11,22 @@ import {
   allMembersApprovedJoinRequest,
   hasEditRequest,
   allAffectedMembersApprovedEdit,
+  isUserAffectedByEdit,
+  hasUserApprovedEditRequest,
   hasAddMemberRequest,
   allMembersApprovedAddMember,
+  hasUserApprovedAddMemberRequest,
   hasPendingRequest,
   hasLeaveRequest,
+  getLeaveRequests,
   allMembersApprovedLeave,
   getLeaveApprovals,
+  hasUserApprovedLeaveRequest,
   hasDeleteRequest,
-  getDeleteApprovals
+  getDeleteApprovals,
+  hasUserApprovedDeletion,
+  hasUserApprovedJoinRequest,
+  hasUserApprovedOwnershipTransfer
 } from '../helpers/users'
 
 export const Groups = () => {
@@ -1551,6 +1559,50 @@ export const Groups = () => {
     return displayMobileForGroup(targetMobile, editGroup)
   }
 
+  const groupNotifications = computed(() => {
+    const me = userStore.getActiveUser
+    if (!me) return []
+    const result = []
+
+    for (const group of joinedGroups.value) {
+      // Join requests needing my approval
+      getJoinRequests(group.id).forEach((req) => {
+        if (!hasUserApprovedJoinRequest(group, req.mobile)) {
+          result.push({ groupId: group.id, groupName: group.name, icon: '👋', label: `${req.name} wants to join` })
+        }
+      })
+
+      // Delete request
+      if (hasDeleteRequest(group) && !hasUserApprovedDeletion(group)) {
+        result.push({ groupId: group.id, groupName: group.name, icon: '⚠️', label: 'Group deletion request' })
+      }
+
+      // Leave requests
+      getLeaveRequests(group).forEach((req) => {
+        if (req.mobile !== me && !hasUserApprovedLeaveRequest(group, req.mobile)) {
+          result.push({ groupId: group.id, groupName: group.name, icon: '🚪', label: `${req.name} wants to leave` })
+        }
+      })
+
+      // Edit request
+      if (hasEditRequest(group) && isUserAffectedByEdit(group) && !hasUserApprovedEditRequest(group)) {
+        result.push({ groupId: group.id, groupName: group.name, icon: '📝', label: 'Group edit request' })
+      }
+
+      // Add member request
+      if (hasAddMemberRequest(group) && isMemberOfGroup(group) && !hasUserApprovedAddMemberRequest(group)) {
+        result.push({ groupId: group.id, groupName: group.name, icon: '➕', label: `Add ${group.addMemberRequest.newMember.name}` })
+      }
+
+      // Ownership transfer
+      if (group.transferOwnershipRequest && isMemberOfGroup(group) && !hasUserApprovedOwnershipTransfer(group)) {
+        result.push({ groupId: group.id, groupName: group.name, icon: '👑', label: 'Ownership transfer request' })
+      }
+    }
+
+    return result
+  })
+
   return {
     // Refs / reactive
     showCreateGroup,
@@ -1609,6 +1661,7 @@ export const Groups = () => {
 
     // Notifications
     hideNotification,
+    groupNotifications,
 
     // Pin
     isPinned,
