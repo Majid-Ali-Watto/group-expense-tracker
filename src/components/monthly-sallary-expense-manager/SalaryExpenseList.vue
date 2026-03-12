@@ -54,10 +54,11 @@
     </div>
 
     <Table
-      downloadTitle="Monthly_Expenses"
+      downloadTitle="Personal_Expenses"
       :rows="expenses"
       :keys="keys"
       :dataRef="content"
+      :reportMonth="selectedMonth"
     />
   </div>
 </template>

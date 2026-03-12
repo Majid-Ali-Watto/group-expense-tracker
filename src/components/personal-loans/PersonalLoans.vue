@@ -9,7 +9,7 @@
 
     <div ref="loanContent">
       <!-- Month Filter -->
-      <div class="flex items-center justify-between mb-2 mt-4">
+      <div class="flex items-center justify-between mb-2 mt-4 no-print-pdf">
         <span class="text-sm font-semibold text-gray-700">Filters</span>
         <el-button
           circle
@@ -22,7 +22,7 @@
       </div>
       <el-row
         :gutter="20"
-        class="filter-bar mb-3 mt-4"
+        class="filter-bar mb-3 mt-4 no-print-pdf"
         :class="showFilters ? '' : 'hidden sm:flex'"
       >
         <el-col :lg="8" :md="12" :sm="24">
@@ -121,6 +121,7 @@
         :keys="loanKeys"
         :dataRef="loanContent"
         :showPopup="true"
+        :reportMonth="selectedMonth"
       />
     </div>
   </div>

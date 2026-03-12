@@ -246,10 +246,11 @@
       <!-- Table -->
       <Table
         :rows="filteredPayments"
-        downloadTitle="Expenses"
+        downloadTitle="Shared Expenses"
         :keys="paymentKeys"
         :dataRef="pdfContent"
         :showPopup="!isHistory"
+        :reportMonth="selectedMonth"
       />
     </div>
   </div>

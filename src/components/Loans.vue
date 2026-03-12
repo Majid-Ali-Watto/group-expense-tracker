@@ -257,10 +257,11 @@
 
         <h2>Loan Records</h2>
         <Table
-          downloadTitle="Loans"
+          downloadTitle="Shared Loans"
           :rows="filteredLoans"
           :keys="loanKeys"
           :dataRef="loanContent"
+          :reportMonth="selectedMonth"
         />
       </div>
     </div>
