@@ -21,7 +21,7 @@
         />
       </div>
       <el-row
-        :gutter="20"
+        :gutter="5"
         class="filter-bar mb-3 mt-4 no-print-pdf"
         :class="showFilters ? '' : 'hidden sm:flex'"
       >

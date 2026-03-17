@@ -34,7 +34,7 @@
         label-position="top"
         class="space-y-4"
       >
-        <el-row :gutter="20">
+        <el-row :gutter="5">
           <el-col :lg="12" :md="12" :sm="24">
             <AmountInput v-model="formData.amount" required />
 
@@ -285,7 +285,7 @@
               </el-button>
             </div>
 
-            <el-row :gutter="12">
+            <el-row :gutter="5">
               <el-col :sm="14">
                 <el-form-item label="Description" class="mb-1">
                   <el-input

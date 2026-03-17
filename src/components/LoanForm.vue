@@ -34,7 +34,7 @@
         label-position="top"
         class="space-y-4"
       >
-        <el-row :gutter="20">
+        <el-row :gutter="5">
           <el-col :lg="12" :md="12" :sm="24">
             <AmountInput v-model="formData.amount" required />
             <div v-if="!isPersonal" class="relative">

@@ -147,7 +147,7 @@
       </div>
       <!-- Filters -->
       <el-row
-        :gutter="20"
+        :gutter="5"
         class="filter-bar mb-3 mt-4 hidden sm:flex"
         justify="space-between"
       >
@@ -194,7 +194,7 @@
       <!-- Mobile filters (toggle) -->
       <el-row
         v-if="showFilters"
-        :gutter="20"
+        :gutter="5"
         class="filter-bar mb-3 mt-2 sm:hidden"
         justify="space-between"
       >
