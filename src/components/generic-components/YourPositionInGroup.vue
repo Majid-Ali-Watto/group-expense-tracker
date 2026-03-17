@@ -79,7 +79,7 @@ const balance = computed(() => props.getGroupBalances(props.group.id) || {})
 
 const makeState = (
   val,
-  { pos = 'Lender', neg = 'Debtor', zero = 'Settled' } = {}
+  { pos = 'Will Receive', neg = 'Will Pay', zero = 'Settled' } = {}
 ) => {
   const num = Number(val || 0)
   return {
@@ -100,8 +100,8 @@ const expenseState = computed(() => makeState(balance.value.expenses))
 const loanState = computed(() => makeState(balance.value.loans))
 const netState = computed(() =>
   makeState((balance.value.expenses || 0) + (balance.value.loans || 0), {
-    pos: 'You Receive',
-    neg: 'You Owe',
+    pos: 'You Get',
+    neg: 'You Pay',
     zero: 'Settled'
   })
 )

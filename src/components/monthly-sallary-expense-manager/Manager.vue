@@ -1,27 +1,25 @@
 <!-- eslint-disable vue/multi-word-component-names -->
 <template>
-  <div class="w-full mx-auto">
-    <div class="flex flex-col gap-6">
-      <el-row :gutter="30">
-        <el-col :lg="12" :md="12" :sm="12">
-          <AddNewTransactionButton
-            text="Want to add a new expense?"
-            @click="setShowForm"
-            v-if="!showForm"
-          />
-          <HOC
-            v-else-if="showForm"
-            :componentToBeRendered="AddExpense"
-            :componentProps="{ showForm }"
-            :listenersToPass="{ click: setShowForm }"
-          />
-        </el-col>
-        <el-col :lg="12" :md="12" :sm="12">
-          <HOC :componentToBeRendered="AddSalary" />
-        </el-col>
-      </el-row>
-      <HOC :componentToBeRendered="ExpenseList" />
+  <div class="manager-wrap">
+    <div class="manager-top">
+      <div class="manager-col">
+        <AddNewTransactionButton
+          text="Want to add a new expense?"
+          @click="setShowForm"
+          v-if="!showForm"
+        />
+        <HOC
+          v-else-if="showForm"
+          :componentToBeRendered="AddExpense"
+          :componentProps="{ showForm }"
+          :listenersToPass="{ click: setShowForm }"
+        />
+      </div>
+      <div class="manager-col">
+        <HOC :componentToBeRendered="AddSalary" />
+      </div>
     </div>
+    <HOC :componentToBeRendered="ExpenseList" />
   </div>
 </template>
 
@@ -31,15 +29,29 @@ import AddNewTransactionButton from '../generic-components/AddNewTransactionButt
 import HOC from '../HOC.vue'
 import { ref } from 'vue'
 
-// Async components
 const AddSalary = defineAsyncComponent(() => import('./SalaryForm.vue'))
 const AddExpense = defineAsyncComponent(() => import('./ExpenseForm.vue'))
-const ExpenseList = defineAsyncComponent(
-  () => import('./SalaryExpenseList.vue')
-)
+const ExpenseList = defineAsyncComponent(() => import('./SalaryExpenseList.vue'))
 
 const showForm = ref(false)
-const setShowForm = () => {
-  showForm.value = !showForm.value
-}
+const setShowForm = () => { showForm.value = !showForm.value }
 </script>
+
+<style scoped>
+.manager-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  width: 100%;
+}
+.manager-top {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  align-items: start;
+}
+@media (max-width: 600px) {
+  .manager-top { grid-template-columns: 1fr; }
+}
+.manager-col { min-width: 0; }
+</style>

@@ -8,7 +8,8 @@
         >
       </template>
 
-      <div class="w-full mx-auto px-2 pb-2">
+      <div class="w-full mx-auto px-2 pb-4 space-y-4">
+        <!-- Text descriptions -->
         <el-descriptions direction="vertical" :column="isMobileScreen ? 1 : 2" :border="true">
           <el-descriptions-item label="Total Spent">
             {{ formatAmount(totalSpent) }}
@@ -26,7 +27,7 @@
             <el-descriptions-item
               v-for="(person, i) in perPersonOwed"
               :key="i"
-              :label="`${person.name} Owes`"
+              :label="`${person.name} Pays`"
             >
               {{ formatAmount(person.amount) }}
             </el-descriptions-item>
@@ -37,15 +38,36 @@
             </el-descriptions-item>
           </template>
         </el-descriptions>
+
+        <!-- Charts -->
+        <div v-if="totalSpent > 0" class="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
+          <!-- Who paid what — donut -->
+          <div class="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
+            <DonutChart
+              title="Who Paid"
+              :segments="chartPayerSegments"
+            />
+          </div>
+
+          <!-- Per-person owed (custom splits) OR payer comparison (equal splits) -->
+          <div class="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
+            <BarChart
+              :title="hasCustomSplits ? 'Each Person Pays' : 'Amount Paid per Person'"
+              :items="chartBarItems"
+            />
+          </div>
+        </div>
       </div>
     </el-collapse-item>
   </el-collapse>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useMobileScreen } from '../utils/useMobileScreen'
 import { Summary } from '../scripts/summary'
+import DonutChart from './generic-components/DonutChart.vue'
+import BarChart from './generic-components/BarChart.vue'
 
 const props = defineProps({
   payments: Array
@@ -62,4 +84,23 @@ const {
   perPersonOwed,
   friendTotals
 } = Summary(props)
+
+const chartPayerSegments = computed(() =>
+  friendTotals.value
+    .filter((f) => f.total > 0)
+    .map((f) => ({ label: f.name, value: f.total, formatted: formatAmount(f.total) }))
+)
+
+const chartBarItems = computed(() => {
+  if (hasCustomSplits.value) {
+    return perPersonOwed.value.map((p) => ({
+      label: p.name,
+      value: p.amount,
+      formatted: formatAmount(p.amount)
+    }))
+  }
+  return friendTotals.value
+    .filter((f) => f.total > 0)
+    .map((f) => ({ label: f.name, value: f.total, formatted: formatAmount(f.total) }))
+})
 </script>

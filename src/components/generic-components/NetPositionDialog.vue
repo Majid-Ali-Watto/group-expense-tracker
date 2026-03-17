@@ -7,18 +7,18 @@
     :close-on-press-escape="true"
     @close="handleClose"
   >
-    <div v-if="summary" class="net-position-content">
+    <div v-if="summary" ref="netPositionContent" class="net-position-content">
       <!-- Overall Summary -->
       <div class="section-card">
         <div class="section-header">Overall Summary</div>
         <div class="summary-row">
-          <span class="label">Total You Are Owed</span>
+          <span class="label">You Will Receive</span>
           <span class="amount positive">{{
             formatAmount(summary.totalLender)
           }}</span>
         </div>
         <div class="summary-row">
-          <span class="label">Total You Owe</span>
+          <span class="label">You Will Pay</span>
           <span class="amount negative">{{
             formatAmount(summary.totalDebtor)
           }}</span>
@@ -31,9 +31,13 @@
           >
             {{ formatAmount(Math.abs(summary.netPosition)) }}
             <span class="position-label">
-              {{ summary.netPosition >= 0 ? '(You Receive)' : '(You Owe)' }}
+              {{ summary.netPosition >= 0 ? '(You Get)' : '(You Pay)' }}
             </span>
           </span>
+        </div>
+        <!-- Overall donut chart -->
+        <div v-if="summary.totalLender + summary.totalDebtor > 0" class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+          <DonutChart :segments="overallDonutSegments" />
         </div>
       </div>
 
@@ -41,13 +45,13 @@
       <div class="section-card">
         <div class="section-header">Shared Expenses</div>
         <div class="summary-row">
-          <span class="label">You Are Owed:</span>
+          <span class="label">You Will Receive:</span>
           <span class="amount positive">{{
             formatAmount(summary.sharedExpenses.lenderAmount)
           }}</span>
         </div>
         <div class="summary-row">
-          <span class="label">You Owe:</span>
+          <span class="label">You Will Pay:</span>
           <span class="amount negative">{{
             formatAmount(summary.sharedExpenses.debtorAmount)
           }}</span>
@@ -77,8 +81,8 @@
                 summary.sharedExpenses.lenderAmount -
                   summary.sharedExpenses.debtorAmount >=
                 0
-                  ? '(You Receive)'
-                  : '(You Owe)'
+                  ? '(You Get)'
+                  : '(You Pay)'
               }}
             </span>
           </span>
@@ -125,8 +129,8 @@
                 summary.sharedLoans.lenderAmount -
                   summary.sharedLoans.debtorAmount >=
                 0
-                  ? '(You Receive)'
-                  : '(You Owe)'
+                  ? '(You Get)'
+                  : '(You Pay)'
               }}
             </span>
           </span>
@@ -173,16 +177,23 @@
                 summary.personalLoans.lenderAmount -
                   summary.personalLoans.debtorAmount >=
                 0
-                  ? '(You Receive)'
-                  : '(You Owe)'
+                  ? '(You Get)'
+                  : '(You Pay)'
               }}
             </span>
           </span>
         </div>
       </div>
+
+      <!-- Category breakdown bar chart -->
+      <div v-if="summary.totalLender + summary.totalDebtor > 0" class="section-card">
+        <div class="section-header">Category Breakdown</div>
+        <BarChart title="To Receive (↑) vs To Pay (↓) per Category" :items="categoryBarItems" />
+      </div>
     </div>
 
     <template #footer>
+      <el-button type="success" @click="downloadPdf" :disabled="!summary">Download PDF</el-button>
       <el-button @click="handleClose">Close</el-button>
     </template>
   </el-dialog>
@@ -190,6 +201,10 @@
 
 <script setup>
 import { ref, computed, inject } from 'vue'
+import DonutChart from './DonutChart.vue'
+import BarChart from './BarChart.vue'
+import { downloadPDF } from '../../utils/downloadDataProcedures'
+import getCurrentMonth from '../../utils/getCurrentMonth'
 
 const props = defineProps({
   modelValue: {
@@ -206,6 +221,7 @@ const emit = defineEmits(['update:modelValue'])
 
 const formatAmount = inject('formatAmount')
 const isMobile = ref(window.innerWidth < 768)
+const netPositionContent = ref(null)
 
 const visible = computed({
   get: () => props.modelValue,
@@ -215,6 +231,54 @@ const visible = computed({
 const handleClose = () => {
   visible.value = false
 }
+
+async function downloadPdf() {
+  if (!netPositionContent.value) return
+  const el = netPositionContent.value
+  const lightVars = {
+    '--el-bg-color': '#ffffff',
+    '--el-text-color-primary': '#1f2937',
+    '--el-text-color-regular': '#374151',
+    '--el-border-color': '#e5e7eb',
+    '--el-border-color-lighter': '#f3f4f6',
+    '--el-fill-color-lighter': '#f9fafb',
+    '--el-color-success': '#22c55e',
+    '--el-color-warning': '#f59e0b',
+  }
+  const prevBg = el.style.backgroundColor
+  const prevColor = el.style.color
+  const prevMaxHeight = el.style.maxHeight
+  const prevOverflow = el.style.overflow
+  Object.entries(lightVars).forEach(([k, v]) => el.style.setProperty(k, v))
+  el.style.backgroundColor = '#ffffff'
+  el.style.color = '#1f2937'
+  el.style.maxHeight = 'none'
+  el.style.overflow = 'visible'
+  await downloadPDF(el, `${getCurrentMonth()}_Net_Position_`, 'Expenses Summary')
+  Object.keys(lightVars).forEach((k) => el.style.removeProperty(k))
+  el.style.backgroundColor = prevBg
+  el.style.color = prevColor
+  el.style.maxHeight = prevMaxHeight
+  el.style.overflow = prevOverflow
+}
+
+const overallDonutSegments = computed(() => [
+  { label: 'You Will Receive', value: props.summary?.totalLender ?? 0, formatted: formatAmount(props.summary?.totalLender ?? 0) },
+  { label: 'You Will Pay', value: props.summary?.totalDebtor ?? 0, formatted: formatAmount(props.summary?.totalDebtor ?? 0) }
+])
+
+const categoryBarItems = computed(() => {
+  if (!props.summary) return []
+  const s = props.summary
+  return [
+    { label: 'Shared Exp ↑', value: s.sharedExpenses.lenderAmount, formatted: formatAmount(s.sharedExpenses.lenderAmount) },
+    { label: 'Shared Exp ↓', value: s.sharedExpenses.debtorAmount, formatted: formatAmount(s.sharedExpenses.debtorAmount) },
+    { label: 'Shared Loan ↑', value: s.sharedLoans.lenderAmount, formatted: formatAmount(s.sharedLoans.lenderAmount) },
+    { label: 'Shared Loan ↓', value: s.sharedLoans.debtorAmount, formatted: formatAmount(s.sharedLoans.debtorAmount) },
+    { label: 'Personal Loan ↑', value: s.personalLoans.lenderAmount, formatted: formatAmount(s.personalLoans.lenderAmount) },
+    { label: 'Personal Loan ↓', value: s.personalLoans.debtorAmount, formatted: formatAmount(s.personalLoans.debtorAmount) }
+  ]
+})
 
 // Handle window resize
 window.addEventListener('resize', () => {

@@ -17,14 +17,14 @@
 
       <!-- Show settlements table when data exists -->
       <el-table v-else :data="settlements" style="width: 100%">
-        <el-table-column label="Debtor">
+        <el-table-column label="Pays">
           <template #default="{ row }">
             <span class="text-red-500 dark:text-red-400 font-medium">
               {{ userStore.getUserByMobile(row.from)?.name || row.from }}
             </span>
           </template>
         </el-table-column>
-        <el-table-column label="Lender">
+        <el-table-column label="Receives">
           <template #default="{ row }">
             <span class="text-green-700 dark:text-green-400 font-medium">
               {{ userStore.getUserByMobile(row.to)?.name || row.to }}

@@ -172,7 +172,7 @@
         </el-col>
         <el-col :lg="6" :md="6" :sm="12" :xs="12">
           <!-- Giver Selection -->
-          <el-form-item label="Loan Giver" class="w-full">
+          <el-form-item label="Giver" class="w-full">
             <el-select
               filterable
               v-model="selectedGiver"
@@ -180,7 +180,7 @@
               class="w-full"
               size="small"
             >
-              <el-option value="All" label="All" />
+              <el-option value="All" label="All Givers" />
               <el-option
                 v-for="opt in usersOptions"
                 :key="opt.value"
@@ -218,7 +218,7 @@
         </el-col>
         <el-col :lg="6" :md="6" :sm="12" :xs="12">
           <!-- Giver Selection -->
-          <el-form-item label="Loan Giver" class="w-full">
+          <el-form-item label="Giver" class="w-full">
             <el-select
               filterable
               v-model="selectedGiver"
@@ -248,7 +248,7 @@
             <span
               :class="balance.amount < 0 ? 'text-red-500' : 'text-green-500'"
             >
-              {{ balance.amount < 0 ? 'Under Debt' : 'A Lender' }}
+              {{ balance.amount < 0 ? 'Will Pay' : 'Will Receive' }}
             </span>
             with
             <i>{{ formatAmount(Math.abs(balance.amount)) }}</i>

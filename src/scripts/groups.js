@@ -32,6 +32,8 @@ import {
 export const Groups = () => {
   const showCreateGroup = ref(false)
   const searchQuery = ref('')
+  const sortOrder = ref('') // '' | 'asc' | 'desc'
+  const filterByUser = ref('')
   const pinnedGroupIds = ref([])
 
   const openCreateGroup = () => {
@@ -49,47 +51,62 @@ export const Groups = () => {
   const groupBalances = ref({})
   let groupsListener = null
 
-  // Filtered groups based on search query
+  // All unique members across all groups (excluding the current user), sorted by name
+  const allGroupMembers = computed(() => {
+    const me = userStore.getActiveUser
+    const seen = new Set()
+    const members = []
+    for (const g of groups.value) {
+      for (const m of g.members || []) {
+        if (m.mobile !== me && !seen.has(m.mobile)) {
+          seen.add(m.mobile)
+          members.push({
+            mobile: m.mobile,
+            name: m.name || userStore.getUserByMobile(m.mobile)?.name || m.mobile
+          })
+        }
+      }
+    }
+    return members.sort((a, b) => a.name.localeCompare(b.name))
+  })
+
+  // Filtered groups based on search query, user filter, and sort order
   const filteredGroups = computed(() => {
-    if (!searchQuery.value) {
-      return groups.value
+    let result = groups.value
+
+    if (searchQuery.value) {
+      const query = searchQuery.value.toLowerCase().trim()
+      result = result.filter((group) => {
+        if (group.name && group.name.toLowerCase().includes(query)) return true
+        if (group.id && group.id.toLowerCase().includes(query)) return true
+        if (group.ownerMobile && group.ownerMobile.toLowerCase().includes(query)) return true
+        const ownerName = userStore.getUserByMobile(group.ownerMobile)?.name
+        if (ownerName && ownerName.toLowerCase().includes(query)) return true
+        if (
+          group.members &&
+          group.members.some(
+            (m) =>
+              (m.name && m.name.toLowerCase().includes(query)) ||
+              (m.mobile && m.mobile.toLowerCase().includes(query))
+          )
+        ) return true
+        return false
+      })
     }
 
-    const query = searchQuery.value.toLowerCase().trim()
-    return groups.value.filter((group) => {
-      // Search by group name
-      if (group.name && group.name.toLowerCase().includes(query)) {
-        return true
-      }
-      // Search by group ID/code
-      if (group.id && group.id.toLowerCase().includes(query)) {
-        return true
-      }
-      // Search by owner mobile
-      if (
-        group.ownerMobile &&
-        group.ownerMobile.toLowerCase().includes(query)
-      ) {
-        return true
-      }
-      // Search by owner name
-      const ownerName = userStore.getUserByMobile(group.ownerMobile)?.name
-      if (ownerName && ownerName.toLowerCase().includes(query)) {
-        return true
-      }
-      // Search by member name or mobile
-      if (
-        group.members &&
-        group.members.some(
-          (m) =>
-            (m.name && m.name.toLowerCase().includes(query)) ||
-            (m.mobile && m.mobile.toLowerCase().includes(query))
-        )
-      ) {
-        return true
-      }
-      return false
-    })
+    if (filterByUser.value) {
+      result = result.filter((g) =>
+        g.members?.some((m) => m.mobile === filterByUser.value)
+      )
+    }
+
+    if (sortOrder.value === 'asc') {
+      result = [...result].sort((a, b) => a.name.localeCompare(b.name))
+    } else if (sortOrder.value === 'desc') {
+      result = [...result].sort((a, b) => b.name.localeCompare(a.name))
+    }
+
+    return result
   })
 
   const joinedGroups = computed(() => {
@@ -1607,6 +1624,9 @@ export const Groups = () => {
     // Refs / reactive
     showCreateGroup,
     searchQuery,
+    sortOrder,
+    filterByUser,
+    allGroupMembers,
     filteredGroups,
     joinedGroups,
     otherGroups,

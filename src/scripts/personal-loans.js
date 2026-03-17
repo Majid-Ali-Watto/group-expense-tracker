@@ -14,6 +14,7 @@ export const PersonalLoans = () => {
   const loanKeys = ref([])
   const loanContent = ref(null)
   const selectedMonth = ref('All')
+  const selectedGiver = ref('All')
   const months = ref([])
   const showLoanForm = ref(false)
 
@@ -138,8 +139,25 @@ export const PersonalLoans = () => {
     }
   })
 
+  const giverOptions = computed(() => {
+    const seen = new Set()
+    const options = []
+    loans.value.forEach((loan) => {
+      if (loan.loanGiver && !seen.has(loan.loanGiver)) {
+        seen.add(loan.loanGiver)
+        options.push({ mobile: loan.loanGiver, name: loan.giverName || loan.loanGiver })
+      }
+    })
+    return options.sort((a, b) => a.name.localeCompare(b.name))
+  })
+
+  const filteredLoans = computed(() => {
+    if (selectedGiver.value === 'All') return loans.value
+    return loans.value.filter((loan) => loan.loanGiver === selectedGiver.value)
+  })
+
   const totalLending = computed(() => {
-    return loans.value.reduce((total, loan) => {
+    return filteredLoans.value.reduce((total, loan) => {
       if (loan.loanGiver === activeUser.value) {
         return total + Number(loan.amount || 0)
       }
@@ -148,7 +166,7 @@ export const PersonalLoans = () => {
   })
 
   const totalDebting = computed(() => {
-    return loans.value.reduce((total, loan) => {
+    return filteredLoans.value.reduce((total, loan) => {
       if (loan.loanReceiver === activeUser.value) {
         return total + Number(loan.amount || 0)
       }
@@ -164,7 +182,7 @@ export const PersonalLoans = () => {
     const pairMap = {}
     const nameMap = {}
 
-    loans.value.forEach((loan) => {
+    filteredLoans.value.forEach((loan) => {
       const { loanGiver, giverName, loanReceiver, receiverName, amount } = loan
       if (!loanGiver || !loanReceiver || !amount) return
 
@@ -209,6 +227,9 @@ export const PersonalLoans = () => {
     loanKeys,
     loanContent,
     selectedMonth,
+    selectedGiver,
+    giverOptions,
+    filteredLoans,
     months,
     showLoanForm,
     closeLoanForm,

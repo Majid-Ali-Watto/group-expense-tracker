@@ -78,6 +78,29 @@
                 size="small"
                 class="absolute top-0 right-0 z-10 text-xs"
               >ME?</el-checkbox>
+              <div v-if="!isMeGiver" class="mb-1">
+                <button
+                  type="button"
+                  class="text-xs text-blue-500 hover:underline mb-1"
+                  @click="toggleGiverDropdown"
+                >{{ showGiverDropdown ? 'Hide user selector' : 'Select from Users' }}</button>
+                <el-select
+                  v-if="showGiverDropdown"
+                  v-model="selectedGiverUser"
+                  clearable
+                  filterable
+                  placeholder="Pick a user (optional)"
+                  size="small"
+                  class="w-full"
+                >
+                  <el-option
+                    v-for="u in usersForDropdown"
+                    :key="u.mobile"
+                    :label="`${u.name} (${u.displayMobile})`"
+                    :value="u.mobile"
+                  />
+                </el-select>
+              </div>
               <GenericInput
                 :rows="1"
                 v-model="formData.loanGiverMobile"
@@ -87,7 +110,7 @@
                 type="textarea"
                 placeholder="e.g. 03001234567"
                 :maxlength="15"
-                :disabled="isMeGiver"
+                :disabled="isMeGiver || !!selectedGiverUser"
                 @blur="onGiverMobileBlur"
               />
               <GenericInput
@@ -99,7 +122,7 @@
                 type="textarea"
                 placeholder="Loan Giver Name"
                 :maxlength="50"
-                :disabled="isMeGiver"
+                :disabled="isMeGiver || !!selectedGiverUser"
               />
             </div>
 
@@ -111,6 +134,29 @@
                 size="small"
                 class="absolute top-0 right-0 z-10 text-xs"
               >ME?</el-checkbox>
+              <div v-if="!isMeReceiver" class="mb-1">
+                <button
+                  type="button"
+                  class="text-xs text-blue-500 hover:underline mb-1"
+                  @click="toggleReceiverDropdown"
+                >{{ showReceiverDropdown ? 'Hide user selector' : 'Select from Users' }}</button>
+                <el-select
+                  v-if="showReceiverDropdown"
+                  v-model="selectedReceiverUser"
+                  clearable
+                  filterable
+                  placeholder="Pick a user (optional)"
+                  size="small"
+                  class="w-full"
+                >
+                  <el-option
+                    v-for="u in usersForDropdown"
+                    :key="u.mobile"
+                    :label="`${u.name} (${u.displayMobile})`"
+                    :value="u.mobile"
+                  />
+                </el-select>
+              </div>
               <GenericInput
                 :rows="1"
                 v-model="formData.loanReceiverMobile"
@@ -120,7 +166,7 @@
                 type="textarea"
                 placeholder="e.g. 03001234567"
                 :maxlength="15"
-                :disabled="isMeReceiver"
+                :disabled="isMeReceiver || !!selectedReceiverUser"
                 @blur="onReceiverMobileBlur"
               />
               <GenericInput
@@ -132,7 +178,7 @@
                 type="textarea"
                 placeholder="Loan Receiver Name"
                 :maxlength="50"
-                :disabled="isMeReceiver"
+                :disabled="isMeReceiver || !!selectedReceiverUser"
               />
             </div>
 
@@ -230,6 +276,7 @@
 </template>
 
 <script setup>
+import { ref } from 'vue'
 import { rules } from '../assets/validation-rules'
 import {
   AmountInput,
@@ -267,8 +314,24 @@ const {
   onReceiverMobileBlur,
   isMeGiver,
   isMeReceiver,
-  copyToExpenses
+  copyToExpenses,
+  selectedGiverUser,
+  selectedReceiverUser,
+  usersForDropdown
 } = LoanForm(props, emit)
+
+const showGiverDropdown = ref(false)
+const showReceiverDropdown = ref(false)
+
+function toggleGiverDropdown() {
+  showGiverDropdown.value = !showGiverDropdown.value
+  if (!showGiverDropdown.value) selectedGiverUser.value = ''
+}
+
+function toggleReceiverDropdown() {
+  showReceiverDropdown.value = !showReceiverDropdown.value
+  if (!showReceiverDropdown.value) selectedReceiverUser.value = ''
+}
 
 defineExpose({
   validateForm

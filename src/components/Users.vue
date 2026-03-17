@@ -56,11 +56,22 @@
       placeholder="Search by name, mobile, or group..."
       clearable
       size="small"
-      class="mb-3"
+      class="mb-2"
       :maxlength="50"
     >
       <template #prefix><span class="text-gray-400">🔍</span></template>
     </el-input>
+    <!-- Sort & Filter controls -->
+    <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+      <el-button-group size="small">
+        <el-button :type="sortOrder === '' ? 'primary' : ''" @click="sortOrder = ''">Default</el-button>
+        <el-button :type="sortOrder === 'asc' ? 'primary' : ''" @click="sortOrder = 'asc'">A→Z</el-button>
+        <el-button :type="sortOrder === 'desc' ? 'primary' : ''" @click="sortOrder = 'desc'">Z→A</el-button>
+      </el-button-group>
+      <el-checkbox v-model="sharedGroupsOnly" size="small">Shared groups only</el-checkbox>
+    </div>
+
+
     <!-- Header row — visible only on larger screens -->
     <div
       class="hidden sm:flex sm:items-center gap-3 px-3 mt-3 text-xs font-semibold text-gray-500 uppercase tracking-wide"
@@ -263,6 +274,8 @@ import GroupsCreate from './GroupsCreate.vue'
 
 const {
   searchQuery,
+  sortOrder,
+  sharedGroupsOnly,
   filteredUsers,
   editDialogVisible,
   editForm,

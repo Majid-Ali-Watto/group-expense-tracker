@@ -21,7 +21,7 @@
     </div>
 
     <!-- Search Bar -->
-    <div class="mb-4">
+    <div class="mb-2">
       <el-input
         v-model="searchQuery"
         placeholder="Search by group name, code, owner, or member..."
@@ -34,6 +34,29 @@
           <span class="text-gray-400">🔍</span>
         </template>
       </el-input>
+    </div>
+
+    <!-- Sort & Filter controls -->
+    <div class="flex flex-wrap justify-between items-center gap-2 mb-4">
+      <el-button-group size="small">
+        <el-button :type="sortOrder === '' ? 'primary' : ''" @click="sortOrder = ''">Default</el-button>
+        <el-button :type="sortOrder === 'asc' ? 'primary' : ''" @click="sortOrder = 'asc'">A→Z</el-button>
+        <el-button :type="sortOrder === 'desc' ? 'primary' : ''" @click="sortOrder = 'desc'">Z→A</el-button>
+      </el-button-group>
+      <el-select
+        v-model="filterByUser"
+        clearable
+        placeholder="Filter by member"
+        size="small"
+        class="w-[150px] max-w-[200px]"
+      >
+        <el-option
+          v-for="u in allGroupMembers"
+          :key="u.mobile"
+          :label="u.name"
+          :value="u.mobile"
+        />
+      </el-select>
     </div>
     <!-- Pending Invitations -->
     <div v-if="pendingInvitations.length > 0" class="mb-4">
@@ -437,6 +460,9 @@ const {
   // Refs / reactive
   showCreateGroup,
   searchQuery,
+  sortOrder,
+  filterByUser,
+  allGroupMembers,
   joinedGroups,
   otherGroups,
   pendingInvitations,

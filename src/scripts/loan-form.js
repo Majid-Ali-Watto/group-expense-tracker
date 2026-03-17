@@ -1,4 +1,4 @@
-import { ref, watch, computed } from 'vue'
+import { ref, watch, computed, nextTick } from 'vue'
 import { useUsersOptions } from '../utils/useUsersOptions'
 import getWhoAddedTransaction from '../utils/whoAdded'
 import useFireBase from '../api/firebase-apis'
@@ -8,6 +8,7 @@ import {
   deleteFromCloudinary
 } from '../utils/cloudinaryUpload'
 import { showError } from '../utils/showAlerts'
+import { maskMobile } from '../utils/maskMobile'
 import { buildRequestMeta } from '../utils/buildRequestMeta'
 import getCurrentMonth from '../utils/getCurrentMonth'
 
@@ -29,6 +30,10 @@ export const LoanForm = (props, emit) => {
     }
     isMeGiver.value = false
     isMeReceiver.value = false
+    selectedGiverUser.value = ''
+    selectedReceiverUser.value = ''
+    giverRealMobile.value = ''
+    receiverRealMobile.value = ''
     copyToExpenses.value = false
     receiptFile.value = null
     if (fileInputRef.value) fileInputRef.value.value = ''
@@ -69,6 +74,24 @@ export const LoanForm = (props, emit) => {
     () => userStore.getUserByMobile(activeUser.value)?.name || ''
   )
 
+  // ========== Select from Users (personal loans) ==========
+  const selectedGiverUser = ref('')
+  const selectedReceiverUser = ref('')
+  // Real (unmasked) mobile when a user was picked from the dropdown
+  const giverRealMobile = ref('')
+  const receiverRealMobile = ref('')
+
+  const usersForDropdown = computed(() => {
+    const me = activeUser.value
+    return (userStore.getUsers || [])
+      .map((u) => ({
+        mobile: u.mobile,
+        name: u.name || u.mobile,
+        displayMobile: u.mobile === me ? u.mobile : (u.maskedMobile || maskMobile(u.mobile))
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name))
+  })
+
   // ========== Copy to Personal Expenses ==========
   const copyToExpenses = ref(false)
 
@@ -90,6 +113,8 @@ export const LoanForm = (props, emit) => {
   watch(isMeGiver, (val) => {
     if (val) {
       isMeReceiver.value = false
+      selectedGiverUser.value = ''
+      giverRealMobile.value = ''
       if (props.isPersonal) {
         formData.value.loanGiverMobile = activeUser.value
         formData.value.loanGiver = activeUserName.value
@@ -97,6 +122,8 @@ export const LoanForm = (props, emit) => {
         formData.value.loanGiver = activeUser.value
       }
     } else {
+      selectedGiverUser.value = ''
+      giverRealMobile.value = ''
       if (props.isPersonal) {
         formData.value.loanGiverMobile = ''
         formData.value.loanGiver = ''
@@ -108,6 +135,8 @@ export const LoanForm = (props, emit) => {
 
   watch(isMeReceiver, (val) => {
     if (val) {
+      selectedReceiverUser.value = ''
+      receiverRealMobile.value = ''
       if (props.isPersonal) {
         formData.value.loanReceiverMobile = activeUser.value
         formData.value.loanReceiver = activeUserName.value
@@ -115,6 +144,8 @@ export const LoanForm = (props, emit) => {
         formData.value.loanReceiver = activeUser.value
       }
     } else {
+      selectedReceiverUser.value = ''
+      receiverRealMobile.value = ''
       if (props.isPersonal) {
         formData.value.loanReceiverMobile = ''
         formData.value.loanReceiver = ''
@@ -122,6 +153,48 @@ export const LoanForm = (props, emit) => {
         formData.value.loanReceiver = ''
       }
     }
+  })
+
+  watch(selectedGiverUser, async (mobile) => {
+    if (!mobile) {
+      giverRealMobile.value = ''
+      return
+    }
+    const user = userStore.getUserByMobile(mobile)
+    if (!user) return
+    if (mobile === activeUser.value) {
+      // Let isMeGiver watcher handle field setting
+      isMeGiver.value = true
+      return
+    }
+    // Uncheck ME? first if it was set, wait for its watcher to clear fields
+    if (isMeGiver.value) {
+      isMeGiver.value = false
+      await nextTick()
+    }
+    giverRealMobile.value = mobile
+    formData.value.loanGiverMobile = user.maskedMobile || maskMobile(mobile)
+    formData.value.loanGiver = user.name || ''
+  })
+
+  watch(selectedReceiverUser, async (mobile) => {
+    if (!mobile) {
+      receiverRealMobile.value = ''
+      return
+    }
+    const user = userStore.getUserByMobile(mobile)
+    if (!user) return
+    if (mobile === activeUser.value) {
+      isMeReceiver.value = true
+      return
+    }
+    if (isMeReceiver.value) {
+      isMeReceiver.value = false
+      await nextTick()
+    }
+    receiverRealMobile.value = mobile
+    formData.value.loanReceiverMobile = user.maskedMobile || maskMobile(mobile)
+    formData.value.loanReceiver = user.name || ''
   })
 
   watch(
@@ -180,9 +253,9 @@ export const LoanForm = (props, emit) => {
         // Personal loan guard: logged-in user must be either giver or receiver
         if (props.isPersonal) {
           const giverMobile =
-            formData.value.loanGiverMobile || formData.value.loanGiver
+            giverRealMobile.value || formData.value.loanGiverMobile || formData.value.loanGiver
           const receiverMobile =
-            formData.value.loanReceiverMobile || formData.value.loanReceiver
+            receiverRealMobile.value || formData.value.loanReceiverMobile || formData.value.loanReceiver
           if (giverMobile === receiverMobile) {
             showError('Giver and Receiver cannot be the same person.')
             return
@@ -416,13 +489,13 @@ export const LoanForm = (props, emit) => {
 
   function getLoanData(receiptUrl = null, receiptMeta = null) {
     const giverMobile =
-      props.isPersonal && formData.value.loanGiverMobile
-        ? formData.value.loanGiverMobile
+      props.isPersonal
+        ? (giverRealMobile.value || formData.value.loanGiverMobile || formData.value.loanGiver)
         : formData.value.loanGiver
 
     const receiverMobile =
-      props.isPersonal && formData.value.loanReceiverMobile
-        ? formData.value.loanReceiverMobile
+      props.isPersonal
+        ? (receiverRealMobile.value || formData.value.loanReceiverMobile || formData.value.loanReceiver)
         : formData.value.loanReceiver
 
     const loan = {
@@ -463,6 +536,9 @@ export const LoanForm = (props, emit) => {
     onReceiverMobileBlur,
     isMeGiver,
     isMeReceiver,
-    copyToExpenses
+    copyToExpenses,
+    selectedGiverUser,
+    selectedReceiverUser,
+    usersForDropdown
   }
 }

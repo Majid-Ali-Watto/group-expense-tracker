@@ -20,6 +20,7 @@ export const Table = (props) => {
   const lastClickTime = ref(0)
   const doubleClickThreshold = 300
   const dialogFormVisible = ref(false)
+  const deleteMode = ref(false)
   const state = reactive({ row: null })
   const screenWidth = ref(window.innerWidth)
   const tabStore = store()
@@ -232,6 +233,31 @@ export const Table = (props) => {
         doubleClickThreshold
       )
     }
+  }
+
+  const openForDelete = (rowS, rowIndex) => {
+    if (rowS.deleteRequest || rowS.updateRequest) {
+      const requestType = rowS.deleteRequest ? 'delete' : 'update'
+      const requester =
+        rowS.deleteRequest?.requestedBy || rowS.updateRequest?.requestedBy
+      const currentUser = tabStore.getActiveUser
+      if (requester === currentUser) {
+        ElMessage.info(
+          `You have a pending ${requestType} request. Please wait for approval or cancel it from the pending requests section.`
+        )
+      } else {
+        ElMessage.warning(
+          `This item has a pending ${requestType} request. Please approve or reject it before making changes.`
+        )
+      }
+      return
+    }
+    let date = rowS.date?.split(',')[0].split('/').reverse().join('-')
+    let time = rowS.date?.split(',')[1]
+    date = date + ', ' + time
+    deleteMode.value = true
+    dialogFormVisible.value = true
+    state.row = { ...rowS, date, id: props.keys[rowIndex] }
   }
 
   // Converts a rendered el-table element into a plain <table> by reading
@@ -506,6 +532,7 @@ export const Table = (props) => {
   return {
     tabStore,
     dialogFormVisible,
+    deleteMode,
     state,
     childRef,
     activeTabComponent,
@@ -518,6 +545,9 @@ export const Table = (props) => {
     remove,
     duplicate,
     handleRowClick,
+    handleClick,
+    handleDoubleClick,
+    openForDelete,
     downloadExcelData,
     downloadPdfData
   }

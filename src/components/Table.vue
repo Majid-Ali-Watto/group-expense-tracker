@@ -41,7 +41,17 @@
     >
       <!-- Sortable header cell -->
       <template #header-cell="{ column }">
+        <!-- Actions column: no sort -->
         <div
+          v-if="column.key === '__actions__'"
+          class="flex items-center justify-center w-full"
+          style="overflow: hidden;"
+        >
+          <span class="text-sm font-semibold uppercase tracking-wide" style="color: #ffffff !important;">Actions</span>
+        </div>
+        <!-- Regular sortable header -->
+        <div
+          v-else
           class="flex items-center gap-1 w-full select-none"
           style="cursor: pointer; overflow: hidden;"
           @click.stop="toggleSort(column.key)"
@@ -178,6 +188,24 @@
           <template v-else>—</template>
         </span>
 
+        <!-- actions -->
+        <div v-else-if="column.key === '__actions__'" class="et-actions-cell" @click.stop>
+          <el-dropdown
+            trigger="click"
+            placement="bottom-end"
+            @command="(cmd) => handleTableAction(cmd, rowData)"
+          >
+            <button class="et-actions-btn" @click.stop>&#8942;</button>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item v-if="showPopup" command="edit">&#9998; Edit / Duplicate</el-dropdown-item>
+                <el-dropdown-item v-if="showPopup" command="delete" class="et-action-delete">&#128465; Delete</el-dropdown-item>
+                <el-dropdown-item command="info">&#128712; Added By</el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+        </div>
+
         <!-- default -->
         <span
           v-else
@@ -213,26 +241,53 @@
       destroy-on-close
       v-model="dialogFormVisible"
       :width="dialogWidth + 'px'"
+      @close="deleteMode = false"
     >
       <template #header>
         <div class="dialog-header">
-          <strong>Delete or Update</strong>
+          <strong v-if="deleteMode">Confirm Delete</strong>
+          <strong v-else>Edit Record</strong>
         </div>
       </template>
+
+      <!-- Delete-mode: show confirmation message; form is rendered hidden so remove() can use it -->
+      <template v-if="deleteMode">
+        <div class="et-delete-confirm">
+          <div class="et-delete-confirm__icon">🗑️</div>
+          <p class="et-delete-confirm__msg">Are you sure you want to delete this record?<br><span class="et-delete-confirm__sub">This action cannot be undone.</span></p>
+        </div>
+        <div style="display:none; height:0; overflow:hidden; pointer-events:none;">
+          <HOC
+            :componentToBeRendered="activeTabComponent()"
+            :componentProps="dialogComponentProps"
+            :listenersToPass="{ closeModal: () => { dialogFormVisible = false } }"
+            ref="childRef"
+          />
+        </div>
+      </template>
+
+      <!-- Edit mode: show form normally -->
       <HOC
+        v-else
         :componentToBeRendered="activeTabComponent()"
         :componentProps="dialogComponentProps"
         :listenersToPass="{ closeModal: () => (dialogFormVisible = false) }"
         ref="childRef"
       />
+
       <template #footer>
         <div class="dialog-footer">
-          <BottomButtons
-            @update="update"
-            @delete="remove"
-            @duplicate="duplicate"
-            @cancel="dialogFormVisible = false"
-          />
+          <!-- Delete mode footer -->
+          <template v-if="deleteMode">
+            <el-button type="danger" size="small" @click="remove">Yes, Delete</el-button>
+            <el-button size="small" @click="dialogFormVisible = false">Cancel</el-button>
+          </template>
+          <!-- Edit mode footer -->
+          <template v-else>
+            <el-button type="warning" size="small" @click="update">Update</el-button>
+            <el-button type="primary" size="small" @click="duplicate">Duplicate</el-button>
+            <el-button type="success" size="small" @click="dialogFormVisible = false">Cancel</el-button>
+          </template>
         </div>
       </template>
     </el-dialog>
@@ -278,7 +333,6 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { Search as SearchIcon } from '@element-plus/icons-vue'
-import BottomButtons from './BottomButtons.vue'
 import GenericButton from './generic-components/GenericButton.vue'
 import HOC from './HOC.vue'
 import { Table } from '../scripts/table'
@@ -313,6 +367,7 @@ const props = defineProps({
 const {
   tabStore,
   dialogFormVisible,
+  deleteMode,
   activeTabComponent,
   dialogComponentProps,
   isDownloadAvailable,
@@ -322,7 +377,9 @@ const {
   update,
   remove,
   duplicate,
-  handleRowClick,
+  handleClick,
+  handleDoubleClick,
+  openForDelete,
   downloadExcelData,
   downloadPdfData,
   childRef,
@@ -401,17 +458,23 @@ const filteredSortedRows = computed(() => {
 
 // --- Column definitions (equal-width, min 150px per column) ---
 const MIN_COL_WIDTH = 150
+const ACTIONS_COL_WIDTH = 80
 const tableColumns = computed(() => {
   if (!headers.value.length) return []
   const count = headers.value.length
-  const colWidth = Math.max(MIN_COL_WIDTH, Math.floor(containerWidth.value / count))
-  return headers.value.map((h) => ({
+  const availableWidth = containerWidth.value - ACTIONS_COL_WIDTH
+  const colWidth = Math.max(MIN_COL_WIDTH, Math.floor(availableWidth / count))
+  const dataCols = headers.value.map((h) => ({
     key: h.key,
     dataKey: h.key,
     title: h.label,
     width: colWidth,
     align: 'left'
   }))
+  return [
+    ...dataCols,
+    { key: '__actions__', dataKey: '__actions__', title: 'Actions', width: ACTIONS_COL_WIDTH, align: 'center' }
+  ]
 })
 
 // tableWidth = sum of all column widths so nothing gets clipped
@@ -421,23 +484,14 @@ const tableWidth = computed(() => {
   return tableColumns.value.reduce((sum, col) => sum + col.width, 0)
 })
 
-// --- Row event handlers (single/double-click logic lives in handleRowClick) ---
+// --- Row event handlers (cell popup only — actions handled via Actions column) ---
 const rowEventHandlers = computed(() => ({
-  onClick: ({ event, rowData }) => {
-    // If the click landed on a truncated et-cell-text, show the full text popup
+  onClick: ({ event }) => {
     const cellEl = event?.target?.closest?.('.et-cell-text')
     if (cellEl && cellEl.scrollWidth > cellEl.clientWidth) {
       const title = cellEl.getAttribute('data-cell-title') || ''
       const text = cellEl.textContent?.trim() || ''
-      if (text) {
-        openCellPopup(title, text)
-        return
-      }
-    }
-    // Normal single / double-click row logic
-    if (props.showPopup) {
-      const { _origIndex, ...cleanRow } = rowData
-      handleRowClick(cleanRow, _origIndex)
+      if (text) openCellPopup(title, text)
     }
   }
 }))
@@ -479,6 +533,27 @@ function openShowMore(title, items) {
   showMoreTitle.value = title
   showMoreItems.value = items
   showMoreDialogVisible.value = true
+}
+
+function doEdit(rowData) {
+  deleteMode.value = false
+  const { _origIndex, ...cleanRow } = rowData
+  handleClick(cleanRow, _origIndex)
+}
+
+function doDelete(rowData) {
+  const { _origIndex, ...cleanRow } = rowData
+  openForDelete(cleanRow, _origIndex)
+}
+
+function doInfo(rowData) {
+  handleDoubleClick(rowData)
+}
+
+function handleTableAction(command, rowData) {
+  if (command === 'edit') doEdit(rowData)
+  else if (command === 'delete') doDelete(rowData)
+  else if (command === 'info') doInfo(rowData)
 }
 </script>
 
@@ -595,7 +670,7 @@ function openShowMore(title, items) {
 /* ── Row base & cursor ───────────────────────────────────── */
 .expense-table-v2 .el-table-v2__row {
   background-color: var(--card-bg);
-  cursor: pointer;
+  cursor: default;
 }
 
 /* ── Cell borders and text color (CSS vars auto-flip) ────── */
@@ -673,5 +748,69 @@ function openShowMore(title, items) {
 .dark-theme .expense-table-v2 .et-row--update:hover,
 .dark-theme .expense-table-v2 .et-row--update.is-hovered {
   background-color: rgba(154, 52, 18, 0.3) !important; /* orange-900/30 */
+}
+
+/* ── Actions column ─────────────────────────────────────── */
+.et-actions-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.et-actions-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--text-secondary);
+  padding: 4px 10px;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  letter-spacing: 0;
+}
+
+.et-actions-btn:hover {
+  background: var(--bg-secondary);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+/* ── Delete dropdown item ───────────────────────────────── */
+:global(.et-action-delete) {
+  color: #ef4444 !important;
+}
+:global(.et-action-delete:hover),
+:global(.et-action-delete:focus) {
+  background-color: rgb(254 242 242) !important;
+  color: #dc2626 !important;
+}
+
+/* ── Delete confirmation dialog body ───────────────────── */
+.et-delete-confirm {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 8px 4px;
+  text-align: center;
+}
+.et-delete-confirm__icon { font-size: 2.5rem; line-height: 1; }
+.et-delete-confirm__msg {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.5;
+  margin: 0;
+}
+.et-delete-confirm__sub {
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: var(--text-secondary);
 }
 </style>

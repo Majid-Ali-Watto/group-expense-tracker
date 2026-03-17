@@ -18,6 +18,8 @@ export const Users = () => {
   const activeUser = computed(() => userStore.getActiveUser)
 
   const searchQuery = ref('')
+  const sortOrder = ref('') // '' | 'asc' | 'desc'
+  const sharedGroupsOnly = ref(false)
 
   const activeGroupMobiles = computed(() => {
     const groupId = userStore.getActiveGroup
@@ -43,14 +45,35 @@ export const Users = () => {
 
   const filteredUsers = computed(() => {
     const query = searchQuery.value.toLowerCase().trim()
-    if (!query) return users.value
-    return users.value.filter((u) => {
-      return (
-        u.name.toLowerCase().includes(query) ||
-        displayMobile(u.mobile).toLowerCase().includes(query) ||
-        getUserGroups(u.mobile).some((g) => g.toLowerCase().includes(query))
+    let result = users.value
+
+    if (query) {
+      result = result.filter((u) => {
+        return (
+          u.name.toLowerCase().includes(query) ||
+          displayMobile(u.mobile).toLowerCase().includes(query) ||
+          getUserGroups(u.mobile).some((g) => g.toLowerCase().includes(query))
+        )
+      })
+    }
+
+    if (sharedGroupsOnly.value) {
+      const me = activeUser.value
+      const sharedMobiles = new Set(
+        groups.value
+          .filter((g) => g.members?.some((m) => m.mobile === me))
+          .flatMap((g) => g.members?.map((m) => m.mobile) || [])
       )
-    })
+      result = result.filter((u) => u.mobile !== me && sharedMobiles.has(u.mobile))
+    }
+
+    if (sortOrder.value === 'asc') {
+      result = [...result].sort((a, b) => a.name.localeCompare(b.name))
+    } else if (sortOrder.value === 'desc') {
+      result = [...result].sort((a, b) => b.name.localeCompare(a.name))
+    }
+
+    return result
   })
 
   // Load full user data (app.js only loads minimal fields)
@@ -348,6 +371,8 @@ export const Users = () => {
 
   return {
     searchQuery,
+    sortOrder,
+    sharedGroupsOnly,
     filteredUsers,
     editDialogVisible,
     editForm,
