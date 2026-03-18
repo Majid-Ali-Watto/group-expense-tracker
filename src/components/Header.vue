@@ -75,6 +75,14 @@
 
       <!-- Desktop buttons - visible on screens >= 640px -->
       <div class="hidden sm:flex items-center gap-2">
+        <!-- Help — always visible -->
+        <button class="theme-btn" @click="showHelp = true" title="Help">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </button>
+
         <!-- Theme toggle — always visible -->
         <button
           class="theme-btn"
@@ -159,8 +167,18 @@
         </button>
         <template #dropdown>
           <el-dropdown-menu class="mobile-dropdown-menu">
+            <!-- Help — always visible -->
+            <el-dropdown-item @click="showHelp = true">
+              <div class="flex items-center gap-3">
+                <svg class="w-5 h-5 menu-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Help</span>
+              </div>
+            </el-dropdown-item>
             <!-- Expenses Summary - only when logged in -->
-            <el-dropdown-item v-if="loggedIn" @click="handleNetPosition">
+            <el-dropdown-item v-if="loggedIn" @click="handleNetPosition" divided>
               <div class="flex items-center gap-3">
                 <el-icon class="menu-icon" :size="20"><DataAnalysis /></el-icon>
                 <span>Expenses Summary</span>
@@ -213,18 +231,29 @@
       </el-dropdown>
     </div>
   </el-header>
+
+  <!-- Help Dialog — rendered outside el-header so it can overlay correctly -->
+  <HelpDialog
+    v-model="showHelp"
+    :loggedIn="loggedIn"
+    :isDarkTheme="isDarkTheme"
+    :toggleTheme="toggleTheme"
+    @logout="confirmLogout"
+  />
 </template>
 
 <script>
 import { ref } from 'vue'
 import { SwitchButton, DataAnalysis } from '@element-plus/icons-vue'
 import { ElMessageBox } from 'element-plus'
+import HelpDialog from './generic-components/HelpDialog.vue'
 
 export default {
   name: 'AppHeader',
   components: {
     DataAnalysis,
-    SwitchButton
+    SwitchButton,
+    HelpDialog
   },
   props: {
     loggedIn: { type: Boolean, default: false },
@@ -237,6 +266,7 @@ export default {
 
   setup(_, { emit }) {
     const notifVisible = ref(false)
+    const showHelp = ref(false)
 
     function setLoggedInStatus() {
       emit('click-log', false)
@@ -270,6 +300,7 @@ export default {
 
     return {
       notifVisible,
+      showHelp,
       setLoggedInStatus,
       confirmLogout,
       handleNetPosition,

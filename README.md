@@ -61,7 +61,7 @@ npx -y gsutil cors set cors.json gs://<your-storage-bucket>
 
 ## Authentication & Session Flow
 - **Login / Register:** Users enter name, mobile (PK), and a password. New users set the code and receive printable recovery passcodes (see `src/scripts/login.js`).
-- **Recovery:** “Forgot password” consumes one recovery passcode; on last code, fresh codes are generated and shown.
+- **Recovery:** "Forgot password" consumes one recovery passcode; on last code, fresh codes are generated and shown.
 - **Session hardening:** A random token is encrypted twice (AES-GCM in sessionStorage, AES-CBC in Pinia). Every tab change and a 5‑minute timer re-verify token + loginCode on Firebase; failures force logout.
 - **Remember Me:** Stores name/mobile/loginCode in `localStorage` for prefill only (session still crypto-based).
 
@@ -90,10 +90,10 @@ npx -y gsutil cors set cors.json gs://<your-storage-bucket>
 - Member changes trigger an edit request. All affected members (existing, added, removed) must approve; on success the membership list is replaced.
 
 **Adding members (non-owner)**
-- Any member can propose an add-member request; all members approve, then owner clicks “Add Member Now”.
+- Any member can propose an add-member request; all members approve, then owner clicks "Add Member Now".
 
 **Deletion**
-- Owner starts a delete request; unanimous member approval is required, then owner can “Delete Now”.
+- Owner starts a delete request; unanimous member approval is required, then owner can "Delete Now".
 
 **Ownership transfer**
 - Owner proposes a new owner; all members approve to finalize.
@@ -102,11 +102,15 @@ npx -y gsutil cors set cors.json gs://<your-storage-bucket>
 - Per-user notifications stored under `group.notifications[mobile]`. Users can dismiss locally.
 
 **Balances snapshot**
-- “Your Position” card computes (current month) net for shared expenses and shared loans to show what you owe/receive.
+- "Your Position" card computes (current month) net for shared expenses and shared loans to show what you will receive or need to pay.
+
+**Filter & Sort**
+- Sort groups alphabetically A–Z or Z–A.
+- Filter by member: dropdown lists all group members; selecting one shows only groups containing that person.
 
 ---
 
-## Shared Expenses (tab: “Shared Expenses”)
+## Shared Expenses (tab: "Shared Expenses")
 Component stack: `PaymentForm.vue` → `ExpenseList.vue` → `Table.vue`
 
 **Add / edit payments**
@@ -121,54 +125,96 @@ Component stack: `PaymentForm.vue` → `ExpenseList.vue` → `Table.vue`
 - Rejections notify the requester; approvals auto-apply change (and prune replaced Cloudinary files).
 - Pending requests surface at top of ExpenseList; Table rows are locked while a request is open.
 
+**Expense Summary accordion**
+- Shows total spent, per-payer totals, and per-person share.
+- Visual charts: donut chart for payer share proportions and bar chart for per-person amounts.
+
 **Exports & history**
 - Table supports PDF (html2pdf) and Excel (xlsx) downloads.
-- Settled months move to `payments-backup` and appear under the “History” tab (read-only).
+- Settled months move to `payments-backup` and appear under the "History" tab (read-only).
 
 ---
 
 ## Settlement Flow (src/components/Settlement.vue)
-- Computes pairwise “who pays whom” from current month’s expenses.
+- Computes pairwise "who pays whom" from current month's expenses.
 - Any member may request settlement for the month; all members must approve.
 - Admin (group owner) can finalize once approvals are unanimous: moves `payments/{groupId}/{month}` to `payments-backup` and clears live data.
 - Requests can be canceled/rejected; approvals tracked on `group.settlementRequest`.
 
 ---
 
-## Shared Loans (tab: “Shared Loans”)
+## Shared Loans (tab: "Shared Loans")
 - Guarded: if a group has >2 members, shows a warning (loans work best between two people).
 - Add loans with giver/receiver, description, optional receipt (Cloudinary), auto-stamped dates.
 - Updates/deletes follow the same unanimous approval flow as expenses.
 - Balances table shows who is net lender/debtor across loaded month.
+- Loan Summary accordion with donut and bar charts for visual breakdown.
 
 ---
 
 ## Personal Budgeting
-**Monthly Salary & Expenses (tab: “Personal Expenses”)**
+**Monthly Salary & Expenses (tab: "Personal Expenses")**
 - Salary per month (`salaries/{mobile}/{month}`) with live display and remaining budget.
 - Personal expenses with receipts; month filter; PDF/Excel export.
 
-**Personal Loans (tab: “Personal Loans”)**
-- Loans stored per-user; month filter or “All”.
-- Summary cards: total lending, total debting, net position.
-- Pairwise settlements show exact who-owes-whom across personal loans.
+**Personal Loans (tab: "Personal Loans")**
+- Loans stored per-user; month filter or "All".
+- **Filter by Giver:** dropdown to show only loans from a specific person.
+- **Select from Users:** dropdown on giver/receiver fields to auto-fill name and masked mobile from registered users. Toggle shown via "Select from Users" link; hidden by default.
+- **ME? Checkbox:** quickly fills your own details as giver or receiver.
+- Summary cards: total you gave, total you received, net balance.
+- Donut chart (gave vs. received) and bar chart (settlement amounts) inside the Loan Summary accordion.
+- Pairwise settlements show exact who-pays-whom across all personal loans.
+- PDF/Excel export.
 
 ---
 
-## Users Admin (tab: “Users”)
-- Add users (mobile is ID). Initial loginCode is `null` so the user must set it on first login.
-- Reset password: sets `loginCode=null` so the user recreates it and gets new recovery codes.
-- Rename / delete with approvals:
-  - If the user is in groups, all relevant group owners must approve the update/delete request.
-  - Pending requests appear in “Pending Approvals” for approvers; actions recorded back to Firebase.
-- Mobile numbers are masked outside the current group for privacy.
+## Users (tab: "Users")
+- Browse all registered users; mobile numbers are masked for privacy.
+- Search by name or mobile.
+- **Sort:** alphabetical A–Z or Z–A buttons.
+- **Shared Groups Only:** checkbox to filter to users who share at least one group with you.
+- Each user card shows which groups they belong to.
+- **Admin actions:** add users, reset password (sets loginCode=null so the user recreates it), rename/delete with group-owner approvals.
 
 ---
 
-## Notifications Overview
+## Notifications
 - Group-level: join/edit/add-member/delete/ownership actions use `group.notifications`.
-- Expense/Loan-level: approval/rejection notices stored per user under each record’s `notifications`.
+- Expense/Loan-level: approval/rejection notices stored per user under each record's `notifications`.
+- Bell icon in header shows count of pending actions. Tap any notification to jump to the relevant section.
 - UI components: `NotificationsForCurrentUser.vue` and `GroupNotificationsForCurrentUser.vue`; dismiss just removes your copy.
+
+---
+
+## Expenses Summary Dialog (header button)
+- Accessible from the header on every page (desktop button + mobile hamburger menu).
+- Shows complete financial picture across all groups and loan types:
+  - Total you will receive vs. total you need to pay (Shared Expenses, Shared Loans, Personal Loans).
+  - Net position: positive means others pay you; negative means you pay others.
+- **Charts:** donut chart for the overall receive/pay split; bar chart for per-category breakdown.
+- **Download PDF:** saves the full summary including charts as a formatted PDF.
+
+---
+
+## Charts & Visuals
+All charts are pure SVG/CSS — no external chart library dependency.
+
+- **DonutChart** (`src/components/generic-components/DonutChart.vue`): SVG stroke-dasharray donut, auto-colored segments, legend with values and percentages.
+- **BarChart** (`src/components/generic-components/BarChart.vue`): CSS percentage-width horizontal bars with animated transitions.
+- **Where they appear:**
+  - Shared Expenses → Expense Summary accordion
+  - Shared Loans → Loan Summary accordion
+  - Personal Loans → Loan Summary accordion
+  - Expenses Summary dialog (header)
+
+---
+
+## Help Dialog
+- Accessible from the header on every page, before and after login (desktop button + mobile menu).
+- Lists all app features in a collapsible accordion, written for new users.
+- Footer includes a theme toggle button and logout button (when logged in).
+- Full dark theme support.
 
 ---
 
@@ -180,8 +226,16 @@ Component stack: `PaymentForm.vue` → `ExpenseList.vue` → `Table.vue`
 ---
 
 ## Exports & Reporting
-- Table downloads: PDF (`html2pdf.js`) and Excel (`xlsx`).
-- Pairwise settlements, balances, and summaries are shown inline for quick reads.
+- **PDF:** `html2pdf.js` — captures the full page/section with styles, branding, and page numbers.
+- **Excel:** `xlsx` — exports all visible rows as a spreadsheet (.xlsx).
+- **Available on:** Shared Expenses list, Shared Loans list, Personal Loans list, Expenses Summary dialog.
+
+---
+
+## Theme & Appearance
+- Light / Dark mode toggle via the sun/moon icon in the header (or hamburger menu on mobile).
+- Theme preference saved to `localStorage` and restored on next visit.
+- All dialogs, charts, and custom components have explicit dark theme overrides.
 
 ---
 
@@ -193,17 +247,23 @@ Component stack: `PaymentForm.vue` → `ExpenseList.vue` → `Table.vue`
 - Settlements: `src/components/Settlement.vue`, `src/scripts/settlement.js`
 - Shared loans: `src/components/Loans.vue`, `src/scripts/loans.js`, `src/components/SharedLoansGuard.vue`
 - Personal budget: `src/components/monthly-sallary-expense-manager/*`, `src/components/personal-loans/PersonalLoans.vue`
+- Personal loans composable: `src/scripts/loan-form.js`, `src/scripts/personal-loans.js`
 - Groups: `src/components/Groups.vue`, `src/scripts/groups.js`, `src/helpers/users.js`
-- Users admin: `src/components/Users.vue`, `src/scripts/users.js`
+- Users: `src/components/Users.vue`, `src/scripts/users.js`
 - Auth & security: `src/components/Login.vue`, `src/scripts/login.js`, `src/utils/sessionCrypto.js`, `src/utils/passcodes.js`
+- Charts: `src/components/generic-components/DonutChart.vue`, `src/components/generic-components/BarChart.vue`
+- Expenses Summary: `src/components/generic-components/NetPositionDialog.vue`
+- Help: `src/components/generic-components/HelpDialog.vue`
+- Header: `src/components/Header.vue`
 
 ---
 
 ## Operational Notes & Gotchas
 - Approval rules are unanimous for group actions, expense/loan mutations, and settlements; design your UI/UX changes to respect that invariant.
-- Session verification runs every 5 minutes; devtools tweaks to Pinia/sessionStorage won’t bypass it.
+- Session verification runs every 5 minutes; devtools tweaks to Pinia/sessionStorage won't bypass it.
 - Group member visibility: mobile numbers are masked outside the active group; pass `displayMobileForGroup` helpers when adding new UI.
 - Shared loans are designed for two-party groups; larger groups only get a warning (not a hard block).
 - Receipts rely on Cloudinary; ensure the unsigned upload preset exists and is limited to images.
+- Charts are dependency-free (pure SVG/CSS); keep them that way to avoid bundle bloat.
 
 Happy hacking!
