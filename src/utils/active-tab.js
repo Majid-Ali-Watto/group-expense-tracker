@@ -4,11 +4,13 @@ const PersonalLoans = defineAsyncComponent(
   () => import('@/components/personal-loans/PersonalLoans.vue')
 )
 const PaymentForm = defineAsyncComponent(
-  () => import('@/components/PaymentForm.vue')
+  () => import('@/components/shared-expenses/PaymentForm.vue')
 )
-const LoanForm = defineAsyncComponent(() => import('@/components/LoanForm.vue'))
+const LoanForm = defineAsyncComponent(
+  () => import('@/components/shared-loans/LoanForm.vue')
+)
 const SharedLoansGuard = defineAsyncComponent(
-  () => import('@/components/SharedLoansGuard.vue')
+  () => import('@/components/shared-loans/SharedLoansGuard.vue')
 )
 const SalaryManager = defineAsyncComponent(
   () => import('@/components/monthly-sallary-expense-manager/Manager.vue')
@@ -16,9 +18,13 @@ const SalaryManager = defineAsyncComponent(
 const SalaryExpenseForm = defineAsyncComponent(
   () => import('@/components/monthly-sallary-expense-manager/ExpenseForm.vue')
 )
-const History = defineAsyncComponent(() => import('@/components/History.vue'))
-const Users = defineAsyncComponent(() => import('@/components/Users.vue'))
-const Groups = defineAsyncComponent(() => import('@/components/Groups.vue'))
+const History = defineAsyncComponent(
+  () => import('@/components/history/History.vue')
+)
+const Users = defineAsyncComponent(() => import('@/components/users/Users.vue'))
+const Groups = defineAsyncComponent(
+  () => import('@/components/groups/Groups.vue')
+)
 
 // Used for main tab content rendering
 export function getActiveTab(activeTab) {

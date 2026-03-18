@@ -56,7 +56,7 @@
 import { ref } from 'vue'
 import { rules } from '../../assets/validation-rules'
 import { GenericButton } from '../generic-components'
-import { SalaryForm } from '../../scripts/salary-form'
+import { SalaryForm } from '../../scripts/monthly-expenses/salary-form'
 
 const activePanel = ref([])
 

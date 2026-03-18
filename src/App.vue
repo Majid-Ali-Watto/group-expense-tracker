@@ -7,7 +7,6 @@
           @show-net-position="handleShowNetPosition"
           @navigate-to-tab="({ tab, groupId }) => navigateToTab(tab, groupId)"
           :loggedIn="loggedIn"
-          :user="tabStore.getActiveUser"
           :isDarkTheme="isDarkTheme"
           :toggleTheme="toggleTheme"
           :notifications="allNotifications"
@@ -71,19 +70,23 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, nextTick } from 'vue'
 import { svg } from './assets/loader-svg'
-import WelcomeBanner from './components/generic-components/WelcomeBanner.vue'
-import NetPositionDialog from './components/generic-components/NetPositionDialog.vue'
-import { App } from './scripts/app'
-import { useGlobalNotifications } from './utils/useGlobalNotifications'
+import { App } from './scripts/layout/app'
+import { defineAsyncComponent } from 'vue'
+const HOC = defineAsyncComponent(() => import('@/components/layout/HOC.vue'))
+const Login = defineAsyncComponent(() => import('@/components/auth/Login.vue'))
+const Header = defineAsyncComponent(
+  () => import('@/components/layout/Header.vue')
+)
+const WelcomeBanner = defineAsyncComponent(
+  () => import('@/components/generic-components/WelcomeBanner.vue')
+)
+const NetPositionDialog = defineAsyncComponent(
+  () => import('@/components/generic-components/NetPositionDialog.vue')
+)
 
 const {
-  HOC,
-  Login,
-  Header,
   loggedIn,
-  tabStore,
   tabs,
   displayName,
   activeTab,
@@ -95,44 +98,8 @@ const {
   showNetPositionDialog,
   netPositionSummary,
   handleShowNetPosition,
-  navigateToTab
+  navigateToTab,
+  allNotifications,
+  notificationCount
 } = App()
-
-// Initialize notification system only after successful login
-const allNotifications = ref([])
-const notificationCount = computed(() => allNotifications.value.length)
-let notificationCleanup = null
-
-// Watch for login state changes
-watch(
-  loggedIn,
-  (isLoggedIn) => {
-    if (isLoggedIn) {
-      // User logged in - initialize notifications in next tick to avoid blocking UI
-      nextTick(() => {
-        const { allNotifications: notifs, cleanup } = useGlobalNotifications()
-        
-        // Update refs reactively
-        watch(
-          notifs,
-          (newNotifs) => {
-            allNotifications.value = newNotifs
-          },
-          { immediate: true }
-        )
-        
-        // Store cleanup function
-        notificationCleanup = cleanup
-      })
-    } else {
-      // User logged out - cleanup notifications
-      if (notificationCleanup) {
-        notificationCleanup()
-        notificationCleanup = null
-      }
-      allNotifications.value = []
-    }
-  },
-  { immediate: true }
-)
 </script>

@@ -1,7 +1,10 @@
 <!-- eslint-disable vue/multi-word-component-names -->
 <template>
   <div v-if="hasData">
-    <p v-if="title" class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+    <p
+      v-if="title"
+      class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2"
+    >
       {{ title }}
     </p>
     <div class="flex flex-col sm:flex-row items-center gap-4">
@@ -14,7 +17,9 @@
       >
         <!-- Background ring -->
         <circle
-          cx="21" cy="21" r="15.9155"
+          cx="21"
+          cy="21"
+          r="15.9155"
           fill="transparent"
           stroke="#d1d5db"
           stroke-width="3.5"
@@ -23,7 +28,9 @@
         <circle
           v-for="(seg, i) in computedSegments"
           :key="i"
-          cx="21" cy="21" r="15.9155"
+          cx="21"
+          cy="21"
+          r="15.9155"
           fill="transparent"
           :stroke="seg.color"
           stroke-width="3.5"
@@ -44,7 +51,9 @@
             :style="`background: ${seg.color}`"
           ></span>
           <span class="text-gray-600 dark:text-gray-400">{{ seg.label }}</span>
-          <span class="font-semibold text-gray-900 dark:text-gray-100">{{ seg.formatted }}</span>
+          <span class="font-semibold text-gray-900 dark:text-gray-100">{{
+            seg.formatted
+          }}</span>
           <span class="text-gray-400 text-[10px]">({{ seg.pct }}%)</span>
         </div>
       </div>
@@ -57,8 +66,14 @@
 import { computed } from 'vue'
 
 const COLORS = [
-  '#3b82f6', '#22c55e', '#f59e0b', '#ef4444',
-  '#8b5cf6', '#06b6d4', '#f97316', '#ec4899'
+  '#3b82f6',
+  '#22c55e',
+  '#f59e0b',
+  '#ef4444',
+  '#8b5cf6',
+  '#06b6d4',
+  '#f97316',
+  '#ec4899'
 ]
 
 const props = defineProps({

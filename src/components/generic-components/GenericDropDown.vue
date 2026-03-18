@@ -20,7 +20,7 @@
 </template>
 
 <script setup>
-import { GenericDropDown } from '../../scripts/generic-dropdown'
+import { GenericDropDown } from '../../scripts/shared/generic-dropdown'
 
 const props = defineProps({
   modelValue: {

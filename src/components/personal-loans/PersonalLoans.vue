@@ -174,14 +174,20 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, defineAsyncComponent } from 'vue'
 import { useMobileScreen } from '../../utils/useMobileScreen'
 import { Filter } from '@element-plus/icons-vue'
-import LoanForm from '../LoanForm.vue'
-import Table from '../Table.vue'
-import { PersonalLoans } from '../../scripts/personal-loans'
-import DonutChart from '../generic-components/DonutChart.vue'
-import BarChart from '../generic-components/BarChart.vue'
+import Table from '../shared/Table.vue'
+import { PersonalLoans } from '../../scripts/personal-loans/personal-loans'
+const LoanForm = defineAsyncComponent(
+  () => import('../shared-loans/LoanForm.vue')
+)
+const DonutChart = defineAsyncComponent(
+  () => import('../generic-components/DonutChart.vue')
+)
+const BarChart = defineAsyncComponent(
+  () => import('../generic-components/BarChart.vue')
+)
 
 const {
   formatAmount,
@@ -201,7 +207,7 @@ const {
 } = PersonalLoans()
 
 const showFilters = ref(false)
-const openPanels = ref(['summary', 'settlements'])
+const openPanels = ref([])
 const { isMobileScreen } = useMobileScreen()
 
 const lendingDebtingSegments = computed(() => [

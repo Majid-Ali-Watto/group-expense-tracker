@@ -210,7 +210,9 @@
         >
           Waiting for members approval...
         </div>
-        <div v-else class="text-xs text-green-700 dark:text-green-400">✓ You have approved</div>
+        <div v-else class="text-xs text-green-700 dark:text-green-400">
+          ✓ You have approved
+        </div>
       </div>
     </div>
   </div>

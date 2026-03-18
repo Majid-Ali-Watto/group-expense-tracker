@@ -110,7 +110,7 @@
 <script setup>
 import { rules } from '../../assets/validation-rules'
 import { GenericButton, AmountInput, GenericInput } from '../generic-components'
-import { ExpenseForm } from '../../scripts/expense-form'
+import { ExpenseForm } from '../../scripts/monthly-expenses/expense-form'
 
 const emit = defineEmits(['closeModal', 'click'])
 const props = defineProps({

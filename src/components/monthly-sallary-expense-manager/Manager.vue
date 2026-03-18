@@ -26,15 +26,19 @@
 <script setup>
 import { defineAsyncComponent } from 'vue'
 import AddNewTransactionButton from '../generic-components/AddNewTransactionButton.vue'
-import HOC from '../HOC.vue'
+import HOC from '../layout/HOC.vue'
 import { ref } from 'vue'
 
 const AddSalary = defineAsyncComponent(() => import('./SalaryForm.vue'))
 const AddExpense = defineAsyncComponent(() => import('./ExpenseForm.vue'))
-const ExpenseList = defineAsyncComponent(() => import('./SalaryExpenseList.vue'))
+const ExpenseList = defineAsyncComponent(
+  () => import('./SalaryExpenseList.vue')
+)
 
 const showForm = ref(false)
-const setShowForm = () => { showForm.value = !showForm.value }
+const setShowForm = () => {
+  showForm.value = !showForm.value
+}
 </script>
 
 <style scoped>
@@ -51,7 +55,11 @@ const setShowForm = () => { showForm.value = !showForm.value }
   align-items: start;
 }
 @media (max-width: 600px) {
-  .manager-top { grid-template-columns: 1fr; }
+  .manager-top {
+    grid-template-columns: 1fr;
+  }
 }
-.manager-col { min-width: 0; }
+.manager-col {
+  min-width: 0;
+}
 </style>

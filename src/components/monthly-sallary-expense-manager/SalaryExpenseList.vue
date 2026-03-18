@@ -4,17 +4,24 @@
     <div class="sel-stats">
       <div class="sel-stat">
         <span class="sel-stat-label">Total Spent</span>
-        <span class="sel-stat-value sel-danger">{{ formatAmount(totalSpent) }}</span>
+        <span class="sel-stat-value sel-danger">{{
+          formatAmount(totalSpent)
+        }}</span>
       </div>
       <div class="sel-divider" />
       <div class="sel-stat">
         <span class="sel-stat-label">Remaining</span>
-        <span class="sel-stat-value sel-success">{{ formatAmount(remaining) }}</span>
+        <span class="sel-stat-value sel-success">{{
+          formatAmount(remaining)
+        }}</span>
       </div>
       <div class="sel-divider" />
       <div class="sel-stat sel-stat-end">
         <span class="sel-stat-label">Transactions</span>
-        <span class="sel-stat-value">{{ expenses.length }} <span class="sel-month">{{ selectedMonth }}</span></span>
+        <span class="sel-stat-value"
+          >{{ expenses.length }}
+          <span class="sel-month">{{ selectedMonth }}</span></span
+        >
       </div>
     </div>
 
@@ -22,12 +29,30 @@
     <div class="sel-filter no-print-pdf">
       <div class="sel-filter-toggle">
         <span class="sel-filter-label">Filter by month</span>
-        <el-button circle type="primary" size="small" class="sm:hidden" :icon="Filter" @click="showFilters = !showFilters" />
+        <el-button
+          circle
+          type="primary"
+          size="small"
+          class="sm:hidden"
+          :icon="Filter"
+          @click="showFilters = !showFilters"
+        />
       </div>
       <div :class="showFilters ? 'block' : 'hidden sm:block'">
         <el-form-item label="Select Month" class="w-full mb-0">
-          <el-select filterable class="w-full" v-model="selectedMonth" @change="fetchExpenses" placeholder="Select month">
-            <el-option v-for="month in months" :key="month" :label="month" :value="month" />
+          <el-select
+            filterable
+            class="w-full"
+            v-model="selectedMonth"
+            @change="fetchExpenses"
+            placeholder="Select month"
+          >
+            <el-option
+              v-for="month in months"
+              :key="month"
+              :label="month"
+              :value="month"
+            />
           </el-select>
         </el-form-item>
       </div>
@@ -46,10 +71,20 @@
 <script setup>
 import { ref } from 'vue'
 import { Filter } from '@element-plus/icons-vue'
-import Table from '../Table.vue'
-import { SalaryExpenseList } from '../../scripts/salary-expense-list'
+import Table from '../shared/Table.vue'
+import { SalaryExpenseList } from '../../scripts/monthly-expenses/salary-expense-list'
 
-const { formatAmount, selectedMonth, expenses, keys, totalSpent, remaining, months, content, fetchExpenses } = SalaryExpenseList()
+const {
+  formatAmount,
+  selectedMonth,
+  expenses,
+  keys,
+  totalSpent,
+  remaining,
+  months,
+  content,
+  fetchExpenses
+} = SalaryExpenseList()
 const showFilters = ref(false)
 </script>
 
@@ -73,9 +108,14 @@ const showFilters = ref(false)
   gap: 4px;
   min-width: 0;
 }
-.sel-stat-end { align-items: flex-end; padding-right: 1rem; }
+.sel-stat-end {
+  align-items: flex-end;
+  padding-right: 1rem;
+}
 @media (max-width: 480px) {
-  .sel-stat-end { display: none; }
+  .sel-stat-end {
+    display: none;
+  }
 }
 .sel-divider {
   width: 1px;
@@ -104,8 +144,12 @@ const showFilters = ref(false)
   font-weight: 500;
   color: var(--text-secondary);
 }
-.sel-danger { color: #ef4444; }
-.sel-success { color: #22c55e; }
+.sel-danger {
+  color: #ef4444;
+}
+.sel-success {
+  color: #22c55e;
+}
 .sel-filter {
   margin-bottom: 1rem;
 }

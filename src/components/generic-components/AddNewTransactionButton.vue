@@ -1,7 +1,22 @@
 <template>
-  <div class="ant-card" @click.stop="$emit('click')" role="button" tabindex="0" @keydown.enter.stop="$emit('click')">
+  <div
+    class="ant-card"
+    @click.stop="$emit('click')"
+    role="button"
+    tabindex="0"
+    @keydown.enter.stop="$emit('click')"
+  >
     <div class="ant-icon-wrap">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="ant-icon">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="ant-icon"
+      >
         <line x1="12" y1="5" x2="12" y2="19" />
         <line x1="5" y1="12" x2="19" y2="12" />
       </svg>
@@ -26,12 +41,19 @@ defineEmits(['click'])
   gap: 1rem;
   padding: 1rem 1.1rem;
   border-radius: 14px;
-  background: linear-gradient(135deg, var(--tab-gradient-start) 0%, var(--bg-primary) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--tab-gradient-start) 0%,
+    var(--bg-primary) 100%
+  );
   border: 1.5px solid var(--success-200);
   box-shadow: 0 4px 16px -6px rgba(34, 197, 94, 0.18);
   cursor: pointer;
   min-height: 72px;
-  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    border-color 0.15s ease;
   user-select: none;
 }
 .ant-card:hover {
@@ -57,7 +79,11 @@ defineEmits(['click'])
 .ant-card:hover .ant-icon-wrap {
   box-shadow: 0 8px 22px -4px rgba(34, 197, 94, 0.75);
 }
-.ant-icon { width: 20px; height: 20px; color: #fff; }
+.ant-icon {
+  width: 20px;
+  height: 20px;
+  color: #fff;
+}
 .ant-body {
   flex: 1;
   display: flex;
@@ -84,7 +110,9 @@ defineEmits(['click'])
   line-height: 1;
   color: var(--success-500);
   opacity: 0.6;
-  transition: opacity 0.15s ease, transform 0.15s ease;
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
 }
 .ant-card:hover .ant-arrow {
   opacity: 1;

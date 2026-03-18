@@ -1,7 +1,12 @@
 import html2pdf from 'html2pdf.js'
 import * as XLSX from 'xlsx'
 import { startLoading, stopLoading } from './loading'
-async function downloadPDF(pdfContent, fileName = 'Details-Sheet', title = '', subtitle = '') {
+async function downloadPDF(
+  pdfContent,
+  fileName = 'Details-Sheet',
+  title = '',
+  subtitle = ''
+) {
   const loading = startLoading()
   const options = {
     margin: 0.5,
@@ -90,8 +95,15 @@ async function downloadPDF(pdfContent, fileName = 'Details-Sheet', title = '', s
           pdf.setFontSize(9)
           pdf.setTextColor(80, 80, 80)
           pdf.text(`Page ${i} of ${totalPages}`, 0.4, pageHeight - 0.28)
-          pdf.text('Kharchafy', pageWidth / 2, pageHeight - 0.28, { align: 'center' })
-          pdf.text('g-exp-trk.netlify.app', pageWidth - 0.4, pageHeight - 0.28, { align: 'right' })
+          pdf.text('Kharchafy', pageWidth / 2, pageHeight - 0.28, {
+            align: 'center'
+          })
+          pdf.text(
+            'g-exp-trk.netlify.app',
+            pageWidth - 0.4,
+            pageHeight - 0.28,
+            { align: 'right' }
+          )
         }
       })
       .save()
