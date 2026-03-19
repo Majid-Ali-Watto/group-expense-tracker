@@ -9,41 +9,25 @@
         {{ helperText }}
       </span>
     </p>
-    <div class="flex items-center gap-2 flex-wrap">
-      <el-button size="small" @click="triggerInput" :disabled="uploading">
-        {{ selectedFiles.length ? 'Change File' : 'Choose File' }}
+
+    <el-upload
+      ref="uploadRef"
+      :multiple="multiple"
+      :auto-upload="false"
+      :show-file-list="true"
+      accept="image/*"
+      :on-change="handleChange"
+      :on-remove="handleRemove"
+      :disabled="uploading"
+    >
+      <el-button size="small" :disabled="uploading">
+        Choose File
       </el-button>
-      <span
-        v-if="selectedFiles.length"
-        v-overflow-popup="{ title: 'Selected File' }"
-        class="text-sm text-gray-600 dark:text-gray-400 truncate max-w-[220px]"
-      >
-        {{ selectedFilesLabel }}
-      </span>
-      <span v-else class="text-sm text-gray-400 dark:text-gray-500">
-        No file chosen
-      </span>
-      <el-button
-        v-if="selectedFiles.length"
-        size="small"
-        type="danger"
-        text
-        @click="$emit('remove')"
-      >
-        ✕
-      </el-button>
-      <input
-        ref="fileInputRef"
-        type="file"
-        accept="image/*"
-        class="hidden"
-        :multiple="multiple"
-        @change="handleChange"
-      />
-    </div>
+    </el-upload>
+
     <div
       v-if="existingUrls.length && !selectedFiles.length"
-      class="flex flex-col gap-1 mt-1"
+      class="flex flex-col gap-1 mt-2"
     >
       <a
         v-for="(url, index) in existingUrls"
@@ -60,7 +44,7 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { ref, watch } from 'vue'
 
 const props = defineProps({
   selectedFiles: {
@@ -87,29 +71,26 @@ const props = defineProps({
 
 const emit = defineEmits(['files-selected', 'remove'])
 
-const fileInputRef = ref(null)
+const uploadRef = ref(null)
 
-const selectedFilesLabel = computed(() => {
-  if (props.selectedFiles.length <= 1) {
-    return props.selectedFiles[0]?.name || ''
+function handleChange(file, files) {
+  emit('files-selected', files.map((f) => f.raw))
+}
+
+function handleRemove(file, files) {
+  if (files.length === 0) {
+    emit('remove')
+  } else {
+    emit('files-selected', files.map((f) => f.raw))
   }
-
-  return `${props.selectedFiles[0].name} +${props.selectedFiles.length - 1} more`
-})
-
-function triggerInput() {
-  fileInputRef.value?.click()
 }
 
-function handleChange(event) {
-  emit('files-selected', Array.from(event.target.files || []))
-}
-
+// When parent clears selectedFiles (e.g. after save or removeReceipt), clear el-upload's list too
 watch(
   () => props.selectedFiles.length,
   (length) => {
-    if (length === 0 && fileInputRef.value) {
-      fileInputRef.value.value = ''
+    if (length === 0) {
+      uploadRef.value?.clearFiles()
     }
   }
 )

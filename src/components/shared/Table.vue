@@ -148,7 +148,7 @@
                 </span>
               </span>
               <el-button
-                v-if="rowData.split.length > 2"
+                v-if="rowData.split.length > 1"
                 link
                 size="small"
                 class="ml-2 flex-shrink-0"
@@ -156,7 +156,7 @@
                   openShowMore('Split Details', rowData.split.map(formatSplit))
                 "
               >
-                +{{ rowData.split.length - 2 }} more
+                +{{ rowData.split.length - 1 }} more
               </el-button>
             </template>
             <span
@@ -189,7 +189,7 @@
                 </span>
               </span>
               <el-button
-                v-if="rowData.payers.length > 2"
+                v-if="rowData.payers.length > 1"
                 link
                 size="small"
                 class="ml-2 flex-shrink-0"
@@ -197,7 +197,7 @@
                   openShowMore('Payers', rowData.payers.map(formatPayer))
                 "
               >
-                +{{ rowData.payers.length - 2 }} more
+                +{{ rowData.payers.length - 1 }} more
               </el-button>
             </template>
             <span
