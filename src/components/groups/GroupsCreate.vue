@@ -23,23 +23,17 @@
             :maxlength="100"
           />
         </el-form-item>
-        <el-form-item label="Members" prop="members" label-position="top">
-          <el-select
-            filterable
-            v-model="groupForm.members"
-            multiple
-            placeholder="Select members"
-            class="w-full"
-            size="small"
-          >
-            <el-option
-              v-for="u in usersOptions"
-              :key="u.mobile"
-              :label="getUserLabel(u)"
-              :value="u.mobile"
-            />
-          </el-select>
-        </el-form-item>
+        <GenericDropDown
+          v-model="groupForm.members"
+          label="Members"
+          prop="members"
+          label-position="top"
+          :options="usersOptions"
+          placeholder="Select members"
+          size="small"
+          multiple
+          required
+        />
         <div class="flex flex-row justify-end gap-2">
           <slot name="clear"></slot>
           <el-button type="primary" size="small" @click="createGroup"
@@ -54,12 +48,15 @@
 <script setup>
 import { groupRules } from '../../assets/validation-rules'
 import { GroupsCreate } from '../../scripts/groups/groups-create'
+import { GenericDropDown } from '../generic-components'
 
 const emit = defineEmits(['groupCreated'])
 const props = defineProps({
   preselectedMember: { type: String, default: null }
 })
 
-const { groupForm, groupFormRef, usersOptions, createGroup, getUserLabel } =
-  GroupsCreate(emit, props)
+const { groupForm, groupFormRef, usersOptions, createGroup } = GroupsCreate(
+  emit,
+  props
+)
 </script>

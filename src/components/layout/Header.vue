@@ -78,8 +78,18 @@
                 >
                   <span class="notif-icon">{{ notif.icon }}</span>
                   <div class="notif-text">
-                    <div class="notif-desc">{{ notif.description }}</div>
-                    <div class="notif-group">{{ notif.title }}</div>
+                    <div
+                      v-overflow-popup="{ title: 'Notification' }"
+                      class="notif-desc"
+                    >
+                      {{ notif.description }}
+                    </div>
+                    <div
+                      v-overflow-popup="{ title: 'Related Section' }"
+                      class="notif-group"
+                    >
+                      {{ notif.title }}
+                    </div>
                   </div>
                   <span class="notif-arrow">›</span>
                 </div>

@@ -49,7 +49,6 @@
         :data="filteredSortedRows"
         :width="tableWidth"
         :height="tableHeight"
-        :row-event-handlers="rowEventHandlers"
         :row-class="getRowClass"
       >
         <!-- Sortable header cell -->
@@ -89,6 +88,7 @@
                 style="color: #ffffff !important; font-size: 10px; flex-shrink: 0; opacity: 0.7; margin-right: 2px"
               >⠿</span>
               <span
+                v-overflow-popup="{ title: 'Column Name' }"
                 class="text-sm font-semibold uppercase tracking-wide"
                 style="
                   color: #ffffff !important;
@@ -122,6 +122,7 @@
           <!-- amount -->
           <span
             v-if="column.key === 'amount'"
+            v-overflow-popup="{ title: column.title }"
             class="et-cell-text px-2 text-sm"
             :data-cell-title="column.title"
           >
@@ -134,7 +135,11 @@
             class="px-2 text-sm et-cell-overflow"
           >
             <template v-if="Array.isArray(rowData.split)">
-              <span class="et-cell-text" :data-cell-title="column.title">
+              <span
+                v-overflow-popup="{ title: column.title }"
+                class="et-cell-text"
+                :data-cell-title="column.title"
+              >
                 <span v-for="(s, i) in rowData.split.slice(0, 2)" :key="i">
                   {{ formatSplit(s)
                   }}<span v-if="i < Math.min(1, rowData.split.length - 1)"
@@ -154,9 +159,13 @@
                 +{{ rowData.split.length - 2 }} more
               </el-button>
             </template>
-            <span v-else class="et-cell-text" :data-cell-title="column.title">{{
-              rowData.split
-            }}</span>
+            <span
+              v-else
+              v-overflow-popup="{ title: column.title }"
+              class="et-cell-text"
+              :data-cell-title="column.title"
+              >{{ rowData.split }}</span
+            >
           </span>
 
           <!-- payer -->
@@ -165,9 +174,13 @@
             class="px-2 text-sm et-cell-overflow"
           >
             <template
-              v-if="rowData.payerMode === 'multiple' && rowData.payers?.length"
-            >
-              <span class="et-cell-text" :data-cell-title="column.title">
+            v-if="rowData.payerMode === 'multiple' && rowData.payers?.length"
+          >
+              <span
+                v-overflow-popup="{ title: column.title }"
+                class="et-cell-text"
+                :data-cell-title="column.title"
+              >
                 <span v-for="(p, i) in rowData.payers.slice(0, 2)" :key="i">
                   {{ formatPayer(p)
                   }}<span v-if="i < Math.min(1, rowData.payers.length - 1)"
@@ -187,24 +200,24 @@
                 +{{ rowData.payers.length - 2 }} more
               </el-button>
             </template>
-            <span v-else class="et-cell-text" :data-cell-title="column.title">
-              {{
-                tabStore.getUserByMobile(rowData.payer)?.name +
-                  ` (${rowData.payer})` || rowData.payer
-              }}
+            <span
+              v-else
+              v-overflow-popup="{ title: column.title }"
+              class="et-cell-text"
+              :data-cell-title="column.title"
+            >
+              {{ formatUser(rowData.payer) }}
             </span>
           </span>
 
           <!-- giver / receiver -->
           <span
             v-else-if="column.key === 'giver' || column.key === 'receiver'"
+            v-overflow-popup="{ title: column.title }"
             class="et-cell-text px-2 text-sm"
             :data-cell-title="column.title"
           >
-            {{
-              (tabStore.getUserByMobile(rowData[column.key])?.name ||
-                rowData[column.key]) + ` (${rowData[column.key]})`
-            }}
+            {{ formatUser(rowData[column.key]) }}
           </span>
 
           <!-- receiptUrls (array) -->
@@ -299,6 +312,7 @@
           <!-- default -->
           <span
             v-else
+            v-overflow-popup="{ title: column.title }"
             class="et-cell-text px-2 text-sm"
             :data-cell-title="column.title"
           >
@@ -446,24 +460,6 @@
     </ol>
   </el-dialog>
 
-  <!-- Cell full-text popup -->
-  <el-dialog
-    v-model="cellPopupVisible"
-    :title="cellPopupTitle"
-    width="90%"
-    destroy-on-close
-  >
-    <p
-      style="
-        color: var(--text-primary);
-        word-break: break-word;
-        white-space: pre-wrap;
-      "
-    >
-      {{ cellPopupText }}
-    </p>
-  </el-dialog>
-
   <!-- Column settings dialog -->
   <el-dialog
     v-model="columnSettingsVisible"
@@ -509,7 +505,6 @@ const props = defineProps({
 })
 
 const {
-  tabStore,
   dialogFormVisible,
   deleteMode,
   activeTabComponent,
@@ -539,14 +534,11 @@ const {
   columnSettingsVisible,
   colSettingsDragKey,
   handleColSettingsDrop,
-  rowEventHandlers,
   getRowClass,
   showMoreDialogVisible,
   showMoreTitle,
   showMoreItems,
-  cellPopupVisible,
-  cellPopupTitle,
-  cellPopupText,
+  formatUser,
   formatPayer,
   formatSplit,
   formatReceipt,

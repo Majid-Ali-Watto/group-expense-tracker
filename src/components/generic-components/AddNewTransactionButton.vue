@@ -22,7 +22,9 @@
       </svg>
     </div>
     <div class="ant-body">
-      <span class="ant-label">{{ text }}</span>
+      <span v-overflow-popup="{ title: 'Action' }" class="ant-label">{{
+        text
+      }}</span>
       <span class="ant-hint">Tap to open the form</span>
     </div>
     <span class="ant-arrow">&#8250;</span>

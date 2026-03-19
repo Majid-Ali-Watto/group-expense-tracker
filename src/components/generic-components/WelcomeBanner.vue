@@ -27,7 +27,10 @@
             <p class="text-xs sm:text-sm text-gray-500 font-medium mb-0.5">
               Welcome back
             </p>
-            <p class="text-base font-bold text-gray-800 truncate">
+            <p
+              v-overflow-popup="{ title: 'User Name' }"
+              class="text-base font-bold text-gray-800 truncate"
+            >
               {{ displayName }}
             </p>
           </div>

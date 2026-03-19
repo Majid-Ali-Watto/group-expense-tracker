@@ -93,22 +93,14 @@
                       : 'Select from Users'
                   }}
                 </button>
-                <el-select
+                <GenericDropDown
                   v-if="showGiverDropdown"
                   v-model="selectedGiverUser"
-                  clearable
-                  filterable
+                  :options="usersForDropdown"
                   placeholder="Pick a user (optional)"
                   size="small"
-                  class="w-full"
-                >
-                  <el-option
-                    v-for="u in usersForDropdown"
-                    :key="u.mobile"
-                    :label="`${u.name} (${u.displayMobile})`"
-                    :value="u.mobile"
-                  />
-                </el-select>
+                  :wrap-form-item="false"
+                />
               </div>
               <GenericInput
                 :rows="1"
@@ -156,22 +148,14 @@
                       : 'Select from Users'
                   }}
                 </button>
-                <el-select
+                <GenericDropDown
                   v-if="showReceiverDropdown"
                   v-model="selectedReceiverUser"
-                  clearable
-                  filterable
+                  :options="usersForDropdown"
                   placeholder="Pick a user (optional)"
                   size="small"
-                  class="w-full"
-                >
-                  <el-option
-                    v-for="u in usersForDropdown"
-                    :key="u.mobile"
-                    :label="`${u.name} (${u.displayMobile})`"
-                    :value="u.mobile"
-                  />
-                </el-select>
+                  :wrap-form-item="false"
+                />
               </div>
               <GenericInput
                 :rows="1"
@@ -212,60 +196,13 @@
           </el-col>
         </el-row>
 
-        <!-- Receipt Upload (optional) -->
-        <div class="mb-4">
-          <p class="text-sm font-medium receipt-label mb-1">
-            Receipt
-            <span class="text-gray-400 dark:text-gray-500 font-normal text-xs"
-              >(optional)</span
-            >
-            <span class="block text-xs text-gray-500 dark:text-gray-400 mt-1">
-              Only image files (JPG, PNG, GIF, BMP, WEBP) are allowed. Max size:
-              1MB per file.
-            </span>
-          </p>
-          <div class="flex items-center gap-2 flex-wrap">
-            <el-button
-              size="small"
-              @click="triggerFileInput"
-              :disabled="receiptUploading"
-            >
-              {{ receiptFile ? 'Change File' : 'Choose File' }}
-            </el-button>
-            <span
-              v-if="receiptFile"
-              class="text-sm text-gray-600 dark:text-gray-400 truncate max-w-[180px]"
-            >
-              {{ receiptFile.name }}
-            </span>
-            <span v-else class="text-sm text-gray-400 dark:text-gray-500"
-              >No file chosen</span
-            >
-            <el-button
-              v-if="receiptFile"
-              size="small"
-              type="danger"
-              text
-              @click="removeReceipt"
-              >✕</el-button
-            >
-            <input
-              ref="fileInputRef"
-              type="file"
-              accept="image/*"
-              class="hidden"
-              @change="handleReceiptChange"
-            />
-          </div>
-          <a
-            v-if="existingReceiptUrl && !receiptFile"
-            :href="existingReceiptUrl"
-            target="_blank"
-            rel="noopener"
-            class="text-xs text-blue-500 hover:underline mt-1 inline-block"
-            >View current receipt</a
-          >
-        </div>
+        <ReceiptUploadField
+          :selected-files="receiptFiles"
+          :existing-urls="existingReceiptUrls"
+          :uploading="receiptUploading"
+          @files-selected="setSelectedFiles"
+          @remove="removeReceipt"
+        />
         <div v-if="!isEditMode" class="mb-3">
           <el-checkbox v-model="copyToExpenses" size="small">
             Also add a copy to Personal Expenses
@@ -296,7 +233,8 @@ import { rules } from '../../assets/validation-rules'
 import {
   AmountInput,
   GenericDropDown,
-  GenericInput
+  GenericInput,
+  ReceiptUploadField
 } from '../generic-components'
 import { LoanForm } from '../../scripts/shared-loans/loan-form'
 import AddNewTransactionButton from '../generic-components/AddNewTransactionButton.vue'
@@ -318,12 +256,10 @@ const {
   openForm,
   closeForm,
   validateForm,
-  receiptFile,
+  receiptFiles,
   receiptUploading,
-  fileInputRef,
-  existingReceiptUrl,
-  triggerFileInput,
-  handleReceiptChange,
+  existingReceiptUrls,
+  setSelectedFiles,
   removeReceipt,
   onGiverMobileBlur,
   onReceiverMobileBlur,
@@ -352,13 +288,3 @@ defineExpose({
   validateForm
 })
 </script>
-
-<style scoped>
-.receipt-label {
-  color: #111827 !important; /* text-gray-900 */
-}
-
-:root.dark-theme .receipt-label {
-  color: #d1d5db !important; /* text-gray-300 */
-}
-</style>

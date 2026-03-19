@@ -15,7 +15,7 @@
       >
         <div class="flex items-center justify-between mb-2">
           <span class="text-sm font-medium">
-            {{ request.name }} ({{ displayMasked(request.mobile) }})
+            {{ formatMember(request, { preferMasked: true }) }}
           </span>
         </div>
         <!-- Show approval progress -->
@@ -31,7 +31,7 @@
             size="small"
             type="success"
           >
-            ✓ {{ approval.name }}
+            ✓ {{ formatMember(approval) }}
           </el-tag>
           <el-tag
             v-for="member in getPendingJoinApprovals(group, request.mobile)"
@@ -39,7 +39,7 @@
             size="small"
             type="info"
           >
-            ⏳ {{ member.name }}
+            ⏳ {{ formatMember(member) }}
           </el-tag>
         </div>
         <!-- Member actions -->
@@ -118,7 +118,7 @@
         size="small"
         type="success"
       >
-        ✓ {{ approval.name }}
+        ✓ {{ formatMember(approval) }}
       </el-tag>
       <el-tag
         v-for="member in getPendingApprovals(group)"
@@ -126,7 +126,7 @@
         size="small"
         type="info"
       >
-        ⏳ {{ member.name }}
+        ⏳ {{ formatMember(member) }}
       </el-tag>
     </div>
     <!-- Approve/Reject buttons for current user -->
@@ -166,7 +166,7 @@
         class="bg-white dark:bg-gray-800 p-2 rounded border border-orange-200 dark:border-orange-700"
       >
         <div class="text-sm font-medium text-gray-800 dark:text-gray-200 mb-1">
-          {{ leaveReq.name }} wants to leave
+          {{ formatMember(leaveReq) }} wants to leave
         </div>
         <div class="text-xs text-gray-600 dark:text-gray-400 mb-1">
           Approvals: {{ leaveReq.approvals?.length || 0 }} /
@@ -179,7 +179,7 @@
             size="small"
             type="success"
           >
-            ✓ {{ approval.name }}
+            ✓ {{ formatMember(approval) }}
           </el-tag>
         </div>
         <div
@@ -226,7 +226,7 @@
       📝 Group Edit Request
     </div>
     <div class="text-xs text-blue-700 mb-2">
-      Requested by: {{ group.editRequest.requestedByName }}
+      Requested by: {{ formatUser(group.editRequest.requestedBy) }}
     </div>
 
     <!-- Show what's changing -->
@@ -241,7 +241,7 @@
           v-for="(member, i) in group.editRequest.addedMembers"
           :key="member.mobile"
         >
-          {{ member.name
+          {{ formatMember(member)
           }}{{ i < group.editRequest.addedMembers.length - 1 ? ', ' : '' }}
         </span>
       </div>
@@ -251,7 +251,7 @@
           v-for="(member, i) in group.editRequest.removedMembers"
           :key="member.mobile"
         >
-          {{ member.name
+          {{ formatMember(member)
           }}{{ i < group.editRequest.removedMembers.length - 1 ? ', ' : '' }}
         </span>
       </div>
@@ -268,7 +268,7 @@
         size="small"
         type="success"
       >
-        ✓ {{ approval.name }}
+        ✓ {{ formatMember(approval) }}
       </el-tag>
     </div>
     <div v-if="!hasUserApprovedEditRequest(group)" class="flex gap-2">
@@ -301,13 +301,11 @@
       ➕ Add Member Request
     </div>
     <div class="text-xs text-green-700 mb-2">
-      Requested by: {{ group.addMemberRequest.requestedByName }}
+      Requested by: {{ formatUser(group.addMemberRequest.requestedBy) }}
     </div>
     <div class="text-xs text-gray-700 mb-2">
       <strong>New Member:</strong>
-      {{ group.addMemberRequest.newMember.name }} ({{
-        displayMasked(group.addMemberRequest.newMember.mobile)
-      }})
+      {{ formatMember(group.addMemberRequest.newMember, { preferMasked: true }) }}
     </div>
     <div class="text-sm text-green-700 mb-2">
       Approvals: {{ getAddMemberRequestApprovals(group).length }} /
@@ -320,7 +318,7 @@
         size="small"
         type="success"
       >
-        ✓ {{ approval.name }}
+        ✓ {{ formatMember(approval) }}
       </el-tag>
     </div>
 
@@ -373,10 +371,7 @@
     </div>
     <div class="text-xs text-purple-700 mb-2">
       Transfer ownership to:
-      {{
-        userStore.getUserByMobile(group.transferOwnershipRequest.newOwner)
-          ?.name || group.transferOwnershipRequest.newOwner
-      }}
+      {{ formatUser(group.transferOwnershipRequest.newOwner) }}
     </div>
     <div class="text-sm text-purple-700 mb-2">
       Approvals:
@@ -390,7 +385,7 @@
         size="small"
         type="success"
       >
-        ✓ {{ approval.name }}
+        ✓ {{ formatMember(approval) }}
       </el-tag>
     </div>
     <div v-if="!hasUserApprovedOwnershipTransfer(group)" class="flex gap-2">
@@ -437,14 +432,14 @@ import {
   getAddMemberRequestApprovals,
   allMembersApprovedAddMember,
   hasUserApprovedAddMemberRequest,
-  hasUserApprovedOwnershipTransfer,
-  displayMasked
+  hasUserApprovedOwnershipTransfer
 } from '../../helpers/users'
 import { store } from '../../stores/store'
+import { formatMemberDisplay, formatUserDisplay } from '../../utils/user-display'
 
 const userStore = store()
 
-defineProps({
+const props = defineProps({
   group: {
     type: Object,
     required: true
@@ -510,4 +505,13 @@ defineProps({
     required: true
   }
 })
+
+const formatUser = (mobile) =>
+  formatUserDisplay(userStore, mobile, { group: props.group })
+
+const formatMember = (member, options = {}) =>
+  formatMemberDisplay(userStore, member, {
+    group: props.group,
+    ...options
+  })
 </script>

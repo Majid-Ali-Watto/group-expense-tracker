@@ -15,8 +15,8 @@
       >
         <!-- Label -->
         <span
+          v-overflow-popup="{ title: title || 'Chart Label' }"
           class="w-24 text-right text-gray-600 dark:text-gray-400 shrink-0 truncate"
-          :title="item.label"
           >{{ item.label }}</span
         >
 

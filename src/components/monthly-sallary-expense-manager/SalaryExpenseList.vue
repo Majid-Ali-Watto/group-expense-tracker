@@ -4,21 +4,29 @@
     <div class="sel-stats">
       <div class="sel-stat">
         <span class="sel-stat-label">Total Spent</span>
-        <span class="sel-stat-value sel-danger">{{
+        <span
+          v-overflow-popup="{ title: 'Total Spent' }"
+          class="sel-stat-value sel-danger"
+          >{{
           formatAmount(totalSpent)
         }}</span>
       </div>
       <div class="sel-divider" />
       <div class="sel-stat">
         <span class="sel-stat-label">Remaining</span>
-        <span class="sel-stat-value sel-success">{{
+        <span
+          v-overflow-popup="{ title: 'Remaining' }"
+          class="sel-stat-value sel-success"
+          >{{
           formatAmount(remaining)
         }}</span>
       </div>
       <div class="sel-divider" />
       <div class="sel-stat sel-stat-end">
         <span class="sel-stat-label">Transactions</span>
-        <span class="sel-stat-value"
+        <span
+          v-overflow-popup="{ title: 'Transactions' }"
+          class="sel-stat-value"
           >{{ expenses.length }}
           <span class="sel-month">{{ selectedMonth }}</span></span
         >

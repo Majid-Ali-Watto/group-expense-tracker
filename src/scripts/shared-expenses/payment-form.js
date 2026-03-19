@@ -3,79 +3,14 @@ import { useUsersOptions } from '../../utils/useUsersOptions'
 import getWhoAddedTransaction from '../../utils/whoAdded'
 import { store } from '../../stores/store'
 import useFireBase from '../../api/firebase-apis'
-import {
-  uploadToCloudinary,
-  deleteFromCloudinary
-} from '../../utils/cloudinaryUpload'
-import { showError } from '../../utils/showAlerts'
 import { buildRequestMeta } from '../../utils/buildRequestMeta'
+import { useReceiptUpload } from '../../utils/useReceiptUpload'
 
 export const PaymentForm = (props, emit) => {
   const { updateData, saveData } = useFireBase()
   const isVisible = ref(true)
   const userStore = store()
   const isEditMode = computed(() => !!props.row?.amount)
-
-  // ========== Receipt Upload ==========
-  const receiptFiles = ref([])
-  const receiptUploading = ref(false)
-  const fileInputRef = ref(null)
-  const existingReceiptUrls = computed(() => {
-    if (Array.isArray(props.row?.receiptUrls)) return props.row.receiptUrls
-    return props.row?.receiptUrl ? [props.row.receiptUrl] : []
-  })
-  const existingReceiptMeta = computed(() =>
-    Array.isArray(props.row?.receiptMeta) ? props.row.receiptMeta : []
-  )
-
-  function triggerFileInput() {
-    fileInputRef.value?.click()
-  }
-
-  function handleReceiptChange(event) {
-    const files = Array.from(event.target.files || [])
-    if (!files.length) {
-      receiptFiles.value = []
-      return
-    }
-    const allowedTypes = [
-      'image/jpeg',
-      'image/png',
-      'image/gif',
-      'image/bmp',
-      'image/webp'
-    ]
-    const maxSize = 1024 * 1024 // 1MB
-    const validFiles = []
-    for (const file of files) {
-      if (!allowedTypes.includes(file.type)) {
-        showError('Only image files (JPG, PNG, GIF, BMP, WEBP) are allowed.')
-        if (fileInputRef.value) fileInputRef.value.value = ''
-        receiptFiles.value = []
-        return
-      }
-      if (file.size > maxSize) {
-        showError('File size must be less than 1MB.')
-        if (fileInputRef.value) fileInputRef.value.value = ''
-        receiptFiles.value = []
-        return
-      }
-      validFiles.push(file)
-    }
-    receiptFiles.value =
-      formData.value.payerMode === 'single'
-        ? validFiles.slice(0, 1)
-        : validFiles
-  }
-
-  function removeReceipt() {
-    receiptFiles.value = []
-    if (fileInputRef.value) fileInputRef.value.value = ''
-  }
-
-  async function uploadReceiptToStorage(file) {
-    return await uploadToCloudinary(file)
-  }
 
   const showTransactionForm = ref(false)
 
@@ -115,6 +50,29 @@ export const PaymentForm = (props, emit) => {
     splitItems: []
   })
 
+  const {
+    receiptFiles,
+    receiptUploading,
+    allowsMultiple,
+    existingReceiptUrls,
+    existingReceiptMeta,
+    removeReceipt,
+    setSelectedFiles,
+    trimSelectedFiles,
+    uploadSelectedFiles
+  } = useReceiptUpload({
+    existingUrls: computed(() => {
+      if (Array.isArray(props.row?.receiptUrls)) return props.row.receiptUrls
+      return props.row?.receiptUrl ? [props.row.receiptUrl] : []
+    }),
+    existingMeta: computed(() =>
+      Array.isArray(props.row?.receiptMeta) ? props.row.receiptMeta : []
+    ),
+    maxFiles: computed(() =>
+      formData.value.payerMode === 'single' ? 1 : Infinity
+    )
+  })
+
   watch(usersOptions, (newOptions) => {
     if (!isEditMode.value) {
       formData.value.participants = newOptions.map((u) => u.value)
@@ -136,7 +94,7 @@ export const PaymentForm = (props, emit) => {
       formData.value.splitMode = newRow?.splitMode ?? 'equal'
       formData.value.splitItems = newRow?.splitItems ?? []
       isVisible.value = !newRow?.amount
-      receiptFiles.value = []
+      removeReceipt()
       // Auto-tick ME? checkbox in edit mode (single payer only)
       if (newRow?.amount && newRow?.payerMode !== 'multiple') {
         isMePayer.value = formData.value.payer === activeUser.value
@@ -150,9 +108,7 @@ export const PaymentForm = (props, emit) => {
   watch(
     () => formData.value.payerMode,
     (mode) => {
-      if (mode === 'single' && receiptFiles.value.length > 1) {
-        receiptFiles.value = receiptFiles.value.slice(0, 1)
-      }
+      trimSelectedFiles()
       if (mode !== 'single') {
         isMePayer.value = false
       }
@@ -204,34 +160,11 @@ export const PaymentForm = (props, emit) => {
         monthYear = monthYear[0] + '-' + monthYear[1].toString().padStart(2, 0)
         const groupId = userStore.getActiveGroup || 'global'
 
-        // Upload receipt if a new file was selected
-        let receiptUrls = existingReceiptUrls.value
-        let receiptMeta = existingReceiptMeta.value
-        if (receiptFiles.value.length) {
-          try {
-            receiptUploading.value = true
-            const uploaded = await Promise.all(
-              receiptFiles.value.map((file) => uploadReceiptToStorage(file))
-            )
-            receiptUrls = uploaded.map((r) => r.url)
-            receiptMeta = uploaded.map((r) => ({
-              url: r.url,
-              publicId: r.publicId,
-              resourceType: r.resourceType
-            }))
-            // Delete old Cloudinary files when replacing on update
-            if (whatTask === 'Update') {
-              existingReceiptMeta.value.forEach((m) =>
-                deleteFromCloudinary(m.publicId, m.resourceType)
-              )
-            }
-          } catch {
-            showError('Failed to upload receipt. Please try again.')
-            receiptUploading.value = false
-            return
-          }
-          receiptUploading.value = false
-        }
+        const uploadedReceipts = await uploadSelectedFiles()
+        if (!uploadedReceipts) return
+
+        const receiptUrls = uploadedReceipts.receiptUrls
+        const receiptMeta = uploadedReceipts.receiptMeta
 
         if (whatTask == 'Save') {
           saveData(
@@ -240,7 +173,7 @@ export const PaymentForm = (props, emit) => {
             transactionForm,
             'Transaction successfully saved.',
             () => {
-              receiptFiles.value = []
+              removeReceipt()
               if (isEditMode.value) {
                 emit('closeModal')
               } else {
@@ -427,11 +360,10 @@ export const PaymentForm = (props, emit) => {
     removePayer,
     receiptFiles,
     receiptUploading,
-    fileInputRef,
+    allowsMultiple,
     existingReceiptUrls,
     existingReceiptMeta,
-    triggerFileInput,
-    handleReceiptChange,
+    setSelectedFiles,
     removeReceipt
   }
 }

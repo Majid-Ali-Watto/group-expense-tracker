@@ -10,17 +10,25 @@
         class="pending-card rounded-lg p-3 mb-2"
       >
         <div class="flex items-start justify-between gap-2">
-          <div class="flex-1 min-w-0">
-            <div class="font-medium text-sm">{{ item.user.name }}</div>
+            <div class="flex-1 min-w-0">
+            <div class="font-medium text-sm">
+              {{ item.user.name }} ({{ displayMobile(item.user.mobile) }})
+            </div>
             <div class="text-xs text-gray-600 mt-1">
               <span v-if="item.type === 'delete'">
                 Delete request by
-                <strong>{{ item.request.requestedByName }}</strong>
+                <strong>
+                  {{ item.request.requestedByName }} ({{
+                    displayMobile(item.request.requestedBy)
+                  }})
+                </strong>
               </span>
               <span v-else>
                 Rename to "<strong>{{ item.request.newName }}</strong
                 >" — by
-                {{ item.request.requestedByName }}
+                {{ item.request.requestedByName }} ({{
+                  displayMobile(item.request.requestedBy)
+                }})
               </span>
             </div>
             <div class="text-xs text-gray-500 mt-1">

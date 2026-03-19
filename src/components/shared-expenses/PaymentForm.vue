@@ -80,19 +80,14 @@
                 :key="index"
                 class="flex items-center gap-2 border border-gray-200 rounded-lg p-2 bg-gray-50"
               >
-                <el-select
+                <GenericDropDown
                   v-model="p.mobile"
+                  :options="usersOptions"
                   placeholder="Select payer"
                   size="small"
-                  class="flex-1"
-                >
-                  <el-option
-                    v-for="opt in usersOptions"
-                    :key="opt.value"
-                    :label="opt.label"
-                    :value="opt.value"
-                  />
-                </el-select>
+                  select-class="flex-1"
+                  :wrap-form-item="false"
+                />
                 <el-input-number
                   v-model="p.amount"
                   :min="0"
@@ -139,109 +134,33 @@
               </div>
             </div>
 
-            <el-form-item
+            <GenericDropDown
+              v-model="formData.participants"
               label="Participants"
               prop="participants"
-              class="w-full"
-            >
-              <el-select
-                filterable
-                v-model="formData.participants"
-                multiple
-                disabled
-                placeholder="Select participants"
-                class="w-full"
-                size="small"
-                clearable
-              >
-                <el-option
-                  v-for="opt in usersOptions"
-                  :key="opt.value"
-                  :label="opt.label"
-                  :value="opt.value"
-                />
-              </el-select>
-            </el-form-item>
+              :options="usersOptions"
+              placeholder="Select participants"
+              size="small"
+              multiple
+              disabled
+              required
+            />
 
             <DataTimePicker v-model="formData.date" required />
 
-            <!-- Receipt Upload (optional) -->
-            <div class="mb-4">
-              <p class="text-sm font-medium receipt-label mb-1">
-                Receipt
-                <span
-                  class="text-gray-400 dark:text-gray-500 font-normal text-xs"
-                  >(optional)</span
-                >
-                <span
-                  class="block text-xs text-gray-500 dark:text-gray-400 mt-1"
-                >
-                  Only image files (JPG, PNG, GIF, BMP, WEBP) are allowed. Max
-                  size: 1MB per file.
-                  {{
-                    formData.payerMode === 'multiple'
-                      ? 'You can upload multiple files.'
-                      : 'Single file only.'
-                  }}
-                </span>
-              </p>
-              <div class="flex items-center gap-2 flex-wrap">
-                <el-button
-                  size="small"
-                  @click="triggerFileInput"
-                  :disabled="receiptUploading"
-                >
-                  {{ receiptFiles.length ? 'Change File' : 'Choose File' }}
-                </el-button>
-                <span
-                  v-if="receiptFiles.length"
-                  class="text-sm text-gray-600 dark:text-gray-400 truncate max-w-[220px]"
-                >
-                  {{
-                    receiptFiles.length === 1
-                      ? receiptFiles[0].name
-                      : receiptFiles[0].name +
-                        ' +' +
-                        (receiptFiles.length - 1) +
-                        ' more'
-                  }}
-                </span>
-                <span v-else class="text-sm text-gray-400 dark:text-gray-500"
-                  >No file chosen</span
-                >
-                <el-button
-                  v-if="receiptFiles.length"
-                  size="small"
-                  type="danger"
-                  text
-                  @click="removeReceipt"
-                  >✕</el-button
-                >
-                <input
-                  ref="fileInputRef"
-                  type="file"
-                  accept="image/*"
-                  class="hidden"
-                  :multiple="formData.payerMode === 'multiple'"
-                  @change="handleReceiptChange"
-                />
-              </div>
-              <div
-                v-if="existingReceiptUrls.length && !receiptFiles.length"
-                class="flex flex-col gap-1 mt-1"
-              >
-                <a
-                  v-for="(url, idx) in existingReceiptUrls"
-                  :key="idx"
-                  :href="url"
-                  target="_blank"
-                  rel="noopener"
-                  class="text-xs text-blue-500 hover:underline inline-block"
-                  >View receipt
-                  {{ existingReceiptUrls.length > 1 ? idx + 1 : '' }}</a
-                >
-              </div>
-            </div>
+            <ReceiptUploadField
+              :selected-files="receiptFiles"
+              :existing-urls="existingReceiptUrls"
+              :uploading="receiptUploading"
+              :multiple="allowsMultiple"
+              :helper-text="
+                allowsMultiple
+                  ? 'Only image files (JPG, PNG, GIF, BMP, WEBP) are allowed. Max size: 1MB per file. You can upload multiple files.'
+                  : 'Only image files (JPG, PNG, GIF, BMP, WEBP) are allowed. Max size: 1MB per file. Single file only.'
+              "
+              @files-selected="setSelectedFiles"
+              @remove="removeReceipt"
+            />
           </el-col>
 
           <el-col :lg="12" :md="12" :sm="24">
@@ -312,20 +231,14 @@
             </el-row>
 
             <el-form-item label="Participants" class="mb-0">
-              <el-select
+              <GenericDropDown
                 v-model="item.participants"
-                multiple
+                :options="usersOptions"
                 placeholder="Who shared this item?"
-                class="w-full"
                 size="small"
-              >
-                <el-option
-                  v-for="opt in usersOptions"
-                  :key="opt.value"
-                  :label="opt.label"
-                  :value="opt.value"
-                />
-              </el-select>
+                multiple
+                :wrap-form-item="false"
+              />
             </el-form-item>
           </div>
 
@@ -391,7 +304,8 @@ import {
   DataTimePicker,
   AmountInput,
   GenericDropDown,
-  GenericInput
+  GenericInput,
+  ReceiptUploadField
 } from '../generic-components'
 import { rules } from '../../assets/validation-rules'
 import { PaymentForm } from '../../scripts/shared-expenses/payment-form'
@@ -420,10 +334,9 @@ const {
   removePayer,
   receiptFiles,
   receiptUploading,
-  fileInputRef,
+  allowsMultiple,
   existingReceiptUrls,
-  triggerFileInput,
-  handleReceiptChange,
+  setSelectedFiles,
   removeReceipt,
   isMePayer
 } = PaymentForm(props, emit)
@@ -432,13 +345,3 @@ defineExpose({
   validateForm
 })
 </script>
-
-<style scoped>
-.receipt-label {
-  color: #111827 !important; /* text-gray-900 */
-}
-
-:root.dark-theme .receipt-label {
-  color: #d1d5db !important; /* text-gray-300 */
-}
-</style>

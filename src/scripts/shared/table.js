@@ -14,6 +14,7 @@ import { getEditComponent } from '../../utils/active-tab'
 import { Tabs } from '../../assets/enums'
 import { downloadExcel, downloadPDF } from '../../utils/downloadDataProcedures'
 import getCurrentMonth from '../../utils/getCurrentMonth'
+import { formatUserDisplay } from '../../utils/user-display'
 
 export const Table = (props) => {
   const clickTimeout = ref(null)
@@ -27,7 +28,17 @@ export const Table = (props) => {
   const childRef = ref(null)
 
   const activeTab = computed(() => tabStore.$state.activeTab)
+  const activeGroupObj = computed(() =>
+    tabStore.getActiveGroup ? tabStore.getGroupById(tabStore.getActiveGroup) : null
+  )
   const activeTabComponent = () => getEditComponent(activeTab.value)
+
+  const formatUser = (mobile, name = null) =>
+    formatUserDisplay(tabStore, mobile, {
+      name,
+      group: activeGroupObj.value,
+      preferMasked: !activeGroupObj.value
+    })
 
   const dialogComponentProps = computed(() => {
     const base = {
@@ -356,32 +367,24 @@ export const Table = (props) => {
           if (row.payerMode === 'multiple' && row.payers?.length) {
             td.textContent = row.payers
               .map((p) => {
-                const name =
-                  tabStore.getUserByMobile(p.mobile)?.name || p.mobile
-                return `${name} (${p.mobile}): ${formatAmount(p.amount)}`
+                return `${formatUser(p.mobile)}: ${formatAmount(p.amount)}`
               })
               .join('\n')
           } else {
-            const name = tabStore.getUserByMobile(row.payer)?.name
-            td.textContent = name
-              ? `${name} (${row.payer})`
-              : (row.payer ?? '—')
+            td.textContent = row.payer ? formatUser(row.payer) : '—'
           }
         } else if (key === 'split') {
           if (Array.isArray(row.split)) {
             td.textContent = row.split
               .map((s) => {
-                const name =
-                  tabStore.getUserByMobile(s.mobile)?.name || s.mobile
-                return `${name}: ${formatAmount(s.amount)}`
+                return `${formatUser(s.mobile, s.name)}: ${formatAmount(s.amount)}`
               })
               .join('\n')
           } else {
             td.textContent = row.split ?? '—'
           }
         } else if (key === 'giver' || key === 'receiver') {
-          const name = tabStore.getUserByMobile(row[key])?.name
-          td.textContent = name ? `${name} (${row[key]})` : (row[key] ?? '—')
+          td.textContent = row[key] ? formatUser(row[key]) : '—'
         } else if (key === 'receiptUrls') {
           if (Array.isArray(row.receiptUrls) && row.receiptUrls.length) {
             row.receiptUrls.forEach((url, i) => {
@@ -721,17 +724,6 @@ export const Table = (props) => {
   })
 
   // --- Row event handlers ---
-  const rowEventHandlers = computed(() => ({
-    onClick: ({ event }) => {
-      const cellEl = event?.target?.closest?.('.et-cell-text')
-      if (cellEl && cellEl.scrollWidth > cellEl.clientWidth) {
-        const title = cellEl.getAttribute('data-cell-title') || ''
-        const text = cellEl.textContent?.trim() || ''
-        if (text) openCellPopup(title, text)
-      }
-    }
-  }))
-
   const getRowClass = ({ rowData, rowIndex }) => {
     const base = 'et-row'
     if (rowData.deleteRequest) return `${base} et-row--delete`
@@ -744,23 +736,10 @@ export const Table = (props) => {
   const showMoreTitle = ref('')
   const showMoreItems = ref([])
 
-  // --- Cell full-text popup ---
-  const cellPopupVisible = ref(false)
-  const cellPopupTitle = ref('')
-  const cellPopupText = ref('')
-
-  function openCellPopup(title, text) {
-    if (!text || String(text).trim() === '') return
-    cellPopupTitle.value = title
-    cellPopupText.value = String(text)
-    cellPopupVisible.value = true
-  }
-
-  const formatPayer = (p) =>
-    `${tabStore.getUserByMobile(p.mobile)?.name || p.mobile} (${p.mobile}): ${formatAmount(p.amount)}`
+  const formatPayer = (p) => `${formatUser(p.mobile)}: ${formatAmount(p.amount)}`
 
   const formatSplit = (s) =>
-    `${tabStore.getUserByMobile(s.mobile)?.name || s.mobile}: ${formatAmount(s.amount)}`
+    `${formatUser(s.mobile, s.name)}: ${formatAmount(s.amount)}`
 
   const formatReceipt = (url, i) => ({ label: `Receipt ${i + 1}`, href: url })
 
@@ -832,17 +811,13 @@ export const Table = (props) => {
     colSettingsDragKey,
     handleColSettingsDrop,
     // Row handlers
-    rowEventHandlers,
     getRowClass,
     // Show More dialog
     showMoreDialogVisible,
     showMoreTitle,
     showMoreItems,
-    // Cell popup
-    cellPopupVisible,
-    cellPopupTitle,
-    cellPopupText,
     // Formatters
+    formatUser,
     formatPayer,
     formatSplit,
     formatReceipt,

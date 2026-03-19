@@ -1,5 +1,6 @@
 import { computed, inject } from 'vue'
 import { store } from '../../stores/store'
+import { formatUserDisplay } from '../../utils/user-display'
 
 export const Summary = (props) => {
   const formatAmount = inject('formatAmount')
@@ -68,8 +69,10 @@ export const Summary = (props) => {
         if (!s.mobile || !(s.amount > 0)) return
         if (!totals[s.mobile]) {
           totals[s.mobile] = {
-            name:
-              s.name || userStore.getUserByMobile(s.mobile)?.name || s.mobile,
+            name: formatUserDisplay(userStore, s.mobile, {
+              name: s.name,
+              group: groupObj.value
+            }),
             amount: 0
           }
         }
@@ -81,7 +84,11 @@ export const Summary = (props) => {
 
   const friendTotals = computed(() =>
     usersList.value.map((user) => ({
-      name: user.name,
+      name: formatUserDisplay(userStore, user.mobile, {
+        name: user.name,
+        group: groupObj.value,
+        preferMasked: !groupObj.value
+      }),
       total: filteredPayments.value.reduce((sum, payment) => {
         if (payment.payerMode === 'multiple' && payment.payers?.length) {
           const entry = payment.payers.find((p) => p.mobile === user.mobile)

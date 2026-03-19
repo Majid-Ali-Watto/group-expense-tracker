@@ -3,14 +3,11 @@ import { useUsersOptions } from '../../utils/useUsersOptions'
 import getWhoAddedTransaction from '../../utils/whoAdded'
 import useFireBase from '../../api/firebase-apis'
 import { store } from '../../stores/store'
-import {
-  uploadToCloudinary,
-  deleteFromCloudinary
-} from '../../utils/cloudinaryUpload'
 import { showError } from '../../utils/showAlerts'
 import { maskMobile } from '../../utils/maskMobile'
 import { buildRequestMeta } from '../../utils/buildRequestMeta'
 import getCurrentMonth from '../../utils/getCurrentMonth'
+import { useReceiptUpload } from '../../utils/useReceiptUpload'
 
 export const LoanForm = (props, emit) => {
   const userStore = store()
@@ -35,8 +32,7 @@ export const LoanForm = (props, emit) => {
     giverRealMobile.value = ''
     receiverRealMobile.value = ''
     copyToExpenses.value = false
-    receiptFile.value = null
-    if (fileInputRef.value) fileInputRef.value.value = ''
+    removeReceipt()
     setTimeout(() => {
       if (loanForm.value) {
         loanForm.value.clearValidate()
@@ -52,13 +48,6 @@ export const LoanForm = (props, emit) => {
   const loanForm = ref(null)
   const isVisible = ref(true)
   const isEditMode = computed(() => !!props.row?.amount)
-
-  // ========== Receipt Upload ==========
-  const receiptFile = ref(null)
-  const receiptUploading = ref(false)
-  const fileInputRef = ref(null)
-  const existingReceiptUrl = computed(() => props.row?.receiptUrl || null)
-  const existingReceiptMeta = computed(() => props.row?.receiptMeta || null)
 
   const formData = ref({
     amount: null,
@@ -85,12 +74,26 @@ export const LoanForm = (props, emit) => {
     const me = activeUser.value
     return (userStore.getUsers || [])
       .map((u) => ({
-        mobile: u.mobile,
-        name: u.name || u.mobile,
-        displayMobile:
+        label: `${u.name || u.mobile} (${
           u.mobile === me ? u.mobile : u.maskedMobile || maskMobile(u.mobile)
+        })`,
+        value: u.mobile
       }))
-      .sort((a, b) => a.name.localeCompare(b.name))
+      .sort((a, b) => a.label.localeCompare(b.label))
+  })
+
+  const {
+    receiptFiles,
+    receiptUploading,
+    existingReceiptUrls,
+    existingReceiptUrl,
+    removeReceipt,
+    setSelectedFiles,
+    uploadSelectedFiles,
+    deleteExistingReceipts
+  } = useReceiptUpload({
+    existingUrls: computed(() => props.row?.receiptUrl || null),
+    existingMeta: computed(() => props.row?.receiptMeta || null)
   })
 
   // ========== Copy to Personal Expenses ==========
@@ -216,8 +219,7 @@ export const LoanForm = (props, emit) => {
         ''
       formData.value.description = newRow?.description ?? ''
       isVisible.value = !newRow?.amount
-      receiptFile.value = null
-      if (fileInputRef.value) fileInputRef.value.value = ''
+      removeReceipt()
       // Auto-tick ME? checkbox in edit mode
       if (newRow?.amount) {
         const giverMobile = props.isPersonal
@@ -308,37 +310,13 @@ export const LoanForm = (props, emit) => {
           loanPath = `${props.dbRef}/${groupId}/${monthYear}`
         }
 
-        // Upload receipt if selected
-        let receiptUrl = existingReceiptUrl.value
-        let receiptMeta = existingReceiptMeta.value
-        if (receiptFile.value) {
-          try {
-            receiptUploading.value = true
-            const uploaded = await uploadReceiptToStorage(receiptFile.value)
-            receiptUrl = uploaded.url
-            receiptMeta = {
-              url: uploaded.url,
-              publicId: uploaded.publicId,
-              resourceType: uploaded.resourceType
-            }
-            // Delete old Cloudinary file when replacing on direct update
-            if (
-              whatTask === 'Update' &&
-              props.isPersonal &&
-              existingReceiptMeta.value
-            ) {
-              deleteFromCloudinary(
-                existingReceiptMeta.value.publicId,
-                existingReceiptMeta.value.resourceType
-              )
-            }
-          } catch {
-            showError('Failed to upload receipt. Please try again.')
-            receiptUploading.value = false
-            return
-          }
-          receiptUploading.value = false
-        }
+        const uploadedReceipts = await uploadSelectedFiles({
+          replaceExisting: whatTask === 'Update' && props.isPersonal
+        })
+        if (!uploadedReceipts) return
+
+        const receiptUrl = uploadedReceipts.receiptUrl
+        const receiptMeta = uploadedReceipts.receiptMetaSingle
 
         if (whatTask == 'Save') {
           // Capture expense data before saveData resets the form
@@ -371,8 +349,7 @@ export const LoanForm = (props, emit) => {
                   null
                 )
               }
-              receiptFile.value = null
-              if (fileInputRef.value) fileInputRef.value.value = ''
+              removeReceipt()
               if (isEditMode.value) {
                 emit('closeModal')
               } else {
@@ -405,12 +382,7 @@ export const LoanForm = (props, emit) => {
               `${props.dbRef}/${groupId}/${monthYear}/${props.row.id}`
             )
           } else {
-            if (existingReceiptMeta.value) {
-              deleteFromCloudinary(
-                existingReceiptMeta.value.publicId,
-                existingReceiptMeta.value.resourceType
-              )
-            }
+            deleteExistingReceipts()
             deleteData(
               `${loanPath}/${props.row.id}`,
               `Loan record with ID ${props.row.id} deleted successfully`
@@ -420,49 +392,6 @@ export const LoanForm = (props, emit) => {
         }
       }
     })
-  }
-
-  function triggerFileInput() {
-    fileInputRef.value?.click()
-  }
-
-  function handleReceiptChange(event) {
-    const file = event.target.files?.[0] || null
-    if (!file) {
-      receiptFile.value = null
-      return
-    }
-    // Validate file type
-    const allowedTypes = [
-      'image/jpeg',
-      'image/png',
-      'image/gif',
-      'image/bmp',
-      'image/webp'
-    ]
-    if (!allowedTypes.includes(file.type)) {
-      showError('Only image files (JPG, PNG, GIF, BMP, WEBP) are allowed.')
-      if (fileInputRef.value) fileInputRef.value.value = ''
-      receiptFile.value = null
-      return
-    }
-    // Validate file size (max 1MB)
-    if (file.size > 1024 * 1024) {
-      showError('File size must be less than 1MB.')
-      if (fileInputRef.value) fileInputRef.value.value = ''
-      receiptFile.value = null
-      return
-    }
-    receiptFile.value = file
-  }
-
-  function removeReceipt() {
-    receiptFile.value = null
-    if (fileInputRef.value) fileInputRef.value.value = ''
-  }
-
-  async function uploadReceiptToStorage(file) {
-    return await uploadToCloudinary(file)
   }
 
   const createDeleteRequest = (loanPath) => {
@@ -534,12 +463,11 @@ export const LoanForm = (props, emit) => {
     openForm,
     closeForm,
     validateForm,
-    receiptFile,
+    receiptFiles,
     receiptUploading,
-    fileInputRef,
+    existingReceiptUrls,
     existingReceiptUrl,
-    triggerFileInput,
-    handleReceiptChange,
+    setSelectedFiles,
     removeReceipt,
     onGiverMobileBlur,
     onReceiverMobileBlur,

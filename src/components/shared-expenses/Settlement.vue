@@ -20,14 +20,14 @@
         <el-table-column label="Pays">
           <template #default="{ row }">
             <span class="text-red-500 dark:text-red-400 font-medium">
-              {{ userStore.getUserByMobile(row.from)?.name || row.from }}
+              {{ formatUser(row.from) }}
             </span>
           </template>
         </el-table-column>
         <el-table-column label="Receives">
           <template #default="{ row }">
             <span class="text-green-700 dark:text-green-400 font-medium">
-              {{ userStore.getUserByMobile(row.to)?.name || row.to }}
+              {{ formatUser(row.to) }}
             </span>
           </template>
         </el-table-column>
@@ -55,7 +55,7 @@
         📋 Settlement Request
       </div>
       <div class="text-xs mb-2">
-        Requested by: {{ group.settlementRequest.requestedByName }} for
+        Requested by: {{ formatUser(group.settlementRequest.requestedBy) }} for
         {{ group.settlementRequest.month }}
       </div>
       <div class="text-xs mb-2">
@@ -73,7 +73,7 @@
           size="small"
           type="success"
         >
-          ✓ {{ approval.name }}
+          ✓ {{ formatMember(approval) }}
         </el-tag>
         <el-tag
           v-for="member in getAllSettlementMembers.filter(
@@ -83,7 +83,7 @@
           size="small"
           type="info"
         >
-          ⏳ {{ member.name }}
+          ⏳ {{ formatMember(member) }}
         </el-tag>
       </div>
 
@@ -179,6 +179,7 @@
 <script setup>
 import { GenericButton } from '../generic-components'
 import { Settlement } from '../../scripts/shared-expenses/settlement'
+import { formatMemberDisplay, formatUserDisplay } from '../../utils/user-display'
 
 const props = defineProps({
   payments: Array,
@@ -205,6 +206,18 @@ const {
   approveSettlement,
   rejectSettlement
 } = Settlement(props)
+
+const formatUser = (mobile) =>
+  formatUserDisplay(userStore, mobile, {
+    group: group.value,
+    preferMasked: !group.value
+  })
+
+const formatMember = (member) =>
+  formatMemberDisplay(userStore, member, {
+    group: group.value,
+    preferMasked: !group.value
+  })
 </script>
 
 <style scoped>

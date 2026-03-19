@@ -2,7 +2,7 @@ import { ref, computed, watch } from 'vue'
 import { store } from '../../stores/store'
 import useFireBase from '../../api/firebase-apis'
 import { showError } from '../../utils/showAlerts'
-import { maskMobile } from '../../utils/maskMobile'
+import { formatUserDisplay } from '../../utils/user-display'
 
 export const GroupsCreate = (emit, props) => {
   const userStore = store()
@@ -11,16 +11,20 @@ export const GroupsCreate = (emit, props) => {
   const groupForm = ref({ name: '', description: '', members: [] })
   const groupFormRef = ref(null)
 
-  const usersOptions = computed(() => userStore.getUsers || [])
+  const usersOptions = computed(() =>
+    (userStore.getUsers || []).map((user) => ({
+      label: getUserLabel(user),
+      value: user.mobile
+    }))
+  )
 
   const activeUser = computed(() => userStore.getActiveUser)
 
   function getUserLabel(u) {
-    const displayMob =
-      u.mobile === activeUser.value
-        ? u.mobile
-        : u.maskedMobile || maskMobile(u.mobile)
-    return `${u.name} (${displayMob})`
+    return formatUserDisplay(userStore, u.mobile, {
+      name: u.name,
+      preferMasked: u.mobile !== activeUser.value
+    })
   }
 
   async function createGroup() {
@@ -125,7 +129,6 @@ export const GroupsCreate = (emit, props) => {
     groupForm,
     groupFormRef,
     usersOptions,
-    createGroup,
-    getUserLabel
+    createGroup
   }
 }

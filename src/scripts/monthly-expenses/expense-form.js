@@ -3,11 +3,7 @@ import { store } from '../../stores/store'
 import getCurrentMonth from '../../utils/getCurrentMonth'
 import getWhoAddedTransaction from '../../utils/whoAdded'
 import useFireBase from '../../api/firebase-apis'
-import {
-  uploadToCloudinary,
-  deleteFromCloudinary
-} from '../../utils/cloudinaryUpload'
-import { showError } from '../../utils/showAlerts'
+import { useReceiptUpload } from '../../utils/useReceiptUpload'
 
 export const ExpenseForm = (props, emit) => {
   const { saveData, updateData, deleteData } = useFireBase()
@@ -21,12 +17,19 @@ export const ExpenseForm = (props, emit) => {
     recipient: ''
   })
 
-  // Receipt upload (single file)
-  const receiptFile = ref(null)
-  const receiptUploading = ref(false)
-  const fileInputRef = ref(null)
-  const existingReceiptUrl = computed(() => props.row?.receiptUrl || null)
-  const existingReceiptMeta = computed(() => props.row?.receiptMeta || null)
+  const {
+    receiptFiles,
+    receiptUploading,
+    existingReceiptUrls,
+    existingReceiptUrl,
+    removeReceipt,
+    setSelectedFiles,
+    uploadSelectedFiles,
+    deleteExistingReceipts
+  } = useReceiptUpload({
+    existingUrls: computed(() => props.row?.receiptUrl || null),
+    existingMeta: computed(() => props.row?.receiptMeta || null)
+  })
 
   const expenseForm = ref(null)
   const userStore = store()
@@ -50,8 +53,7 @@ export const ExpenseForm = (props, emit) => {
         location: newRow?.location ?? '',
         recipient: newRow?.recipient ?? ''
       }
-      receiptFile.value = null
-      if (fileInputRef.value) fileInputRef.value.value = ''
+      removeReceipt()
     },
     { immediate: true, deep: true }
   )
@@ -71,33 +73,13 @@ export const ExpenseForm = (props, emit) => {
 
     expenseForm.value.validate(async (valid) => {
       if (valid) {
-        // Upload receipt if selected
-        let receiptUrl = existingReceiptUrl.value
-        let receiptMeta = existingReceiptMeta.value
-        if (receiptFile.value) {
-          try {
-            receiptUploading.value = true
-            const uploaded = await uploadReceiptToStorage(receiptFile.value)
-            receiptUrl = uploaded.url
-            receiptMeta = {
-              url: uploaded.url,
-              publicId: uploaded.publicId,
-              resourceType: uploaded.resourceType
-            }
-            // Delete old Cloudinary file when replacing on update
-            if (whatTask === 'Update' && existingReceiptMeta.value) {
-              deleteFromCloudinary(
-                existingReceiptMeta.value.publicId,
-                existingReceiptMeta.value.resourceType
-              )
-            }
-          } catch {
-            showError('Failed to upload receipt. Please try again.')
-            receiptUploading.value = false
-            return
-          }
-          receiptUploading.value = false
-        }
+        const uploadedReceipts = await uploadSelectedFiles({
+          replaceExisting: whatTask === 'Update'
+        })
+        if (!uploadedReceipts) return
+
+        const receiptUrl = uploadedReceipts.receiptUrl
+        const receiptMeta = uploadedReceipts.receiptMetaSingle
 
         if (whatTask == 'Save') {
           saveData(
@@ -106,8 +88,7 @@ export const ExpenseForm = (props, emit) => {
             expenseForm,
             'Expense added successfully!',
             () => {
-              receiptFile.value = null
-              if (fileInputRef.value) fileInputRef.value.value = ''
+              removeReceipt()
               if (isEditMode.value) {
                 emit('closeModal')
               } else {
@@ -123,12 +104,7 @@ export const ExpenseForm = (props, emit) => {
           )
           emit('closeModal')
         } else if (whatTask == 'Delete') {
-          if (existingReceiptMeta.value) {
-            deleteFromCloudinary(
-              existingReceiptMeta.value.publicId,
-              existingReceiptMeta.value.resourceType
-            )
-          }
+          deleteExistingReceipts()
           deleteData(
             `expenses/${activeUser.value}/${selectedMonth.value}/${props.row.id}`,
             `Expense record with ID ${props.row.id} deleted successfully`
@@ -137,49 +113,6 @@ export const ExpenseForm = (props, emit) => {
         }
       }
     })
-  }
-
-  function triggerFileInput() {
-    fileInputRef.value?.click()
-  }
-
-  function handleReceiptChange(event) {
-    const file = event.target.files?.[0] || null
-    if (!file) {
-      receiptFile.value = null
-      return
-    }
-    // Validate file type
-    const allowedTypes = [
-      'image/jpeg',
-      'image/png',
-      'image/gif',
-      'image/bmp',
-      'image/webp'
-    ]
-    if (!allowedTypes.includes(file.type)) {
-      showError('Only image files (JPG, PNG, GIF, BMP, WEBP) are allowed.')
-      if (fileInputRef.value) fileInputRef.value.value = ''
-      receiptFile.value = null
-      return
-    }
-    // Validate file size (max 1MB)
-    if (file.size > 1024 * 1024) {
-      showError('File size must be less than 1MB.')
-      if (fileInputRef.value) fileInputRef.value.value = ''
-      receiptFile.value = null
-      return
-    }
-    receiptFile.value = file
-  }
-
-  function removeReceipt() {
-    receiptFile.value = null
-    if (fileInputRef.value) fileInputRef.value.value = ''
-  }
-
-  async function uploadReceiptToStorage(file) {
-    return await uploadToCloudinary(file)
   }
 
   function getExpenseData(receiptUrl = null, receiptMeta = null) {
@@ -202,12 +135,11 @@ export const ExpenseForm = (props, emit) => {
     form,
     expenseForm,
     validateForm,
-    receiptFile,
+    receiptFiles,
     receiptUploading,
-    fileInputRef,
+    existingReceiptUrls,
     existingReceiptUrl,
-    triggerFileInput,
-    handleReceiptChange,
+    setSelectedFiles,
     removeReceipt
   }
 }

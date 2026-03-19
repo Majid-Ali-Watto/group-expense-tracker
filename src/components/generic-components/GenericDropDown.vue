@@ -1,12 +1,16 @@
 <template>
-  <el-form-item :label="label" :prop="prop" :required="required" class="w-full">
+  <component :is="wrapFormItem ? 'el-form-item' : 'div'" v-bind="wrapperProps">
     <el-select
-      filterable
       v-model="internalValue"
+      :filterable="filterable"
       :placeholder="placeholder"
-      class="w-full"
-      clearable
+      :class="selectClass"
+      :clearable="clearable"
       :disabled="disabled"
+      :multiple="multiple"
+      :size="size"
+      :collapse-tags="collapseTags"
+      :collapse-tags-tooltip="collapseTagsTooltip"
       @change="$emit('update:modelValue', internalValue)"
     >
       <el-option
@@ -16,16 +20,17 @@
         :value="getValue(item)"
       />
     </el-select>
-  </el-form-item>
+  </component>
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { GenericDropDown } from '../../scripts/shared/generic-dropdown'
 
 const props = defineProps({
   modelValue: {
-    type: [String, Number, Object],
-    required: true
+    type: [String, Number, Object, Array],
+    default: null
   },
   label: {
     type: String,
@@ -43,11 +48,51 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
+  labelPosition: {
+    type: String,
+    default: ''
+  },
   options: {
     type: Array,
     default: () => []
   },
   disabled: {
+    type: Boolean,
+    default: false
+  },
+  multiple: {
+    type: Boolean,
+    default: false
+  },
+  filterable: {
+    type: Boolean,
+    default: true
+  },
+  clearable: {
+    type: Boolean,
+    default: true
+  },
+  wrapFormItem: {
+    type: Boolean,
+    default: true
+  },
+  size: {
+    type: String,
+    default: ''
+  },
+  selectClass: {
+    type: String,
+    default: 'w-full'
+  },
+  formItemClass: {
+    type: String,
+    default: 'w-full'
+  },
+  collapseTags: {
+    type: Boolean,
+    default: false
+  },
+  collapseTagsTooltip: {
     type: Boolean,
     default: false
   },
@@ -64,4 +109,18 @@ const props = defineProps({
 defineEmits(['update:modelValue'])
 
 const { internalValue, getLabel, getValue, getKey } = GenericDropDown(props)
+
+const wrapperProps = computed(() => {
+  if (!props.wrapFormItem) {
+    return {}
+  }
+
+  return {
+    label: props.label,
+    prop: props.prop,
+    required: props.required,
+    labelPosition: props.labelPosition || undefined,
+    class: props.formItemClass
+  }
+})
 </script>

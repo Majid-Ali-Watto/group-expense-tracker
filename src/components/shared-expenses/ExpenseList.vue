@@ -23,7 +23,8 @@
               {{ request.type === 'delete' ? 'Delete' : 'Update' }} Request
             </strong>
             <p class="text-sm text-gray-600">
-              Requested by: <strong>{{ request.requestedByName }}</strong>
+              Requested by:
+              <strong>{{ getUserName(request.requestedBy) }}</strong>
               <span v-if="request.requestedAt">
                 on {{ request.requestedAt }}</span
               >

@@ -4,6 +4,7 @@ import useFireBase from '../../api/firebase-apis'
 import { store } from '../../stores/store'
 import getCurrentMonth from '../../utils/getCurrentMonth'
 import { showError } from '../../utils/showAlerts'
+import { formatUserDisplay } from '../../utils/user-display'
 
 export const PersonalLoans = () => {
   const formatAmount = inject('formatAmount')
@@ -147,7 +148,9 @@ export const PersonalLoans = () => {
         seen.add(loan.loanGiver)
         options.push({
           mobile: loan.loanGiver,
-          name: loan.giverName || loan.loanGiver
+          name: formatUserDisplay(userStore, loan.loanGiver, {
+            name: loan.giverName
+          })
         })
       }
     })
@@ -189,8 +192,12 @@ export const PersonalLoans = () => {
       const { loanGiver, giverName, loanReceiver, receiverName, amount } = loan
       if (!loanGiver || !loanReceiver || !amount) return
 
-      if (giverName) nameMap[loanGiver] = giverName
-      if (receiverName) nameMap[loanReceiver] = receiverName
+      nameMap[loanGiver] = formatUserDisplay(userStore, loanGiver, {
+        name: giverName
+      })
+      nameMap[loanReceiver] = formatUserDisplay(userStore, loanReceiver, {
+        name: receiverName
+      })
 
       const v = Number(amount)
       // Canonical key: always sort mobiles lexicographically so each pair has one stable key

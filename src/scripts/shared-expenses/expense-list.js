@@ -6,11 +6,13 @@ import useFireBase from '../../api/firebase-apis'
 import { checkDaily } from '../../utils/notifications'
 import getCurrentMonth from '../../utils/getCurrentMonth'
 import { showError } from '../../utils/showAlerts'
+import { appendNotificationForUser } from '../../utils/recordNotifications'
+import { useApprovalRequests } from '../../utils/useApprovalRequests'
+import { formatUserDisplay } from '../../utils/user-display'
 import {
   deleteFromCloudinary,
   cleanupOldReceipts
 } from '../../utils/cloudinaryUpload'
-import { ElMessageBox } from 'element-plus'
 
 export const ExpenseList = (props) => {
   const userStore = store()
@@ -160,282 +162,72 @@ export const ExpenseList = (props) => {
     })
   })
 
-  // Notifications for current user
-  const userNotifications = computed(() => {
-    if (!rawPaymentsData.value || !activeUser.value) return []
-
-    const notifications = []
-
-    Object.keys(rawPaymentsData.value).forEach((paymentId) => {
-      const payment = rawPaymentsData.value[paymentId]
-      if (
-        payment &&
-        payment.notifications &&
-        payment.notifications[activeUser.value]
-      ) {
-        payment.notifications[activeUser.value].forEach((notif) => {
-          notifications.push({
-            ...notif,
-            paymentId,
-            monthYear: selectedMonth.value
-          })
-        })
-      }
-    })
-
-    return notifications.sort((a, b) => b.timestamp - a.timestamp)
-  })
-
-  const dismissNotification = async (notificationId) => {
-    const groupId = activeGroup.value || 'global'
-
-    for (const paymentId of Object.keys(rawPaymentsData.value)) {
-      const payment = rawPaymentsData.value[paymentId]
-      if (payment.notifications && payment.notifications[activeUser.value]) {
-        const filtered = payment.notifications[activeUser.value].filter(
-          (n) => n.id !== notificationId
-        )
-
-        if (
-          filtered.length !== payment.notifications[activeUser.value].length
-        ) {
-          const paymentPath = `${props.dbRef}/${groupId}/${selectedMonth.value}/${paymentId}`
-
-          if (filtered.length === 0) {
-            await deleteData(
-              `${paymentPath}/notifications/${activeUser.value}`,
-              ''
-            )
-          } else {
-            await updateData(
-              `${paymentPath}/notifications/${activeUser.value}`,
-              () => filtered,
-              ''
-            )
-          }
-          break
-        }
-      }
-    }
-  }
-
-  // Approval request logic
-  const pendingRequests = computed(() => {
-    if (!rawPaymentsData.value) return []
-
-    const requests = []
-
-    Object.keys(rawPaymentsData.value).forEach((paymentId) => {
-      const payment = rawPaymentsData.value[paymentId]
-      const commonPayment = {
-        paymentId,
-        payment: {
-          amount: payment.amount,
-          payer: payment.payer,
-          description: payment.description,
-          date: payment.date
-        },
-        monthYear: selectedMonth.value
-      }
-      if (payment.deleteRequest && payment.amount) {
-        requests.push({
-          type: 'delete',
-          ...commonPayment,
-          requestedBy: payment.deleteRequest.requestedBy,
-          requestedByName: payment.deleteRequest.requestedByName,
-          approvals: payment.deleteRequest.approvals || [],
-          requestedAt: payment.deleteRequest.requestedAt
-        })
-      }
-
-      if (payment.updateRequest && payment.amount) {
-        requests.push({
-          type: 'update',
-          ...commonPayment,
-          requestedBy: payment.updateRequest.requestedBy,
-          requestedByName: payment.updateRequest.requestedByName,
-          approvals: payment.updateRequest.approvals || [],
-          requestedAt: payment.updateRequest.requestedAt,
-          changes: payment.updateRequest.changes
-        })
-      }
-    })
-
-    return requests
-  })
-
   const getTotalMembers = () => {
     return groupObj.value?.members?.length || 0
   }
 
   const getUserName = (mobile) => {
-    return userStore.getUserByMobile(mobile)?.name || mobile
+    return formatUserDisplay(userStore, mobile, { group: groupObj.value })
   }
 
-  const hasUserApproved = (request) => {
-    return request.approvals.includes(activeUser.value)
-  }
+  const {
+    userNotifications,
+    dismissNotification,
+    pendingRequests,
+    hasUserApproved,
+    isFullyApproved,
+    executeRequestManually,
+    cancelRequest,
+    approveRequest,
+    rejectRequest
+  } = useApprovalRequests({
+    rawItems: rawPaymentsData,
+    activeUser,
+    activeGroup,
+    selectedMonth,
+    userStore,
+    getTotalMembers,
+    updateData,
+    deleteData,
+    itemIdKey: 'paymentId',
+    summaryKey: 'payment',
+    itemLabel: 'payment',
+    listLabel: 'Payment',
+    getSummary: (payment) => ({
+      amount: payment.amount,
+      payer: payment.payer,
+      description: payment.description,
+      date: payment.date
+    }),
+    buildItemPath: ({ groupId, monthYear, itemId }) =>
+      `${props.dbRef}/${groupId}/${monthYear}/${itemId}`,
+    cleanupDeletedReceipts: (payment) => {
+      const deletedMeta = payment?.receiptMeta
+      if (!deletedMeta) return
 
-  const isFullyApproved = (request) => {
-    return request.approvals.length >= getTotalMembers()
-  }
-
-  const executeRequestManually = async (request) => {
-    const groupId = activeGroup.value || 'global'
-    await executeRequest(request, groupId)
-  }
-
-  const cancelRequest = async (request) => {
-    ElMessageBox.confirm(
-      `Are you sure you want to cancel this ${request.type} request?`,
-      'Cancel Request',
-      {
-        confirmButtonText: 'Yes, Cancel',
-        cancelButtonText: 'No',
-        type: 'warning'
-      }
-    )
-      .then(async () => {
-        const groupId = activeGroup.value || 'global'
-        const paymentPath = `${props.dbRef}/${groupId}/${request.monthYear}/${request.paymentId}`
-        const requestPath = `${paymentPath}/${request.type}Request`
-
-        await deleteData(
-          requestPath,
-          `${request.type} request has been cancelled.`
-        )
-      })
-      .catch(() => {})
-  }
-
-  const approveRequest = async (request) => {
-    const groupId = activeGroup.value || 'global'
-    const requestPath = `${props.dbRef}/${groupId}/${request.monthYear}/${request.paymentId}/${request.type}Request`
-
-    const updatedApprovals = [...request.approvals, activeUser.value]
-
-    await updateData(
-      requestPath,
-      () => ({ approvals: updatedApprovals }),
-      'Your approval has been recorded.'
-    )
-
-    if (updatedApprovals.length >= getTotalMembers()) {
-      await executeRequest(request, groupId)
-    }
-  }
-
-  const rejectRequest = async (request) => {
-    ElMessageBox.confirm(
-      `Are you sure you want to reject this ${request.type} request?`,
-      'Confirm Rejection',
-      {
-        confirmButtonText: 'Yes, Reject',
-        cancelButtonText: 'Cancel',
-        type: 'warning'
-      }
-    )
-      .then(async () => {
-        const groupId = activeGroup.value || 'global'
-        const paymentPath = `${props.dbRef}/${groupId}/${request.monthYear}/${request.paymentId}`
-        const currentUser = userStore.getUserByMobile(activeUser.value)
-
-        const notification = {
-          id: Date.now().toString() + Math.random(),
-          type: 'rejected',
-          message: `Your ${request.type} request for payment was rejected`,
-          byName: currentUser?.name || activeUser.value,
-          timestamp: Date.now()
-        }
-
-        const existingNotifications =
-          rawPaymentsData.value[request.paymentId]?.notifications?.[
-            request.requestedBy
-          ] || []
-        await updateData(
-          `${paymentPath}/notifications`,
-          () => ({
-            ...rawPaymentsData.value[request.paymentId]?.notifications,
-            [request.requestedBy]: [...existingNotifications, notification]
-          }),
-          ''
-        )
-
-        const requestPath = `${paymentPath}/${request.type}Request`
-        await deleteData(
-          requestPath,
-          `${request.type} request has been rejected.`
-        )
-      })
-      .catch(() => {})
-  }
-
-  const executeRequest = async (request, groupId) => {
-    const paymentPath = `${props.dbRef}/${groupId}/${request.monthYear}/${request.paymentId}`
-
-    await deleteData(`${paymentPath}/${request.type}Request`, '')
-
-    const notification = {
-      id: Date.now().toString() + Math.random(),
-      type: 'approved',
-      message: `Your ${request.type} request for payment has been approved by all members`,
-      timestamp: Date.now()
-    }
-
-    if (request.type === 'delete') {
-      const deletedMeta = rawPaymentsData.value[request.paymentId]?.receiptMeta
-      if (deletedMeta) {
-        const metas = Array.isArray(deletedMeta) ? deletedMeta : [deletedMeta]
-        metas.forEach((m) => deleteFromCloudinary(m.publicId, m.resourceType))
-      }
-
-      const existingNotifications =
-        rawPaymentsData.value[request.paymentId]?.notifications?.[
-          request.requestedBy
-        ] || []
-      await updateData(
-        `${paymentPath}/notifications`,
-        () => ({
-          ...rawPaymentsData.value[request.paymentId]?.notifications,
-          [request.requestedBy]: [...existingNotifications, notification]
-        }),
-        ''
+      const metas = Array.isArray(deletedMeta) ? deletedMeta : [deletedMeta]
+      metas.forEach((meta) =>
+        deleteFromCloudinary(meta.publicId, meta.resourceType)
       )
+    },
+    buildUpdatedItem: (payment, request, notification) => {
+      cleanupOldReceipts(payment?.receiptMeta, request.changes?.receiptMeta)
 
-      await new Promise((resolve) => setTimeout(resolve, 100))
-
-      await deleteData(
-        paymentPath,
-        'Payment has been deleted (approved by all members).'
+      const updatedPayment = appendNotificationForUser(
+        {
+          ...payment,
+          ...request.changes
+        },
+        request.requestedBy,
+        notification
       )
-    } else if (request.type === 'update') {
-      const oldMeta = rawPaymentsData.value[request.paymentId]?.receiptMeta
-      const newMeta = request.changes?.receiptMeta
-      cleanupOldReceipts(oldMeta, newMeta)
-
-      const updatedPayment = {
-        ...rawPaymentsData.value[request.paymentId],
-        ...request.changes
-      }
 
       delete updatedPayment.deleteRequest
       delete updatedPayment.updateRequest
 
-      if (!updatedPayment.notifications) {
-        updatedPayment.notifications = {}
-      }
-      if (!updatedPayment.notifications[request.requestedBy]) {
-        updatedPayment.notifications[request.requestedBy] = []
-      }
-      updatedPayment.notifications[request.requestedBy].push(notification)
-
-      await updateData(
-        paymentPath,
-        () => updatedPayment,
-        'Payment has been updated (approved by all members).'
-      )
+      return updatedPayment
     }
-  }
+  })
 
   return {
     userStore,

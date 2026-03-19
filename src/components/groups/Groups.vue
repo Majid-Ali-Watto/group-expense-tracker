@@ -55,20 +55,14 @@
           >Z→A</el-button
         >
       </el-button-group>
-      <el-select
+      <GenericDropDown
         v-model="filterByUser"
-        clearable
+        :options="allGroupMemberOptions"
         placeholder="Filter by member"
         size="small"
-        class="w-[150px] max-w-[200px]"
-      >
-        <el-option
-          v-for="u in allGroupMembers"
-          :key="u.mobile"
-          :label="u.name"
-          :value="u.mobile"
-        />
-      </el-select>
+        select-class="w-[150px] max-w-[200px]"
+        :wrap-form-item="false"
+      />
     </div>
     <!-- Pending Invitations -->
     <div v-if="pendingInvitations.length > 0" class="mb-4">
@@ -353,23 +347,15 @@
           />
         </el-form-item>
 
-        <el-form-item label="Members" prop="members">
-          <el-select
-            filterable
-            v-model="editForm.members"
-            multiple
-            placeholder="Select members"
-            class="w-full"
-            size="small"
-          >
-            <el-option
-              v-for="u in userStore.getUsers"
-              :key="u.mobile"
-              :label="`${u.name} (${displayMobileInEditDialog(u.mobile)})`"
-              :value="u.mobile"
-            />
-          </el-select>
-        </el-form-item>
+        <GenericDropDown
+          v-model="editForm.members"
+          label="Members"
+          prop="members"
+          :options="editMemberOptions"
+          placeholder="Select members"
+          size="small"
+          multiple
+        />
       </el-form>
 
       <template #footer>
@@ -401,22 +387,13 @@
       style="max-width: 500px"
     >
       <el-form label-position="top">
-        <el-form-item label="Select Member to Add">
-          <el-select
-            v-model="selectedMemberToAdd"
-            filterable
-            placeholder="Select member"
-            class="w-full"
-            size="small"
-          >
-            <el-option
-              v-for="u in availableUsersToAdd"
-              :key="u.mobile"
-              :label="`${u.name} (${displayMasked(u.mobile)})`"
-              :value="u.mobile"
-            />
-          </el-select>
-        </el-form-item>
+        <GenericDropDown
+          v-model="selectedMemberToAdd"
+          label="Select Member to Add"
+          :options="availableUsersToAddOptions"
+          placeholder="Select member"
+          size="small"
+        />
         <el-alert
           title="All current members must approve before this member can be added"
           type="info"
@@ -453,22 +430,13 @@
       style="max-width: 500px"
     >
       <el-form label-position="top">
-        <el-form-item label="Select New Owner">
-          <el-select
-            v-model="newOwnerMobile"
-            filterable
-            placeholder="Select new owner"
-            class="w-full"
-            size="small"
-          >
-            <el-option
-              v-for="member in transferOwnershipMembers"
-              :key="member.mobile"
-              :label="`${member.name} (${member.mobile})`"
-              :value="member.mobile"
-            />
-          </el-select>
-        </el-form-item>
+        <GenericDropDown
+          v-model="newOwnerMobile"
+          label="Select New Owner"
+          :options="transferOwnershipOptions"
+          placeholder="Select new owner"
+          size="small"
+        />
         <el-alert
           title="All members must approve this transfer"
           type="warning"
@@ -501,7 +469,6 @@
 
 <script setup>
 import { defineAsyncComponent } from 'vue'
-import { displayMasked } from '../../helpers/users'
 import { groupRules } from '../../assets/validation-rules'
 import { Groups } from '../../scripts/groups/groups'
 import GroupDetailsAccordion from '../generic-components/GroupDetailsAccordion.vue'
@@ -509,6 +476,7 @@ import YourPositionInGroup from '../generic-components/YourPositionInGroup.vue'
 import GroupActionButtons from '../generic-components/GroupActionButtons.vue'
 import GroupRequestButtons from '../generic-components/GroupRequestButtons.vue'
 import GroupNotificationsForCurrentUser from '../generic-components/GroupNotificationsForCurrentUser.vue'
+import { GenericDropDown } from '../generic-components'
 const GroupsCreate = defineAsyncComponent(() => import('./GroupsCreate.vue'))
 const AddNewTransactionButton = defineAsyncComponent(
   () => import('../generic-components/AddNewTransactionButton.vue')
@@ -524,7 +492,7 @@ const {
   searchQuery,
   sortOrder,
   filterByUser,
-  allGroupMembers,
+  allGroupMemberOptions,
   joinedGroups,
   otherGroups,
   pendingInvitations,
@@ -532,12 +500,13 @@ const {
   rejectInvitation,
   editDialogVisible,
   editForm,
+  editMemberOptions,
   transferDialogVisible,
   newOwnerMobile,
-  transferOwnershipMembers,
+  transferOwnershipOptions,
   addMemberDialogVisible,
   selectedMemberToAdd,
-  availableUsersToAdd,
+  availableUsersToAddOptions,
   userStore,
 
   isPinned,
@@ -574,7 +543,6 @@ const {
 
   // Mobile display helpers
   displayMobileForGroup,
-  displayMobileInEditDialog,
 
   // Ownership transfer
   requestOwnershipTransfer,

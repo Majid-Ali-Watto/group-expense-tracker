@@ -6,6 +6,11 @@ import { ElMessageBox } from 'element-plus'
 import { onValue, off } from '../../firebase'
 import { maskMobile } from '../../utils/maskMobile'
 import {
+  appendNotificationForUser,
+  removeNotificationForUser
+} from '../../utils/recordNotifications'
+import { formatMemberDisplay, formatUserDisplay } from '../../utils/user-display'
+import {
   isMemberOfGroup,
   allMembersApproved,
   allMembersApprovedJoinRequest,
@@ -70,6 +75,13 @@ export const Groups = () => {
     }
     return members.sort((a, b) => a.name.localeCompare(b.name))
   })
+
+  const allGroupMemberOptions = computed(() =>
+    allGroupMembers.value.map((member) => ({
+      label: `${member.name} (${member.mobile})`,
+      value: member.mobile
+    }))
+  )
 
   // Filtered groups based on search query, user filter, and sort order
   const filteredGroups = computed(() => {
@@ -395,24 +407,19 @@ export const Groups = () => {
       if (!group) return
 
       const mobile = userStore.getActiveUser
-      if (!group.notifications || !group.notifications[mobile]) return
-
-      // Remove the notification
-      group.notifications[mobile] = group.notifications[mobile].filter(
-        (n) => n.id !== notificationId
+      const { changed, record } = removeNotificationForUser(
+        group,
+        mobile,
+        notificationId
       )
+      if (!changed) return
 
-      // Clean up empty notification arrays
-      if (group.notifications[mobile].length === 0) {
-        delete group.notifications[mobile]
-      }
-
-      await updateData(`groups/${groupId}`, () => group, '')
+      await updateData(`groups/${groupId}`, () => record, '')
 
       const groupIndex = groups.value.findIndex((g) => g.id === groupId)
       if (groupIndex !== -1) {
-        groups.value[groupIndex] = group
-        userStore.updateGroup(group)
+        groups.value[groupIndex] = record
+        userStore.updateGroup(record)
       }
     } catch (err) {
       showError(err.message || err)
@@ -430,17 +437,10 @@ export const Groups = () => {
       timestamp: Date.now()
     }
 
-    if (!group.notifications) {
-      group.notifications = {}
-    }
-
     // Notify all members except the one performing the action
     group.members.forEach((member) => {
       if (member.mobile !== userStore.getActiveUser) {
-        if (!group.notifications[member.mobile]) {
-          group.notifications[member.mobile] = []
-        }
-        group.notifications[member.mobile].push(notification)
+        appendNotificationForUser(group, member.mobile, notification)
       }
     })
   }
@@ -459,6 +459,15 @@ export const Groups = () => {
     return group.members.filter((m) => m.mobile !== userStore.getActiveUser)
   })
 
+  const transferOwnershipOptions = computed(() =>
+    transferOwnershipMembers.value.map((member) => ({
+      label: formatMemberDisplay(userStore, member, {
+        group: groups.value.find((g) => g.id === transferOwnershipGroupId.value)
+      }),
+      value: member.mobile
+    }))
+  )
+
   // Add Member Dialog
   const addMemberDialogVisible = ref(false)
   const addMemberGroupId = ref(null)
@@ -474,6 +483,16 @@ export const Groups = () => {
       (u) => !currentMemberMobiles.includes(u.mobile)
     )
   })
+
+  const availableUsersToAddOptions = computed(() =>
+    availableUsersToAdd.value.map((user) => ({
+      label: formatUserDisplay(userStore, user.mobile, {
+        name: user.name,
+        preferMasked: true
+      }),
+      value: user.mobile
+    }))
+  )
 
   function showAddMemberDialog(groupId) {
     addMemberGroupId.value = groupId
@@ -1599,6 +1618,19 @@ export const Groups = () => {
     return displayMobileForGroup(targetMobile, editGroup)
   }
 
+  const editMemberOptions = computed(() =>
+    (userStore.getUsers || []).map((user) => ({
+      label: formatUserDisplay(userStore, user.mobile, {
+        name: user.name,
+        group: groups.value.find((g) => g.id === editingGroupId.value),
+        preferMasked: !groups.value
+          .find((g) => g.id === editingGroupId.value)
+          ?.members?.some((member) => member.mobile === user.mobile)
+      }),
+      value: user.mobile
+    }))
+  )
+
   const groupNotifications = computed(() => {
     const me = userStore.getActiveUser
     if (!me) return []
@@ -1728,6 +1760,7 @@ export const Groups = () => {
     sortOrder,
     filterByUser,
     allGroupMembers,
+    allGroupMemberOptions,
     filteredGroups,
     joinedGroups,
     otherGroups,
@@ -1739,9 +1772,11 @@ export const Groups = () => {
     transferDialogVisible,
     newOwnerMobile,
     transferOwnershipMembers,
+    transferOwnershipOptions,
     addMemberDialogVisible,
     selectedMemberToAdd,
     availableUsersToAdd,
+    availableUsersToAddOptions,
     userStore,
 
     // Group actions
@@ -1806,6 +1841,7 @@ export const Groups = () => {
     getGroupActions,
 
     // Edit form
+    editMemberOptions,
     editFormRef,
     handleEditSave
   }

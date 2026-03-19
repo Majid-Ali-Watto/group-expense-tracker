@@ -103,6 +103,20 @@ body {
     color 0.3s ease;
 }
 
+.overflow-popup-trigger {
+  cursor: pointer;
+}
+
+.overflow-popup-box .el-message-box__message {
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.overflow-popup-box .el-message-box__message p {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 /* HTML Elements */
 h1,
 h2,

@@ -28,7 +28,11 @@
           >
             <span class="font-medium">{{ notif.message }}</span>
             <span v-if="notif.byName" class="text-gray-600 ml-2"
-              >({{ notif.byName }})</span
+              >({{
+                notif.byMobile
+                  ? `${notif.byName} (${notif.byMobile})`
+                  : notif.byName
+              }})</span
             >
           </div>
           <el-button size="small" text @click="dismissNotification(notif.id)">
@@ -50,13 +54,14 @@
           <div class="flex justify-between items-start mb-2">
             <div>
               <strong class="text-gray-800">
-                {{ request.type === 'delete' ? 'Delete' : 'Update' }} Request
-              </strong>
-              <p class="text-sm text-gray-600">
-                Requested by: <strong>{{ request.requestedByName }}</strong>
-                <span v-if="request.requestedAt">
-                  on {{ request.requestedAt }}</span
-                >
+              {{ request.type === 'delete' ? 'Delete' : 'Update' }} Request
+            </strong>
+            <p class="text-sm text-gray-600">
+              Requested by:
+              <strong>{{ getUserName(request.requestedBy) }}</strong>
+              <span v-if="request.requestedAt">
+                on {{ request.requestedAt }}</span
+              >
               </p>
             </div>
             <el-tag :type="request.type === 'delete' ? 'danger' : 'warning'">
@@ -244,6 +249,7 @@
             v-for="(balance, index) in balances"
             :key="index"
             :label="balance.name"
+            label-class-name="loan-detail-name-cell"
           >
             <span
               :class="balance.amount < 0 ? 'text-red-500' : 'text-green-500'"
@@ -303,3 +309,11 @@ const {
 
 const showFilters = ref(false)
 </script>
+
+<style scoped>
+:deep(.loan-detail-name-cell) {
+  min-width: 220px;
+  white-space: normal;
+  word-break: break-word;
+}
+</style>
