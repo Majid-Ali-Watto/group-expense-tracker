@@ -88,13 +88,12 @@
                   select-class="flex-1"
                   :wrap-form-item="false"
                 />
-                <el-input-number
+                <GenericInputNumber
                   v-model="p.amount"
                   :min="0"
                   :precision="2"
-                  size="small"
-                  controls-position="right"
-                  placeholder="Amount"
+                  :wrap-form-item="false"
+                  input-class=""
                   style="width: 130px"
                 />
                 <el-button
@@ -208,23 +207,21 @@
             <el-row :gutter="5">
               <el-col :sm="14">
                 <el-form-item label="Description" class="mb-1">
-                  <el-input
+                  <GenericInputField
                     v-model="item.description"
                     placeholder="e.g. Burger, Cake..."
-                    size="small"
                     :maxlength="100"
+                    :wrap-form-item="false"
                   />
                 </el-form-item>
               </el-col>
               <el-col :sm="10">
                 <el-form-item label="Amount" class="mb-1">
-                  <el-input-number
+                  <GenericInputNumber
                     v-model="item.amount"
                     :min="0"
                     :precision="2"
-                    size="small"
-                    class="w-full"
-                    controls-position="right"
+                    :wrap-form-item="false"
                   />
                 </el-form-item>
               </el-col>
@@ -307,6 +304,8 @@ import {
   GenericInput,
   ReceiptUploadField
 } from '../generic-components'
+import GenericInputField from '../generic-components/GenericInputField.vue'
+import GenericInputNumber from '../generic-components/GenericInputNumber.vue'
 import { rules } from '../../assets/validation-rules'
 import { PaymentForm } from '../../scripts/shared-expenses/payment-form'
 import AddNewTransactionButton from '../generic-components/AddNewTransactionButton.vue'

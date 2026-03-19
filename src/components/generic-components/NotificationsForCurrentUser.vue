@@ -20,7 +20,9 @@
         <span class="font-medium">{{ notif.message }}</span>
         <span v-if="notif.byName" class="text-gray-600 ml-2"
           >({{
-            notif.byMobile ? `${notif.byName} (${notif.byMobile})` : notif.byName
+            notif.byMobile
+              ? `${notif.byName} (${notif.byMobile})`
+              : notif.byName
           }})</span
         >
       </div>

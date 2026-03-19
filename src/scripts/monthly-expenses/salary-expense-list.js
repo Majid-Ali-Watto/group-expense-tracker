@@ -1,6 +1,7 @@
 import { inject, ref, onMounted, watch, onUnmounted } from 'vue'
 import { onValue, off } from '../../firebase'
-import { store } from '../../stores/store'
+import { useAuthStore } from '../../stores/authStore'
+import { useDataStore } from '../../stores/dataStore'
 import getCurrentMonth from '../../utils/getCurrentMonth'
 import { showError } from '../../utils/showAlerts'
 import useFireBase from '../../api/firebase-apis'
@@ -8,9 +9,10 @@ import useFireBase from '../../api/firebase-apis'
 export const SalaryExpenseList = () => {
   const formatAmount = inject('formatAmount')
   const { dbRef, readShallow } = useFireBase()
-  const userStore = store()
+  const authStore = useAuthStore()
+  const dataStore = useDataStore()
 
-  const activeUser = ref(userStore.activeUser)
+  const activeUser = ref(authStore.activeUser)
   const selectedMonth = ref(getCurrentMonth())
   const expenses = ref([])
   const keys = ref([])
@@ -86,7 +88,7 @@ export const SalaryExpenseList = () => {
   }
 
   watch(selectedMonth, () => {
-    userStore.setCurrentMonth(selectedMonth.value)
+    dataStore.setCurrentMonth(selectedMonth.value)
     fetchSalary()
     fetchExpenses()
   })
@@ -112,7 +114,7 @@ export const SalaryExpenseList = () => {
     fetchExpenses()
 
     setTimeout(() => {
-      userStore.setSalaryRef(content.value)
+      dataStore.setSalaryRef(content.value)
     }, 1000)
   })
 

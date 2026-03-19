@@ -14,11 +14,11 @@
 
 <script setup>
 import { computed, defineAsyncComponent } from 'vue'
-import { store } from '../../stores/store'
+import { useGroupStore } from '../../stores/groupStore'
 
 const Loans = defineAsyncComponent(() => import('./Loans.vue'))
 
-const userStore = store()
+const userStore = useGroupStore()
 
 const activeGroup = computed(() => userStore.getActiveGroup)
 const groupObj = computed(() =>

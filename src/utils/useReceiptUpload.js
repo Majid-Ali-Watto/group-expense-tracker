@@ -47,7 +47,9 @@ export function useReceiptUpload({ existingUrls, existingMeta, maxFiles = 1 }) {
   const existingReceiptUrls = computed(() => normalizeList(unref(existingUrls)))
   const existingReceiptMeta = computed(() => normalizeList(unref(existingMeta)))
   const receiptFile = computed(() => receiptFiles.value[0] || null)
-  const existingReceiptUrl = computed(() => existingReceiptUrls.value[0] || null)
+  const existingReceiptUrl = computed(
+    () => existingReceiptUrls.value[0] || null
+  )
   const existingReceiptMetaSingle = computed(
     () => existingReceiptMeta.value[0] || null
   )

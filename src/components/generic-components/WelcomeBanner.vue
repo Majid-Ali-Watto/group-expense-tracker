@@ -41,7 +41,7 @@
           <div class="flex-shrink-0">
             <div
               class="group-circle"
-              :class="userStore.getActiveGroup ? '' : 'group-circle--empty'"
+              :class="groupStore.getActiveGroup ? '' : 'group-circle--empty'"
             >
               <svg
                 class="w-4 h-4 sm:w-5 sm:h-5 text-white"
@@ -62,23 +62,20 @@
             <p class="text-xs sm:text-sm text-gray-500 font-medium mb-0.5">
               Active Group (joined groups)
             </p>
-            <el-select
+            <GenericDropDown
               v-model="selectedGroupId"
-              filterable
-              size="small"
               placeholder="No Group Selected"
-              class="min-w-0 font-bold"
+              size="small"
+              select-class="min-w-0 font-bold"
               :class="joinedGroups.length === 0 ? 'opacity-50' : ''"
               :disabled="joinedGroups.length === 0"
-              @change="handleSelectGroup"
-            >
-              <el-option
-                v-for="group in joinedGroups"
-                :key="group.id"
-                :label="group.name"
-                :value="group.id"
-              />
-            </el-select>
+              :wrap-form-item="false"
+              :clearable="false"
+              label-key="name"
+              value-key="id"
+              :options="joinedGroups"
+              @update:modelValue="handleSelectGroup"
+            />
           </div>
         </div>
       </div>
@@ -88,7 +85,8 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { store } from '../../stores/store'
+import GenericDropDown from './GenericDropDown.vue'
+import { useGroupStore } from '../../stores/groupStore'
 import { showSuccess } from '../../utils/showAlerts'
 import { isMemberOfGroup } from '../../helpers/users'
 
@@ -96,25 +94,25 @@ defineProps({
   displayName: String
 })
 
-const userStore = store()
+const groupStore = useGroupStore()
 
 const joinedGroups = computed(() =>
-  userStore.getGroups.filter((g) => isMemberOfGroup(g))
+  groupStore.getGroups.filter((g) => isMemberOfGroup(g))
 )
 
-const selectedGroupId = ref(userStore.getActiveGroup)
+const selectedGroupId = ref(groupStore.getActiveGroup)
 
 watch(
-  () => userStore.getActiveGroup,
+  () => groupStore.getActiveGroup,
   (newId) => {
     selectedGroupId.value = newId
   }
 )
 
 function handleSelectGroup(id) {
-  const group = userStore.getGroupById(id)
+  const group = groupStore.getGroupById(id)
   if (!group) return
-  userStore.setActiveGroup(id)
+  groupStore.setActiveGroup(id)
   showSuccess(`Selected group: ${group.name}`)
 }
 </script>

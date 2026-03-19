@@ -1,11 +1,21 @@
 import { ref, computed, watch } from 'vue'
-import { store } from '../../stores/store'
+import { useAuthStore } from '../../stores/authStore'
+import { useGroupStore } from '../../stores/groupStore'
+import { useUserStore } from '../../stores/userStore'
 import useFireBase from '../../api/firebase-apis'
 import { showError } from '../../utils/showAlerts'
 import { formatUserDisplay } from '../../utils/user-display'
 
 export const GroupsCreate = (emit, props) => {
-  const userStore = store()
+  const authStore = useAuthStore()
+  const groupStore = useGroupStore()
+  const userStore = useUserStore()
+  const storeProxy = {
+    get getActiveUser() {
+      return authStore.getActiveUser
+    },
+    getUserByMobile: (m) => userStore.getUserByMobile(m)
+  }
   const { updateData } = useFireBase()
 
   const groupForm = ref({ name: '', description: '', members: [] })
@@ -18,10 +28,10 @@ export const GroupsCreate = (emit, props) => {
     }))
   )
 
-  const activeUser = computed(() => userStore.getActiveUser)
+  const activeUser = computed(() => authStore.getActiveUser)
 
   function getUserLabel(u) {
-    return formatUserDisplay(userStore, u.mobile, {
+    return formatUserDisplay(storeProxy, u.mobile, {
       name: u.name,
       preferMasked: u.mobile !== activeUser.value
     })
@@ -35,7 +45,7 @@ export const GroupsCreate = (emit, props) => {
   }
 
   async function doCreateGroup() {
-    const creatorMobile = userStore.getActiveUser
+    const creatorMobile = authStore.getActiveUser
 
     // Auto-include creator if not already selected
     if (!groupForm.value.members.includes(creatorMobile)) {
@@ -47,7 +57,7 @@ export const GroupsCreate = (emit, props) => {
     }
 
     const newName = groupForm.value.name.trim().toLowerCase()
-    const allGroups = userStore.getGroups || []
+    const allGroups = groupStore.getGroups || []
 
     // Rule 1: owner can never create two groups with the same name
     const ownerDuplicate = allGroups.some(
@@ -86,7 +96,7 @@ export const GroupsCreate = (emit, props) => {
       id,
       name: groupForm.value.name,
       description: groupForm.value.description || '',
-      ownerMobile: userStore.getActiveUser,
+      ownerMobile: authStore.getActiveUser,
       // Only the creator joins immediately; all others receive an invitation
       members: [
         {
@@ -107,7 +117,7 @@ export const GroupsCreate = (emit, props) => {
         () => payload,
         'Group created — invitations sent to selected members'
       )
-      userStore.addGroup(payload)
+      groupStore.addGroup(payload)
       groupForm.value = { name: '', description: '', members: [] }
       if (emit) emit('groupCreated')
     } catch (err) {

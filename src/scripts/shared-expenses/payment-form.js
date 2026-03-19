@@ -1,7 +1,9 @@
 import { ref, watch, computed } from 'vue'
 import { useUsersOptions } from '../../utils/useUsersOptions'
 import getWhoAddedTransaction from '../../utils/whoAdded'
-import { store } from '../../stores/store'
+import { useAuthStore } from '../../stores/authStore'
+import { useGroupStore } from '../../stores/groupStore'
+import { useUserStore } from '../../stores/userStore'
 import useFireBase from '../../api/firebase-apis'
 import { buildRequestMeta } from '../../utils/buildRequestMeta'
 import { useReceiptUpload } from '../../utils/useReceiptUpload'
@@ -9,7 +11,15 @@ import { useReceiptUpload } from '../../utils/useReceiptUpload'
 export const PaymentForm = (props, emit) => {
   const { updateData, saveData } = useFireBase()
   const isVisible = ref(true)
-  const userStore = store()
+  const authStore = useAuthStore()
+  const groupStore = useGroupStore()
+  const userStore = useUserStore()
+  const storeProxy = {
+    get getActiveUser() {
+      return authStore.getActiveUser
+    },
+    getUserByMobile: (m) => userStore.getUserByMobile(m)
+  }
   const isEditMode = computed(() => !!props.row?.amount)
 
   const showTransactionForm = ref(false)
@@ -25,7 +35,7 @@ export const PaymentForm = (props, emit) => {
 
   const { usersOptions } = useUsersOptions()
 
-  const activeUser = computed(() => userStore.getActiveUser)
+  const activeUser = computed(() => authStore.getActiveUser)
 
   // ========== ME? Checkbox (single payer) ==========
   const isMePayer = ref(false)
@@ -158,7 +168,7 @@ export const PaymentForm = (props, emit) => {
       if (valid) {
         let monthYear = formData.value.date.split('-')
         monthYear = monthYear[0] + '-' + monthYear[1].toString().padStart(2, 0)
-        const groupId = userStore.getActiveGroup || 'global'
+        const groupId = groupStore.getActiveGroup || 'global'
 
         const uploadedReceipts = await uploadSelectedFiles()
         if (!uploadedReceipts) return
@@ -209,7 +219,7 @@ export const PaymentForm = (props, emit) => {
   }
 
   const createDeleteRequest = (paymentPath) => {
-    const deleteRequest = buildRequestMeta(userStore)
+    const deleteRequest = buildRequestMeta(storeProxy)
 
     updateData(
       `${paymentPath}/deleteRequest`,
@@ -226,7 +236,7 @@ export const PaymentForm = (props, emit) => {
   ) => {
     const updateRequest = {
       changes: getPaymentData(receiptUrls, receiptMeta),
-      ...buildRequestMeta(userStore)
+      ...buildRequestMeta(storeProxy)
     }
 
     updateData(
@@ -319,7 +329,7 @@ export const PaymentForm = (props, emit) => {
       payerMode: formData.value.payerMode,
       payer: isMultiPayer ? null : formData.value.payer,
       ...(payersField ? { payers: payersField } : {}),
-      group: userStore.getActiveGroup || null,
+      group: groupStore.getActiveGroup || null,
       date: new Date(formData.value.date).toLocaleString('en-PK'),
       whenAdded: new Date().toLocaleString('en-PK'),
       whoAdded: getWhoAddedTransaction(),

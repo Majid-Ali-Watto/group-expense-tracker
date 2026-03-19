@@ -21,15 +21,13 @@
         ref="salaryForm"
         class="space-y-4 px-3 pt-3 pb-1"
       >
-        <el-form-item label="Monthly Salary" prop="salary">
-          <el-input-number
-            v-model.number="form.salary"
-            :min="1"
-            placeholder="Enter salary"
-            class="w-full"
-            controls-position="right"
-          />
-        </el-form-item>
+        <GenericInputNumber
+          v-model="form.salary"
+          label="Monthly Salary"
+          prop="salary"
+          :min="1"
+          placeholder="Enter salary"
+        />
 
         <div class="flex justify-between">
           <GenericButton
@@ -57,6 +55,7 @@ import { ref } from 'vue'
 import { rules } from '../../assets/validation-rules'
 import { GenericButton } from '../generic-components'
 import { SalaryForm } from '../../scripts/monthly-expenses/salary-form'
+import GenericInputNumber from '../generic-components/GenericInputNumber.vue'
 
 const activePanel = ref([])
 

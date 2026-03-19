@@ -10,7 +10,7 @@
         class="pending-card rounded-lg p-3 mb-2"
       >
         <div class="flex items-start justify-between gap-2">
-            <div class="flex-1 min-w-0">
+          <div class="flex-1 min-w-0">
             <div class="font-medium text-sm">
               {{ item.user.name }} ({{ displayMobile(item.user.mobile) }})
             </div>
@@ -25,8 +25,7 @@
               </span>
               <span v-else>
                 Rename to "<strong>{{ item.request.newName }}</strong
-                >" — by
-                {{ item.request.requestedByName }} ({{
+                >" — by {{ item.request.requestedByName }} ({{
                   displayMobile(item.request.requestedBy)
                 }})
               </span>
@@ -59,16 +58,15 @@
     </div>
 
     <h3>Existing Users (only verified)</h3>
-    <el-input
+    <GenericInputField
       v-model="searchQuery"
       placeholder="Search by name, mobile, or group..."
-      clearable
-      size="small"
-      class="mb-2"
       :maxlength="50"
+      :wrap-form-item="false"
+      input-class="mb-2"
     >
       <template #prefix><span class="text-gray-400">🔍</span></template>
-    </el-input>
+    </GenericInputField>
     <!-- Sort & Filter controls -->
     <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
       <el-button-group size="small">
@@ -264,13 +262,17 @@
         label-position="top"
       >
         <el-form-item label="Mobile Number">
-          <el-input :value="editForm.mobile" size="small" disabled />
+          <GenericInputField
+            :modelValue="editForm.mobile"
+            :wrap-form-item="false"
+            :disabled="true"
+          />
         </el-form-item>
         <el-form-item label="Full Name" prop="name">
-          <el-input
+          <GenericInputField
             v-model="editForm.name"
+            :wrap-form-item="false"
             placeholder="Full name"
-            size="small"
             :maxlength="50"
           />
         </el-form-item>
@@ -293,6 +295,7 @@
 import { defineAsyncComponent } from 'vue'
 import { loginRules as rules } from '../../assets/validation-rules'
 import { Users } from '../../scripts/users/users'
+import GenericInputField from '../generic-components/GenericInputField.vue'
 const GroupsCreate = defineAsyncComponent(
   () => import('../groups/GroupsCreate.vue')
 )

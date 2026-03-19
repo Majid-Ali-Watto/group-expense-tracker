@@ -1,22 +1,32 @@
 import { computed } from 'vue'
-import { store } from '../stores/store'
+import { useAuthStore } from '../stores/authStore'
+import { useGroupStore } from '../stores/groupStore'
+import { useUserStore } from '../stores/userStore'
 import { formatMemberDisplay, formatUserDisplay } from './user-display'
 
 export function useUsersOptions() {
-  const userStore = store()
+  const authStore = useAuthStore()
+  const groupStore = useGroupStore()
+  const userStore = useUserStore()
+  const storeProxy = {
+    get getActiveUser() {
+      return authStore.getActiveUser
+    },
+    getUserByMobile: (m) => userStore.getUserByMobile(m)
+  }
 
   const usersOptions = computed(() => {
-    const activeGroup = userStore.getActiveGroup
-    const group = activeGroup ? userStore.getGroupById(activeGroup) : null
+    const activeGroup = groupStore.getActiveGroup
+    const group = activeGroup ? groupStore.getGroupById(activeGroup) : null
     if (group && group.members && group.members.length) {
       return group.members.map((m) => ({
-        label: formatMemberDisplay(userStore, m, { group }),
+        label: formatMemberDisplay(storeProxy, m, { group }),
         value: m.mobile
       }))
     }
     const users = userStore.getUsers?.length ? userStore.getUsers : []
     return users.map((u) => ({
-      label: formatUserDisplay(userStore, u.mobile, {
+      label: formatUserDisplay(storeProxy, u.mobile, {
         name: u.name,
         preferMasked: true
       }),

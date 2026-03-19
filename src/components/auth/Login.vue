@@ -53,59 +53,45 @@
           </el-alert>
 
           <!-- Full Name (only in register mode) -->
-          <el-form-item
+          <GenericInputField
             v-if="mode === 'register'"
+            v-model="form.name"
             label="Full Name"
             prop="name"
-          >
-            <el-input
-              v-model="form.name"
-              placeholder="Enter your full name"
-              class="w-full"
-              size="small"
-              :maxlength="50"
-            />
-          </el-form-item>
+            placeholder="Enter your full name"
+            :maxlength="50"
+          />
 
           <!-- Mobile Number (only in register mode) -->
-          <el-form-item
+          <GenericInputField
             v-if="mode === 'register'"
+            v-model="form.mobile"
             label="Mobile Number"
             prop="mobile"
-          >
-            <el-input
-              v-model="form.mobile"
-              placeholder="Enter your mobile number"
-              class="w-full"
-              size="small"
-              :maxlength="11"
-              @input="form.mobile = form.mobile.replace(/\D/g, '')"
-            />
-          </el-form-item>
+            placeholder="Enter your mobile number"
+            :maxlength="11"
+            @input="form.mobile = form.mobile.replace(/\D/g, '')"
+          />
 
           <!-- Email -->
-          <el-form-item label="Email" prop="email">
-            <el-input
-              v-model="form.email"
-              type="email"
-              placeholder="Enter your email address"
-              class="w-full"
-              size="small"
-            />
-          </el-form-item>
+          <GenericInputField
+            v-model="form.email"
+            label="Email"
+            prop="email"
+            type="email"
+            placeholder="Enter your email address"
+          />
 
           <!-- Password -->
-          <el-form-item label="Password" prop="loginCode">
-            <el-input
-              v-model="form.loginCode"
-              type="password"
-              placeholder="Enter your password (6-15 characters)"
-              class="w-full"
-              size="small"
-              show-password
-              :maxlength="15"
-            />
-          </el-form-item>
+          <GenericInputField
+            v-model="form.loginCode"
+            label="Password"
+            prop="loginCode"
+            type="password"
+            placeholder="Enter your password (6-15 characters)"
+            :show-password="true"
+            :maxlength="15"
+          />
 
           <!-- Forgot Password Link (only in login mode) -->
           <div
@@ -190,15 +176,13 @@
           </template>
         </el-alert>
 
-        <el-form-item label="Registered Email Address" labelPosition="top">
-          <el-input
-            v-model="resetEmail"
-            type="email"
-            placeholder="Enter your registered email"
-            class="w-full"
-            size="small"
-          />
-        </el-form-item>
+        <GenericInputField
+          v-model="resetEmail"
+          label="Registered Email Address"
+          label-position="top"
+          type="email"
+          placeholder="Enter your registered email"
+        />
 
         <div class="flex gap-3">
           <el-button
@@ -230,6 +214,7 @@
 import { loginRules as rules } from '../../assets/validation-rules'
 import { GenericButton } from '../generic-components'
 import { Login } from '../../scripts/auth/login'
+import GenericInputField from '../generic-components/GenericInputField.vue'
 
 const {
   form,

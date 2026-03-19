@@ -3,13 +3,12 @@
   <div class="w-full" ref="containerRef">
     <!-- Filter / sort toolbar -->
     <div class="mb-2 flex items-center gap-3 flex-wrap no-print-pdf">
-      <el-input
+      <GenericInputField
         v-model="filterText"
         placeholder="Search all columns..."
-        clearable
         :prefix-icon="SearchIcon"
-        size="small"
-        class="table-filter-input"
+        :wrap-form-item="false"
+        input-class="table-filter-input"
       />
       <span
         v-if="filterText.trim()"
@@ -68,7 +67,12 @@
           <!-- Regular sortable + draggable header -->
           <div
             v-else
-            style="position: relative; overflow: visible; width: 100%; height: 100%;"
+            style="
+              position: relative;
+              overflow: visible;
+              width: 100%;
+              height: 100%;
+            "
           >
             <div
               class="flex items-center gap-1 w-full select-none"
@@ -85,8 +89,15 @@
               @click.stop="toggleSort(column.key)"
             >
               <span
-                style="color: #ffffff !important; font-size: 10px; flex-shrink: 0; opacity: 0.7; margin-right: 2px"
-              >⠿</span>
+                style="
+                  color: #ffffff !important;
+                  font-size: 10px;
+                  flex-shrink: 0;
+                  opacity: 0.7;
+                  margin-right: 2px;
+                "
+                >⠿</span
+              >
               <span
                 v-overflow-popup="{ title: 'Column Name' }"
                 class="text-sm font-semibold uppercase tracking-wide"
@@ -174,8 +185,8 @@
             class="px-2 text-sm et-cell-overflow"
           >
             <template
-            v-if="rowData.payerMode === 'multiple' && rowData.payers?.length"
-          >
+              v-if="rowData.payerMode === 'multiple' && rowData.payers?.length"
+            >
               <span
                 v-overflow-popup="{ title: column.title }"
                 class="et-cell-text"
@@ -482,7 +493,7 @@
       >
         <span class="col-settings-grip">⠿</span>
         <span class="col-settings-label">
-          {{ tableColumns.find(c => c.key === key)?.title || key }}
+          {{ tableColumns.find((c) => c.key === key)?.title || key }}
         </span>
       </li>
     </ul>
@@ -492,6 +503,7 @@
 <script setup>
 import { Search as SearchIcon } from '@element-plus/icons-vue'
 import GenericButton from '../generic-components/GenericButton.vue'
+import GenericInputField from '../generic-components/GenericInputField.vue'
 import HOC from '../layout/HOC.vue'
 import { Table } from '../../scripts/shared/table'
 
@@ -836,12 +848,14 @@ const {
   background: var(--bg-secondary);
   cursor: grab;
   user-select: none;
-  transition: opacity 0.15s, box-shadow 0.15s;
+  transition:
+    opacity 0.15s,
+    box-shadow 0.15s;
 }
 
 .col-settings-item--dragging {
   opacity: 0.45;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .col-settings-grip {

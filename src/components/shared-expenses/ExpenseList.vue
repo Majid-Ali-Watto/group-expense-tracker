@@ -103,62 +103,51 @@
     >
       <!-- Month Selection -->
       <el-col :lg="6" :md="6" :sm="12" :xs="12">
-        <el-form-item label="Month" class="w-full">
-          <el-select
-            filterable
-            v-model="selectedMonth"
-            placeholder="Select Month"
-            class="w-full"
-            size="small"
-          >
-            <el-option
-              v-for="month in months"
-              :key="month"
-              :value="month"
-              :label="month"
-            />
-          </el-select>
-        </el-form-item>
+        <GenericDropDown
+          v-model="selectedMonth"
+          label="Month"
+          placeholder="Select Month"
+          :options="months"
+          size="small"
+        />
       </el-col>
       <el-col :lg="6" :md="6" :sm="12" :xs="12">
         <!-- Payer Selection -->
-        <el-form-item label="Payer" class="w-full">
-          <el-select
-            filterable
-            v-model="selectedFriend"
-            placeholder="Select Payer"
-            class="w-full"
-            size="small"
-          >
-            <el-option value="All" label="All" />
-            <el-option
-              v-for="opt in usersOptions"
-              :key="opt.value"
-              :value="opt.value"
-              :label="opt.label"
-            />
-          </el-select>
-        </el-form-item>
+        <GenericDropDown
+          v-model="selectedFriend"
+          label="Payer"
+          placeholder="Select Payer"
+          :options="[{ label: 'All', value: 'All' }, ...usersOptions]"
+          size="small"
+        />
       </el-col>
       <el-col :lg="6" :md="6" :sm="12" :xs="12">
         <!-- Payer Mode Filter -->
-        <el-form-item label="Payer Mode" class="w-full">
-          <el-select v-model="selectedPayerMode" class="w-full" size="small">
-            <el-option value="all" label="All" />
-            <el-option value="single" label="Single" />
-            <el-option value="multiple" label="Multiple" />
-          </el-select>
-        </el-form-item>
+        <GenericDropDown
+          v-model="selectedPayerMode"
+          label="Payer Mode"
+          :filterable="false"
+          :options="[
+            { label: 'All', value: 'all' },
+            { label: 'Single', value: 'single' },
+            { label: 'Multiple', value: 'multiple' }
+          ]"
+          size="small"
+        />
       </el-col>
       <el-col :lg="6" :md="6" :sm="12" :xs="12">
         <!-- Split Mode Filter -->
-        <el-form-item label="Split Mode" class="w-full">
-          <el-select v-model="selectedSplitMode" class="w-full" size="small">
-            <el-option value="all" label="All" />
-            <el-option value="equal" label="Equal" />
-            <el-option value="custom" label="Custom" />
-          </el-select>
-        </el-form-item>
+        <GenericDropDown
+          v-model="selectedSplitMode"
+          label="Split Mode"
+          :filterable="false"
+          :options="[
+            { label: 'All', value: 'all' },
+            { label: 'Equal', value: 'equal' },
+            { label: 'Custom', value: 'custom' }
+          ]"
+          size="small"
+        />
       </el-col>
     </el-row>
     <!-- Mobile filters (toggle) -->
@@ -170,62 +159,51 @@
     >
       <!-- Month Selection -->
       <el-col :lg="6" :md="6" :sm="12" :xs="12">
-        <el-form-item label="Month" class="w-full">
-          <el-select
-            filterable
-            v-model="selectedMonth"
-            placeholder="Select Month"
-            class="w-full"
-            size="small"
-          >
-            <el-option
-              v-for="month in months"
-              :key="month"
-              :value="month"
-              :label="month"
-            />
-          </el-select>
-        </el-form-item>
+        <GenericDropDown
+          v-model="selectedMonth"
+          label="Month"
+          placeholder="Select Month"
+          :options="months"
+          size="small"
+        />
       </el-col>
       <el-col :lg="6" :md="6" :sm="12" :xs="12">
         <!-- Payer Selection -->
-        <el-form-item label="Payer" class="w-full">
-          <el-select
-            filterable
-            v-model="selectedFriend"
-            placeholder="Select Payer"
-            class="w-full"
-            size="small"
-          >
-            <el-option value="All" label="All" />
-            <el-option
-              v-for="opt in usersOptions"
-              :key="opt.value"
-              :value="opt.value"
-              :label="opt.label"
-            />
-          </el-select>
-        </el-form-item>
+        <GenericDropDown
+          v-model="selectedFriend"
+          label="Payer"
+          placeholder="Select Payer"
+          :options="[{ label: 'All', value: 'All' }, ...usersOptions]"
+          size="small"
+        />
       </el-col>
       <el-col :lg="6" :md="6" :sm="12" :xs="12">
         <!-- Payer Mode Filter -->
-        <el-form-item label="Payer Mode" class="w-full">
-          <el-select v-model="selectedPayerMode" class="w-full" size="small">
-            <el-option value="all" label="All" />
-            <el-option value="single" label="Single" />
-            <el-option value="multiple" label="Multiple" />
-          </el-select>
-        </el-form-item>
+        <GenericDropDown
+          v-model="selectedPayerMode"
+          label="Payer Mode"
+          :filterable="false"
+          :options="[
+            { label: 'All', value: 'all' },
+            { label: 'Single', value: 'single' },
+            { label: 'Multiple', value: 'multiple' }
+          ]"
+          size="small"
+        />
       </el-col>
       <el-col :lg="6" :md="6" :sm="12" :xs="12">
         <!-- Split Mode Filter -->
-        <el-form-item label="Split Mode" class="w-full">
-          <el-select v-model="selectedSplitMode" class="w-full" size="small">
-            <el-option value="all" label="All" />
-            <el-option value="equal" label="Equal" />
-            <el-option value="custom" label="Custom" />
-          </el-select>
-        </el-form-item>
+        <GenericDropDown
+          v-model="selectedSplitMode"
+          label="Split Mode"
+          :filterable="false"
+          :options="[
+            { label: 'All', value: 'all' },
+            { label: 'Equal', value: 'equal' },
+            { label: 'Custom', value: 'custom' }
+          ]"
+          size="small"
+        />
       </el-col>
     </el-row>
     <div ref="pdfContent">
@@ -262,6 +240,7 @@ import { Filter } from '@element-plus/icons-vue'
 import Settlement from './Settlement.vue'
 import Summary from './Summary.vue'
 import Table from '../shared/Table.vue'
+import GenericDropDown from '../generic-components/GenericDropDown.vue'
 import { ExpenseList } from '../../scripts/shared-expenses/expense-list'
 const NotificationsForCurrentUser = defineAsyncComponent(
   () => import('../generic-components/NotificationsForCurrentUser.vue')

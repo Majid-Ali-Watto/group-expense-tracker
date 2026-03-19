@@ -20,7 +20,8 @@ function normalizeConfig(el, value) {
   }
 
   return {
-    title: value?.title || el.getAttribute('data-overflow-title') || 'Full Text',
+    title:
+      value?.title || el.getAttribute('data-overflow-title') || 'Full Text',
     text: value?.text || el.getAttribute('data-overflow-text') || ''
   }
 }

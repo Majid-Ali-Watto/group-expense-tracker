@@ -1,6 +1,6 @@
 <template>
   <component :is="wrapFormItem ? 'el-form-item' : 'div'" v-bind="wrapperProps">
-    <el-select
+    <el-select-v2
       v-model="internalValue"
       :filterable="filterable"
       :placeholder="placeholder"
@@ -11,20 +11,21 @@
       :size="size"
       :collapse-tags="collapseTags"
       :collapse-tags-tooltip="collapseTagsTooltip"
+      :options="mappedOptions"
+      :teleported="false"
+      scrollbar-always-on
       @change="$emit('update:modelValue', internalValue)"
-    >
-      <el-option
-        v-for="item in options"
-        :key="getKey(item)"
-        :label="getLabel(item)"
-        :value="getValue(item)"
-      />
-    </el-select>
+    />
   </component>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, onErrorCaptured } from 'vue'
+
+onErrorCaptured((err) => {
+  if (err instanceof TypeError && err.message.includes('scrollTop'))
+    return false
+})
 import { GenericDropDown } from '../../scripts/shared/generic-dropdown'
 
 const props = defineProps({
@@ -78,7 +79,7 @@ const props = defineProps({
   },
   size: {
     type: String,
-    default: ''
+    default: 'small'
   },
   selectClass: {
     type: String,
@@ -108,7 +109,16 @@ const props = defineProps({
 
 defineEmits(['update:modelValue'])
 
-const { internalValue, getLabel, getValue, getKey } = GenericDropDown(props)
+const { internalValue, getLabel, getValue } = GenericDropDown(props)
+
+const mappedOptions = computed(() =>
+  (props.options || [])
+    .map((item) => ({
+      label: String(getLabel(item) ?? ''),
+      value: getValue(item) ?? ''
+    }))
+    .filter((item) => item.label !== '' || item.value !== '')
+)
 
 const wrapperProps = computed(() => {
   if (!props.wrapFormItem) {

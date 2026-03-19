@@ -1,14 +1,16 @@
 import { ref, computed } from 'vue'
-import { store } from '../../stores/store'
+import { useAuthStore } from '../../stores/authStore'
+import { useGroupStore } from '../../stores/groupStore'
 import useFireBase from '../../api/firebase-apis'
 import { ElMessageBox } from 'element-plus'
 import { showError, showSuccess } from '../../utils/showAlerts'
 
 export const NetPosition = () => {
-  const userStore = store()
+  const authStore = useAuthStore()
+  const groupStore = useGroupStore()
   const { read, readShallow } = useFireBase()
 
-  const activeUser = computed(() => userStore.getActiveUser)
+  const activeUser = computed(() => authStore.getActiveUser)
   const isCalculating = ref(false)
 
   /**
@@ -213,7 +215,7 @@ export const NetPosition = () => {
       }
 
       // Get all groups the user is part of
-      const allGroups = userStore.getGroups || []
+      const allGroups = groupStore.getGroups || []
       const userGroups = allGroups.filter((group) => {
         if (!group || !group.members) return false
         return group.members.some((m) => m.mobile === userMobile)

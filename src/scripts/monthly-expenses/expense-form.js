@@ -1,5 +1,6 @@
 import { ref, watch, computed } from 'vue'
-import { store } from '../../stores/store'
+import { useAuthStore } from '../../stores/authStore'
+import { useDataStore } from '../../stores/dataStore'
 import getCurrentMonth from '../../utils/getCurrentMonth'
 import getWhoAddedTransaction from '../../utils/whoAdded'
 import useFireBase from '../../api/firebase-apis'
@@ -32,12 +33,13 @@ export const ExpenseForm = (props, emit) => {
   })
 
   const expenseForm = ref(null)
-  const userStore = store()
-  const selectedMonth = ref(userStore.$state.selectedMonth)
+  const authStore = useAuthStore()
+  const dataStore = useDataStore()
+  const selectedMonth = ref(dataStore.selectedMonth)
 
-  const activeUser = ref(userStore.activeUser)
+  const activeUser = ref(authStore.activeUser)
   watch(
-    () => userStore.$state.selectedMonth,
+    () => dataStore.selectedMonth,
     (newMonth) => {
       selectedMonth.value = newMonth
     }

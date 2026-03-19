@@ -7,9 +7,8 @@
         <span
           v-overflow-popup="{ title: 'Total Spent' }"
           class="sel-stat-value sel-danger"
-          >{{
-          formatAmount(totalSpent)
-        }}</span>
+          >{{ formatAmount(totalSpent) }}</span
+        >
       </div>
       <div class="sel-divider" />
       <div class="sel-stat">
@@ -17,9 +16,8 @@
         <span
           v-overflow-popup="{ title: 'Remaining' }"
           class="sel-stat-value sel-success"
-          >{{
-          formatAmount(remaining)
-        }}</span>
+          >{{ formatAmount(remaining) }}</span
+        >
       </div>
       <div class="sel-divider" />
       <div class="sel-stat sel-stat-end">
@@ -47,22 +45,14 @@
         />
       </div>
       <div :class="showFilters ? 'block' : 'hidden sm:block'">
-        <el-form-item label="Select Month" class="w-full mb-0">
-          <el-select
-            filterable
-            class="w-full"
-            v-model="selectedMonth"
-            @change="fetchExpenses"
-            placeholder="Select month"
-          >
-            <el-option
-              v-for="month in months"
-              :key="month"
-              :label="month"
-              :value="month"
-            />
-          </el-select>
-        </el-form-item>
+        <GenericDropDown
+          size="small"
+          v-model="selectedMonth"
+          label="Select Month"
+          placeholder="Select month"
+          :options="months"
+          @update:modelValue="fetchExpenses"
+        />
       </div>
     </div>
 
@@ -80,6 +70,7 @@
 import { ref } from 'vue'
 import { Filter } from '@element-plus/icons-vue'
 import Table from '../shared/Table.vue'
+import GenericDropDown from '../generic-components/GenericDropDown.vue'
 import { SalaryExpenseList } from '../../scripts/monthly-expenses/salary-expense-list'
 
 const {

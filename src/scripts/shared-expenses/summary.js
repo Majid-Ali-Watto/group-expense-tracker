@@ -1,14 +1,24 @@
 import { computed, inject } from 'vue'
-import { store } from '../../stores/store'
+import { useAuthStore } from '../../stores/authStore'
+import { useGroupStore } from '../../stores/groupStore'
+import { useUserStore } from '../../stores/userStore'
 import { formatUserDisplay } from '../../utils/user-display'
 
 export const Summary = (props) => {
   const formatAmount = inject('formatAmount')
-  const userStore = store()
+  const authStore = useAuthStore()
+  const groupStore = useGroupStore()
+  const userStore = useUserStore()
+  const storeProxy = {
+    get getActiveUser() {
+      return authStore.getActiveUser
+    },
+    getUserByMobile: (m) => userStore.getUserByMobile(m)
+  }
 
-  const activeGroup = computed(() => userStore.getActiveGroup)
+  const activeGroup = computed(() => groupStore.getActiveGroup)
   const groupObj = computed(() =>
-    activeGroup.value ? userStore.getGroupById(activeGroup.value) : null
+    activeGroup.value ? groupStore.getGroupById(activeGroup.value) : null
   )
 
   const filteredPayments = computed(() => {
@@ -69,7 +79,7 @@ export const Summary = (props) => {
         if (!s.mobile || !(s.amount > 0)) return
         if (!totals[s.mobile]) {
           totals[s.mobile] = {
-            name: formatUserDisplay(userStore, s.mobile, {
+            name: formatUserDisplay(storeProxy, s.mobile, {
               name: s.name,
               group: groupObj.value
             }),
@@ -84,7 +94,7 @@ export const Summary = (props) => {
 
   const friendTotals = computed(() =>
     usersList.value.map((user) => ({
-      name: formatUserDisplay(userStore, user.mobile, {
+      name: formatUserDisplay(storeProxy, user.mobile, {
         name: user.name,
         group: groupObj.value,
         preferMasked: !groupObj.value

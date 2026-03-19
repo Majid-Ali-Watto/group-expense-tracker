@@ -2,7 +2,9 @@ import { ref, watch, computed, nextTick } from 'vue'
 import { useUsersOptions } from '../../utils/useUsersOptions'
 import getWhoAddedTransaction from '../../utils/whoAdded'
 import useFireBase from '../../api/firebase-apis'
-import { store } from '../../stores/store'
+import { useAuthStore } from '../../stores/authStore'
+import { useGroupStore } from '../../stores/groupStore'
+import { useUserStore } from '../../stores/userStore'
 import { showError } from '../../utils/showAlerts'
 import { maskMobile } from '../../utils/maskMobile'
 import { buildRequestMeta } from '../../utils/buildRequestMeta'
@@ -10,7 +12,15 @@ import getCurrentMonth from '../../utils/getCurrentMonth'
 import { useReceiptUpload } from '../../utils/useReceiptUpload'
 
 export const LoanForm = (props, emit) => {
-  const userStore = store()
+  const authStore = useAuthStore()
+  const groupStore = useGroupStore()
+  const userStore = useUserStore()
+  const storeProxy = {
+    get getActiveUser() {
+      return authStore.getActiveUser
+    },
+    getUserByMobile: (m) => userStore.getUserByMobile(m)
+  }
 
   const openForm = () => {
     emit('closeForm')
@@ -58,7 +68,7 @@ export const LoanForm = (props, emit) => {
     description: ''
   })
 
-  const activeUser = computed(() => userStore.getActiveUser)
+  const activeUser = computed(() => authStore.getActiveUser)
   const activeUserName = computed(
     () => userStore.getUserByMobile(activeUser.value)?.name || ''
   )
@@ -304,9 +314,9 @@ export const LoanForm = (props, emit) => {
         const date = new Date()
         const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
         if (props.isPersonal) {
-          loanPath = `${props.dbRef}/${userStore.getActiveUser}/${monthYear}`
+          loanPath = `${props.dbRef}/${authStore.getActiveUser}/${monthYear}`
         } else {
-          const groupId = userStore.getActiveGroup || 'global'
+          const groupId = groupStore.getActiveGroup || 'global'
           loanPath = `${props.dbRef}/${groupId}/${monthYear}`
         }
 
@@ -359,7 +369,7 @@ export const LoanForm = (props, emit) => {
           )
         } else if (whatTask == 'Update') {
           if (!props.isPersonal) {
-            const groupId = userStore.getActiveGroup || 'global'
+            const groupId = groupStore.getActiveGroup || 'global'
             const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
             createUpdateRequest(
               `${props.dbRef}/${groupId}/${monthYear}/${props.row.id}`,
@@ -376,7 +386,7 @@ export const LoanForm = (props, emit) => {
           }
         } else if (whatTask == 'Delete') {
           if (!props.isPersonal) {
-            const groupId = userStore.getActiveGroup || 'global'
+            const groupId = groupStore.getActiveGroup || 'global'
             const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
             createDeleteRequest(
               `${props.dbRef}/${groupId}/${monthYear}/${props.row.id}`
@@ -395,7 +405,7 @@ export const LoanForm = (props, emit) => {
   }
 
   const createDeleteRequest = (loanPath) => {
-    const deleteRequest = buildRequestMeta(userStore)
+    const deleteRequest = buildRequestMeta(storeProxy)
 
     updateData(
       `${loanPath}/deleteRequest`,
@@ -412,7 +422,7 @@ export const LoanForm = (props, emit) => {
   ) => {
     const updateRequest = {
       changes: getLoanData(receiptUrl, receiptMeta),
-      ...buildRequestMeta(userStore)
+      ...buildRequestMeta(storeProxy)
     }
 
     updateData(

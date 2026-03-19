@@ -1,4 +1,5 @@
-import { store } from '../stores/store.js'
+import { useAuthStore } from '../stores/authStore'
+import { useUserStore } from '../stores/userStore'
 export function getStoredUser() {
   const storedData = localStorage.getItem('rememberMeData')
   if (storedData) {
@@ -19,9 +20,10 @@ export function removeUserFromStorage() {
   localStorage.removeItem('rememberMeData')
 }
 export default function getWhoAddedTransaction() {
-  const userStore = store()
+  const authStore = useAuthStore()
+  const userStore = useUserStore()
   return (
-    userStore.getUserByMobile(userStore.getActiveUser)?.name ||
-    userStore.getActiveUser
+    userStore.getUserByMobile(authStore.getActiveUser)?.name ||
+    authStore.getActiveUser
   )
 }

@@ -179,7 +179,10 @@
 <script setup>
 import { GenericButton } from '../generic-components'
 import { Settlement } from '../../scripts/shared-expenses/settlement'
-import { formatMemberDisplay, formatUserDisplay } from '../../utils/user-display'
+import {
+  formatMemberDisplay,
+  formatUserDisplay
+} from '../../utils/user-display'
 
 const props = defineProps({
   payments: Array,

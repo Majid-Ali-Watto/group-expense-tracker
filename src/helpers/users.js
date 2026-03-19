@@ -1,16 +1,17 @@
-import { store } from '../stores/store'
+import { useAuthStore } from '../stores/authStore'
+import { useUserStore } from '../stores/userStore'
 import { maskMobile } from '../utils/maskMobile'
 // Check if current user is a member of the group
 
 export function isMemberOfGroup(group) {
-  const userStore = store()
-  const mobile = userStore.getActiveUser
+  const authStore = useAuthStore()
+  const mobile = authStore.getActiveUser
   return group.members && group.members.some((m) => m.mobile === mobile)
 }
 // Check if current user has a pending join request
 export function hasPendingRequest(group) {
-  const userStore = store()
-  const mobile = userStore.getActiveUser
+  const authStore = useAuthStore()
+  const mobile = authStore.getActiveUser
   return (
     group.joinRequests && group.joinRequests.some((r) => r.mobile === mobile)
   )
@@ -46,8 +47,8 @@ export function getPendingApprovals(group) {
 
 // Check if current user has approved deletion
 export function hasUserApprovedDeletion(group) {
-  const userStore = store()
-  const mobile = userStore.getActiveUser
+  const authStore = useAuthStore()
+  const mobile = authStore.getActiveUser
   const approvals = getDeleteApprovals(group)
   return approvals.some((approval) => approval.mobile === mobile)
 }
@@ -66,8 +67,8 @@ export function getPendingJoinApprovals(group, requestMobile) {
 }
 
 export function hasUserApprovedJoinRequest(group, requestMobile) {
-  const userStore = store()
-  const mobile = userStore.getActiveUser
+  const authStore = useAuthStore()
+  const mobile = authStore.getActiveUser
   const approvals = getJoinRequestApprovals(group, requestMobile)
   return approvals.some((approval) => approval.mobile === mobile)
 }
@@ -103,8 +104,8 @@ export function allMembersApprovedLeave(group, mobile) {
 }
 
 export function hasUserApprovedLeaveRequest(group, leaveMobile) {
-  const userStore = store()
-  const mobile = userStore.getActiveUser
+  const authStore = useAuthStore()
+  const mobile = authStore.getActiveUser
   const request = getLeaveRequests(group).find((r) => r.mobile === leaveMobile)
   return request?.approvals?.some((a) => a.mobile === mobile) || false
 }
@@ -150,14 +151,14 @@ export function allAffectedMembersApprovedEdit(group) {
 }
 
 export function hasUserApprovedEditRequest(group) {
-  const userStore = store()
-  const mobile = userStore.getActiveUser
+  const authStore = useAuthStore()
+  const mobile = authStore.getActiveUser
   return group.editRequest?.approvals?.some((a) => a.mobile === mobile) || false
 }
 
 export function isUserAffectedByEdit(group) {
-  const userStore = store()
-  const mobile = userStore.getActiveUser
+  const authStore = useAuthStore()
+  const mobile = authStore.getActiveUser
   return getAllAffectedMembers(group).some((m) => m.mobile === mobile)
 }
 
@@ -181,15 +182,15 @@ export function allMembersApprovedAddMember(group) {
 }
 
 export function hasUserApprovedAddMemberRequest(group) {
-  const userStore = store()
-  const mobile = userStore.getActiveUser
+  const authStore = useAuthStore()
+  const mobile = authStore.getActiveUser
   return getAddMemberRequestApprovals(group).some((a) => a.mobile === mobile)
 }
 
 // ========== Ownership Transfer Helpers ==========
 export function hasUserApprovedOwnershipTransfer(group) {
-  const userStore = store()
-  const mobile = userStore.getActiveUser
+  const authStore = useAuthStore()
+  const mobile = authStore.getActiveUser
   return (
     group.transferOwnershipRequest?.approvals?.some(
       (a) => a.mobile === mobile
@@ -199,15 +200,15 @@ export function hasUserApprovedOwnershipTransfer(group) {
 
 // ========== Notification Helpers ==========
 export function getUserNotifications(group) {
-  const userStore = store()
-  const mobile = userStore.getActiveUser
+  const authStore = useAuthStore()
+  const mobile = authStore.getActiveUser
   return group.notifications?.[mobile] || []
 }
 
 // ========== Mobile Display Helpers ==========
 export function displayMasked(targetMobile) {
   if (!targetMobile) return ''
-  const userStore = store()
+  const userStore = useUserStore()
   return (
     userStore.getUserByMobile(targetMobile)?.maskedMobile ||
     maskMobile(targetMobile)

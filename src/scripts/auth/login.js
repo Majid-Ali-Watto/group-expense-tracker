@@ -1,7 +1,8 @@
 import { onMounted, ref } from 'vue'
 import { ElMessageBox } from 'element-plus'
 import useFireBase from '../../api/firebase-apis'
-import { store } from '../../stores/store'
+import { useAuthStore } from '../../stores/authStore'
+import { useGroupStore } from '../../stores/groupStore'
 import { showError, showSuccess } from '../../utils/showAlerts'
 import { encryptForSession, encryptForStore } from '../../utils/sessionCrypto'
 import { generateUUID } from '../../utils/uuid'
@@ -18,7 +19,8 @@ import {
 } from '../../firebase'
 
 export const Login = () => {
-  const userStore = store()
+  const authStore = useAuthStore()
+  const groupStore = useGroupStore()
   const { read, updateData } = useFireBase()
 
   const form = ref({
@@ -107,11 +109,11 @@ export const Login = () => {
   }
 
   function activateUserGroup(mobileKey) {
-    const groups = userStore.getGroups || []
+    const groups = groupStore.getGroups || []
     const myGroup = groups.find((g) =>
       (g.members || []).some((m) => m.mobile === mobileKey)
     )
-    if (myGroup) userStore.setActiveGroup(myGroup.id)
+    if (myGroup) groupStore.setActiveGroup(myGroup.id)
   }
 
   async function completeLogin(payload, message) {
@@ -122,9 +124,9 @@ export const Login = () => {
     ])
 
     sessionStorage.setItem('_session', encryptedSession)
-    userStore.setActiveUser(payload.mobile)
-    userStore.setSessionToken(encryptedStore)
-    userStore.setActiveLoginCode(payload.loginCode)
+    authStore.setActiveUser(payload.mobile)
+    authStore.setSessionToken(encryptedStore)
+    authStore.setActiveLoginCode(payload.loginCode)
     activateUserGroup(payload.mobile)
     showSuccess(message || 'Login successful!')
   }

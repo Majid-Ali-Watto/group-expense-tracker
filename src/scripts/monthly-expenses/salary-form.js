@@ -3,14 +3,16 @@ import { ElMessageBox } from 'element-plus'
 import { set, update, onValue, off } from 'firebase/database'
 import getCurrentMonth from '../../utils/getCurrentMonth'
 import useFireBase from '../../api/firebase-apis'
-import { store } from '../../stores/store'
+import { useAuthStore } from '../../stores/authStore'
+import { useDataStore } from '../../stores/dataStore'
 import { showError, showSuccess } from '../../utils/showAlerts'
 
 export const SalaryForm = () => {
   const formatAmount = inject('formatAmount')
-  const userStore = store()
+  const authStore = useAuthStore()
+  const dataStore = useDataStore()
   const { read, dbRef } = useFireBase()
-  const selectedMonth = ref(userStore.$state.selectedMonth)
+  const selectedMonth = ref(dataStore.selectedMonth)
 
   const salaryData = ref({
     month: null,
@@ -26,7 +28,7 @@ export const SalaryForm = () => {
   let salaryListener = null
 
   watch(
-    () => userStore.$state.selectedMonth,
+    () => dataStore.selectedMonth,
     (newMonth) => {
       selectedMonth.value = newMonth
       listenForSalaryChanges()
@@ -47,7 +49,7 @@ export const SalaryForm = () => {
 
     try {
       const monthRef = dbRef(
-        `salaries/${userStore.activeUser}/${selectedMonth.value}`
+        `salaries/${authStore.activeUser}/${selectedMonth.value}`
       )
       await set(monthRef, {
         salary: form.value.salary,
@@ -77,10 +79,10 @@ export const SalaryForm = () => {
       )
 
       const monthRef = dbRef(
-        `salaries/${userStore.activeUser}/${selectedMonth.value}`
+        `salaries/${authStore.activeUser}/${selectedMonth.value}`
       )
       const data = await read(
-        `salaries/${userStore.activeUser}/${selectedMonth.value}`
+        `salaries/${authStore.activeUser}/${selectedMonth.value}`
       )
 
       if (data) {
@@ -100,7 +102,7 @@ export const SalaryForm = () => {
 
   const listenForSalaryChanges = () => {
     const monthRef = dbRef(
-      `salaries/${userStore.activeUser}/${selectedMonth.value}`
+      `salaries/${authStore.activeUser}/${selectedMonth.value}`
     )
 
     salaryListener = onValue(monthRef, (snapshot) => {
@@ -148,7 +150,7 @@ export const SalaryForm = () => {
   onUnmounted(() => {
     if (salaryListener) {
       const monthRef = dbRef(
-        `salaries/${userStore.activeUser}/${getCurrentMonth()}`
+        `salaries/${authStore.activeUser}/${getCurrentMonth()}`
       )
       off(monthRef, 'value', salaryListener)
     }

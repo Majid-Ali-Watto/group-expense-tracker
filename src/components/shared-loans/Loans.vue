@@ -54,14 +54,14 @@
           <div class="flex justify-between items-start mb-2">
             <div>
               <strong class="text-gray-800">
-              {{ request.type === 'delete' ? 'Delete' : 'Update' }} Request
-            </strong>
-            <p class="text-sm text-gray-600">
-              Requested by:
-              <strong>{{ getUserName(request.requestedBy) }}</strong>
-              <span v-if="request.requestedAt">
-                on {{ request.requestedAt }}</span
-              >
+                {{ request.type === 'delete' ? 'Delete' : 'Update' }} Request
+              </strong>
+              <p class="text-sm text-gray-600">
+                Requested by:
+                <strong>{{ getUserName(request.requestedBy) }}</strong>
+                <span v-if="request.requestedAt">
+                  on {{ request.requestedAt }}</span
+                >
               </p>
             </div>
             <el-tag :type="request.type === 'delete' ? 'danger' : 'warning'">
@@ -158,42 +158,23 @@
       >
         <!-- Month Selection -->
         <el-col :lg="6" :md="6" :sm="12" :xs="12">
-          <el-form-item label="Month" class="w-full">
-            <el-select
-              filterable
-              v-model="selectedMonth"
-              placeholder="Select Month"
-              class="w-full"
-              size="small"
-            >
-              <el-option
-                v-for="month in months"
-                :key="month"
-                :value="month"
-                :label="month"
-              />
-            </el-select>
-          </el-form-item>
+          <GenericDropDown
+            v-model="selectedMonth"
+            label="Month"
+            placeholder="Select Month"
+            :options="months"
+            size="small"
+          />
         </el-col>
         <el-col :lg="6" :md="6" :sm="12" :xs="12">
           <!-- Giver Selection -->
-          <el-form-item label="Giver" class="w-full">
-            <el-select
-              filterable
-              v-model="selectedGiver"
-              placeholder="Select Giver"
-              class="w-full"
-              size="small"
-            >
-              <el-option value="All" label="All Givers" />
-              <el-option
-                v-for="opt in usersOptions"
-                :key="opt.value"
-                :value="opt.value"
-                :label="opt.label"
-              />
-            </el-select>
-          </el-form-item>
+          <GenericDropDown
+            v-model="selectedGiver"
+            label="Giver"
+            placeholder="Select Giver"
+            :options="[{ label: 'All Givers', value: 'All' }, ...usersOptions]"
+            size="small"
+          />
         </el-col>
       </el-row>
       <!-- Mobile filters (toggle) -->
@@ -204,42 +185,23 @@
         justify="space-between"
       >
         <el-col :lg="6" :md="6" :sm="12" :xs="12">
-          <el-form-item label="Month" class="w-full">
-            <el-select
-              filterable
-              v-model="selectedMonth"
-              placeholder="Select Month"
-              class="w-full"
-              size="small"
-            >
-              <el-option
-                v-for="month in months"
-                :key="month"
-                :value="month"
-                :label="month"
-              />
-            </el-select>
-          </el-form-item>
+          <GenericDropDown
+            v-model="selectedMonth"
+            label="Month"
+            placeholder="Select Month"
+            :options="months"
+            size="small"
+          />
         </el-col>
         <el-col :lg="6" :md="6" :sm="12" :xs="12">
           <!-- Giver Selection -->
-          <el-form-item label="Giver" class="w-full">
-            <el-select
-              filterable
-              v-model="selectedGiver"
-              placeholder="Select Giver"
-              class="w-full"
-              size="small"
-            >
-              <el-option value="All" label="All" />
-              <el-option
-                v-for="opt in usersOptions"
-                :key="opt.value"
-                :value="opt.value"
-                :label="opt.label"
-              />
-            </el-select>
-          </el-form-item>
+          <GenericDropDown
+            v-model="selectedGiver"
+            label="Giver"
+            placeholder="Select Giver"
+            :options="[{ label: 'All Givers', value: 'All' }, ...usersOptions]"
+            size="small"
+          />
         </el-col>
       </el-row>
       <div ref="loanContent">
@@ -278,6 +240,7 @@
 import { ref, defineAsyncComponent } from 'vue'
 import { Filter } from '@element-plus/icons-vue'
 import Table from '../shared/Table.vue'
+import GenericDropDown from '../generic-components/GenericDropDown.vue'
 import { Loans } from '../../scripts/shared-loans/loans'
 const LoanForm = defineAsyncComponent(() => import('./LoanForm.vue'))
 

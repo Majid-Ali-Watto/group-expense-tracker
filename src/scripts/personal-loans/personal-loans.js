@@ -1,7 +1,9 @@
 import { ref, computed, onMounted, onUnmounted, inject, watch } from 'vue'
 import { onValue, off } from '../../firebase'
 import useFireBase from '../../api/firebase-apis'
-import { store } from '../../stores/store'
+import { useAuthStore } from '../../stores/authStore'
+import { useUserStore } from '../../stores/userStore'
+import { useDataStore } from '../../stores/dataStore'
 import getCurrentMonth from '../../utils/getCurrentMonth'
 import { showError } from '../../utils/showAlerts'
 import { formatUserDisplay } from '../../utils/user-display'
@@ -9,8 +11,16 @@ import { formatUserDisplay } from '../../utils/user-display'
 export const PersonalLoans = () => {
   const formatAmount = inject('formatAmount')
   const { dbRef, readShallow } = useFireBase()
-  const userStore = store()
+  const authStore = useAuthStore()
+  const userStore = useUserStore()
+  const dataStore = useDataStore()
 
+  const storeProxy = {
+    get getActiveUser() {
+      return authStore.getActiveUser
+    },
+    getUserByMobile: (m) => userStore.getUserByMobile(m)
+  }
   const loans = ref([])
   const loanKeys = ref([])
   const loanContent = ref(null)
@@ -26,7 +36,7 @@ export const PersonalLoans = () => {
   let loansListener = null
   let currentLoansRef = null
 
-  const activeUser = computed(() => userStore.getActiveUser)
+  const activeUser = computed(() => authStore.getActiveUser)
 
   const fetchMonths = async () => {
     try {
@@ -130,7 +140,7 @@ export const PersonalLoans = () => {
     fetchLoans()
 
     setTimeout(() => {
-      userStore.setLoansRef(loanContent.value)
+      dataStore.setLoansRef(loanContent.value)
     }, 1000)
   })
 
@@ -148,7 +158,7 @@ export const PersonalLoans = () => {
         seen.add(loan.loanGiver)
         options.push({
           mobile: loan.loanGiver,
-          name: formatUserDisplay(userStore, loan.loanGiver, {
+          name: formatUserDisplay(storeProxy, loan.loanGiver, {
             name: loan.giverName
           })
         })
@@ -192,10 +202,10 @@ export const PersonalLoans = () => {
       const { loanGiver, giverName, loanReceiver, receiverName, amount } = loan
       if (!loanGiver || !loanReceiver || !amount) return
 
-      nameMap[loanGiver] = formatUserDisplay(userStore, loanGiver, {
+      nameMap[loanGiver] = formatUserDisplay(storeProxy, loanGiver, {
         name: giverName
       })
-      nameMap[loanReceiver] = formatUserDisplay(userStore, loanReceiver, {
+      nameMap[loanReceiver] = formatUserDisplay(storeProxy, loanReceiver, {
         name: receiverName
       })
 

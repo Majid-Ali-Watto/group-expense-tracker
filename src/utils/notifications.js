@@ -2,7 +2,7 @@ import { ElMessageBox } from 'element-plus'
 import { downloadPDF } from './downloadDataProcedures'
 import { showError, showSuccess } from './showAlerts'
 import getCurrentMonth from './getCurrentMonth'
-import { store } from '../stores/store'
+import { useDataStore } from '../stores/dataStore'
 import { LAST_DAY, MIDDLE_DAY } from '../assets/data'
 
 export function checkLastDayOfMonth() {
@@ -36,16 +36,13 @@ async function confirmDownload(res, pdfContent) {
       }
     )
 
-    const storePermissions = store()
+    const dataStore = useDataStore()
     await showSuccess('PDF downloading started')
     // Sequential downloads
     await downloadPDF(pdfContent.value, `${getCurrentMonth()}_Expenses_`)
+    await downloadPDF(dataStore.loansRef, `${getCurrentMonth()}_Loans_`)
     await downloadPDF(
-      storePermissions.$state.loansRef,
-      `${getCurrentMonth()}_Loans_`
-    )
-    await downloadPDF(
-      storePermissions.$state.salaryRef,
+      dataStore.salaryRef,
       `${getCurrentMonth()}_Salary_Expense_`
     )
     localStorage.setItem('isDownloaded', true)

@@ -3,26 +3,23 @@
     <fieldset class="border rounded bg-white shadow-sm p-4">
       <legend class="font-medium">Create Group</legend>
       <el-form :model="groupForm" :rules="groupRules" ref="groupFormRef">
-        <el-form-item label="Name" prop="name" label-position="top">
-          <el-input
-            v-model="groupForm.name"
-            placeholder="Enter group name"
-            class="w-full"
-            size="small"
-            :maxlength="50"
-          />
-        </el-form-item>
-        <el-form-item label="Description" label-position="top">
-          <el-input
-            v-model="groupForm.description"
-            type="textarea"
-            :rows="3"
-            placeholder="Enter group description (optional)"
-            class="w-full"
-            size="small"
-            :maxlength="100"
-          />
-        </el-form-item>
+        <GenericInputField
+          v-model="groupForm.name"
+          label="Name"
+          prop="name"
+          label-position="top"
+          placeholder="Enter group name"
+          :maxlength="50"
+        />
+        <GenericInputField
+          v-model="groupForm.description"
+          label="Description"
+          label-position="top"
+          type="textarea"
+          :rows="3"
+          placeholder="Enter group description (optional)"
+          :maxlength="100"
+        />
         <GenericDropDown
           v-model="groupForm.members"
           label="Members"
@@ -49,6 +46,7 @@
 import { groupRules } from '../../assets/validation-rules'
 import { GroupsCreate } from '../../scripts/groups/groups-create'
 import { GenericDropDown } from '../generic-components'
+import GenericInputField from '../generic-components/GenericInputField.vue'
 
 const emit = defineEmits(['groupCreated'])
 const props = defineProps({

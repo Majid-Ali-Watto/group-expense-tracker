@@ -1,29 +1,33 @@
 import { ref, computed, onMounted } from 'vue'
 import { ElMessageBox } from 'element-plus'
 import useFireBase from '../../api/firebase-apis'
-import { store } from '../../stores/store'
+import { useAuthStore } from '../../stores/authStore'
+import { useGroupStore } from '../../stores/groupStore'
+import { useUserStore } from '../../stores/userStore'
 import { showError } from '../../utils/showAlerts'
 import { maskMobile } from '../../utils/maskMobile'
 import { auth, deleteUser } from '../../firebase'
 
 export const Users = () => {
-  const userStore = store()
+  const authStore = useAuthStore()
+  const groupStore = useGroupStore()
+  const userStore = useUserStore()
   const { updateData, read, deleteData } = useFireBase()
 
   const editDialogVisible = ref(false)
   const editForm = ref({ name: '', mobile: '' })
 
   const users = computed(() => userStore.getUsers || [])
-  const groups = computed(() => userStore.getGroups || [])
-  const activeUser = computed(() => userStore.getActiveUser)
+  const groups = computed(() => groupStore.getGroups || [])
+  const activeUser = computed(() => authStore.getActiveUser)
 
   const searchQuery = ref('')
   const sortOrder = ref('') // '' | 'asc' | 'desc'
   const sharedGroupsOnly = ref(false)
 
   const activeGroupMobiles = computed(() => {
-    const groupId = userStore.getActiveGroup
-    const group = groupId ? userStore.getGroupById(groupId) : null
+    const groupId = groupStore.getActiveGroup
+    const group = groupId ? groupStore.getGroupById(groupId) : null
     return (group?.members || []).map((m) => m.mobile)
   })
 
@@ -245,9 +249,9 @@ export const Users = () => {
             )
           }
 
-          userStore.setActiveUser(null)
-          userStore.setActiveGroup(null)
-          userStore.setSessionToken(null)
+          authStore.setActiveUser(null)
+          groupStore.setActiveGroup(null)
+          authStore.setSessionToken(null)
           sessionStorage.removeItem('_session')
         }
       } else {
@@ -312,9 +316,9 @@ export const Users = () => {
           )
         }
 
-        userStore.setActiveUser(null)
-        userStore.setActiveGroup(null)
-        userStore.setSessionToken(null)
+        authStore.setActiveUser(null)
+        groupStore.setActiveGroup(null)
+        authStore.setSessionToken(null)
         sessionStorage.removeItem('_session')
       }
     } else if (type === 'update' && allApproved) {

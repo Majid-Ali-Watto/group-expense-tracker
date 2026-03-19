@@ -26,44 +26,26 @@
         :class="showFilters ? '' : 'hidden sm:flex'"
       >
         <el-col :lg="6" :md="6" :sm="12" :xs="12">
-          <el-form-item label="Month" class="w-full">
-            <el-select
-              filterable
-              v-model="selectedMonth"
-              placeholder="Select Month"
-              class="w-full"
-              @change="fetchLoans"
-              size="small"
-            >
-              <el-option value="All" label="All Months" />
-              <el-option
-                v-for="month in months"
-                :key="month"
-                :value="month"
-                :label="month"
-              />
-            </el-select>
-          </el-form-item>
+          <GenericDropDown
+            v-model="selectedMonth"
+            label="Month"
+            placeholder="Select Month"
+            :options="[{ label: 'All Months', value: 'All' }, ...months]"
+            size="small"
+            @update:modelValue="fetchLoans"
+          />
         </el-col>
         <el-col :lg="6" :md="6" :sm="12" :xs="12">
-          <el-form-item label="Giver" class="w-full">
-            <el-select
-              filterable
-              clearable
-              v-model="selectedGiver"
-              placeholder="All Givers"
-              class="w-full"
-              size="small"
-            >
-              <el-option value="All" label="All Givers" />
-              <el-option
-                v-for="opt in giverOptions"
-                :key="opt.mobile"
-                :value="opt.mobile"
-                :label="opt.name"
-              />
-            </el-select>
-          </el-form-item>
+          <GenericDropDown
+            v-model="selectedGiver"
+            label="Giver"
+            placeholder="All Givers"
+            :options="[
+              { label: 'All Givers', value: 'All' },
+              ...giverOptions.map((o) => ({ label: o.name, value: o.mobile }))
+            ]"
+            size="small"
+          />
         </el-col>
       </el-row>
       <!-- Accordions -->
@@ -178,6 +160,7 @@ import { ref, computed, defineAsyncComponent } from 'vue'
 import { useMobileScreen } from '../../utils/useMobileScreen'
 import { Filter } from '@element-plus/icons-vue'
 import Table from '../shared/Table.vue'
+import GenericDropDown from '../generic-components/GenericDropDown.vue'
 import { PersonalLoans } from '../../scripts/personal-loans/personal-loans'
 const LoanForm = defineAsyncComponent(
   () => import('../shared-loans/LoanForm.vue')

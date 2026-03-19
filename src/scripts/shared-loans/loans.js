@@ -1,6 +1,9 @@
 import { ref, computed, onMounted, onUnmounted, inject, watch } from 'vue'
 import { onValue, off } from '../../firebase'
-import { store } from '../../stores/store'
+import { useAuthStore } from '../../stores/authStore'
+import { useGroupStore } from '../../stores/groupStore'
+import { useUserStore } from '../../stores/userStore'
+import { useDataStore } from '../../stores/dataStore'
 import useFireBase from '../../api/firebase-apis'
 import { appendNotificationForUser } from '../../utils/recordNotifications'
 import { useApprovalRequests } from '../../utils/useApprovalRequests'
@@ -13,7 +16,16 @@ import getCurrentMonth from '../../utils/getCurrentMonth'
 import { showError } from '../../utils/showAlerts'
 
 export const Loans = () => {
-  const userStore = store()
+  const authStore = useAuthStore()
+  const groupStore = useGroupStore()
+  const userStore = useUserStore()
+  const storeProxy = {
+    get getActiveUser() {
+      return authStore.getActiveUser
+    },
+    getUserByMobile: (m) => userStore.getUserByMobile(m)
+  }
+  const dataStore = useDataStore()
   const { dbRef, readShallow, updateData, deleteData } = useFireBase()
   const formatAmount = inject('formatAmount')
 
@@ -26,10 +38,10 @@ export const Loans = () => {
   const selectedGiver = ref('All')
   const months = ref([])
 
-  const activeGroup = computed(() => userStore.getActiveGroup)
-  const activeUser = computed(() => userStore.getActiveUser)
+  const activeGroup = computed(() => groupStore.getActiveGroup)
+  const activeUser = computed(() => authStore.getActiveUser)
   const groupObj = computed(() =>
-    activeGroup.value ? userStore.getGroupById(activeGroup.value) : null
+    activeGroup.value ? groupStore.getGroupById(activeGroup.value) : null
   )
 
   const usersList = computed(() => {
@@ -65,7 +77,7 @@ export const Loans = () => {
 
   // Fetch available months
   const fetchMonths = async () => {
-    const groupId = userStore.getActiveGroup || 'global'
+    const groupId = groupStore.getActiveGroup || 'global'
     try {
       months.value = await readShallow(`loans/${groupId}`)
       if (months.value.length) selectedMonth.value = getCurrentMonth()
@@ -76,7 +88,7 @@ export const Loans = () => {
   // Fetch loans for the selected month
 
   const fetchLoans = () => {
-    const groupId = userStore.getActiveGroup || 'global'
+    const groupId = groupStore.getActiveGroup || 'global'
     const loansRef = dbRef(`loans/${groupId}/${selectedMonth.value}`)
     if (loansListener && currentLoansRef)
       off(currentLoansRef, 'value', loansListener)
@@ -139,7 +151,7 @@ export const Loans = () => {
   })
 
   setTimeout(() => {
-    userStore.setLoansRef(loanContent.value)
+    dataStore.setLoansRef(loanContent.value)
   }, 1000)
 
   const filteredLoans = computed(() => {
@@ -171,7 +183,7 @@ export const Loans = () => {
     })
 
     return Object.keys(balanceMap).map((mobile) => ({
-      name: formatUserDisplay(userStore, mobile, { group: groupObj.value }),
+      name: formatUserDisplay(storeProxy, mobile, { group: groupObj.value }),
       amount: balanceMap[mobile]
     }))
   })
@@ -183,7 +195,7 @@ export const Loans = () => {
   }
 
   const getUserName = (mobile) => {
-    return formatUserDisplay(userStore, mobile, { group: groupObj.value })
+    return formatUserDisplay(storeProxy, mobile, { group: groupObj.value })
   }
 
   const {

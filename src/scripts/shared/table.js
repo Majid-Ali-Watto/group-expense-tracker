@@ -9,7 +9,10 @@ import {
   watch,
   nextTick
 } from 'vue'
-import { store } from '../../stores/store'
+import { useAuthStore } from '../../stores/authStore'
+import { useTabStore } from '../../stores/tabStore'
+import { useGroupStore } from '../../stores/groupStore'
+import { useUserStore } from '../../stores/userStore'
 import { getEditComponent } from '../../utils/active-tab'
 import { Tabs } from '../../assets/enums'
 import { downloadExcel, downloadPDF } from '../../utils/downloadDataProcedures'
@@ -24,17 +27,28 @@ export const Table = (props) => {
   const deleteMode = ref(false)
   const state = reactive({ row: null })
   const screenWidth = ref(window.innerWidth)
-  const tabStore = store()
+  const authStore = useAuthStore()
+  const tabStore = useTabStore()
+  const groupStore = useGroupStore()
+  const userStore = useUserStore()
   const childRef = ref(null)
 
-  const activeTab = computed(() => tabStore.$state.activeTab)
+  const activeTab = computed(() => tabStore.activeTab)
   const activeGroupObj = computed(() =>
-    tabStore.getActiveGroup ? tabStore.getGroupById(tabStore.getActiveGroup) : null
+    groupStore.getActiveGroup
+      ? groupStore.getGroupById(groupStore.getActiveGroup)
+      : null
   )
   const activeTabComponent = () => getEditComponent(activeTab.value)
 
+  const storeProxy = {
+    get getActiveUser() {
+      return authStore.getActiveUser
+    },
+    getUserByMobile: (m) => userStore.getUserByMobile(m)
+  }
   const formatUser = (mobile, name = null) =>
-    formatUserDisplay(tabStore, mobile, {
+    formatUserDisplay(storeProxy, mobile, {
       name,
       group: activeGroupObj.value,
       preferMasked: !activeGroupObj.value
@@ -187,7 +201,7 @@ export const Table = (props) => {
       const requestType = rowS.deleteRequest ? 'delete' : 'update'
       const requester =
         rowS.deleteRequest?.requestedBy || rowS.updateRequest?.requestedBy
-      const currentUser = tabStore.getActiveUser
+      const currentUser = authStore.getActiveUser
 
       if (requester === currentUser) {
         ElMessage.info(
@@ -251,7 +265,7 @@ export const Table = (props) => {
       const requestType = rowS.deleteRequest ? 'delete' : 'update'
       const requester =
         rowS.deleteRequest?.requestedBy || rowS.updateRequest?.requestedBy
-      const currentUser = tabStore.getActiveUser
+      const currentUser = authStore.getActiveUser
       if (requester === currentUser) {
         ElMessage.info(
           `You have a pending ${requestType} request. Please wait for approval or cancel it from the pending requests section.`
@@ -707,7 +721,8 @@ export const Table = (props) => {
   const colSettingsDragKey = ref(null)
 
   function handleColSettingsDrop(targetKey) {
-    if (!colSettingsDragKey.value || colSettingsDragKey.value === targetKey) return
+    if (!colSettingsDragKey.value || colSettingsDragKey.value === targetKey)
+      return
     const order = [...columnOrder.value]
     const fromIdx = order.indexOf(colSettingsDragKey.value)
     const toIdx = order.indexOf(targetKey)
@@ -736,7 +751,8 @@ export const Table = (props) => {
   const showMoreTitle = ref('')
   const showMoreItems = ref([])
 
-  const formatPayer = (p) => `${formatUser(p.mobile)}: ${formatAmount(p.amount)}`
+  const formatPayer = (p) =>
+    `${formatUser(p.mobile)}: ${formatAmount(p.amount)}`
 
   const formatSplit = (s) =>
     `${formatUser(s.mobile, s.name)}: ${formatAmount(s.amount)}`

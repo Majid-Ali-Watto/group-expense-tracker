@@ -1,5 +1,7 @@
 import { computed, inject, ref } from 'vue'
-import { store } from '../../stores/store'
+import { useAuthStore } from '../../stores/authStore'
+import { useGroupStore } from '../../stores/groupStore'
+import { useUserStore } from '../../stores/userStore'
 import useFireBase from '../../api/firebase-apis'
 import { showError, showSuccess } from '../../utils/showAlerts'
 import { ElMessageBox } from 'element-plus'
@@ -7,17 +9,19 @@ import { ElMessageBox } from 'element-plus'
 export const Settlement = (props) => {
   const { updateData, deleteData, setData } = useFireBase()
   const formatAmount = inject('formatAmount')
-  const userStore = store()
+  const authStore = useAuthStore()
+  const groupStore = useGroupStore()
+  const userStore = useUserStore()
 
-  const user = ref(userStore.$state.activeUser)
-  const activeGroup = computed(() => userStore.getActiveGroup)
+  const user = ref(authStore.activeUser)
+  const activeGroup = computed(() => groupStore.getActiveGroup)
   const group = computed(() =>
-    activeGroup.value ? userStore.getGroupById(activeGroup.value) : null
+    activeGroup.value ? groupStore.getGroupById(activeGroup.value) : null
   )
 
   const isAdmin = computed(() => {
     if (!group.value) return false
-    return group.value.ownerMobile === userStore.getActiveUser
+    return group.value.ownerMobile === authStore.getActiveUser
   })
 
   // Make settlementRequest reactive to group changes
@@ -35,7 +39,7 @@ export const Settlement = (props) => {
   // Check if current user has approved settlement request
   const hasUserApprovedSettlement = computed(() => {
     if (!hasSettlementRequest.value) return false
-    const mobile = userStore.getActiveUser
+    const mobile = authStore.getActiveUser
     return (
       settlementRequest.value.approvals?.some((a) => a.mobile === mobile) ||
       false
@@ -82,7 +86,7 @@ export const Settlement = (props) => {
         return showError('No active group selected')
       }
 
-      const mobile = userStore.getActiveUser
+      const mobile = authStore.getActiveUser
       const userName = userStore.getUserByMobile(mobile)?.name || mobile
 
       const newSettlementRequest = {
@@ -110,7 +114,7 @@ export const Settlement = (props) => {
     try {
       if (!hasSettlementRequest.value) return
 
-      const mobile = userStore.getActiveUser
+      const mobile = authStore.getActiveUser
       const userName = userStore.getUserByMobile(mobile)?.name || mobile
 
       const updatedRequest = { ...settlementRequest.value }

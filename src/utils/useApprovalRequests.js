@@ -122,7 +122,12 @@ export function useApprovalRequests({
     }
   }
 
-  async function appendRequesterNotification(itemId, itemPath, requestedBy, notification) {
+  async function appendRequesterNotification(
+    itemId,
+    itemPath,
+    requestedBy,
+    notification
+  ) {
     const item = rawItems.value[itemId] || {}
     const nextItem = appendNotificationForUser(item, requestedBy, notification)
 

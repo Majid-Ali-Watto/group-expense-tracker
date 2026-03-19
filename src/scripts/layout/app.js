@@ -1,5 +1,8 @@
 import { ref, onUnmounted, onMounted, computed, watch, nextTick } from 'vue'
-import { store } from '../../stores/store'
+import { useAuthStore } from '../../stores/authStore'
+import { useTabStore } from '../../stores/tabStore'
+import { useGroupStore } from '../../stores/groupStore'
+import { useUserStore } from '../../stores/userStore'
 import useFireBase from '../../api/firebase-apis'
 import { tabs as allTabs } from '../../assets/data'
 import { Tabs } from '../../assets/enums'
@@ -17,7 +20,10 @@ import { auth, onAuthStateChanged, signOut } from '../../firebase'
 import { NetPosition } from '../generic/net-position'
 
 export const App = () => {
-  const tabStore = store()
+  const authStore = useAuthStore()
+  const tabStore = useTabStore()
+  const groupStore = useGroupStore()
+  const userStore = useUserStore()
 
   // Holds the saved tab to restore after HOC loads groups/users data
   const pendingTabRestore = ref(null)
@@ -82,9 +88,9 @@ export const App = () => {
         ])
 
         sessionStorage.setItem('_session', encryptedSession)
-        tabStore.setActiveUser(mobile)
-        tabStore.setSessionToken(encryptedStore)
-        tabStore.setActiveLoginCode('')
+        authStore.setActiveUser(mobile)
+        authStore.setSessionToken(encryptedStore)
+        authStore.setActiveLoginCode('')
 
         // Queue the saved tab — Groups opens first so HOC can load data,
         // then the watcher below applies the restore once users are ready
@@ -96,7 +102,6 @@ export const App = () => {
         console.error('Auto session restore failed:', e)
       }
     })
-
   })
   onUnmounted(() => {
     if (authUnsubscribe) authUnsubscribe()
@@ -106,15 +111,15 @@ export const App = () => {
   // Checks presence only; the full crypto comparison happens in verifyUser().
   const loggedIn = computed(() => {
     return !!(
-      tabStore.getActiveUser &&
-      tabStore.getSessionToken &&
+      authStore.getActiveUser &&
+      authStore.getSessionToken &&
       sessionStorage.getItem('_session')
     )
   })
 
   // Computed tabs based on active group
   const tabs = computed(() => {
-    const activeGroup = tabStore.getActiveGroup
+    const activeGroup = groupStore.getActiveGroup
     if (!activeGroup) {
       return allTabs.filter(
         (tab) => tab !== Tabs.SHARED_EXPENSES && tab !== Tabs.SHARED_LOANS
@@ -125,10 +130,10 @@ export const App = () => {
 
   const { read } = useFireBase()
   const displayName = computed(
-    () => tabStore.getUserByMobile(tabStore.getActiveUser)?.name || 'Guest'
+    () => userStore.getUserByMobile(authStore.getActiveUser)?.name || 'Guest'
   )
   const activeGroup = computed(
-    () => tabStore.getGroupById(tabStore.getActiveGroup)?.name
+    () => groupStore.getGroupById(groupStore.getActiveGroup)?.name
   )
 
   // Current active tab from store
@@ -136,7 +141,7 @@ export const App = () => {
 
   // Once HOC loads users (signal that group/user data is ready), apply the queued tab restore
   const stopTabRestoreWatch = watch(
-    () => tabStore.users.length,
+    () => userStore.users.length,
     (len) => {
       if (len > 0 && pendingTabRestore.value) {
         const tab = pendingTabRestore.value
@@ -151,10 +156,10 @@ export const App = () => {
   )
 
   async function logout() {
-    tabStore.setActiveUser(null)
-    tabStore.setActiveGroup(null)
-    tabStore.setSessionToken(null)
-    tabStore.setActiveLoginCode(null)
+    authStore.setActiveUser(null)
+    groupStore.setActiveGroup(null)
+    authStore.setSessionToken(null)
+    authStore.setActiveLoginCode(null)
     sessionStorage.removeItem('_session')
     sessionStorage.removeItem('_activeTab')
     pendingTabRestore.value = null
@@ -169,7 +174,7 @@ export const App = () => {
   }
 
   async function verifyUser(loading = true) {
-    const encryptedStore = tabStore.getSessionToken
+    const encryptedStore = authStore.getSessionToken
     const encryptedSession = sessionStorage.getItem('_session')
     if (!encryptedStore || !encryptedSession) return false
 
@@ -186,7 +191,7 @@ export const App = () => {
     )
       return false
 
-    const mobile = tabStore.getActiveUser
+    const mobile = authStore.getActiveUser
     if (!mobile) return false
 
     // Verify user exists in database
@@ -261,9 +266,9 @@ export const App = () => {
 
   function navigateToTab(tab, groupId) {
     if (groupId) {
-      tabStore.setActiveGroup(groupId)
+      groupStore.setActiveGroup(groupId)
       // Trigger scroll to group with timestamp to ensure reactivity
-      tabStore.setScrollToGroupTrigger({ groupId, timestamp: Date.now() })
+      groupStore.setScrollToGroupTrigger({ groupId, timestamp: Date.now() })
     }
     activeTab.value = tab
     tabStore.setActiveTab(tab)
@@ -310,7 +315,10 @@ export const App = () => {
 
   return {
     loggedIn,
+    authStore,
     tabStore,
+    groupStore,
+    userStore,
     tabs,
     displayName,
     activeGroup,

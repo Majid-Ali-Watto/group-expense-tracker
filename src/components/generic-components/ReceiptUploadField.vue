@@ -20,9 +20,7 @@
       :on-remove="handleRemove"
       :disabled="uploading"
     >
-      <el-button size="small" :disabled="uploading">
-        Choose File
-      </el-button>
+      <el-button size="small" :disabled="uploading"> Choose File </el-button>
     </el-upload>
 
     <div
@@ -37,7 +35,11 @@
         rel="noopener"
         class="text-xs text-blue-500 hover:underline inline-block"
       >
-        {{ existingUrls.length > 1 ? `View receipt ${index + 1}` : 'View current receipt' }}
+        {{
+          existingUrls.length > 1
+            ? `View receipt ${index + 1}`
+            : 'View current receipt'
+        }}
       </a>
     </div>
   </div>
@@ -65,7 +67,8 @@ const props = defineProps({
   },
   helperText: {
     type: String,
-    default: 'Only image files (JPG, PNG, GIF, BMP, WEBP) are allowed. Max size: 1MB per file.'
+    default:
+      'Only image files (JPG, PNG, GIF, BMP, WEBP) are allowed. Max size: 1MB per file.'
   }
 })
 
@@ -74,14 +77,20 @@ const emit = defineEmits(['files-selected', 'remove'])
 const uploadRef = ref(null)
 
 function handleChange(file, files) {
-  emit('files-selected', files.map((f) => f.raw))
+  emit(
+    'files-selected',
+    files.map((f) => f.raw)
+  )
 }
 
 function handleRemove(file, files) {
   if (files.length === 0) {
     emit('remove')
   } else {
-    emit('files-selected', files.map((f) => f.raw))
+    emit(
+      'files-selected',
+      files.map((f) => f.raw)
+    )
   }
 }
 

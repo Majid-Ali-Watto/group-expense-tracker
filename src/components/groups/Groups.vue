@@ -22,18 +22,16 @@
 
     <!-- Search Bar -->
     <div class="mb-2">
-      <el-input
+      <GenericInputField
         v-model="searchQuery"
         placeholder="Search by group name, code, owner, or member..."
-        clearable
-        prefix-icon="el-icon-search"
-        size="small"
         :maxlength="50"
+        :wrap-form-item="false"
       >
         <template #prefix>
           <span class="text-gray-400">🔍</span>
         </template>
-      </el-input>
+      </GenericInputField>
     </div>
 
     <!-- Sort & Filter controls -->
@@ -327,25 +325,22 @@
         ref="editFormRef"
         label-position="top"
       >
-        <el-form-item label="Group Name" prop="name">
-          <el-input
-            v-model="editForm.name"
-            placeholder="Enter group name"
-            size="small"
-            :maxlength="50"
-          />
-        </el-form-item>
+        <GenericInputField
+          v-model="editForm.name"
+          label="Group Name"
+          prop="name"
+          placeholder="Enter group name"
+          :maxlength="50"
+        />
 
-        <el-form-item label="Description">
-          <el-input
-            v-model="editForm.description"
-            type="textarea"
-            :rows="3"
-            placeholder="Enter group description (optional)"
-            size="small"
-            :maxlength="100"
-          />
-        </el-form-item>
+        <GenericInputField
+          v-model="editForm.description"
+          label="Description"
+          type="textarea"
+          :rows="3"
+          placeholder="Enter group description (optional)"
+          :maxlength="100"
+        />
 
         <GenericDropDown
           v-model="editForm.members"
@@ -471,6 +466,7 @@
 import { defineAsyncComponent } from 'vue'
 import { groupRules } from '../../assets/validation-rules'
 import { Groups } from '../../scripts/groups/groups'
+import GenericInputField from '../generic-components/GenericInputField.vue'
 import GroupDetailsAccordion from '../generic-components/GroupDetailsAccordion.vue'
 import YourPositionInGroup from '../generic-components/YourPositionInGroup.vue'
 import GroupActionButtons from '../generic-components/GroupActionButtons.vue'

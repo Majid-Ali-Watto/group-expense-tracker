@@ -1,5 +1,7 @@
 import { computed, ref, watch } from 'vue'
-import { store } from '../stores/store'
+import { useAuthStore } from '../stores/authStore'
+import { useGroupStore } from '../stores/groupStore'
+import { useUserStore } from '../stores/userStore'
 import { onValue, off } from '../firebase'
 import useFireBase from '../api/firebase-apis'
 import { Tabs } from '../assets/enums'
@@ -20,11 +22,13 @@ import {
 } from '../helpers/users'
 
 export function useGlobalNotifications() {
-  const userStore = store()
+  const authStore = useAuthStore()
+  const groupStore = useGroupStore()
+  const userStore = useUserStore()
   const { dbRef } = useFireBase()
 
-  const activeUser = computed(() => userStore.getActiveUser)
-  const groups = computed(() => userStore.getGroups || [])
+  const activeUser = computed(() => authStore.getActiveUser)
+  const groups = computed(() => groupStore.getGroups || [])
   const users = computed(() => userStore.getUsers || [])
 
   // Early return if no active user - avoid expensive computations

@@ -66,7 +66,7 @@
         <div
           v-else-if="
             allMembersApprovedJoinRequest(group, request.mobile) &&
-            (group.ownerMobile === userStore.getActiveUser ||
+            (group.ownerMobile === authStore.getActiveUser ||
               !group.members.some((m) => m.mobile === group.ownerMobile))
           "
           class="flex gap-1"
@@ -83,7 +83,7 @@
           ✓ You have approved this request
           <span
             v-if="
-              group.ownerMobile === userStore.getActiveUser &&
+              group.ownerMobile === authStore.getActiveUser &&
               !allMembersApprovedJoinRequest(group, request.mobile)
             "
           >
@@ -184,7 +184,7 @@
         </div>
         <div
           v-if="
-            leaveReq.mobile !== userStore.getActiveUser &&
+            leaveReq.mobile !== authStore.getActiveUser &&
             !hasUserApprovedLeaveRequest(group, leaveReq.mobile)
           "
           class="flex gap-2"
@@ -205,7 +205,7 @@
           </el-button>
         </div>
         <div
-          v-else-if="leaveReq.mobile === userStore.getActiveUser"
+          v-else-if="leaveReq.mobile === authStore.getActiveUser"
           class="text-xs text-blue-700 dark:text-blue-300"
         >
           Waiting for members approval...
@@ -305,7 +305,9 @@
     </div>
     <div class="text-xs text-gray-700 mb-2">
       <strong>New Member:</strong>
-      {{ formatMember(group.addMemberRequest.newMember, { preferMasked: true }) }}
+      {{
+        formatMember(group.addMemberRequest.newMember, { preferMasked: true })
+      }}
     </div>
     <div class="text-sm text-green-700 mb-2">
       Approvals: {{ getAddMemberRequestApprovals(group).length }} /
@@ -346,7 +348,7 @@
     <!-- Admin finalize button when all approved -->
     <div
       v-if="
-        group.ownerMobile === userStore.getActiveUser &&
+        group.ownerMobile === authStore.getActiveUser &&
         allMembersApprovedAddMember(group)
       "
       class="mt-2"
@@ -434,10 +436,21 @@ import {
   hasUserApprovedAddMemberRequest,
   hasUserApprovedOwnershipTransfer
 } from '../../helpers/users'
-import { store } from '../../stores/store'
-import { formatMemberDisplay, formatUserDisplay } from '../../utils/user-display'
+import { useAuthStore } from '../../stores/authStore'
+import { useUserStore } from '../../stores/userStore'
+import {
+  formatMemberDisplay,
+  formatUserDisplay
+} from '../../utils/user-display'
 
-const userStore = store()
+const authStore = useAuthStore()
+const userStore = useUserStore()
+const storeProxy = {
+  get getActiveUser() {
+    return authStore.getActiveUser
+  },
+  getUserByMobile: (m) => userStore.getUserByMobile(m)
+}
 
 const props = defineProps({
   group: {
@@ -507,10 +520,10 @@ const props = defineProps({
 })
 
 const formatUser = (mobile) =>
-  formatUserDisplay(userStore, mobile, { group: props.group })
+  formatUserDisplay(storeProxy, mobile, { group: props.group })
 
 const formatMember = (member, options = {}) =>
-  formatMemberDisplay(userStore, member, {
+  formatMemberDisplay(storeProxy, member, {
     group: props.group,
     ...options
   })

@@ -9,6 +9,7 @@
       :max="max"
       :step="step"
       clearable
+      size="small"
       @input="$emit('update:modelValue', internalValue)"
     />
   </el-form-item>

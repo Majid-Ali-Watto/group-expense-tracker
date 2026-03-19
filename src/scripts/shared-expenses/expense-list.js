@@ -1,6 +1,8 @@
 import { computed, onMounted, onUnmounted, ref, watch, inject } from 'vue'
 import { useUsersOptions } from '../../utils/useUsersOptions'
-import { store } from '../../stores/store'
+import { useAuthStore } from '../../stores/authStore'
+import { useGroupStore } from '../../stores/groupStore'
+import { useUserStore } from '../../stores/userStore'
 import { onValue, off } from '../../firebase'
 import useFireBase from '../../api/firebase-apis'
 import { checkDaily } from '../../utils/notifications'
@@ -15,7 +17,15 @@ import {
 } from '../../utils/cloudinaryUpload'
 
 export const ExpenseList = (props) => {
-  const userStore = store()
+  const authStore = useAuthStore()
+  const groupStore = useGroupStore()
+  const userStore = useUserStore()
+  const storeProxy = {
+    get getActiveUser() {
+      return authStore.getActiveUser
+    },
+    getUserByMobile: (m) => userStore.getUserByMobile(m)
+  }
   const { dbRef, readShallow, updateData, deleteData } = useFireBase()
   const formatAmount = inject('formatAmount')
 
@@ -33,17 +43,17 @@ export const ExpenseList = (props) => {
   const selectedSplitMode = ref('all')
   const selectedParticipants = ref([])
 
-  const activeUser = computed(() => userStore.getActiveUser)
-  const activeGroup = computed(() => userStore.getActiveGroup)
+  const activeUser = computed(() => authStore.getActiveUser)
+  const activeGroup = computed(() => groupStore.getActiveGroup)
   const groupObj = computed(() =>
-    activeGroup.value ? userStore.getGroupById(activeGroup.value) : null
+    activeGroup.value ? groupStore.getGroupById(activeGroup.value) : null
   )
 
   let paymentsListener = null
 
   // Watch active group and refetch when it changes
   watch(
-    () => userStore.getActiveGroup,
+    () => groupStore.getActiveGroup,
     () => {
       selectedMonth.value = getCurrentMonth()
       selectedFriend.value = 'All'
@@ -61,7 +71,7 @@ export const ExpenseList = (props) => {
 
   // Clean up listeners on unmount
   onUnmounted(() => {
-    const groupId = userStore.getActiveGroup || 'global'
+    const groupId = groupStore.getActiveGroup || 'global'
     if (paymentsListener)
       off(
         dbRef(`${props.dbRef}/${groupId}/${selectedMonth.value}`),
@@ -72,7 +82,7 @@ export const ExpenseList = (props) => {
 
   // Fetch available months
   const fetchMonths = async () => {
-    const groupId = userStore.getActiveGroup || 'global'
+    const groupId = groupStore.getActiveGroup || 'global'
     try {
       months.value = await readShallow(`${props.dbRef}/${groupId}`)
       if (months.value.length) selectedMonth.value = getCurrentMonth()
@@ -83,7 +93,7 @@ export const ExpenseList = (props) => {
 
   // Fetch expenses for the selected month
   const fetchExpenses = () => {
-    const groupId = userStore.getActiveGroup || 'global'
+    const groupId = groupStore.getActiveGroup || 'global'
     const paymentsRef = dbRef(
       `${props.dbRef}/${groupId}/${selectedMonth.value}`
     )
@@ -167,7 +177,7 @@ export const ExpenseList = (props) => {
   }
 
   const getUserName = (mobile) => {
-    return formatUserDisplay(userStore, mobile, { group: groupObj.value })
+    return formatUserDisplay(storeProxy, mobile, { group: groupObj.value })
   }
 
   const {
