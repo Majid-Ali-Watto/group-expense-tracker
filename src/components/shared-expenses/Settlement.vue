@@ -16,29 +16,11 @@
       </div>
 
       <!-- Show settlements table when data exists -->
-      <el-table v-else :data="settlements" style="width: 100%">
-        <el-table-column label="Pays">
-          <template #default="{ row }">
-            <span class="text-red-500 dark:text-red-400 font-medium">
-              {{ formatUser(row.from) }}
-            </span>
-          </template>
-        </el-table-column>
-        <el-table-column label="Receives">
-          <template #default="{ row }">
-            <span class="text-green-700 dark:text-green-400 font-medium">
-              {{ formatUser(row.to) }}
-            </span>
-          </template>
-        </el-table-column>
-        <el-table-column label="Amount">
-          <template #default="{ row }">
-            <span class="font-bold">
-              {{ formatAmount(row.amount) }}
-            </span>
-          </template>
-        </el-table-column>
-      </el-table>
+      <BalanceSummaryCard
+        v-else
+        :columns="settlementColumns"
+        :rows="settlements"
+      />
     </div>
 
     <!-- Settlement Request Section -->
@@ -177,7 +159,9 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { GenericButton } from '../generic-components'
+import BalanceSummaryCard from '../shared/BalanceSummaryCard.vue'
 import { Settlement } from '../../scripts/shared-expenses/settlement'
 import {
   formatMemberDisplay,
@@ -221,6 +205,27 @@ const formatMember = (member) =>
     group: group.value,
     preferMasked: !group.value
   })
+
+const settlementColumns = computed(() => [
+  {
+    key: 'from',
+    label: 'Pays',
+    class: 'text-red-500 font-medium',
+    format: (row) => formatUser(row.from)
+  },
+  {
+    key: 'to',
+    label: 'Receives',
+    class: 'text-green-600 font-medium',
+    format: (row) => formatUser(row.to)
+  },
+  {
+    key: 'amount',
+    label: 'Amount',
+    class: 'font-bold',
+    format: (row) => formatAmount(row.amount)
+  }
+])
 </script>
 
 <style scoped>

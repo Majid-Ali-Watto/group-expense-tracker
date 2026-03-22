@@ -3,13 +3,18 @@
     <!-- Plus Button -->
 
     <AddNewTransactionButton
-      v-if="!showTransactionForm && !isEditMode"
+      v-if="!isEditMode"
+      :form-open="showTransactionForm"
       text="Want to create a new transaction?"
       @click="openForm"
+      @close="closeForm"
     />
 
     <!-- Transaction Form -->
-    <fieldset v-else class="border border-gray-300 rounded-lg p-4">
+    <fieldset
+      v-if="showTransactionForm || isEditMode"
+      class="border border-gray-300 rounded-lg p-4"
+    >
       <legend>Transaction Details</legend>
 
       <!-- Warning Alert -->
@@ -80,26 +85,29 @@
                 :key="index"
                 class="flex items-center gap-2 border border-gray-200 rounded-lg p-2 bg-gray-50"
               >
-                <GenericDropDown
-                  v-model="p.mobile"
-                  :options="usersOptions"
-                  placeholder="Select payer"
-                  size="small"
-                  select-class="flex-1"
-                  :wrap-form-item="false"
-                />
+                <div class="flex-1 min-w-0">
+                  <GenericDropDown
+                    v-model="p.mobile"
+                    :options="usersOptions"
+                    placeholder="Select payer"
+                    size="small"
+                    select-class="w-full"
+                    :wrap-form-item="false"
+                  />
+                </div>
                 <GenericInputNumber
                   v-model="p.amount"
                   :min="0"
                   :precision="2"
                   :wrap-form-item="false"
-                  input-class=""
-                  style="width: 130px"
+                  input-class="w-full"
+                  style="width: 120px; flex-shrink: 0"
                 />
                 <el-button
                   size="small"
                   type="danger"
-                  text
+                  plain
+                  style="flex-shrink: 0; padding: 5px 8px"
                   @click="removePayer(index)"
                 >
                   ✕
@@ -204,28 +212,29 @@
               </el-button>
             </div>
 
-            <el-row :gutter="5">
-              <el-col :sm="14">
-                <el-form-item label="Description" class="mb-1">
-                  <GenericInputField
-                    v-model="item.description"
-                    placeholder="e.g. Burger, Cake..."
-                    :maxlength="100"
-                    :wrap-form-item="false"
-                  />
-                </el-form-item>
-              </el-col>
-              <el-col :sm="10">
-                <el-form-item label="Amount" class="mb-1">
-                  <GenericInputNumber
-                    v-model="item.amount"
-                    :min="0"
-                    :precision="2"
-                    :wrap-form-item="false"
-                  />
-                </el-form-item>
-              </el-col>
-            </el-row>
+            <div class="flex gap-2 items-end mb-1">
+              <el-form-item label="Description" class="mb-0 flex-1 min-w-0">
+                <GenericInputField
+                  v-model="item.description"
+                  placeholder="e.g. Burger, Cake..."
+                  :maxlength="100"
+                  :wrap-form-item="false"
+                />
+              </el-form-item>
+              <el-form-item
+                label="Amount"
+                class="mb-0"
+                style="width: 120px; flex-shrink: 0"
+              >
+                <GenericInputNumber
+                  v-model="item.amount"
+                  :min="0"
+                  :precision="2"
+                  :wrap-form-item="false"
+                  input-class="w-full"
+                />
+              </el-form-item>
+            </div>
 
             <el-form-item label="Participants" class="mb-0">
               <GenericDropDown

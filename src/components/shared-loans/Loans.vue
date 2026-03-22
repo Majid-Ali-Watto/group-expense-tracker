@@ -206,22 +206,12 @@
       </el-row>
       <div ref="loanContent">
         <!-- Display Final Balances -->
-        <el-descriptions title="Loan Details" :column="1" :border="true">
-          <el-descriptions-item
-            v-for="(balance, index) in balances"
-            :key="index"
-            :label="balance.name"
-            label-class-name="loan-detail-name-cell"
-          >
-            <span
-              :class="balance.amount < 0 ? 'text-red-500' : 'text-green-500'"
-            >
-              {{ balance.amount < 0 ? 'Will Pay' : 'Will Receive' }}
-            </span>
-            with
-            <i>{{ formatAmount(Math.abs(balance.amount)) }}</i>
-          </el-descriptions-item>
-        </el-descriptions>
+        <h3 class="mb-2">Loan Details</h3>
+        <BalanceSummaryCard
+          :columns="loanBalanceColumns"
+          :rows="balances"
+          class="mb-4"
+        />
 
         <h2>Loan Records</h2>
         <Table
@@ -237,9 +227,10 @@
 </template>
 
 <script setup>
-import { ref, defineAsyncComponent } from 'vue'
+import { ref, defineAsyncComponent, computed } from 'vue'
 import { Filter } from '@element-plus/icons-vue'
 import Table from '../shared/Table.vue'
+import BalanceSummaryCard from '../shared/BalanceSummaryCard.vue'
 import GenericDropDown from '../generic-components/GenericDropDown.vue'
 import { Loans } from '../../scripts/shared-loans/loans'
 const LoanForm = defineAsyncComponent(() => import('./LoanForm.vue'))
@@ -271,12 +262,30 @@ const {
 } = Loans()
 
 const showFilters = ref(false)
+
+const loanBalanceColumns = computed(() => [
+  {
+    key: 'name',
+    label: 'Member'
+  },
+  {
+    key: 'status',
+    label: 'Status',
+    class: (row) =>
+      row.amount < 0
+        ? 'text-red-500 font-semibold'
+        : row.amount > 0
+          ? 'text-green-500 font-semibold'
+          : 'text-gray-400',
+    format: (row) =>
+      row.amount < 0 ? 'Will Pay' : row.amount > 0 ? 'Will Receive' : 'Settled'
+  },
+  {
+    key: 'amount',
+    label: 'Amount',
+    format: (row) => formatAmount(Math.abs(row.amount))
+  }
+])
 </script>
 
-<style scoped>
-:deep(.loan-detail-name-cell) {
-  min-width: 220px;
-  white-space: normal;
-  word-break: break-word;
-}
-</style>
+<style scoped></style>

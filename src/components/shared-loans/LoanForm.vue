@@ -3,13 +3,18 @@
     <!-- Plus Button -->
 
     <AddNewTransactionButton
-      v-if="!showForm && !isEditMode"
+      v-if="!isEditMode"
+      :form-open="showForm"
       text="Want to add a new loan?"
       @click="openForm"
+      @close="closeForm"
     />
 
     <!-- Loan Form -->
-    <fieldset v-else class="border border-gray-300 rounded-lg p-4">
+    <fieldset
+      v-if="showForm || isEditMode"
+      class="border border-gray-300 rounded-lg p-4"
+    >
       <legend>Loan Details</legend>
 
       <!-- Warning Alert for Shared Loans -->

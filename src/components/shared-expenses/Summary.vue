@@ -31,7 +31,7 @@
             <el-descriptions-item
               v-for="(person, i) in perPersonOwed"
               :key="i"
-              :label="`${person.name} Pays`"
+              :label="`${person.name}'s Expense`"
             >
               {{ formatAmount(person.amount) }}
             </el-descriptions-item>

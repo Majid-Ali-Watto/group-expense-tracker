@@ -1,4 +1,4 @@
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   computed,
   inject,
@@ -18,6 +18,11 @@ import { Tabs } from '../../assets/enums'
 import { downloadExcel, downloadPDF } from '../../utils/downloadDataProcedures'
 import getCurrentMonth from '../../utils/getCurrentMonth'
 import { formatUserDisplay } from '../../utils/user-display'
+import { buildRequestMeta } from '../../utils/buildRequestMeta'
+import { startLoading, stopLoading } from '../../utils/loading'
+import { showSuccess, showError } from '../../utils/showAlerts'
+import { ref as firebaseRef, set } from 'firebase/database'
+import { database } from '../../firebase'
 
 export const Table = (props) => {
   const clickTimeout = ref(null)
@@ -570,11 +575,240 @@ export const Table = (props) => {
   const containerWidth = ref(800)
   const tableHeight = computed(() => Math.floor(window.innerHeight * 0.6))
 
+  // --- Row Selection ---
+  const selectedKeys = ref([])
+
+  const isAllSelected = computed(
+    () =>
+      filteredSortedRows.value.length > 0 &&
+      filteredSortedRows.value.every((r) =>
+        selectedKeys.value.includes(r._origIndex)
+      )
+  )
+
+  const isIndeterminate = computed(() => {
+    const count = filteredSortedRows.value.filter((r) =>
+      selectedKeys.value.includes(r._origIndex)
+    ).length
+    return count > 0 && count < filteredSortedRows.value.length
+  })
+
+  function toggleSelectAll(val) {
+    if (val) {
+      selectedKeys.value = filteredSortedRows.value.map((r) => r._origIndex)
+    } else {
+      selectedKeys.value = []
+    }
+  }
+
+  function toggleSelectRow(origIndex) {
+    if (selectedKeys.value.includes(origIndex)) {
+      selectedKeys.value = selectedKeys.value.filter((k) => k !== origIndex)
+    } else {
+      selectedKeys.value = [...selectedKeys.value, origIndex]
+    }
+  }
+
+  function isRowSelected(origIndex) {
+    return selectedKeys.value.includes(origIndex)
+  }
+
+  function clearSelection() {
+    selectedKeys.value = []
+  }
+
+  const selectedRows = computed(() =>
+    props.rows.filter((_, i) => selectedKeys.value.includes(i))
+  )
+
+  watch(
+    () => props.rows,
+    () => {
+      selectedKeys.value = []
+    }
+  )
+
+  const isBulkDeleteDirectly = computed(
+    () =>
+      activeTab.value === Tabs.PERSONAL_EXPENSES ||
+      activeTab.value === Tabs.PERSONAL_LOANS
+  )
+
+  async function bulkDeleteSelected() {
+    if (!selectedKeys.value.length) return
+
+    const eligible = filteredSortedRows.value.filter(
+      (r) =>
+        selectedKeys.value.includes(r._origIndex) &&
+        !r.deleteRequest &&
+        !r.updateRequest
+    )
+    const skipped = selectedKeys.value.length - eligible.length
+
+    if (!eligible.length) {
+      ElMessage.warning(
+        'All selected items have pending requests and cannot be deleted.'
+      )
+      return
+    }
+
+    const isShared = !isBulkDeleteDirectly.value
+    const actionLabel = isShared ? 'Send delete requests for' : 'Delete'
+    const skippedNote = skipped
+      ? ` (${skipped} skipped — pending requests)`
+      : ''
+
+    try {
+      await ElMessageBox.confirm(
+        `${actionLabel} ${eligible.length} item(s)?${skippedNote}`,
+        'Bulk Delete',
+        {
+          confirmButtonText: 'Confirm',
+          cancelButtonText: 'Cancel',
+          type: 'warning'
+        }
+      )
+    } catch {
+      return
+    }
+
+    const loading = startLoading()
+    try {
+      const groupId = groupStore.getActiveGroup
+      const month = props.reportMonth
+      const user = authStore.getActiveUser
+      const tab = activeTab.value
+
+      for (const row of eligible) {
+        const key = props.keys[row._origIndex]
+
+        if (tab === Tabs.SHARED_EXPENSES) {
+          await set(
+            firebaseRef(
+              database,
+              `payments/${groupId}/${month}/${key}/deleteRequest`
+            ),
+            buildRequestMeta(storeProxy)
+          )
+        } else if (tab === Tabs.SHARED_LOANS) {
+          await set(
+            firebaseRef(
+              database,
+              `loans/${groupId}/${month}/${key}/deleteRequest`
+            ),
+            buildRequestMeta(storeProxy)
+          )
+        } else if (tab === Tabs.PERSONAL_LOANS) {
+          const path = key.includes('/')
+            ? `personal-loans/${user}/${key}`
+            : `personal-loans/${user}/${month}/${key}`
+          await remove(firebaseRef(database, path))
+        } else if (tab === Tabs.PERSONAL_EXPENSES) {
+          await remove(
+            firebaseRef(database, `expenses/${user}/${month}/${key}`)
+          )
+        }
+      }
+
+      clearSelection()
+      if (isShared) {
+        showSuccess(
+          `Delete request sent for ${eligible.length} item(s). Waiting for group approval.`
+        )
+      } else {
+        showSuccess(`${eligible.length} item(s) deleted successfully.`)
+      }
+    } catch (err) {
+      showError(err.message || 'Bulk delete failed.')
+    } finally {
+      stopLoading(loading)
+    }
+  }
+
+  function downloadSelectedExcel() {
+    if (!selectedRows.value.length) return
+    downloadExcel(
+      selectedRows.value,
+      getCurrentMonth() + `_${props.downloadTitle}_Selected_`,
+      `${props.downloadTitle} (Selected)`
+    )
+  }
+
+  async function downloadSelectedPdf() {
+    if (!selectedRows.value.length || !props.dataRef) return
+    const printHeaders = headers.value
+    if (!printHeaders.length) return
+
+    // Mirror downloadPdfData exactly — operate on the live props.dataRef so
+    // html2canvas captures a fully-rendered, in-viewport element with all CSS
+    // variables applied. Only difference: buildPrintTable uses selectedRows only.
+
+    const noPrint = Array.from(
+      props.dataRef.querySelectorAll('.no-print-pdf, .filter-bar')
+    )
+    noPrint.forEach((el) => (el.style.display = 'none'))
+
+    const lightVarDefs = {
+      '--bg-primary': '#ffffff',
+      '--bg-secondary': '#f9fafb',
+      '--text-primary': '#1f2937',
+      '--text-secondary': '#6b7280',
+      '--border-color': '#e5e7eb',
+      '--card-bg': '#fafafa',
+      '--hover-bg': '#f3f4f6'
+    }
+    Object.entries(lightVarDefs).forEach(([k, v]) =>
+      props.dataRef.style.setProperty(k, v)
+    )
+    const prevBg = props.dataRef.style.backgroundColor
+    const prevColor = props.dataRef.style.color
+    const prevPadding = props.dataRef.style.padding
+    props.dataRef.style.backgroundColor = '#ffffff'
+    props.dataRef.style.color = '#1f2937'
+    props.dataRef.style.padding = '16px'
+
+    const scrollWrapper = props.dataRef.querySelector(
+      '.expense-table-v2-scroll-wrapper'
+    )
+    const printTable = buildPrintTable(printHeaders, selectedRows.value)
+    let restoreTable = null
+    if (scrollWrapper) {
+      const parent = scrollWrapper.parentNode
+      const sibling = scrollWrapper.nextSibling
+      parent.replaceChild(printTable, scrollWrapper)
+      restoreTable = () => {
+        printTable.remove()
+        if (sibling) parent.insertBefore(scrollWrapper, sibling)
+        else parent.appendChild(scrollWrapper)
+      }
+    }
+
+    const title = `${props.downloadTitle.replace(/_/g, ' ')} — ${selectedRows.value.length} selected row(s)`
+    const subtitle = props.reportMonth ? `Report for: ${props.reportMonth}` : ''
+
+    await downloadPDF(
+      props.dataRef,
+      `${getCurrentMonth()}_${props.downloadTitle}_Selected_`,
+      title,
+      subtitle
+    ).finally(() => {
+      noPrint.forEach((el) => (el.style.display = ''))
+      Object.keys(lightVarDefs).forEach((k) =>
+        props.dataRef.style.removeProperty(k)
+      )
+      props.dataRef.style.backgroundColor = prevBg
+      props.dataRef.style.color = prevColor
+      props.dataRef.style.padding = prevPadding
+      if (restoreTable) restoreTable()
+    })
+  }
+
   const columnOrder = ref([])
   const dragSourceKey = ref(null)
 
   watch(activeTab, () => {
     columnOrder.value = []
+    selectedKeys.value = []
   })
 
   watch(
@@ -611,6 +845,11 @@ export const Table = (props) => {
   const filterText = ref('')
   const sortKey = ref(null)
   const sortOrder = ref('asc')
+
+  function clearSort() {
+    sortKey.value = null
+    sortOrder.value = 'asc'
+  }
 
   function toggleSort(key) {
     if (sortKey.value === key) {
@@ -669,10 +908,12 @@ export const Table = (props) => {
   // --- Column definitions ---
   const MIN_COL_WIDTH = 150
   const ACTIONS_COL_WIDTH = 80
+  const SELECT_COL_WIDTH = 50
   const tableColumns = computed(() => {
     if (!headers.value.length) return []
     const count = headers.value.length
-    const availableWidth = containerWidth.value - ACTIONS_COL_WIDTH
+    const availableWidth =
+      containerWidth.value - ACTIONS_COL_WIDTH - SELECT_COL_WIDTH
     const defaultColWidth = Math.max(
       MIN_COL_WIDTH,
       Math.floor(availableWidth / count)
@@ -690,6 +931,13 @@ export const Table = (props) => {
       align: 'left'
     }))
     return [
+      {
+        key: '__select__',
+        dataKey: '__select__',
+        title: '',
+        width: SELECT_COL_WIDTH,
+        align: 'center'
+      },
       ...dataCols,
       {
         key: '__actions__',
@@ -741,9 +989,13 @@ export const Table = (props) => {
   // --- Row event handlers ---
   const getRowClass = ({ rowData, rowIndex }) => {
     const base = 'et-row'
-    if (rowData.deleteRequest) return `${base} et-row--delete`
-    if (rowData.updateRequest) return `${base} et-row--update`
-    return `${base}${rowIndex % 2 !== 0 ? ' et-row--odd' : ''}`
+    let cls = base
+    if (rowData.deleteRequest) cls += ' et-row--delete'
+    else if (rowData.updateRequest) cls += ' et-row--update'
+    else if (rowIndex % 2 !== 0) cls += ' et-row--odd'
+    if (selectedKeys.value.includes(rowData._origIndex))
+      cls += ' et-row--selected'
+    return cls
   }
 
   // --- Show More dialog ---
@@ -814,6 +1066,7 @@ export const Table = (props) => {
     filterText,
     sortKey,
     sortOrder,
+    clearSort,
     toggleSort,
     filteredSortedRows,
     // Columns
@@ -828,6 +1081,20 @@ export const Table = (props) => {
     handleColSettingsDrop,
     // Row handlers
     getRowClass,
+    // Selection
+    selectedKeys,
+    selectedRows,
+    isAllSelected,
+    isIndeterminate,
+    toggleSelectAll,
+    toggleSelectRow,
+    isRowSelected,
+    clearSelection,
+    // Bulk actions
+    isBulkDeleteDirectly,
+    bulkDeleteSelected,
+    downloadSelectedExcel,
+    downloadSelectedPdf,
     // Show More dialog
     showMoreDialogVisible,
     showMoreTitle,

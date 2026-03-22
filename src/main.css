@@ -542,8 +542,27 @@ details {
   border-color: var(--border-color) !important;
 }
 
+/* Popper min-width: grow to fit content on desktop */
+.gdd-popper {
+  min-width: fit-content !important;
+}
+
+/* On small screens: fill viewport width, anchor to left edge */
+@media (max-width: 639px) {
+  .gdd-popper.el-select__popper {
+    width: calc(100vw - 2rem) !important;
+    min-width: calc(100vw - 2rem) !important;
+    max-width: calc(100vw - 2rem) !important;
+    left: 1rem !important;
+    right: auto !important;
+  }
+}
+
 .el-select-dropdown__item {
   color: var(--text-primary) !important;
+  overflow: visible !important;
+  text-overflow: unset !important;
+  white-space: nowrap !important;
 }
 
 .el-select-dropdown__item:hover {

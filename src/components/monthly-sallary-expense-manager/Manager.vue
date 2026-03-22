@@ -5,11 +5,12 @@
       <div class="manager-col">
         <AddNewTransactionButton
           text="Want to add a new expense?"
+          :form-open="showForm"
           @click="setShowForm"
-          v-if="!showForm"
+          @close="setShowForm"
         />
         <HOC
-          v-else-if="showForm"
+          v-if="showForm"
           :componentToBeRendered="AddExpense"
           :componentProps="{ showForm }"
           :listenersToPass="{ click: setShowForm }"

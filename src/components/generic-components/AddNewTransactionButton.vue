@@ -1,5 +1,38 @@
 <template>
+  <!-- Close button: shown when the form is already open -->
   <div
+    v-if="formOpen"
+    class="ant-card ant-card--close"
+    @click.stop="$emit('close')"
+    role="button"
+    tabindex="0"
+    @keydown.enter.stop="$emit('close')"
+  >
+    <div class="ant-icon-wrap ant-icon-wrap--close">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="ant-icon"
+      >
+        <line x1="18" y1="6" x2="6" y2="18" />
+        <line x1="6" y1="6" x2="18" y2="18" />
+      </svg>
+    </div>
+    <div class="ant-body">
+      <span class="ant-label">Close Form</span>
+      <span class="ant-hint">Tap to discard and close</span>
+    </div>
+    <span class="ant-arrow ant-arrow--close">&#8249;</span>
+  </div>
+
+  <!-- Add button: shown when no form is open -->
+  <div
+    v-else
     class="ant-card"
     @click.stop="$emit('click')"
     role="button"
@@ -32,8 +65,11 @@
 </template>
 
 <script setup lang="ts">
-defineProps({ text: { type: String, required: true } })
-defineEmits(['click'])
+defineProps({
+  text: { type: String, required: true },
+  formOpen: { type: Boolean, default: false }
+})
+defineEmits(['click', 'close'])
 </script>
 
 <style scoped>
@@ -119,5 +155,29 @@ defineEmits(['click'])
 .ant-card:hover .ant-arrow {
   opacity: 1;
   transform: translateX(3px);
+}
+
+/* Close variant */
+.ant-card--close {
+  border-color: var(--el-color-danger-light-5, #fca5a5);
+  box-shadow: 0 4px 16px -6px rgba(239, 68, 68, 0.18);
+}
+.ant-card--close:hover {
+  box-shadow: 0 8px 24px -8px rgba(239, 68, 68, 0.32);
+  border-color: #ef4444;
+}
+.ant-icon-wrap--close {
+  background: #ef4444;
+  box-shadow: 0 6px 18px -6px rgba(239, 68, 68, 0.55);
+}
+.ant-card--close:hover .ant-icon-wrap--close {
+  box-shadow: 0 8px 22px -4px rgba(239, 68, 68, 0.75);
+}
+.ant-arrow--close {
+  color: #ef4444;
+  transform: scaleX(-1);
+}
+.ant-card--close:hover .ant-arrow--close {
+  transform: scaleX(-1) translateX(3px);
 }
 </style>

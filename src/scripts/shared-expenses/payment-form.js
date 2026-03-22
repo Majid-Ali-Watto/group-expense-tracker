@@ -1,4 +1,5 @@
 import { ref, watch, computed } from 'vue'
+import { ElMessage } from 'element-plus'
 import { useUsersOptions } from '../../utils/useUsersOptions'
 import getWhoAddedTransaction from '../../utils/whoAdded'
 import { useAuthStore } from '../../stores/authStore'
@@ -164,6 +165,38 @@ export const PaymentForm = (props, emit) => {
   }
 
   const validateForm = (whatTask = 'Save') => {
+    // --- Extra guards not covered by el-form rules ---
+    if (formData.value.payerMode === 'multiple') {
+      const validPayers = formData.value.payers.filter((p) => p.mobile)
+      if (validPayers.length === 0) {
+        ElMessage.error(
+          'Please add at least one payer when using Multiple payer mode.'
+        )
+        return
+      }
+      const payerSum = validPayers.reduce(
+        (s, p) => s + parseFloat(p.amount || 0),
+        0
+      )
+      const total = parseFloat(formData.value.amount || 0)
+      if (total > 0 && Math.abs(payerSum - total) > 0.01) {
+        ElMessage.error(
+          `Payers total (${payerSum.toFixed(2)}) must equal the transaction amount (${total.toFixed(2)}).`
+        )
+        return
+      }
+    }
+
+    if (
+      formData.value.splitMode === 'custom' &&
+      formData.value.splitItems.length === 0
+    ) {
+      ElMessage.error(
+        'Please add at least one split item when using Custom split mode.'
+      )
+      return
+    }
+
     transactionForm.value.validate(async (valid) => {
       if (valid) {
         let monthYear = formData.value.date.split('-')

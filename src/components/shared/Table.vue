@@ -2,40 +2,69 @@
 <template>
   <div class="w-full" ref="containerRef">
     <!-- Filter / sort toolbar -->
-    <div class="mb-2 flex items-center gap-3 flex-wrap no-print-pdf">
-      <GenericInputField
-        v-model="filterText"
-        placeholder="Search all columns..."
-        :prefix-icon="SearchIcon"
-        :wrap-form-item="false"
-        input-class="table-filter-input"
-      />
-      <span
-        v-if="filterText.trim()"
-        class="text-sm"
-        style="color: var(--text-secondary)"
-      >
-        {{ filteredSortedRows.length }} / {{ rows.length }} rows
-      </span>
-      <el-button
-        v-if="sortKey"
-        size="small"
-        link
-        style="color: var(--text-secondary)"
-        @click="sortKey = null; sortOrder = 'asc'"
-      >
-        Clear sort
-      </el-button>
-      <el-button
-        v-if="tableColumns.length > 1"
-        size="small"
-        link
-        style="color: var(--text-secondary); margin-left: auto"
-        @click="columnSettingsVisible = true"
-        title="Reorder columns"
-      >
-        ⚙ Columns
-      </el-button>
+    <div class="mb-2 no-print-pdf">
+      <!-- Row 1: search + columns button always on one line -->
+      <div class="flex items-center gap-2 mb-1">
+        <div class="min-w-0 flex-1">
+          <GenericInputField
+            v-model="filterText"
+            placeholder="Search all columns..."
+            :prefix-icon="SearchIcon"
+            :wrap-form-item="false"
+            input-class="table-filter-input"
+          />
+        </div>
+        <span
+          v-if="filterText.trim()"
+          class="text-sm flex-shrink-0"
+          style="color: var(--text-secondary)"
+        >
+          {{ filteredSortedRows.length }} / {{ rows.length }} rows
+        </span>
+        <el-button
+          v-if="sortKey"
+          size="small"
+          link
+          class="flex-shrink-0"
+          style="color: var(--text-secondary)"
+          @click="clearSort"
+        >
+          Clear sort
+        </el-button>
+        <el-button
+          v-if="tableColumns.length > 1"
+          size="small"
+          link
+          class="flex-shrink-0"
+          style="color: var(--text-secondary)"
+          @click="columnSettingsVisible = true"
+          title="Reorder columns"
+        >
+          ⚙ Columns
+        </el-button>
+      </div>
+
+      <!-- Row 2: bulk-action bar, only visible when rows are selected -->
+      <div v-if="selectedKeys.length" class="flex items-center gap-2 flex-wrap">
+        <el-button
+          v-if="showPopup"
+          size="small"
+          type="danger"
+          plain
+          @click="bulkDeleteSelected"
+        >
+          {{ isBulkDeleteDirectly ? 'Delete' : 'Request Delete' }}
+        </el-button>
+        <el-button size="small" plain @click="downloadSelectedExcel"
+          >Excel</el-button
+        >
+        <el-button size="small" plain @click="downloadSelectedPdf"
+          >PDF</el-button
+        >
+        <span class="bulk-count flex-shrink-0"
+          >{{ selectedKeys.length }} selected</span
+        >
+      </div>
     </div>
 
     <div
@@ -52,9 +81,21 @@
       >
         <!-- Sortable header cell -->
         <template #header-cell="{ column }">
+          <!-- Select-all checkbox -->
+          <div
+            v-if="column.key === '__select__'"
+            class="flex items-center justify-center w-full h-full"
+            @click.stop
+          >
+            <el-checkbox
+              :model-value="isAllSelected"
+              :indeterminate="isIndeterminate"
+              @change="toggleSelectAll"
+            />
+          </div>
           <!-- Actions column: no sort -->
           <div
-            v-if="column.key === '__actions__'"
+            v-else-if="column.key === '__actions__'"
             class="flex items-center justify-center w-full"
             style="overflow: hidden"
           >
@@ -130,9 +171,21 @@
 
         <!-- Custom cell rendering -->
         <template #cell="{ column, rowData }">
+          <!-- select checkbox -->
+          <div
+            v-if="column.key === '__select__'"
+            class="flex items-center justify-center w-full h-full"
+            @click.stop
+          >
+            <el-checkbox
+              :model-value="isRowSelected(rowData._origIndex)"
+              @change="toggleSelectRow(rowData._origIndex)"
+            />
+          </div>
+
           <!-- amount -->
           <span
-            v-if="column.key === 'amount'"
+            v-else-if="column.key === 'amount'"
             v-overflow-popup="{ title: column.title }"
             class="et-cell-text px-2 text-sm"
             :data-cell-title="column.title"
@@ -501,6 +554,7 @@
 </template>
 
 <script setup>
+import { watch } from 'vue'
 import { Search as SearchIcon } from '@element-plus/icons-vue'
 import GenericButton from '../generic-components/GenericButton.vue'
 import GenericInputField from '../generic-components/GenericInputField.vue'
@@ -515,6 +569,8 @@ const props = defineProps({
   reportMonth: { type: String, default: '' },
   showPopup: { type: Boolean, default: true }
 })
+
+const emit = defineEmits(['selection-change'])
 
 const {
   dialogFormVisible,
@@ -535,6 +591,7 @@ const {
   filterText,
   sortKey,
   sortOrder,
+  clearSort,
   toggleSort,
   filteredSortedRows,
   tableColumns,
@@ -555,8 +612,21 @@ const {
   formatSplit,
   formatReceipt,
   openShowMore,
-  handleTableAction
+  handleTableAction,
+  selectedKeys,
+  selectedRows,
+  isAllSelected,
+  isIndeterminate,
+  toggleSelectAll,
+  toggleSelectRow,
+  isRowSelected,
+  isBulkDeleteDirectly,
+  bulkDeleteSelected,
+  downloadSelectedExcel,
+  downloadSelectedPdf
 } = Table(props)
+
+watch(selectedRows, (rows) => emit('selection-change', rows))
 </script>
 
 <style>
@@ -596,9 +666,18 @@ const {
   color: var(--text-primary) !important;
 }
 
+/* ── Bulk action bar ────────────────────────────────────── */
+.bulk-count {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
 /* ── Filter input ───────────────────────────────────────── */
 .table-filter-input {
   width: 100%;
+  min-width: 0;
 }
 
 /* ── Cell ellipsis truncation ───────────────────────────── */
@@ -701,6 +780,15 @@ const {
 /* ── Alternating row background ──────────────────────────── */
 .expense-table-v2 .et-row--odd {
   background-color: var(--bg-secondary); /* gray-50 light / #2d2d2d dark */
+}
+
+/* ── Selected row ────────────────────────────────────────── */
+.expense-table-v2 .et-row--selected {
+  background-color: rgb(220 252 231) !important; /* green-100 */
+}
+
+.dark-theme .expense-table-v2 .et-row--selected {
+  background-color: rgba(22, 163, 74, 0.2) !important; /* green-600/20 */
 }
 
 /* ── Normal row hover ────────────────────────────────────── */

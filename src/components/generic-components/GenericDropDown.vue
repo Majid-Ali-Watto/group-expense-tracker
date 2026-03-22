@@ -1,6 +1,6 @@
 <template>
   <component :is="wrapFormItem ? 'el-form-item' : 'div'" v-bind="wrapperProps">
-    <el-select-v2
+    <el-select
       v-model="internalValue"
       :filterable="filterable"
       :placeholder="placeholder"
@@ -11,11 +11,16 @@
       :size="size"
       :collapse-tags="collapseTags"
       :collapse-tags-tooltip="collapseTagsTooltip"
-      :options="mappedOptions"
-      :teleported="false"
-      scrollbar-always-on
+      popper-class="gdd-popper"
       @change="$emit('update:modelValue', internalValue)"
-    />
+    >
+      <el-option
+        v-for="opt in mappedOptions"
+        :key="opt.value"
+        :label="opt.label"
+        :value="opt.value"
+      />
+    </el-select>
   </component>
 </template>
 

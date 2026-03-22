@@ -114,29 +114,10 @@
               >Who Pays Whom</span
             >
           </template>
-          <el-table :data="pairwiseSettlements" border>
-            <el-table-column prop="from" label="Pays">
-              <template #default="{ row }">
-                <span class="text-red-600 dark:text-red-400 font-medium">{{
-                  row.from
-                }}</span>
-              </template>
-            </el-table-column>
-            <el-table-column prop="to" label="Receives">
-              <template #default="{ row }">
-                <span class="text-green-600 dark:text-green-400 font-medium">{{
-                  row.to
-                }}</span>
-              </template>
-            </el-table-column>
-            <el-table-column label="Amount">
-              <template #default="{ row }">
-                <span class="text-orange-600 dark:text-orange-400 font-bold">{{
-                  formatAmount(row.amount)
-                }}</span>
-              </template>
-            </el-table-column>
-          </el-table>
+          <BalanceSummaryCard
+            :columns="settlementColumns"
+            :rows="pairwiseSettlements"
+          />
         </el-collapse-item>
       </el-collapse>
 
@@ -160,6 +141,7 @@ import { ref, computed, defineAsyncComponent } from 'vue'
 import { useMobileScreen } from '../../utils/useMobileScreen'
 import { Filter } from '@element-plus/icons-vue'
 import Table from '../shared/Table.vue'
+import BalanceSummaryCard from '../shared/BalanceSummaryCard.vue'
 import GenericDropDown from '../generic-components/GenericDropDown.vue'
 import { PersonalLoans } from '../../scripts/personal-loans/personal-loans'
 const LoanForm = defineAsyncComponent(
@@ -213,6 +195,25 @@ const settlementBarItems = computed(() =>
     formatted: formatAmount(s.amount)
   }))
 )
+
+const settlementColumns = [
+  {
+    key: 'from',
+    label: 'Pays',
+    class: 'text-red-500 font-medium'
+  },
+  {
+    key: 'to',
+    label: 'Receives',
+    class: 'text-green-600 font-medium'
+  },
+  {
+    key: 'amount',
+    label: 'Amount',
+    class: 'text-orange-500 font-bold',
+    format: (row) => formatAmount(row.amount)
+  }
+]
 </script>
 
 <style scoped>
