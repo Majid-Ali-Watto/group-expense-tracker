@@ -2,7 +2,7 @@
 <template>
   <div class="w-full" ref="containerRef">
     <!-- Filter / sort toolbar -->
-    <div class="mb-2 no-print-pdf">
+    <div class="table-toolbar mb-2 no-print-pdf">
       <!-- Row 1: search + columns button always on one line -->
       <div class="flex items-center gap-2 mb-1">
         <div class="min-w-0 flex-1">
@@ -37,7 +37,7 @@
           link
           class="flex-shrink-0"
           style="color: var(--text-secondary)"
-          @click="columnSettingsVisible = true"
+          @click="openColumnSettings"
           title="Reorder columns"
         >
           ⚙ Columns
@@ -45,26 +45,31 @@
       </div>
 
       <!-- Row 2: bulk-action bar, only visible when rows are selected -->
-      <div v-if="selectedKeys.length" class="flex items-center gap-2 flex-wrap">
-        <el-button
-          v-if="showPopup"
-          size="small"
-          type="danger"
-          plain
-          @click="bulkDeleteSelected"
+      <Transition name="form-slide">
+        <div
+          v-if="selectedKeys.length"
+          class="table-bulk-actions flex items-center gap-2 flex-wrap"
         >
-          {{ isBulkDeleteDirectly ? 'Delete' : 'Request Delete' }}
-        </el-button>
-        <el-button size="small" plain @click="downloadSelectedExcel"
-          >Excel</el-button
-        >
-        <el-button size="small" plain @click="downloadSelectedPdf"
-          >PDF</el-button
-        >
-        <span class="bulk-count flex-shrink-0"
-          >{{ selectedKeys.length }} selected</span
-        >
-      </div>
+          <el-button
+            v-if="showPopup"
+            size="small"
+            type="danger"
+            plain
+            @click="bulkDeleteSelected"
+          >
+            {{ isBulkDeleteDirectly ? 'Delete' : 'Request Delete' }}
+          </el-button>
+          <el-button size="small" plain @click="downloadSelectedExcel"
+            >Excel</el-button
+          >
+          <el-button size="small" plain @click="downloadSelectedPdf"
+            >PDF</el-button
+          >
+          <span class="bulk-count flex-shrink-0"
+            >{{ selectedKeys.length }} selected</span
+          >
+        </div>
+      </Transition>
     </div>
 
     <div
@@ -407,14 +412,15 @@
     </div>
 
     <!-- Edit / Delete dialog -->
-    <el-dialog
-      top="10vh"
-      center
-      destroy-on-close
-      v-model="dialogFormVisible"
-      :width="dialogWidth + 'px'"
-      @close="deleteMode = false"
-    >
+  <el-dialog
+    top="10vh"
+    center
+    destroy-on-close
+    append-to-body
+    v-model="dialogFormVisible"
+    :width="dialogWidth + 'px'"
+    @close="deleteMode = false"
+  >
       <template #header>
         <div class="dialog-header">
           <strong v-if="deleteMode">Confirm Delete</strong>
@@ -510,6 +516,7 @@
     :title="showMoreTitle"
     width="95%"
     destroy-on-close
+    append-to-body
   >
     <ol class="list-decimal pl-4 space-y-2 text-black dark:text-gray-300">
       <li
@@ -529,7 +536,9 @@
     v-model="columnSettingsVisible"
     title="Reorder Columns"
     width="320px"
+    top="96px"
     destroy-on-close
+    append-to-body
   >
     <p class="col-settings-hint">Drag rows to reorder columns.</p>
     <ul class="col-settings-list">
@@ -601,6 +610,7 @@ const {
   dragSourceKey,
   columnOrder,
   columnSettingsVisible,
+  openColumnSettings,
   colSettingsDragKey,
   handleColSettingsDrop,
   getRowClass,
@@ -667,6 +677,23 @@ watch(selectedRows, (rows) => emit('selection-change', rows))
 }
 
 /* ── Bulk action bar ────────────────────────────────────── */
+.table-toolbar {
+  position: sticky;
+  top: 86px;
+  z-index: 4;
+  padding: 0.75rem 0.75rem 0.6rem;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--card-bg) 82%, transparent);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.table-bulk-actions {
+  margin-top: 0.55rem;
+  padding-top: 0.55rem;
+  border-top: 1px dashed rgba(148, 163, 184, 0.22);
+}
+
 .bulk-count {
   font-size: 0.8rem;
   font-weight: 600;
@@ -678,6 +705,10 @@ watch(selectedRows, (rows) => emit('selection-change', rows))
 .table-filter-input {
   width: 100%;
   min-width: 0;
+}
+
+.dark-theme .table-toolbar {
+  border-color: rgba(75, 85, 99, 0.32);
 }
 
 /* ── Cell ellipsis truncation ───────────────────────────── */

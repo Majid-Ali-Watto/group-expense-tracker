@@ -966,6 +966,10 @@ export const Table = (props) => {
   const columnSettingsVisible = ref(false)
   const colSettingsDragKey = ref(null)
 
+  function openColumnSettings() {
+    columnSettingsVisible.value = true
+  }
+
   function handleColSettingsDrop(targetKey) {
     if (!colSettingsDragKey.value || colSettingsDragKey.value === targetKey)
       return
@@ -1075,6 +1079,7 @@ export const Table = (props) => {
     dragSourceKey,
     columnOrder,
     columnSettingsVisible,
+    openColumnSettings,
     colSettingsDragKey,
     handleColSettingsDrop,
     // Row handlers

@@ -96,11 +96,11 @@
       <div class="flex-shrink-0 w-48">Actions</div>
     </div>
 
-    <div class="space-y-3 mt-1">
+    <div v-if="filteredUsers.length > 0" class="space-y-3 mt-1">
       <div
         v-for="row in filteredUsers"
         :key="row.mobile"
-        class="border border-gray-200 rounded-lg p-3 hover:shadow-sm transition-shadow"
+        class="user-card border border-gray-200 rounded-lg p-3 hover:shadow-sm transition-shadow"
       >
         <div class="flex flex-col sm:flex-row sm:items-center gap-3">
           <!-- Name & Mobile -->
@@ -191,6 +191,13 @@
             </template>
           </div>
         </div>
+      </div>
+    </div>
+    <div v-else class="user-empty">
+      <div class="user-empty__icon">👥</div>
+      <div class="user-empty__title">No users match the current filters</div>
+      <div class="user-empty__copy">
+        Try clearing the search or removing the shared-group filter.
       </div>
     </div>
 
@@ -321,3 +328,53 @@ const {
   handleEditUserSave
 } = Users()
 </script>
+
+<style scoped>
+.user-card {
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.95)),
+    var(--card-bg);
+  transition:
+    transform 0.18s var(--motion-swift),
+    box-shadow 0.2s var(--motion-smooth),
+    border-color 0.2s var(--motion-smooth);
+}
+
+.user-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(34, 197, 94, 0.24);
+}
+
+.dark-theme .user-card {
+  background: rgba(17, 24, 39, 0.55);
+}
+
+.user-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 1.15rem 1rem;
+  border-radius: 16px;
+  border: 1px dashed rgba(59, 130, 246, 0.28);
+  background:
+    linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(34, 197, 94, 0.05)),
+    var(--card-bg);
+  text-align: center;
+}
+
+.user-empty__icon {
+  font-size: 1.55rem;
+}
+
+.user-empty__title {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.user-empty__copy {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+</style>

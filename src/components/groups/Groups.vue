@@ -135,6 +135,7 @@
     <no-group-found
       v-if="joinedGroups.length === 0"
       :search-query="searchQuery"
+      variant="joined"
     />
 
     <div v-else class="space-y-4 mb-6">
@@ -256,6 +257,7 @@
     <no-group-found
       v-if="otherGroups.length === 0"
       :search-query="searchQuery"
+      variant="available"
     />
 
     <div v-else class="space-y-4">
