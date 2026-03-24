@@ -9,12 +9,14 @@ import { showError } from '../../utils/showAlerts'
 import { maskMobile } from '../../utils/maskMobile'
 import { auth, deleteUser } from '../../firebase'
 import { useDebouncedRef } from '../../utils/useDebouncedRef'
+import { appendNotificationForUser } from '../../utils/recordNotifications'
 
 export const Users = () => {
+  const isPageLoading = ref(true)
   const authStore = useAuthStore()
   const groupStore = useGroupStore()
   const userStore = useUserStore()
-  const { updateData, read, deleteData } = useFireBase()
+  const { updateData, read, deleteData, setData } = useFireBase()
 
   const editDialogVisible = ref(false)
   const editForm = ref({ name: '', mobile: '' })
@@ -87,23 +89,28 @@ export const Users = () => {
   // Load full user data (app.js only loads minimal fields)
   // Only show verified users to prevent unverified accounts from being added to groups
   onMounted(async () => {
-    const rawUsers = await read(DB_NODES.USERS)
-    if (!rawUsers) return
-    Object.keys(rawUsers).forEach((mobile) => {
-      const u = rawUsers[mobile]
-      // Only include users who have verified their email
-      // emailVerified is set to true on first successful login
-      if (u.emailVerified === true) {
-        userStore.addUser({
-          mobile,
-          name: u.name || '',
-          addedBy: u.addedBy || null,
-          maskedMobile: maskMobile(mobile),
-          deleteRequest: u.deleteRequest || null,
-          updateRequest: u.updateRequest || null
-        })
-      }
-    })
+    try {
+      const rawUsers = await read(DB_NODES.USERS)
+      if (!rawUsers) return
+
+      Object.keys(rawUsers).forEach((mobile) => {
+        const u = rawUsers[mobile]
+        // Only include users who have verified their email
+        // emailVerified is set to true on first successful login
+        if (u.emailVerified === true) {
+          userStore.addUser({
+            mobile,
+            name: u.name || '',
+            addedBy: u.addedBy || null,
+            maskedMobile: maskMobile(mobile),
+            deleteRequest: u.deleteRequest || null,
+            updateRequest: u.updateRequest || null
+          })
+        }
+      })
+    } finally {
+      isPageLoading.value = false
+    }
   })
 
   // --- Permission helpers ---
@@ -122,23 +129,20 @@ export const Users = () => {
     return [...new Set(memberGroups.map((g) => g.ownerMobile).filter(Boolean))]
   }
 
-  // Pending delete/update requests that the current user needs to approve
+  // Pending delete requests that the current user (as group owner) needs to approve
   const myPendingApprovals = computed(() => {
     const me = activeUser.value
     if (!me) return []
     const result = []
     users.value.forEach((u) => {
-      const check = (req, type) => {
-        if (
-          req &&
-          req.requiredApprovals?.includes(me) &&
-          !req.approvals?.some((a) => a.mobile === me)
-        ) {
-          result.push({ user: u, type, request: req })
-        }
+      const req = u.deleteRequest
+      if (
+        req &&
+        req.requiredApprovals?.includes(me) &&
+        !req.approvals?.some((a) => a.mobile === me)
+      ) {
+        result.push({ user: u, type: 'delete', request: req })
       }
-      check(u.deleteRequest, 'delete')
-      check(u.updateRequest, 'update')
     })
     return result
   })
@@ -163,33 +167,42 @@ export const Users = () => {
     if (!user) return showError('User not found')
     if (user.deleteRequest)
       return showError('A delete request is pending for this user')
-    if (user.updateRequest)
-      return showError('An update request is already pending for this user')
 
-    const me = activeUser.value
-    const requiredApprovals = getGroupOwnerMobiles(mobile)
+    const oldName = user.name
 
-    if (requiredApprovals.length === 0) {
-      const updated = { ...user, name: newName }
-      await updateData(
-        `${DB_NODES.USERS}/${mobile}`,
-        () => updated,
-        'User updated successfully'
-      )
-      userStore.addUser({ mobile, name: newName })
-    } else {
-      const updateRequest = {
-        requestedBy: me,
-        newName,
-        requiredApprovals,
-        approvals: []
+    // Apply the name change directly — it is profile metadata and does not affect balances or membership
+    const updated = { ...user, name: newName }
+    await updateData(
+      `${DB_NODES.USERS}/${mobile}`,
+      () => updated,
+      'User updated successfully'
+    )
+    userStore.addUser({ mobile, name: newName })
+
+    // Notify each group the user belongs to so co-members are informed
+    const memberGroups = groups.value.filter((g) =>
+      g.members?.some((m) => m.mobile === mobile)
+    )
+    for (const group of memberGroups) {
+      const coMembers = (group.members || []).filter((m) => m.mobile !== mobile)
+      if (!coMembers.length) continue
+
+      let updatedGroup = { ...group }
+      for (const member of coMembers) {
+        updatedGroup = appendNotificationForUser(updatedGroup, member.mobile, {
+          id: Date.now().toString() + Math.random(),
+          type: 'member-renamed',
+          message: `${oldName} has changed their name to "${newName}" in group "${group.name}".`,
+          updatedBy: mobile,
+          timestamp: Date.now()
+        })
       }
-      await updateData(
-        `${DB_NODES.USERS}/${mobile}`,
-        () => ({ updateRequest }),
-        'Update request sent to group owners for approval'
+
+      await setData(
+        `${DB_NODES.GROUPS}/${group.id}/notifications`,
+        updatedGroup.notifications,
+        ''
       )
-      userStore.addUser({ mobile, updateRequest })
     }
 
     editDialogVisible.value = false
@@ -291,6 +304,7 @@ export const Users = () => {
       newApprovals.some((a) => a.mobile === r)
     )
 
+    // Only delete requests go through approval; update requests are applied directly
     if (type === 'delete' && allApproved) {
       // Delete from Realtime Database
       await deleteData(`${DB_NODES.USERS}/${userMobile}`, `User ${user.name} deleted`)
@@ -318,18 +332,6 @@ export const Users = () => {
         authStore.setSessionToken(null)
         sessionStorage.removeItem('_session')
       }
-    } else if (type === 'update' && allApproved) {
-      const updated = { ...user, name: request.newName, updateRequest: null }
-      await updateData(
-        `${DB_NODES.USERS}/${userMobile}`,
-        () => updated,
-        `User name updated to "${request.newName}"`
-      )
-      userStore.addUser({
-        mobile: userMobile,
-        name: request.newName,
-        updateRequest: null
-      })
     } else {
       const field = type === 'delete' ? 'deleteRequest' : 'updateRequest'
       const updatedRequest = { ...request, approvals: newApprovals }
@@ -400,6 +402,7 @@ export const Users = () => {
 
   return {
     searchQuery,
+    isPageLoading,
     sortOrder,
     sharedGroupsOnly,
     filteredUsers,

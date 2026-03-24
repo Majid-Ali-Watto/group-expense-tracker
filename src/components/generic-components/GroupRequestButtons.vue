@@ -134,72 +134,6 @@
     </div>
   </div>
 
-  <!-- Leave Requests (visible to all members) -->
-  <div
-    v-if="getLeaveRequests(group).length > 0 && isMemberOfGroup(group)"
-    class="mt-3 pt-3 border-t border-orange-200 dark:border-orange-700 bg-orange-50 dark:bg-orange-900/20 p-3 rounded"
-  >
-    <div class="text-sm font-medium text-orange-800 dark:text-orange-300 mb-2">
-      🚪 Leave Group Requests
-    </div>
-    <div class="space-y-2">
-      <div
-        v-for="leaveReq in getLeaveRequests(group)"
-        :key="leaveReq.mobile"
-        class="bg-white dark:bg-gray-800 p-2 rounded border border-orange-200 dark:border-orange-700"
-      >
-        <div class="text-sm font-medium text-gray-800 dark:text-gray-200 mb-1">
-          {{ formatMember(leaveReq) }} wants to leave
-        </div>
-        <div class="text-xs text-gray-600 dark:text-gray-400 mb-1">
-          Approvals: {{ leaveReq.approvals?.length || 0 }} /
-          {{ group.members.length }}
-        </div>
-        <div class="flex flex-wrap gap-1 mb-2">
-          <el-tag
-            v-for="approval in leaveReq.approvals || []"
-            :key="approval.mobile"
-            size="small"
-            type="success"
-          >
-            ✓ {{ formatMember(approval) }}
-          </el-tag>
-        </div>
-        <div
-          v-if="
-            leaveReq.mobile !== authStore.getActiveUser &&
-            !hasUserApprovedLeaveRequest(group, leaveReq.mobile)
-          "
-          class="flex gap-2"
-        >
-          <el-button
-            size="small"
-            type="success"
-            @click="approveLeaveRequest(group.id, leaveReq.mobile)"
-          >
-            Approve
-          </el-button>
-          <el-button
-            size="small"
-            type="danger"
-            @click="rejectLeaveRequest(group.id, leaveReq.mobile)"
-          >
-            Reject
-          </el-button>
-        </div>
-        <div
-          v-else-if="leaveReq.mobile === authStore.getActiveUser"
-          class="text-xs text-blue-700 dark:text-blue-300"
-        >
-          Waiting for members approval...
-        </div>
-        <div v-else class="text-xs text-green-700 dark:text-green-400">
-          ✓ You have approved
-        </div>
-      </div>
-    </div>
-  </div>
-
   <!-- Edit Requests (visible to all affected members) -->
   <div
     v-if="hasEditRequest(group) && isUserAffectedByEdit(group)"
@@ -346,7 +280,7 @@
     </div>
   </div>
 
-  <!-- Ownership Transfer Requests (visible to all members) -->
+  <!-- Ownership Transfer Requests (visible to all members; action only for the new owner) -->
   <div
     v-if="group.transferOwnershipRequest && isMemberOfGroup(group)"
     class="mt-3 pt-3 border-t border-purple-200 bg-purple-50 p-3 rounded"
@@ -358,39 +292,24 @@
       Transfer ownership to:
       {{ formatUser(group.transferOwnershipRequest.newOwner) }}
     </div>
-    <div class="text-sm text-purple-700 mb-2">
-      Approvals:
-      {{ group.transferOwnershipRequest.approvals?.length || 0 }} /
-      {{ group.members.length }}
+    <div class="text-xs text-purple-600 mb-2">
+      Awaiting acceptance from the designated new owner.
     </div>
-    <div class="flex flex-wrap gap-1 mb-2">
-      <el-tag
-        v-for="approval in group.transferOwnershipRequest.approvals || []"
-        :key="approval.mobile"
-        size="small"
-        type="success"
-      >
-        ✓ {{ formatMember(approval) }}
-      </el-tag>
-    </div>
-    <div v-if="!hasUserApprovedOwnershipTransfer(group)" class="flex gap-2">
+    <div v-if="isCurrentUserPendingOwner(group)" class="flex gap-2">
       <el-button
         size="small"
         type="success"
         @click="approveOwnershipTransfer(group.id)"
       >
-        Approve Transfer
+        Accept Ownership
       </el-button>
       <el-button
         size="small"
         type="danger"
         @click="rejectOwnershipTransfer(group.id)"
       >
-        Reject Transfer
+        Decline
       </el-button>
-    </div>
-    <div v-else class="text-xs text-green-700">
-      ✓ You have approved this transfer
     </div>
   </div>
 </template>
@@ -406,8 +325,6 @@ import {
   getDeleteApprovals,
   getPendingApprovals,
   hasUserApprovedDeletion,
-  getLeaveRequests,
-  hasUserApprovedLeaveRequest,
   hasEditRequest,
   getEditApprovals,
   getAllAffectedMembers,
@@ -417,7 +334,7 @@ import {
   getAddMemberRequestApprovals,
   allMembersApprovedAddMember,
   hasUserApprovedAddMemberRequest,
-  hasUserApprovedOwnershipTransfer
+  isCurrentUserPendingOwner
 } from '../../helpers/users'
 import { useAuthStore } from '../../stores/authStore'
 import { useUserStore } from '../../stores/userStore'
@@ -457,14 +374,6 @@ const props = defineProps({
     required: true
   },
   rejectGroupDeletion: {
-    type: Function,
-    required: true
-  },
-  approveLeaveRequest: {
-    type: Function,
-    required: true
-  },
-  rejectLeaveRequest: {
     type: Function,
     required: true
   },

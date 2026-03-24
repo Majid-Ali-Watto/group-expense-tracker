@@ -11,6 +11,7 @@
     />
 
     <!-- Transaction Form -->
+    <Transition name="form-slide">
     <fieldset
       v-if="showTransactionForm || isEditMode"
       class="border border-gray-300 rounded-lg p-4"
@@ -297,6 +298,7 @@
         </div>
       </el-form>
     </fieldset>
+    </Transition>
 
     <!-- Expense List (only in add mode, not dialog edit mode) -->
     <HOC v-if="!isEditMode" :componentToBeRendered="ExpenseList" />
@@ -305,7 +307,6 @@
 
 <script setup>
 import HOC from '../layout/HOC.vue'
-import { defineAsyncComponent } from 'vue'
 import {
   DataTimePicker,
   AmountInput,
@@ -318,8 +319,9 @@ import GenericInputNumber from '../generic-components/GenericInputNumber.vue'
 import { rules } from '../../assets/validation-rules'
 import { PaymentForm } from '../../scripts/shared-expenses/payment-form'
 import AddNewTransactionButton from '../generic-components/AddNewTransactionButton.vue'
+import { loadAsyncComponent } from '../../utils/async-component'
 
-const ExpenseList = defineAsyncComponent(() => import('./ExpenseList.vue'))
+const ExpenseList = loadAsyncComponent(() => import('./ExpenseList.vue'))
 const emit = defineEmits(['closeModal'])
 const props = defineProps({
   row: Object

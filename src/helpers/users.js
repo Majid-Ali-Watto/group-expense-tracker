@@ -80,36 +80,6 @@ export function allMembersApprovedJoinRequest(group, requestMobile) {
   )
 }
 
-// ========== Leave Group Helpers ==========
-export function getLeaveRequests(group) {
-  return group.leaveRequests || []
-}
-
-export function hasLeaveRequest(group, mobile) {
-  return getLeaveRequests(group).some((r) => r.mobile === mobile)
-}
-
-export function getLeaveApprovals(group, mobile) {
-  const request = getLeaveRequests(group).find((r) => r.mobile === mobile)
-  return request?.approvals || []
-}
-
-export function allMembersApprovedLeave(group, mobile) {
-  const approvals = getLeaveApprovals(group, mobile)
-  return group.members.every(
-    (member) =>
-      approvals.some((approval) => approval.mobile === member.mobile) ||
-      member.mobile === mobile
-  )
-}
-
-export function hasUserApprovedLeaveRequest(group, leaveMobile) {
-  const authStore = useAuthStore()
-  const mobile = authStore.getActiveUser
-  const request = getLeaveRequests(group).find((r) => r.mobile === leaveMobile)
-  return request?.approvals?.some((a) => a.mobile === mobile) || false
-}
-
 // ========== Edit Request Helpers ==========
 export function hasEditRequest(group) {
   return group.editRequest !== undefined && group.editRequest !== null
@@ -121,14 +91,13 @@ export function getEditApprovals(group) {
 
 export function getAllAffectedMembers(group) {
   if (!hasEditRequest(group)) return []
-  const { addedMembers, removedMembers } = group.editRequest
+  const { addedMembers } = group.editRequest
   const existingMembers = group.members || []
 
-  // Combine existing, added, and removed members
+  // Only existing and added members must approve — removed members are notified, not required
   const allMembers = [
     ...existingMembers,
-    ...(addedMembers || []),
-    ...(removedMembers || [])
+    ...(addedMembers || [])
   ]
 
   // Remove duplicates based on mobile
@@ -188,14 +157,10 @@ export function hasUserApprovedAddMemberRequest(group) {
 }
 
 // ========== Ownership Transfer Helpers ==========
-export function hasUserApprovedOwnershipTransfer(group) {
+export function isCurrentUserPendingOwner(group) {
   const authStore = useAuthStore()
   const mobile = authStore.getActiveUser
-  return (
-    group.transferOwnershipRequest?.approvals?.some(
-      (a) => a.mobile === mobile
-    ) || false
-  )
+  return group.transferOwnershipRequest?.newOwner === mobile
 }
 
 // ========== Notification Helpers ==========

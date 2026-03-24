@@ -12,7 +12,6 @@ import {
   isMemberOfGroup,
   hasPendingRequest,
   hasDeleteRequest,
-  getLeaveRequests,
   hasEditRequest,
   isUserAffectedByEdit,
   hasUserApprovedEditRequest,
@@ -20,8 +19,7 @@ import {
   hasUserApprovedAddMemberRequest,
   hasUserApprovedDeletion,
   hasUserApprovedJoinRequest,
-  hasUserApprovedLeaveRequest,
-  hasUserApprovedOwnershipTransfer
+  isCurrentUserPendingOwner
 } from '../helpers/users'
 
 export function useGlobalNotifications() {
@@ -149,24 +147,6 @@ export function useGlobalNotifications() {
           })
         }
 
-        getLeaveRequests(group)
-          .filter(
-            (req) =>
-              req.mobile !== me &&
-              !hasUserApprovedLeaveRequest(group, req.mobile)
-          )
-          .forEach((req) => {
-            result.push({
-              id: `leave-${group.id}-${req.mobile}`,
-              icon: '🚪',
-              title: group.name,
-              description: `${userStore.getUserByMobile(req.mobile)?.name || req.mobile} (${maskMobile(req.mobile)}) wants to leave`,  
-              tab: Tabs.GROUPS,
-              groupId: group.id,
-              category: 'Groups'
-            })
-          })
-
         if (
           hasEditRequest(group) &&
           isUserAffectedByEdit(group) &&
@@ -209,7 +189,7 @@ export function useGlobalNotifications() {
 
         if (
           group.transferOwnershipRequest &&
-          !hasUserApprovedOwnershipTransfer(group)
+          isCurrentUserPendingOwner(group)
         ) {
           const tor = group.transferOwnershipRequest
           const torFrom = userStore.getUserByMobile(tor.requestedBy)?.name || tor.requestedBy
@@ -224,6 +204,25 @@ export function useGlobalNotifications() {
             category: 'Groups'
           })
         }
+
+        // In-group user-specific notifications (e.g. removal-pending, member-renamed, rejections)
+        ;(group.notifications?.[me] || []).forEach((notif) => {
+          const iconMap = {
+            'removal-pending': '🚪',
+            'member-renamed': '✏️',
+            rejection: '❌',
+            'invitation-accepted': '✅'
+          }
+          result.push({
+            id: `group-user-notif-${group.id}-${notif.id}`,
+            icon: iconMap[notif.type] || '🔔',
+            title: group.name,
+            description: notif.message,
+            tab: Tabs.GROUPS,
+            groupId: group.id,
+            category: 'Groups'
+          })
+        })
       })
 
     return result
@@ -318,6 +317,18 @@ export function useGlobalNotifications() {
                 category: 'Shared Expenses'
               })
             }
+            // Approval/rejection feedback notifications stored on the expense record
+            ;(payment.notifications?.[me] || []).forEach((notif) => {
+              notifs.push({
+                id: `exp-notif-${group.id}-${paymentId}-${notif.id || notif.timestamp}`,
+                icon: notif.type === 'approved' ? '✅' : notif.type === 'rejected' ? '❌' : '🧾',
+                title: group.name,
+                description: notif.message || `Expense notification`,
+                tab: Tabs.SHARED_EXPENSES,
+                groupId: group.id,
+                category: 'Shared Expenses'
+              })
+            })
           })
         }
         expenseNotifs.value = { ...expenseNotifs.value, [group.id]: notifs }
@@ -371,6 +382,18 @@ export function useGlobalNotifications() {
                 category: 'Shared Loans'
               })
             }
+            // Approval/rejection feedback notifications stored on the loan record
+            ;(loan.notifications?.[me] || []).forEach((notif) => {
+              notifs.push({
+                id: `loan-notif-${group.id}-${loanId}-${notif.id || notif.timestamp}`,
+                icon: notif.type === 'approved' ? '✅' : notif.type === 'rejected' ? '❌' : '💰',
+                title: group.name,
+                description: notif.message || `Loan notification`,
+                tab: Tabs.SHARED_LOANS,
+                groupId: group.id,
+                category: 'Shared Loans'
+              })
+            })
           })
         }
         loanNotifs.value = { ...loanNotifs.value, [group.id]: notifs }

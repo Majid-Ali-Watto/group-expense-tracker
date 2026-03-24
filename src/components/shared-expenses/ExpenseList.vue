@@ -1,5 +1,7 @@
 <template>
   <div class="my-4">
+    <LoadingSkeleton v-if="isContentLoading" mode="page" />
+    <template v-else>
     <!-- Notifications for current user -->
     <NotificationsForCurrentUser
       v-if="userNotifications && userNotifications.length > 0"
@@ -151,6 +153,7 @@
       </el-col>
     </el-row>
     <!-- Mobile filters (toggle) -->
+    <Transition name="form-slide">
     <el-row
       v-if="showFilters"
       :gutter="5"
@@ -206,6 +209,7 @@
         />
       </el-col>
     </el-row>
+    </Transition>
     <div ref="pdfContent">
       <Summary :payments="filteredPayments" />
       <Settlement
@@ -232,10 +236,11 @@
         :reportMonth="selectedMonth"
       />
     </div>
+    </template>
   </div>
 </template>
 <script setup>
-import { ref, defineAsyncComponent } from 'vue'
+import { ref } from 'vue'
 import { Filter } from '@element-plus/icons-vue'
 import Settlement from './Settlement.vue'
 import Summary from './Summary.vue'
@@ -243,10 +248,12 @@ import Table from '../shared/Table.vue'
 import GenericDropDown from '../generic-components/GenericDropDown.vue'
 import { ExpenseList } from '../../scripts/shared-expenses/expense-list'
 import { DB_NODES } from '../../constants/db-nodes'
-const NotificationsForCurrentUser = defineAsyncComponent(
+import LoadingSkeleton from '../shared/LoadingSkeleton.vue'
+import { loadAsyncComponent } from '../../utils/async-component'
+const NotificationsForCurrentUser = loadAsyncComponent(
   () => import('../generic-components/NotificationsForCurrentUser.vue')
 )
-const ShowPaymentDetails = defineAsyncComponent(
+const ShowPaymentDetails = loadAsyncComponent(
   () => import('../generic-components/ShowPaymentDetails.vue')
 )
 
@@ -261,6 +268,7 @@ const {
   pdfContent,
   months,
   paymentKeys,
+  isContentLoading,
   selectedMonth,
   selectedFriend,
   selectedPayerMode,

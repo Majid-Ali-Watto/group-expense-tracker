@@ -29,6 +29,8 @@ export const PersonalLoans = () => {
   const selectedGiver = ref('All')
   const months = ref([])
   const showLoanForm = ref(false)
+  const monthsLoaded = ref(false)
+  const loansLoaded = ref(false)
 
   const closeLoanForm = () => {
     showLoanForm.value = !showLoanForm.value
@@ -36,10 +38,14 @@ export const PersonalLoans = () => {
 
   let loansListener = null
   let currentLoansRef = null
+  const isContentLoading = computed(
+    () => !monthsLoaded.value || !loansLoaded.value
+  )
 
   const activeUser = computed(() => authStore.getActiveUser)
 
   const fetchMonths = async () => {
+    monthsLoaded.value = false
     try {
       const keys = await readShallow(`${DB_NODES.PERSONAL_LOANS}/${activeUser.value}`)
       months.value = keys.sort((a, b) => b.localeCompare(a))
@@ -53,11 +59,14 @@ export const PersonalLoans = () => {
     } catch (error) {
       showError('Failed to load months. Please try again.')
       console.error(error)
+    } finally {
+      monthsLoaded.value = true
     }
   }
 
   const fetchLoans = () => {
     const basePath = `${DB_NODES.PERSONAL_LOANS}/${activeUser.value}`
+    loansLoaded.value = false
 
     if (loansListener && currentLoansRef) {
       off(currentLoansRef, 'value', loansListener)
@@ -67,6 +76,7 @@ export const PersonalLoans = () => {
       const allLoansRef = dbRef(basePath)
 
       const handleAll = (snapshot) => {
+        loansLoaded.value = true
         if (!snapshot.exists()) {
           loans.value = []
           loanKeys.value = []
@@ -94,12 +104,13 @@ export const PersonalLoans = () => {
       }
       loansListener = handleAll
       currentLoansRef = allLoansRef
-      onValue(allLoansRef, handleAll)
+      onValue(allLoansRef, handleAll, () => { loansLoaded.value = true })
     } else {
       const monthPath = `${basePath}/${selectedMonth.value}`
       const monthLoansRef = dbRef(monthPath)
 
       const handleMonth = (snapshot) => {
+        loansLoaded.value = true
         if (!snapshot.exists()) {
           loans.value = []
           loanKeys.value = []
@@ -123,7 +134,7 @@ export const PersonalLoans = () => {
       }
       loansListener = handleMonth
       currentLoansRef = monthLoansRef
-      onValue(monthLoansRef, handleMonth)
+      onValue(monthLoansRef, handleMonth, () => { loansLoaded.value = true })
     }
   }
 
@@ -136,9 +147,14 @@ export const PersonalLoans = () => {
     fetchLoans()
   })
 
+  let loadingTimeout = null
   onMounted(() => {
     fetchMonths()
     fetchLoans()
+    loadingTimeout = setTimeout(() => {
+      monthsLoaded.value = true
+      loansLoaded.value = true
+    }, 8000)
 
     setTimeout(() => {
       dataStore.setLoansRef(loanContent.value)
@@ -146,6 +162,7 @@ export const PersonalLoans = () => {
   })
 
   onUnmounted(() => {
+    if (loadingTimeout) clearTimeout(loadingTimeout)
     if (loansListener && currentLoansRef) {
       off(currentLoansRef, 'value', loansListener)
     }
@@ -267,6 +284,7 @@ export const PersonalLoans = () => {
     giverOptions,
     filteredLoans,
     months,
+    isContentLoading,
     showLoanForm,
     closeLoanForm,
     fetchLoans,

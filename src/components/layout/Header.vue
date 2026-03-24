@@ -311,12 +311,12 @@
 </template>
 
 <script setup>
-import { defineAsyncComponent } from 'vue'
 import { SwitchButton, DataAnalysis } from '@element-plus/icons-vue'
 import { Header } from '../../scripts/layout/header'
+import { loadAsyncComponent } from '../../utils/async-component'
 
 defineOptions({ inheritAttrs: false })
-const HelpDialog = defineAsyncComponent(
+const HelpDialog = loadAsyncComponent(
   () => import('../generic-components/HelpDialog.vue')
 )
 

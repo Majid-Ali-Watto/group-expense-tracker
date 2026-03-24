@@ -11,6 +11,7 @@
     />
 
     <!-- Loan Form -->
+    <Transition name="form-slide">
     <fieldset
       v-if="showForm || isEditMode"
       class="border border-gray-300 rounded-lg p-4"
@@ -229,6 +230,7 @@
         </div>
       </el-form>
     </fieldset>
+    </Transition>
   </div>
 </template>
 

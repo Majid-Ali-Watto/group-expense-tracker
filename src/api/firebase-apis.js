@@ -1,6 +1,6 @@
 import { get, ref as Ref, remove, update, push, set } from 'firebase/database'
 import { database, auth } from '../firebase'
-import { startLoading, stopLoading } from '../utils/loading'
+import { startLoading, stopLoading, withLoading } from '../utils/loading'
 import { showError, showSuccess } from '../utils/showAlerts'
 import { resetForm } from '../utils/reset-form'
 import getCurrentMonth, { dateToMonthNode } from '../utils/getCurrentMonth'
@@ -28,11 +28,11 @@ export default function useFireBase() {
    * `null`.
    */
   async function read(url, loading = true) {
-    const loadingInstance = loading ? startLoading() : null
-    const db_ref = dbRef(url)
-    const snapshot = await get(db_ref)
-    if (loadingInstance) stopLoading(loadingInstance)
-    return snapshot.exists() ? snapshot.val() : null
+    return withLoading(async () => {
+      const db_ref = dbRef(url)
+      const snapshot = await get(db_ref)
+      return snapshot.exists() ? snapshot.val() : null
+    }, loading)
   }
 
   /**
@@ -146,20 +146,26 @@ export default function useFireBase() {
     await remove(dbRef(path))
   }
 
-  async function readShallow(path) {
-    const baseUrl = import.meta.env.VITE_DATABASE_URL
-    let tokenParam = ''
-    try {
-      const currentUser = auth.currentUser
-      if (currentUser) {
-        const token = await currentUser.getIdToken()
-        tokenParam = `&auth=${token}`
+  async function readShallow(path, loading = true) {
+    return withLoading(async () => {
+      const baseUrl = import.meta.env.VITE_DATABASE_URL
+      let tokenParam = ''
+      try {
+        const currentUser = auth.currentUser
+        if (currentUser) {
+          const token = await currentUser.getIdToken()
+          tokenParam = `&auth=${token}`
+        }
+      } catch {
+        /* proceed without token */
       }
-    } catch { /* proceed without token */ }
-    const res = await fetch(`${baseUrl}/${path}.json?shallow=true${tokenParam}`)
-    if (!res.ok) return []
-    const data = await res.json()
-    return data ? Object.keys(data) : []
+      const res = await fetch(
+        `${baseUrl}/${path}.json?shallow=true${tokenParam}`
+      )
+      if (!res.ok) return []
+      const data = await res.json()
+      return data ? Object.keys(data) : []
+    }, loading)
   }
 
   return {

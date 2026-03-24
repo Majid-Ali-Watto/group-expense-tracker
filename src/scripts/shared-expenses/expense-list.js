@@ -33,6 +33,8 @@ export const ExpenseList = (props) => {
 
   const pdfContent = ref(null)
   const months = ref([])
+  const monthsLoaded = ref(false)
+  const paymentsLoaded = ref(false)
 
   const payments = ref([])
   const paymentKeys = ref([])
@@ -50,6 +52,9 @@ export const ExpenseList = (props) => {
   )
 
   let paymentsListener = null
+  const isContentLoading = computed(
+    () => !monthsLoaded.value || !paymentsLoaded.value
+  )
 
   // Watch active group and refetch when it changes
   watch(
@@ -63,14 +68,20 @@ export const ExpenseList = (props) => {
     }
   )
 
+  let loadingTimeout = null
   onMounted(() => {
     checkDaily(pdfContent)
     fetchMonths()
     fetchExpenses()
+    loadingTimeout = setTimeout(() => {
+      monthsLoaded.value = true
+      paymentsLoaded.value = true
+    }, 8000)
   })
 
   // Clean up listeners on unmount
   onUnmounted(() => {
+    if (loadingTimeout) clearTimeout(loadingTimeout)
     const groupId = groupStore.getActiveGroup || 'global'
     if (paymentsListener)
       off(
@@ -80,20 +91,25 @@ export const ExpenseList = (props) => {
       )
   })
 
+
   // Fetch available months
   const fetchMonths = async () => {
     const groupId = groupStore.getActiveGroup || 'global'
+    monthsLoaded.value = false
     try {
       months.value = await readShallow(`${props.dbRef}/${groupId}`)
       if (months.value.length) selectedMonth.value = getCurrentMonth()
     } catch {
       showError('Failed to load months. Please try again.')
+    } finally {
+      monthsLoaded.value = true
     }
   }
 
   // Fetch expenses for the selected month
   const fetchExpenses = () => {
     const groupId = groupStore.getActiveGroup || 'global'
+    paymentsLoaded.value = false
     const paymentsRef = dbRef(
       `${props.dbRef}/${groupId}/${selectedMonth.value}`
     )
@@ -102,6 +118,7 @@ export const ExpenseList = (props) => {
     paymentsListener = onValue(
       paymentsRef,
       (snapshot) => {
+        paymentsLoaded.value = true
         if (snapshot.exists()) {
           const data = snapshot.val()
           rawPaymentsData.value = data
@@ -125,6 +142,7 @@ export const ExpenseList = (props) => {
         }
       },
       () => {
+        paymentsLoaded.value = true
         showError('Failed to load expenses. Please try again.')
       }
     )
@@ -247,6 +265,7 @@ export const ExpenseList = (props) => {
     months,
     payments,
     paymentKeys,
+    isContentLoading,
     selectedMonth,
     selectedFriend,
     selectedPayerMode,

@@ -1,28 +1,28 @@
-import { defineAsyncComponent } from 'vue'
 import { Tabs } from '../assets/enums'
-const PersonalLoans = defineAsyncComponent(
+import { loadAsyncComponent } from './async-component'
+const PersonalLoans = loadAsyncComponent(
   () => import('@/components/personal-loans/PersonalLoans.vue')
 )
-const PaymentForm = defineAsyncComponent(
+const PaymentForm = loadAsyncComponent(
   () => import('@/components/shared-expenses/PaymentForm.vue')
 )
-const LoanForm = defineAsyncComponent(
+const LoanForm = loadAsyncComponent(
   () => import('@/components/shared-loans/LoanForm.vue')
 )
-const SharedLoansGuard = defineAsyncComponent(
+const SharedLoansGuard = loadAsyncComponent(
   () => import('@/components/shared-loans/SharedLoansGuard.vue')
 )
-const SalaryManager = defineAsyncComponent(
+const SalaryManager = loadAsyncComponent(
   () => import('@/components/monthly-sallary-expense-manager/Manager.vue')
 )
-const SalaryExpenseForm = defineAsyncComponent(
+const SalaryExpenseForm = loadAsyncComponent(
   () => import('@/components/monthly-sallary-expense-manager/ExpenseForm.vue')
 )
-const History = defineAsyncComponent(
+const History = loadAsyncComponent(
   () => import('@/components/history/History.vue')
 )
-const Users = defineAsyncComponent(() => import('@/components/users/Users.vue'))
-const Groups = defineAsyncComponent(
+const Users = loadAsyncComponent(() => import('@/components/users/Users.vue'))
+const Groups = loadAsyncComponent(
   () => import('@/components/groups/Groups.vue')
 )
 

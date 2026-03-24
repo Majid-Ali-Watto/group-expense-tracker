@@ -40,14 +40,22 @@
               :key="index"
               :label="tab"
               :name="tab"
-              lazy
               class="py-2 px-3 sm:px-0"
-            >
-              <keep-alive>
-                <HOC :componentToBeRendered="activeTabComponent(tab)" />
-              </keep-alive>
-            </el-tab-pane>
+            />
           </el-tabs>
+
+          <div class="tab-stage">
+            <Transition :name="tabTransitionName" mode="out-in">
+              <div :key="activeTab" class="tab-stage__panel">
+                <keep-alive>
+                  <HOC
+                    :key="activeTab"
+                    :componentToBeRendered="activeTabComponent(activeTab)"
+                  />
+                </keep-alive>
+              </div>
+            </Transition>
+          </div>
         </div>
 
         <!-- Expenses Summary Dialog -->
@@ -58,33 +66,22 @@
       </div>
     </template>
     <template #fallback>
-      <div
-        class="loading-wrapper"
-        v-loading="true"
-        element-loading-text-color="red"
-        element-loading-text="Loading..."
-        :element-loading-spinner="svg"
-        element-loading-svg-view-box="-10, -10, 50, 50"
-        element-loading-background="rgba(0, 0, 0, 0)"
-        style="width: 100%"
-      ></div>
+      <LoadingSkeleton mode="page" />
     </template>
   </Suspense>
 </template>
 
 <script setup>
-import { svg } from './assets/loader-svg'
 import { App } from './scripts/layout/app'
-import { defineAsyncComponent } from 'vue'
-const HOC = defineAsyncComponent(() => import('@/components/layout/HOC.vue'))
-const Login = defineAsyncComponent(() => import('@/components/auth/Login.vue'))
-const Header = defineAsyncComponent(
-  () => import('@/components/layout/Header.vue')
-)
-const WelcomeBanner = defineAsyncComponent(
+import LoadingSkeleton from './components/shared/LoadingSkeleton.vue'
+import { loadAsyncComponent } from './utils/async-component'
+const HOC = loadAsyncComponent(() => import('@/components/layout/HOC.vue'))
+const Login = loadAsyncComponent(() => import('@/components/auth/Login.vue'))
+const Header = loadAsyncComponent(() => import('@/components/layout/Header.vue'))
+const WelcomeBanner = loadAsyncComponent(
   () => import('@/components/generic-components/WelcomeBanner.vue')
 )
-const NetPositionDialog = defineAsyncComponent(
+const NetPositionDialog = loadAsyncComponent(
   () => import('@/components/generic-components/NetPositionDialog.vue')
 )
 
@@ -93,6 +90,7 @@ const {
   tabs,
   displayName,
   activeTab,
+  tabTransitionName,
   setLoggedInStatus,
   handleActiveTab,
   activeTabComponent,
@@ -106,3 +104,65 @@ const {
   notificationCount
 } = App()
 </script>
+
+<style scoped>
+.tab-stage {
+  position: relative;
+  perspective: 1800px;
+  transform-style: preserve-3d;
+}
+
+.tab-stage__panel {
+  width: 100%;
+  transform-origin: center center;
+  backface-visibility: hidden;
+  will-change: transform, opacity, filter;
+}
+
+.tab-page-forward-enter-active,
+.tab-page-forward-leave-active,
+.tab-page-backward-enter-active,
+.tab-page-backward-leave-active {
+  transition:
+    transform 0.48s var(--motion-swift),
+    opacity 0.34s var(--motion-smooth),
+    filter 0.34s var(--motion-smooth);
+}
+
+.tab-page-forward-enter-from {
+  opacity: 0;
+  filter: blur(1px);
+  transform: rotateY(-78deg) translateX(34px) scale(0.98);
+  transform-origin: right center;
+}
+
+.tab-page-forward-leave-to {
+  opacity: 0;
+  filter: blur(1px);
+  transform: rotateY(72deg) translateX(-28px) scale(0.985);
+  transform-origin: left center;
+}
+
+.tab-page-backward-enter-from {
+  opacity: 0;
+  filter: blur(1px);
+  transform: rotateY(78deg) translateX(-34px) scale(0.98);
+  transform-origin: left center;
+}
+
+.tab-page-backward-leave-to {
+  opacity: 0;
+  filter: blur(1px);
+  transform: rotateY(-72deg) translateX(28px) scale(0.985);
+  transform-origin: right center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tab-page-forward-enter-active,
+  .tab-page-forward-leave-active,
+  .tab-page-backward-enter-active,
+  .tab-page-backward-leave-active {
+    transition-duration: 0.01ms !important;
+  }
+}
+</style>

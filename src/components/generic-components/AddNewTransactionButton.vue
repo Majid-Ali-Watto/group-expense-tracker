@@ -180,4 +180,18 @@ defineEmits(['click', 'close'])
 .ant-card--close:hover .ant-arrow--close {
   transform: scaleX(-1) translateX(3px);
 }
+
+/* Dark theme: soften the bright pastel borders */
+:global(.dark-theme) .ant-card {
+  border-color: rgba(34, 197, 94, 0.35);
+}
+:global(.dark-theme) .ant-card:hover {
+  border-color: var(--success-400);
+}
+:global(.dark-theme) .ant-card--close {
+  border-color: rgba(239, 68, 68, 0.35);
+}
+:global(.dark-theme) .ant-card--close:hover {
+  border-color: #ef4444;
+}
 </style>

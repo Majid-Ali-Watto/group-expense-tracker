@@ -1,6 +1,8 @@
 <!-- eslint-disable vue/multi-word-component-names -->
 <template>
   <div>
+    <LoadingSkeleton v-if="isPageLoading" mode="page" />
+    <template v-else>
     <!-- Pending Approvals -->
     <div v-if="myPendingApprovals.length > 0" class="mb-4">
       <h4 class="pending-title mb-2">Pending Approvals</h4>
@@ -15,19 +17,13 @@
               {{ item.user.name }} ({{ displayMobile(item.user.mobile) }})
             </div>
             <div class="text-xs text-gray-600 mt-1">
-              <span v-if="item.type === 'delete'">
+              <span>
                 Delete request by
                 <strong>
                   {{ userStore.getUserByMobile(item.request.requestedBy)?.name || item.request.requestedBy }} ({{
                     displayMobile(item.request.requestedBy)
                   }})
                 </strong>
-              </span>
-              <span v-else>
-                Rename to "<strong>{{ item.request.newName }}</strong
-                >" — by {{ userStore.getUserByMobile(item.request.requestedBy)?.name || item.request.requestedBy }} ({{
-                  displayMobile(item.request.requestedBy)
-                }})
               </span>
             </div>
             <div class="text-xs text-gray-500 mt-1">
@@ -169,7 +165,7 @@
 
             <template v-if="canManage(row)">
               <!-- No pending request: show edit & delete -->
-              <template v-if="!row.deleteRequest && !row.updateRequest">
+              <template v-if="!row.deleteRequest">
                 <el-button
                   size="small"
                   type="primary"
@@ -187,17 +183,10 @@
               </template>
 
               <!-- Delete pending -->
-              <el-button v-else-if="row.deleteRequest" size="small" disabled>
+              <el-button v-else size="small" disabled>
                 Delete Pending ({{
                   row.deleteRequest.approvals?.length || 0
                 }}/{{ row.deleteRequest.requiredApprovals?.length || 0 }})
-              </el-button>
-
-              <!-- Update pending -->
-              <el-button v-else-if="row.updateRequest" size="small" disabled>
-                Update Pending ({{
-                  row.updateRequest.approvals?.length || 0
-                }}/{{ row.updateRequest.requiredApprovals?.length || 0 }})
               </el-button>
             </template>
           </div>
@@ -288,16 +277,18 @@
         </div>
       </template>
     </el-dialog>
+    </template>
   </div>
 </template>
 
 <script setup>
-import { defineAsyncComponent } from 'vue'
+import LoadingSkeleton from '../shared/LoadingSkeleton.vue'
 import { loginRules as rules } from '../../assets/validation-rules'
 import { Users } from '../../scripts/users/users'
 import GenericInputField from '../generic-components/GenericInputField.vue'
 import { useUserStore } from '../../stores/userStore'
-const GroupsCreate = defineAsyncComponent(
+import { loadAsyncComponent } from '../../utils/async-component'
+const GroupsCreate = loadAsyncComponent(
   () => import('../groups/GroupsCreate.vue')
 )
 const userStore = useUserStore()
@@ -325,6 +316,7 @@ const {
   groupsDialogVisible,
   selectedUserGroups,
   selectedUserName,
+  isPageLoading,
   openGroupsDialog,
   handleEditUserSave
 } = Users()

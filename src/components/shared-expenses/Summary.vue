@@ -69,13 +69,14 @@
 </template>
 
 <script setup>
-import { ref, defineAsyncComponent } from 'vue'
+import { ref } from 'vue'
 import { useMobileScreen } from '../../utils/useMobileScreen'
 import { Summary } from '../../scripts/shared-expenses/summary'
-const DonutChart = defineAsyncComponent(
+import { loadAsyncComponent } from '../../utils/async-component'
+const DonutChart = loadAsyncComponent(
   () => import('../generic-components/DonutChart.vue')
 )
-const BarChart = defineAsyncComponent(
+const BarChart = loadAsyncComponent(
   () => import('../generic-components/BarChart.vue')
 )
 

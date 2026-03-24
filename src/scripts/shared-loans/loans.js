@@ -38,6 +38,8 @@ export const Loans = () => {
   const selectedMonth = ref(getCurrentMonth())
   const selectedGiver = ref('All')
   const months = ref([])
+  const monthsLoaded = ref(false)
+  const loansLoaded = ref(false)
 
   const activeGroup = computed(() => groupStore.getActiveGroup)
   const activeUser = computed(() => authStore.getActiveUser)
@@ -75,21 +77,28 @@ export const Loans = () => {
 
   let loansListener = null
   let currentLoansRef = null
+  const isContentLoading = computed(
+    () => !monthsLoaded.value || !loansLoaded.value
+  )
 
   // Fetch available months
   const fetchMonths = async () => {
     const groupId = groupStore.getActiveGroup || 'global'
+    monthsLoaded.value = false
     try {
       months.value = await readShallow(`${DB_NODES.SHARED_LOANS}/${groupId}`)
       if (months.value.length) selectedMonth.value = getCurrentMonth()
     } catch {
       showError('Failed to load months. Please try again.')
+    } finally {
+      monthsLoaded.value = true
     }
   }
   // Fetch loans for the selected month
 
   const fetchLoans = () => {
     const groupId = groupStore.getActiveGroup || 'global'
+    loansLoaded.value = false
     const loansRef = dbRef(`${DB_NODES.SHARED_LOANS}/${groupId}/${selectedMonth.value}`)
     if (loansListener && currentLoansRef)
       off(currentLoansRef, 'value', loansListener)
@@ -98,6 +107,7 @@ export const Loans = () => {
     loansListener = onValue(
       loansRef,
       (snapshot) => {
+        loansLoaded.value = true
         if (snapshot.exists()) {
           const data = snapshot.val()
           rawLoansData.value = data
@@ -121,6 +131,7 @@ export const Loans = () => {
         }
       },
       () => {
+        loansLoaded.value = true
         showError('Failed to load loans. Please try again.')
       }
     )
@@ -140,12 +151,18 @@ export const Loans = () => {
     fetchLoans()
   })
 
+  let loadingTimeout = null
   onMounted(() => {
     fetchMonths()
     fetchLoans()
+    loadingTimeout = setTimeout(() => {
+      monthsLoaded.value = true
+      loansLoaded.value = true
+    }, 8000)
   })
 
   onUnmounted(() => {
+    if (loadingTimeout) clearTimeout(loadingTimeout)
     if (loansListener) {
       if (currentLoansRef) off(currentLoansRef, 'value', loansListener)
     }
@@ -265,6 +282,7 @@ export const Loans = () => {
     selectedMonth,
     selectedGiver,
     months,
+    isContentLoading,
     activeUser,
     usersOptions,
     loans,

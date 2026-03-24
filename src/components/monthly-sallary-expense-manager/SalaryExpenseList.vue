@@ -1,5 +1,7 @@
 <template>
   <div class="w-full" ref="content">
+    <LoadingSkeleton v-if="isContentLoading" mode="page" />
+    <template v-else>
     <!-- Stats bar -->
     <div class="sel-stats">
       <div class="sel-stat">
@@ -63,6 +65,7 @@
       :dataRef="content"
       :reportMonth="selectedMonth"
     />
+    </template>
   </div>
 </template>
 
@@ -71,6 +74,7 @@ import { ref } from 'vue'
 import { Filter } from '@element-plus/icons-vue'
 import Table from '../shared/Table.vue'
 import GenericDropDown from '../generic-components/GenericDropDown.vue'
+import LoadingSkeleton from '../shared/LoadingSkeleton.vue'
 import { SalaryExpenseList } from '../../scripts/monthly-expenses/salary-expense-list'
 
 const {
@@ -82,6 +86,7 @@ const {
   remaining,
   months,
   content,
+  isContentLoading,
   fetchExpenses
 } = SalaryExpenseList()
 const showFilters = ref(false)

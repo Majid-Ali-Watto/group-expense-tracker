@@ -8,9 +8,9 @@
 
 <script setup>
 import HOC from '../layout/HOC.vue'
-import { defineAsyncComponent } from 'vue'
+import { loadAsyncComponent } from '../../utils/async-component'
 
-const ExpenseList = defineAsyncComponent(
+const ExpenseList = loadAsyncComponent(
   () => import('../shared-expenses/ExpenseList.vue')
 )
 </script>

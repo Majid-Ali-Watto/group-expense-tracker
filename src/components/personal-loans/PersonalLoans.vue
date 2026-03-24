@@ -1,5 +1,7 @@
 <template>
   <div>
+    <LoadingSkeleton v-if="isContentLoading" mode="page" />
+    <template v-else>
     <LoanForm
       db-ref="personal-loans"
       :isPersonal="true"
@@ -133,24 +135,27 @@
         :reportMonth="selectedMonth"
       />
     </div>
+    </template>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, defineAsyncComponent } from 'vue'
+import { ref, computed } from 'vue'
 import { useMobileScreen } from '../../utils/useMobileScreen'
 import { Filter } from '@element-plus/icons-vue'
 import Table from '../shared/Table.vue'
 import BalanceSummaryCard from '../shared/BalanceSummaryCard.vue'
 import GenericDropDown from '../generic-components/GenericDropDown.vue'
 import { PersonalLoans } from '../../scripts/personal-loans/personal-loans'
-const LoanForm = defineAsyncComponent(
+import LoadingSkeleton from '../shared/LoadingSkeleton.vue'
+import { loadAsyncComponent } from '../../utils/async-component'
+const LoanForm = loadAsyncComponent(
   () => import('../shared-loans/LoanForm.vue')
 )
-const DonutChart = defineAsyncComponent(
+const DonutChart = loadAsyncComponent(
   () => import('../generic-components/DonutChart.vue')
 )
-const BarChart = defineAsyncComponent(
+const BarChart = loadAsyncComponent(
   () => import('../generic-components/BarChart.vue')
 )
 
@@ -160,11 +165,13 @@ const {
   loanContent,
   selectedMonth,
   selectedGiver,
+  isContentLoading,
   giverOptions,
   filteredLoans,
   months,
   showLoanForm,
   closeLoanForm,
+  fetchLoans,
   totalLending,
   totalDebting,
   netPosition,

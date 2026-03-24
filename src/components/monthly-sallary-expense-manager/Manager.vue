@@ -9,12 +9,15 @@
           @click="setShowForm"
           @close="setShowForm"
         />
-        <HOC
-          v-if="showForm"
-          :componentToBeRendered="AddExpense"
-          :componentProps="{ showForm }"
-          :listenersToPass="{ click: setShowForm }"
-        />
+        <Transition name="form-slide">
+          <div v-if="showForm">
+            <HOC
+              :componentToBeRendered="AddExpense"
+              :componentProps="{ showForm }"
+              :listenersToPass="{ click: setShowForm }"
+            />
+          </div>
+        </Transition>
       </div>
       <div class="manager-col">
         <HOC :componentToBeRendered="AddSalary" />
@@ -25,14 +28,14 @@
 </template>
 
 <script setup>
-import { defineAsyncComponent } from 'vue'
 import AddNewTransactionButton from '../generic-components/AddNewTransactionButton.vue'
 import HOC from '../layout/HOC.vue'
 import { ref } from 'vue'
+import { loadAsyncComponent } from '../../utils/async-component'
 
-const AddSalary = defineAsyncComponent(() => import('./SalaryForm.vue'))
-const AddExpense = defineAsyncComponent(() => import('./ExpenseForm.vue'))
-const ExpenseList = defineAsyncComponent(
+const AddSalary = loadAsyncComponent(() => import('./SalaryForm.vue'))
+const AddExpense = loadAsyncComponent(() => import('./ExpenseForm.vue'))
+const ExpenseList = loadAsyncComponent(
   () => import('./SalaryExpenseList.vue')
 )
 

@@ -1,16 +1,19 @@
 <!-- eslint-disable vue/multi-word-component-names -->
 <template>
   <div class="space-y-4">
-    <!-- Add Group Button -->
-
-    <add-new-transaction-button
-      v-if="!showCreateGroup"
-      text="Want to create a new group?"
-      @click="openCreateGroup"
-    />
+    <LoadingSkeleton v-if="isPageLoading" mode="page" />
+    <template v-else>
+    <!-- Add Group Button / Create Group Form -->
+    <Transition name="form-slide" mode="out-in">
+    <div v-if="!showCreateGroup" key="btn">
+      <add-new-transaction-button
+        text="Want to create a new group?"
+        @click="openCreateGroup"
+      />
+    </div>
 
     <!-- Create Group Form -->
-    <div v-else>
+    <div v-else key="form">
       <groups-create @group-created="closeCreateGroup">
         <template #clear>
           <el-button type="info" plain size="small" @click="closeCreateGroup">
@@ -19,6 +22,7 @@
         </template>
       </groups-create>
     </div>
+    </Transition>
 
     <!-- Search Bar -->
     <div class="mb-2">
@@ -235,8 +239,6 @@
 
           :approve-group-deletion="approveGroupDeletion"
           :reject-group-deletion="rejectGroupDeletion"
-          :approve-leave-request="approveLeaveRequest"
-          :reject-leave-request="rejectLeaveRequest"
           :approve-edit-request="approveEditRequest"
           :reject-edit-request="rejectEditRequest"
           :approve-add-member-request="approveAddMemberRequest"
@@ -306,8 +308,6 @@
 
           :approve-group-deletion="approveGroupDeletion"
           :reject-group-deletion="rejectGroupDeletion"
-          :approve-leave-request="approveLeaveRequest"
-          :reject-leave-request="rejectLeaveRequest"
           :approve-edit-request="approveEditRequest"
           :reject-edit-request="rejectEditRequest"
           :approve-add-member-request="approveAddMemberRequest"
@@ -441,8 +441,8 @@
           size="small"
         />
         <el-alert
-          title="All members must approve this transfer"
-          type="warning"
+          title="The selected member must accept this transfer before it takes effect."
+          type="info"
           :closable="false"
         />
       </el-form>
@@ -467,11 +467,12 @@
         </div>
       </template>
     </el-dialog>
+    </template>
   </div>
 </template>
 
 <script setup>
-import { defineAsyncComponent } from 'vue'
+import LoadingSkeleton from '../shared/LoadingSkeleton.vue'
 import { groupRules } from '../../assets/validation-rules'
 import { Groups } from '../../scripts/groups/groups'
 import GenericInputField from '../generic-components/GenericInputField.vue'
@@ -481,11 +482,12 @@ import GroupActionButtons from '../generic-components/GroupActionButtons.vue'
 import GroupRequestButtons from '../generic-components/GroupRequestButtons.vue'
 import GroupNotificationsForCurrentUser from '../generic-components/GroupNotificationsForCurrentUser.vue'
 import { GenericDropDown } from '../generic-components'
-const GroupsCreate = defineAsyncComponent(() => import('./GroupsCreate.vue'))
-const AddNewTransactionButton = defineAsyncComponent(
+import { loadAsyncComponent } from '../../utils/async-component'
+const GroupsCreate = loadAsyncComponent(() => import('./GroupsCreate.vue'))
+const AddNewTransactionButton = loadAsyncComponent(
   () => import('../generic-components/AddNewTransactionButton.vue')
 )
-const NoGroupFound = defineAsyncComponent(
+const NoGroupFound = loadAsyncComponent(
   () => import('../generic-components/NoGroupFound.vue')
 )
 import { MoreFilled } from '@element-plus/icons-vue'
@@ -529,9 +531,7 @@ const {
   approveMemberJoinRequest,
   rejectJoinRequest,
 
-  // Leave group actions
-  approveLeaveRequest,
-  rejectLeaveRequest,
+  // Leave group actions (invoked internally via getGroupActions)
 
   // Edit request actions
   approveEditRequest,
@@ -562,6 +562,7 @@ const {
   getGroupActions,
 
   // Edit form
+  isPageLoading,
   editFormRef,
   handleEditSave
 } = Groups()

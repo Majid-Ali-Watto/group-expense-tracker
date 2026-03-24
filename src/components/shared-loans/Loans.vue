@@ -1,6 +1,8 @@
 <!-- eslint-disable vue/multi-word-component-names -->
 <template>
   <div>
+    <LoadingSkeleton v-if="isContentLoading" mode="page" />
+    <template v-else>
     <!-- Add New Loan Section -->
     <LoanForm :showForm="showLoanForm" @close-form="closeLoanForm" />
 
@@ -202,6 +204,7 @@
         </el-col>
       </el-row>
       <!-- Mobile filters (toggle) -->
+      <Transition name="form-slide">
       <el-row
         v-if="showFilters"
         :gutter="5"
@@ -228,6 +231,7 @@
           />
         </el-col>
       </el-row>
+      </Transition>
       <div ref="loanContent">
         <!-- Display Final Balances -->
         <h3 class="mb-2">Loan Details</h3>
@@ -247,17 +251,20 @@
         />
       </div>
     </div>
+    </template>
   </div>
 </template>
 
 <script setup>
-import { ref, defineAsyncComponent, computed } from 'vue'
+import { ref, computed } from 'vue'
 import { Filter } from '@element-plus/icons-vue'
 import Table from '../shared/Table.vue'
 import BalanceSummaryCard from '../shared/BalanceSummaryCard.vue'
 import GenericDropDown from '../generic-components/GenericDropDown.vue'
 import { Loans } from '../../scripts/shared-loans/loans'
-const LoanForm = defineAsyncComponent(() => import('./LoanForm.vue'))
+import LoadingSkeleton from '../shared/LoadingSkeleton.vue'
+import { loadAsyncComponent } from '../../utils/async-component'
+const LoanForm = loadAsyncComponent(() => import('./LoanForm.vue'))
 
 const {
   formatAmount,
@@ -266,6 +273,7 @@ const {
   selectedMonth,
   selectedGiver,
   months,
+  isContentLoading,
   activeUser,
   usersOptions,
   loanKeys,

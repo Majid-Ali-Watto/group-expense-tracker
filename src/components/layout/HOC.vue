@@ -6,25 +6,18 @@
         v-bind="componentProps"
         v-on="listenersToPass"
         ref="componentRef"
+        class="px-2"
       />
     </template>
     <template #fallback>
-      <div
-        class="loading-wrapper"
-        v-loading="true"
-        element-loading-text-color="red"
-        element-loading-text="Loading..."
-        :element-loading-spinner="svg"
-        element-loading-svg-view-box="-10, -10, 50, 50"
-        element-loading-background="rgba(0, 0, 0, 0)"
-      ></div>
+      <LoadingSkeleton mode="page" />
     </template>
   </Suspense>
 </template>
 
 <script setup>
-import { svg } from '../../assets/loader-svg'
 import { ref } from 'vue'
+import LoadingSkeleton from '../shared/LoadingSkeleton.vue'
 const componentRef = ref(null)
 
 // Props
@@ -48,19 +41,3 @@ defineExpose({
   componentRef
 })
 </script>
-
-<style scoped>
-.loading-wrapper {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  width: 100%;
-  background: rgba(30, 32, 28, 0.8); /* Optional background overlay */
-}
-
-.el-loading-text {
-  color: white !important; /* Customize loading text color */
-  font-size: 1.2rem; /* Better readability */
-}
-</style>

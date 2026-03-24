@@ -13,10 +13,11 @@
 </template>
 
 <script setup>
-import { computed, defineAsyncComponent } from 'vue'
+import { computed } from 'vue'
 import { useGroupStore } from '../../stores/groupStore'
+import { loadAsyncComponent } from '../../utils/async-component'
 
-const Loans = defineAsyncComponent(() => import('./Loans.vue'))
+const Loans = loadAsyncComponent(() => import('./Loans.vue'))
 
 const userStore = useGroupStore()
 

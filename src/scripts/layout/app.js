@@ -139,6 +139,20 @@ export const App = () => {
 
   // Current active tab from store
   const activeTab = ref(tabStore.getActiveTab || tabs.value[0])
+  const tabTransitionName = ref('tab-page-forward')
+
+  function updateTabTransition(nextTab) {
+    const currentIndex = tabs.value.indexOf(activeTab.value)
+    const nextIndex = tabs.value.indexOf(nextTab)
+
+    if (currentIndex === -1 || nextIndex === -1 || currentIndex === nextIndex) {
+      tabTransitionName.value = 'tab-page-forward'
+      return
+    }
+
+    tabTransitionName.value =
+      nextIndex > currentIndex ? 'tab-page-forward' : 'tab-page-backward'
+  }
 
   // Once HOC loads users (signal that group/user data is ready), apply the queued tab restore
   const stopTabRestoreWatch = watch(
@@ -148,6 +162,7 @@ export const App = () => {
         const tab = pendingTabRestore.value
         pendingTabRestore.value = null
         if (tabs.value.includes(tab)) {
+          updateTabTransition(tab)
           activeTab.value = tab
           tabStore.setActiveTab(tab)
         }
@@ -207,6 +222,7 @@ export const App = () => {
 
   // Function to handle tab changes — verifies user on every tab switch
   async function handleActiveTab(tab) {
+    updateTabTransition(tab)
     activeTab.value = tab
     tabStore.setActiveTab(tab)
     sessionStorage.setItem('_activeTab', tab)
@@ -271,6 +287,7 @@ export const App = () => {
       // Trigger scroll to group with timestamp to ensure reactivity
       groupStore.setScrollToGroupTrigger({ groupId, timestamp: Date.now() })
     }
+    updateTabTransition(tab)
     activeTab.value = tab
     tabStore.setActiveTab(tab)
     sessionStorage.setItem('_activeTab', tab)
@@ -324,6 +341,7 @@ export const App = () => {
     displayName,
     activeGroup,
     activeTab,
+    tabTransitionName,
     allNotifications,
     notificationCount,
     setLoggedInStatus,

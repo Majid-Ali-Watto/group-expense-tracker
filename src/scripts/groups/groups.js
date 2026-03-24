@@ -30,19 +30,15 @@ import {
   allMembersApprovedAddMember,
   hasUserApprovedAddMemberRequest,
   hasPendingRequest,
-  hasLeaveRequest,
-  getLeaveRequests,
-  allMembersApprovedLeave,
-  getLeaveApprovals,
-  hasUserApprovedLeaveRequest,
   hasDeleteRequest,
   getDeleteApprovals,
   hasUserApprovedDeletion,
   hasUserApprovedJoinRequest,
-  hasUserApprovedOwnershipTransfer
+  isCurrentUserPendingOwner
 } from '../../helpers/users'
 
 export const Groups = () => {
+  const isPageLoading = ref(true)
   const showCreateGroup = ref(false)
   const searchQuery = useDebouncedRef('', 300)
   const sortOrder = ref('') // '' | 'asc' | 'desc'
@@ -67,7 +63,7 @@ export const Groups = () => {
     },
     getUserByMobile: (m) => userStore.getUserByMobile(m)
   }
-  const { read, updateData, removeData, dbRef, setData } = useFireBase()
+  const { read, readShallow, updateData, removeData, dbRef, setData } = useFireBase()
 
   const groups = computed(() => groupStore.getGroups || [])
   const groupBalances = ref({})
@@ -315,9 +311,15 @@ export const Groups = () => {
     // Set up real-time listener for groups
     const groupsRef = dbRef(DB_NODES.GROUPS)
 
+    const loadingTimeout = setTimeout(() => {
+      isPageLoading.value = false
+    }, 8000)
+
     groupsListener = onValue(
       groupsRef,
       (snapshot) => {
+        clearTimeout(loadingTimeout)
+        isPageLoading.value = false
         if (snapshot.exists()) {
           const data = snapshot.val()
           const groupList = Object.keys(data).map((k) => ({ id: k, ...data[k] }))
@@ -336,6 +338,7 @@ export const Groups = () => {
         }
       },
       (error) => {
+        isPageLoading.value = false
         console.error('Error loading groups:', error)
       }
     )
@@ -1052,7 +1055,7 @@ export const Groups = () => {
       // If members changed, create edit request
       if (membersChanged) {
         await ElMessageBox.confirm(
-          `This will send an edit request to all members (existing, being added, and being removed). The changes will be applied after everyone approves.`,
+          `This will send an edit request to existing and newly added members for approval. Removed members will be notified. The changes will be applied after all remaining members approve.`,
           'Confirm Edit Request',
           {
             confirmButtonText: 'Send Request',
@@ -1071,17 +1074,29 @@ export const Groups = () => {
           approvals: []
         }
 
-        group.editRequest = editRequest
+        let updatedGroup = { ...group, editRequest }
+
+        // Notify removed members — they are informed but not required to approve
+        const requestedBy = authStore.getActiveUser
+        for (const mobile of removedMembers) {
+          updatedGroup = appendNotificationForUser(updatedGroup, mobile, {
+            id: Date.now().toString() + Math.random(),
+            type: 'removal-pending',
+            message: `You have been proposed for removal from "${group.name}". This will take effect once existing members approve.`,
+            updatedBy: requestedBy,
+            timestamp: Date.now()
+          })
+        }
 
         await updateData(
           `${DB_NODES.GROUPS}/${editingGroupId.value}`,
-          () => group,
+          () => updatedGroup,
           'Edit request sent'
         )
 
-        groupStore.updateGroup(group)
+        groupStore.updateGroup(updatedGroup)
         editDialogVisible.value = false
-        showSuccess('Edit request sent to all members')
+        showSuccess('Edit request sent to members for approval')
       } else if (nameChanged) {
         // Just name changed (already handled above, but this is a fallback)
         const updatedGroup = {
@@ -1318,6 +1333,81 @@ export const Groups = () => {
   }
 
   // ========== Leave Group Functions ==========
+
+  // Returns a human-readable block reason, or null if leave is allowed.
+  async function getLeaveBlockReason(group, mobile) {
+    // Block if any group-level request is pending — leaving mid-flow would break those workflows
+    const openRequests = [
+      group.editRequest && 'a membership edit is pending',
+      group.deleteRequest && 'a group deletion request is pending',
+      group.addMemberRequest && 'an add-member request is pending',
+      group.transferOwnershipRequest && 'an ownership transfer is pending',
+      (group.joinRequests || []).length > 0 && 'a join request is pending'
+    ].filter(Boolean)
+
+    if (openRequests.length > 0) {
+      return `Cannot leave while ${openRequests[0]}. Resolve it first.`
+    }
+
+    // Block if the user has a non-zero net balance across all recorded months
+    try {
+      const expenseMonths = await readShallow(`${DB_NODES.SHARED_EXPENSES}/${group.id}`)
+      const loanMonths = await readShallow(`${DB_NODES.SHARED_LOANS}/${group.id}`)
+      const allMonths = [...new Set([...expenseMonths, ...loanMonths])]
+
+      let net = 0
+
+      for (const month of allMonths) {
+        // Expenses
+        const payments = (await read(`${DB_NODES.SHARED_EXPENSES}/${group.id}/${month}`, false)) || {}
+        Object.values(payments).forEach((payment) => {
+          const amount = parseFloat(payment.amount) || 0
+          if (!amount) return
+
+          let share = 0
+          if (Array.isArray(payment.split)) {
+            const selfSplit = payment.split.find((s) => s.mobile === mobile)
+            share = parseFloat(selfSplit?.amount) || 0
+          } else if (Array.isArray(payment.participants)) {
+            const isParticipant = payment.participants.some((p) =>
+              typeof p === 'string' ? p === mobile : p?.mobile === mobile || p?.userId === mobile
+            )
+            if (isParticipant) share = amount / payment.participants.length
+          }
+
+          let credit = 0
+          if (payment.payerMode === 'multiple' && Array.isArray(payment.payers)) {
+            const selfPayer = payment.payers.find((p) => p.mobile === mobile)
+            credit = parseFloat(selfPayer?.amount) || 0
+          } else if (payment.payer === mobile) {
+            credit = amount
+          }
+
+          net += credit - share
+        })
+
+        // Loans
+        const loans = (await read(`${DB_NODES.SHARED_LOANS}/${group.id}/${month}`, false)) || {}
+        Object.values(loans).forEach((loan) => {
+          const amt = parseFloat(loan.amount) || 0
+          if (!amt) return
+          if (loan.giver === mobile) net += amt
+          if (loan.receiver === mobile) net -= amt
+        })
+      }
+
+      const roundedNet = parseFloat(net.toFixed(2))
+      if (roundedNet !== 0) {
+        return `Cannot leave while you have an unsettled balance (${roundedNet > 0 ? '+' : ''}${roundedNet}). Settle up first.`
+      }
+    } catch (err) {
+      console.error('Balance check failed during leave', err)
+      return 'Could not verify your balance. Please try again.'
+    }
+
+    return null
+  }
+
   async function requestLeaveGroup(groupId) {
     try {
       const group = groups.value.find((g) => g.id === groupId)
@@ -1329,7 +1419,7 @@ export const Groups = () => {
 
       if (memberCount === 1) {
         await ElMessageBox.confirm(
-          'You are the only member in this group. Leaving will immediately delete the empty group without any approval step.',
+          'You are the only member in this group. Leaving will immediately delete the empty group.',
           'Leave Group',
           {
             confirmButtonText: 'Leave and Delete Group',
@@ -1337,16 +1427,14 @@ export const Groups = () => {
             type: 'warning'
           }
         )
-
         await removeData(`${DB_NODES.GROUPS}/${groupId}`)
         removeGroupLocally(groupId)
         showSuccess('You left the group and it was deleted automatically.')
         return
       }
 
-      // Owner-specific logic
+      // Owner with more than 2 members must transfer ownership first
       if (isOwner && memberCount > 2) {
-        // Must transfer ownership first before leaving
         await ElMessageBox.confirm(
           'You are the group owner. You must transfer ownership to another member before leaving the group.',
           'Transfer Ownership Required',
@@ -1360,155 +1448,34 @@ export const Groups = () => {
         return
       }
 
-      if (isOwner && memberCount === 2) {
-        const otherMember = group.members.find((m) => m.mobile !== mobile)
-        const otherName = otherMember ? (userStore.getUserByMobile(otherMember.mobile)?.name || otherMember.mobile) : 'the other member'
-
-        await ElMessageBox.confirm(
-          `You are the owner. If approved, ownership will be automatically transferred to ${otherName} when you leave.`,
-          'Leave Group',
-          {
-            confirmButtonText: 'Send Request',
-            cancelButtonText: 'Cancel',
-            type: 'warning'
-          }
-        )
-
-        if (!group.leaveRequests) group.leaveRequests = []
-        group.leaveRequests.push({ mobile, approvals: [] })
-
-        await updateData(`${DB_NODES.GROUPS}/${groupId}`, () => group, 'Leave request sent')
-
-        groupStore.updateGroup({ ...group })
-
-        showSuccess('Leave request sent for approval')
-        return
+      // Check open requests and unsettled balance before allowing leave
+      const blockReason = await getLeaveBlockReason(group, mobile)
+      if (blockReason) {
+        return showError(blockReason)
       }
 
-      // Normal leave request flow for non-owners (or solo owner)
-      await ElMessageBox.confirm(
-        'This will send a leave request to all group members. You can only leave after all members approve.',
-        'Request to Leave Group',
-        {
-          confirmButtonText: 'Send Request',
-          cancelButtonText: 'Cancel',
-          type: 'warning'
-        }
-      )
+      const otherMember = group.members.find((m) => m.mobile !== mobile)
+      const confirmMessage = isOwner && memberCount === 2
+        ? `You are the owner. Ownership will be transferred to ${userStore.getUserByMobile(otherMember.mobile)?.name || otherMember.mobile} when you leave.`
+        : 'Are you sure you want to leave this group?'
 
-      if (!group.leaveRequests) {
-        group.leaveRequests = []
-      }
-
-      group.leaveRequests.push({
-        mobile,
-        approvals: []
+      await ElMessageBox.confirm(confirmMessage, 'Leave Group', {
+        confirmButtonText: 'Leave',
+        cancelButtonText: 'Cancel',
+        type: 'warning'
       })
 
-      await updateData(`${DB_NODES.GROUPS}/${groupId}`, () => group, 'Leave request sent')
-
-      groupStore.updateGroup(group)
-
-      showSuccess('Leave request sent to all members')
-    } catch (err) {
-      if (err !== 'cancel') {
-        showError(err.message || err)
-      }
-    }
-  }
-
-  async function approveLeaveRequest(groupId, leaveMobile) {
-    try {
-      const group = groups.value.find((g) => g.id === groupId)
-      if (!group) return
-
-      const mobile = authStore.getActiveUser
-
-      // Find leave request
-      const leaveReq = group.leaveRequests.find((r) => r.mobile === leaveMobile)
-      if (!leaveReq) return
-
-      // Initialize approvals if not exists
-      if (!leaveReq.approvals) {
-        leaveReq.approvals = []
+      // Transfer ownership if leaving owner with 2 members
+      const updatedGroup = { ...group }
+      if (isOwner && otherMember) {
+        updatedGroup.ownerMobile = otherMember.mobile
       }
 
-      // Add approval
-      leaveReq.approvals.push({ mobile })
+      updatedGroup.members = updatedGroup.members.filter((m) => m.mobile !== mobile)
 
-      // Check if all members approved
-      const allApproved = group.members.every(
-        (member) =>
-          leaveReq.approvals.some((a) => a.mobile === member.mobile) ||
-          member.mobile === leaveMobile
-      )
-
-      if (allApproved) {
-        // If the leaving member is the owner, auto-transfer ownership to another member
-        if (group.ownerMobile === leaveMobile) {
-          const newOwner = group.members.find((m) => m.mobile !== leaveMobile)
-          if (newOwner) {
-            group.ownerMobile = newOwner.mobile
-          }
-        }
-
-        // Remove member from group
-        group.members = group.members.filter((m) => m.mobile !== leaveMobile)
-        // Remove leave request
-        group.leaveRequests = group.leaveRequests.filter(
-          (r) => r.mobile !== leaveMobile
-        )
-
-        await updateData(`${DB_NODES.GROUPS}/${groupId}`, () => group, 'Member left group')
-        showSuccess(`${userStore.getUserByMobile(leaveMobile)?.name || leaveMobile} has left the group`)
-      } else {
-        await updateData(`${DB_NODES.GROUPS}/${groupId}`, () => group, 'Approval recorded')
-        showSuccess('You have approved the leave request')
-      }
-
-      groupStore.updateGroup(group)
-    } catch (err) {
-      showError(err.message || err)
-    }
-  }
-
-  async function rejectLeaveRequest(groupId, leaveMobile) {
-    try {
-      await ElMessageBox.confirm(
-        'This will cancel the leave request.',
-        'Reject Leave Request',
-        {
-          confirmButtonText: 'Reject',
-          cancelButtonText: 'Cancel',
-          type: 'warning'
-        }
-      )
-
-      const group = groups.value.find((g) => g.id === groupId)
-      if (!group) return
-
-      const leavingUserName = userStore.getUserByMobile(leaveMobile)?.name || leaveMobile
-
-      // Remove leave request
-      group.leaveRequests = (group.leaveRequests || []).filter(
-        (r) => r.mobile !== leaveMobile
-      )
-
-      // Create notification for members
-      createNotification(
-        group,
-        `Leave request from ${leavingUserName} (${maskMobile(leaveMobile)}) was rejected`
-      )
-
-      await updateData(
-        `${DB_NODES.GROUPS}/${groupId}`,
-        () => group,
-        'Leave request rejected'
-      )
-
-      groupStore.updateGroup(group)
-
-      showSuccess('Leave request rejected')
+      await updateData(`${DB_NODES.GROUPS}/${groupId}`, () => updatedGroup, 'You have left the group')
+      groupStore.updateGroup(updatedGroup)
+      showSuccess('You have left the group')
     } catch (err) {
       if (err !== 'cancel') {
         showError(err.message || err)
@@ -1530,7 +1497,7 @@ export const Groups = () => {
       }
 
       await ElMessageBox.confirm(
-        'This will send an ownership transfer request to all members. The transfer will only happen after all members approve.',
+        'This will send an ownership transfer request to the selected member. The transfer will happen once they accept.',
         'Request Ownership Transfer',
         {
           confirmButtonText: 'Send Request',
@@ -1544,11 +1511,10 @@ export const Groups = () => {
       )
       if (!group) return
 
-      // Add transfer request
+      // Add transfer request — only the new owner needs to accept
       group.transferOwnershipRequest = {
         newOwner: newOwnerMobile.value,
-        requestedBy: authStore.getActiveUser,
-        approvals: []
+        requestedBy: authStore.getActiveUser
       }
 
       await updateData(
@@ -1560,7 +1526,7 @@ export const Groups = () => {
       groupStore.updateGroup(group)
 
       transferDialogVisible.value = false
-      showSuccess('Ownership transfer request sent to all members')
+      showSuccess('Ownership transfer request sent to the selected member')
     } catch (err) {
       if (err !== 'cancel') {
         showError(err.message || err)
@@ -1575,47 +1541,25 @@ export const Groups = () => {
 
       const mobile = authStore.getActiveUser
 
-      // Add approval
-      if (!group.transferOwnershipRequest.approvals) {
-        group.transferOwnershipRequest.approvals = []
+      // Only the designated new owner may accept
+      if (group.transferOwnershipRequest?.newOwner !== mobile) {
+        return showError('Only the designated new owner can accept this transfer')
       }
 
-      group.transferOwnershipRequest.approvals.push({ mobile })
+      // Transfer ownership immediately upon new owner's acceptance
+      group.ownerMobile = group.transferOwnershipRequest.newOwner
+      delete group.transferOwnershipRequest
 
-      // Check if all members approved
-      const allApproved = group.members.every((member) =>
-        group.transferOwnershipRequest.approvals.some(
-          (a) => a.mobile === member.mobile
-        )
+      await setData(
+        `${DB_NODES.GROUPS}/${groupId}/ownerMobile`,
+        group.ownerMobile,
+        ''
       )
 
-      if (allApproved) {
-        // Transfer ownership
-        group.ownerMobile = group.transferOwnershipRequest.newOwner
-        // Remove transfer request from local object
-        delete group.transferOwnershipRequest
-
-        // Update owner in database
-        await updateData(
-          `${DB_NODES.GROUPS}/${groupId}/ownerMobile`,
-          () => group.ownerMobile,
-          ''
-        )
-
-        // Explicitly remove the transferOwnershipRequest from Firebase
-        await removeData(`${DB_NODES.GROUPS}/${groupId}/transferOwnershipRequest`)
-
-        showSuccess('Ownership has been transferred successfully')
-      } else {
-        await updateData(
-          `${DB_NODES.GROUPS}/${groupId}/transferOwnershipRequest`,
-          () => group.transferOwnershipRequest,
-          ''
-        )
-        showSuccess('You have approved the ownership transfer')
-      }
+      await removeData(`${DB_NODES.GROUPS}/${groupId}/transferOwnershipRequest`)
 
       groupStore.updateGroup({ ...group })
+      showSuccess('Ownership has been transferred successfully')
     } catch (err) {
       showError(err.message || err)
     }
@@ -1649,9 +1593,9 @@ export const Groups = () => {
       delete group.transferOwnershipRequest
 
       // Update notifications in database
-      await updateData(
+      await setData(
         `${DB_NODES.GROUPS}/${groupId}/notifications`,
-        () => group.notifications,
+        group.notifications || null,
         ''
       )
 
@@ -1732,19 +1676,6 @@ export const Groups = () => {
       }
 
       // Leave requests
-      getLeaveRequests(group).forEach((req) => {
-        if (
-          req.mobile !== me &&
-          !hasUserApprovedLeaveRequest(group, req.mobile)
-        ) {
-          result.push({
-            groupId: group.id,
-            groupName: group.name,
-            icon: '🚪',
-            label: `${req.name} wants to leave`
-          })
-        }
-      })
 
       // Edit request
       if (
@@ -1778,7 +1709,7 @@ export const Groups = () => {
       if (
         group.transferOwnershipRequest &&
         isMemberOfGroup(group) &&
-        !hasUserApprovedOwnershipTransfer(group)
+        isCurrentUserPendingOwner(group)
       ) {
         result.push({
           groupId: group.id,
@@ -1828,6 +1759,7 @@ export const Groups = () => {
   return {
     // Refs / reactive
     showCreateGroup,
+    isPageLoading,
     searchQuery,
     sortOrder,
     filterByUser,
@@ -1874,8 +1806,6 @@ export const Groups = () => {
 
     // Leave group actions
     requestLeaveGroup,
-    approveLeaveRequest,
-    rejectLeaveRequest,
 
     // Edit request actions
     approveEditRequest,
@@ -1924,7 +1854,6 @@ export const Groups = () => {
   function getGroupActions(group) {
     const isOwner = group.ownerMobile === authStore?.getActiveUser
     const isMember = isMemberOfGroup(group)
-    const hasLeaveReq = hasLeaveRequest(group, authStore?.getActiveUser)
     const hasJoinReq = hasPendingRequest(group)
 
     return [
@@ -1936,17 +1865,8 @@ export const Groups = () => {
         onClick: () => selectGroup(group.id)
       },
       {
-        label: `Leave Pending (${getLeaveApprovals(group, authStore.getActiveUser).length}/${group.members.length})`,
-        show:
-          isMember &&
-          hasLeaveReq &&
-          !allMembersApprovedLeave(group, authStore.getActiveUser),
-        disabled: true,
-        type: ''
-      },
-      {
         label: 'Leave',
-        show: isMember && !hasLeaveReq,
+        show: isMember,
         type: 'warning',
         onClick: () => requestLeaveGroup(group.id)
       },

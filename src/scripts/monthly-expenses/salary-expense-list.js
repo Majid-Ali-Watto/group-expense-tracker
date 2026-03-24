@@ -1,4 +1,4 @@
-import { inject, ref, onMounted, watch, onUnmounted } from 'vue'
+import { computed, inject, ref, onMounted, watch, onUnmounted } from 'vue'
 import { onValue, off } from '../../firebase'
 import { useAuthStore } from '../../stores/authStore'
 import { useDataStore } from '../../stores/dataStore'
@@ -22,20 +22,30 @@ export const SalaryExpenseList = () => {
   const salary = ref(0)
   const months = ref([])
   const content = ref(null)
+  const monthsLoaded = ref(false)
+  const salaryLoaded = ref(false)
+  const expensesLoaded = ref(false)
+  const isContentLoading = computed(
+    () => !monthsLoaded.value || !salaryLoaded.value || !expensesLoaded.value
+  )
 
   let expensesListener = null
   let salaryListener = null
 
   const fetchMonths = async () => {
+    monthsLoaded.value = false
     try {
       months.value = await readShallow(`${DB_NODES.PERSONAL_EXPENSES}/${activeUser.value}`)
     } catch (error) {
       showError('Failed to load months. Please try again.')
       console.error(error)
+    } finally {
+      monthsLoaded.value = true
     }
   }
 
   const fetchSalary = () => {
+    salaryLoaded.value = false
     const salaryRef = dbRef(
       `${DB_NODES.SALARIES}/${activeUser.value}/${selectedMonth.value}`
     )
@@ -44,10 +54,12 @@ export const SalaryExpenseList = () => {
     salaryListener = onValue(
       salaryRef,
       (snapshot) => {
+        salaryLoaded.value = true
         salary.value = snapshot.exists() ? snapshot.val().salary || 0 : 0
         updateRemaining()
       },
       (error) => {
+        salaryLoaded.value = true
         showError('Failed to load salary. Please try again.')
         console.error(error)
       }
@@ -55,6 +67,7 @@ export const SalaryExpenseList = () => {
   }
 
   const fetchExpenses = () => {
+    expensesLoaded.value = false
     const expensesRef = dbRef(
       `${DB_NODES.PERSONAL_EXPENSES}/${activeUser.value}/${selectedMonth.value}`
     )
@@ -63,6 +76,7 @@ export const SalaryExpenseList = () => {
     expensesListener = onValue(
       expensesRef,
       (snapshot) => {
+        expensesLoaded.value = true
         if (snapshot.exists()) {
           const monthExpenses = snapshot.val()
           expenses.value = Object.values(monthExpenses)
@@ -78,6 +92,7 @@ export const SalaryExpenseList = () => {
         updateRemaining()
       },
       (error) => {
+        expensesLoaded.value = true
         showError('Failed to load expenses. Please try again.')
         console.error(error)
       }
@@ -95,6 +110,7 @@ export const SalaryExpenseList = () => {
   })
 
   onUnmounted(() => {
+    if (loadingTimeout) clearTimeout(loadingTimeout)
     if (salaryListener)
       off(
         dbRef(`${DB_NODES.SALARIES}/${activeUser.value}/${selectedMonth.value}`),
@@ -109,10 +125,16 @@ export const SalaryExpenseList = () => {
       )
   })
 
+  let loadingTimeout = null
   onMounted(() => {
     fetchMonths()
     fetchSalary()
     fetchExpenses()
+    loadingTimeout = setTimeout(() => {
+      monthsLoaded.value = true
+      salaryLoaded.value = true
+      expensesLoaded.value = true
+    }, 8000)
 
     setTimeout(() => {
       dataStore.setSalaryRef(content.value)
@@ -128,6 +150,7 @@ export const SalaryExpenseList = () => {
     remaining,
     months,
     content,
+    isContentLoading,
     fetchExpenses
   }
 }

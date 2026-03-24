@@ -1,6 +1,6 @@
 <template>
   <div>
-    <fieldset class="border rounded bg-white shadow-sm p-4">
+    <fieldset class="border border-gray-300 rounded-lg p-4">
       <legend class="font-medium">Create Group</legend>
       <el-form :model="groupForm" :rules="groupRules" ref="groupFormRef">
         <GenericInputField
