@@ -7,3 +7,22 @@ export const Tabs = {
   USERS: 'Users',
   GROUPS: 'Groups'
 }
+
+export const GROUP_CATEGORIES = [
+  { label: '🍕 Food & Dining', value: 'Food & Dining' },
+  { label: '✈️ Travel', value: 'Travel' },
+  { label: '🏠 Housing & Rent', value: 'Housing & Rent' },
+  { label: '💡 Utilities', value: 'Utilities' },
+  { label: '🎬 Entertainment', value: 'Entertainment' },
+  { label: '🛒 Shopping', value: 'Shopping' },
+  { label: '🏥 Healthcare', value: 'Healthcare' },
+  { label: '📚 Education', value: 'Education' },
+  { label: '🚗 Transport', value: 'Transport' },
+  { label: '💼 Work', value: 'Work' },
+  { label: '🎉 Events', value: 'Events' },
+  { label: '💰 Finance', value: 'Finance' },
+  { label: '🏋️ Sports & Fitness', value: 'Sports & Fitness' },
+  { label: '🐾 Pets', value: 'Pets' },
+  { label: '🔧 Maintenance', value: 'Maintenance' },
+  { label: '🗂️ Other', value: 'Other' }
+]

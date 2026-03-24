@@ -1,6 +1,7 @@
 import { computed } from 'vue'
 import { ElMessageBox } from 'element-plus'
 import { appendNotificationForUser } from './recordNotifications'
+import { maskMobile } from './maskMobile'
 
 export function useApprovalRequests({
   rawItems,
@@ -20,6 +21,23 @@ export function useApprovalRequests({
   cleanupDeletedReceipts,
   buildUpdatedItem
 }) {
+  function summarizeChanges(changes) {
+    if (!changes) return ''
+    const resolveUser = (mobile) => {
+      if (!mobile) return mobile
+      const name = userStore?.getUserByMobile?.(mobile)?.name
+      return name ? `${name} (${maskMobile(mobile)})` : maskMobile(mobile)
+    }
+    const parts = []
+    if (changes.amount !== undefined) parts.push(`Amount: ${changes.amount}`)
+    if (changes.description !== undefined) parts.push(`Description: "${changes.description}"`)
+    if (changes.payer !== undefined) parts.push(`Payer: ${resolveUser(changes.payer)}`)
+    if (changes.giver !== undefined) parts.push(`Giver: ${resolveUser(changes.giver)}`)
+    if (changes.receiver !== undefined) parts.push(`Receiver: ${resolveUser(changes.receiver)}`)
+    if (changes.date !== undefined) parts.push(`Date: ${changes.date}`)
+    return parts.length ? ` [${parts.join(' | ')}]` : ''
+  }
+
   const userNotifications = computed(() => {
     if (!rawItems.value || !activeUser.value) return []
 
@@ -58,7 +76,6 @@ export function useApprovalRequests({
           type: 'delete',
           ...commonItem,
           requestedBy: item.deleteRequest.requestedBy,
-          requestedByName: item.deleteRequest.requestedByName,
           approvals: item.deleteRequest.approvals || [],
           requestedAt: item.deleteRequest.requestedAt
         })
@@ -69,10 +86,17 @@ export function useApprovalRequests({
           type: 'update',
           ...commonItem,
           requestedBy: item.updateRequest.requestedBy,
-          requestedByName: item.updateRequest.requestedByName,
           approvals: item.updateRequest.approvals || [],
           requestedAt: item.updateRequest.requestedAt,
-          changes: item.updateRequest.changes
+          changes: item.updateRequest.changes,
+          current: {
+            amount: item.amount,
+            payer: item.payer,
+            giver: item.giver,
+            receiver: item.receiver,
+            description: item.description,
+            date: item.date
+          }
         })
       }
     })
@@ -148,10 +172,11 @@ export function useApprovalRequests({
 
     await deleteData(`${itemPath}/${request.type}Request`, '')
 
+    const changesSummary = request.type === 'update' ? summarizeChanges(request.changes) : ''
     const notification = {
       id: Date.now().toString() + Math.random(),
       type: 'approved',
-      message: `Your ${request.type} request for ${itemLabel} has been approved by all members`,
+      message: `Your ${request.type} request for ${itemLabel} has been approved by all members${changesSummary}`,
       timestamp: Date.now()
     }
 
@@ -252,12 +277,11 @@ export function useApprovalRequests({
       monthYear: request.monthYear,
       itemId
     })
-    const currentUser = userStore.getUserByMobile(activeUser.value)
+    const changesSummary = request.type === 'update' ? summarizeChanges(request.changes) : ''
     const notification = {
       id: Date.now().toString() + Math.random(),
       type: 'rejected',
-      message: `Your ${request.type} request for ${itemLabel} was rejected`,
-      byName: currentUser?.name || activeUser.value,
+      message: `Your ${request.type} request for ${itemLabel} was rejected${changesSummary}`,
       byMobile: activeUser.value,
       timestamp: Date.now()
     }

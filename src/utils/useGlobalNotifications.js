@@ -6,8 +6,11 @@ import { onValue, off } from '../firebase'
 import useFireBase from '../api/firebase-apis'
 import { Tabs } from '../assets/enums'
 import getCurrentMonth from './getCurrentMonth'
+import { DB_NODES } from '../constants/db-nodes'
+import { maskMobile } from './maskMobile'
 import {
   isMemberOfGroup,
+  hasPendingRequest,
   hasDeleteRequest,
   getLeaveRequests,
   hasEditRequest,
@@ -54,10 +57,63 @@ export function useGlobalNotifications() {
           id: `invite-${group.id}`,
           icon: '📨',
           title: group.name,
-          description: `Invited by ${userStore.getUserByMobile(group.ownerMobile)?.name || group.ownerMobile}`,
+          description: `Invited by ${userStore.getUserByMobile(group.ownerMobile)?.name || group.ownerMobile} (${maskMobile(group.ownerMobile)})`,  
           tab: Tabs.GROUPS,
           groupId: group.id,
           category: 'Groups'
+        })
+      })
+
+    // Pending invitations visible to the group creator
+    groups.value
+      .filter((g) => g.ownerMobile === me && (g.pendingMembers || []).length)
+      .forEach((group) => {
+        ;(group.pendingMembers || []).forEach((member) => {
+          result.push({
+            id: `pending-invite-${group.id}-${member.mobile}`,
+            icon: '⏳',
+            title: group.name,
+            description: `${userStore.getUserByMobile(member.mobile)?.name || member.mobile} (${maskMobile(member.mobile)}) hasn't responded to your invitation`,  
+            tab: Tabs.GROUPS,
+            groupId: group.id,
+            category: 'Groups'
+          })
+        })
+      })
+
+    // Join request approval status (visible to the requester)
+    groups.value
+      .filter((g) => hasPendingRequest(g))
+      .forEach((group) => {
+        const request = (group.joinRequests || []).find((r) => r.mobile === me)
+        if (!request) return
+        const approvedCount = (request.approvals || []).length
+        const totalCount = (group.members || []).length
+        result.push({
+          id: `join-status-${group.id}`,
+          icon: '⏳',
+          title: group.name,
+          description: `Your join request: ${approvedCount}/${totalCount} member${totalCount !== 1 ? 's' : ''} approved`,
+          tab: Tabs.GROUPS,
+          groupId: group.id,
+          category: 'Groups'
+        })
+      })
+
+    // Rejection notifications for non-members (join request was rejected)
+    groups.value
+      .filter((g) => !isMemberOfGroup(g) && !hasPendingRequest(g))
+      .forEach((group) => {
+        ;(group.notifications?.[me] || []).forEach((notif) => {
+          result.push({
+            id: `group-notif-${group.id}-${notif.id}`,
+            icon: '❌',
+            title: group.name,
+            description: notif.message,
+            tab: Tabs.GROUPS,
+            groupId: group.id,
+            category: 'Groups'
+          })
         })
       })
 
@@ -72,7 +128,7 @@ export function useGlobalNotifications() {
               id: `join-${group.id}-${req.mobile}`,
               icon: '👋',
               title: group.name,
-              description: `${req.name} wants to join`,
+              description: `${userStore.getUserByMobile(req.mobile)?.name || req.mobile} (${maskMobile(req.mobile)}) wants to join`,  
               tab: Tabs.GROUPS,
               groupId: group.id,
               category: 'Groups'
@@ -80,11 +136,13 @@ export function useGlobalNotifications() {
           })
 
         if (hasDeleteRequest(group) && !hasUserApprovedDeletion(group)) {
+          const delBy = group.deleteRequest?.requestedBy
+          const delByName = userStore.getUserByMobile(delBy)?.name || delBy
           result.push({
             id: `del-${group.id}`,
             icon: '⚠️',
             title: group.name,
-            description: 'Group deletion request',
+            description: `Delete group requested by ${delByName} (${maskMobile(delBy)})`,
             tab: Tabs.GROUPS,
             groupId: group.id,
             category: 'Groups'
@@ -102,7 +160,7 @@ export function useGlobalNotifications() {
               id: `leave-${group.id}-${req.mobile}`,
               icon: '🚪',
               title: group.name,
-              description: `${req.name} wants to leave`,
+              description: `${userStore.getUserByMobile(req.mobile)?.name || req.mobile} (${maskMobile(req.mobile)}) wants to leave`,  
               tab: Tabs.GROUPS,
               groupId: group.id,
               category: 'Groups'
@@ -114,11 +172,18 @@ export function useGlobalNotifications() {
           isUserAffectedByEdit(group) &&
           !hasUserApprovedEditRequest(group)
         ) {
+          const er = group.editRequest
+          const erByName = userStore.getUserByMobile(er.requestedBy)?.name || er.requestedBy
+          const erParts = []
+          if (er.name && er.name !== group.name) erParts.push(`name → "${er.name}"`)
+          if ((er.addedMembers || []).length) erParts.push(`+${er.addedMembers.length} member${er.addedMembers.length > 1 ? 's' : ''}`)
+          if ((er.removedMembers || []).length) erParts.push(`-${er.removedMembers.length} member${er.removedMembers.length > 1 ? 's' : ''}`)
+          const erDetail = erParts.length ? `: ${erParts.join(', ')}` : ''
           result.push({
             id: `edit-${group.id}`,
             icon: '📝',
             title: group.name,
-            description: 'Group edit request',
+            description: `Edit by ${erByName} (${maskMobile(er.requestedBy)})${erDetail}`,
             tab: Tabs.GROUPS,
             groupId: group.id,
             category: 'Groups'
@@ -129,11 +194,13 @@ export function useGlobalNotifications() {
           hasAddMemberRequest(group) &&
           !hasUserApprovedAddMemberRequest(group)
         ) {
+          const nm = group.addMemberRequest.newMember.mobile
+          const nmName = userStore.getUserByMobile(nm)?.name || nm
           result.push({
             id: `addmem-${group.id}`,
             icon: '➕',
             title: group.name,
-            description: `Add ${group.addMemberRequest.newMember.name}`,
+            description: `Add member: ${nmName} (${maskMobile(nm)})`,
             tab: Tabs.GROUPS,
             groupId: group.id,
             category: 'Groups'
@@ -144,11 +211,14 @@ export function useGlobalNotifications() {
           group.transferOwnershipRequest &&
           !hasUserApprovedOwnershipTransfer(group)
         ) {
+          const tor = group.transferOwnershipRequest
+          const torFrom = userStore.getUserByMobile(tor.requestedBy)?.name || tor.requestedBy
+          const torTo = userStore.getUserByMobile(tor.newOwner)?.name || tor.newOwner
           result.push({
             id: `transfer-${group.id}`,
             icon: '👑',
             title: group.name,
-            description: 'Ownership transfer request',
+            description: `Transfer ownership: ${torFrom} (${maskMobile(tor.requestedBy)}) → ${torTo} (${maskMobile(tor.newOwner)})`,
             tab: Tabs.GROUPS,
             groupId: group.id,
             category: 'Groups'
@@ -174,7 +244,9 @@ export function useGlobalNotifications() {
             id: `user-${type}-${u.mobile}`,
             icon: type === 'delete' ? '🗑️' : '✏️',
             title: 'Users',
-            description: `${type === 'delete' ? 'Delete' : 'Update'} request for ${u.name}`,
+            description: type === 'delete'
+              ? `Delete request for ${u.name} (${maskMobile(u.mobile)})`
+              : `Update request for ${u.name} (${maskMobile(u.mobile)}): Name → "${req.newName}"`,  
             tab: Tabs.USERS,
             category: 'Users'
           })
@@ -203,7 +275,7 @@ export function useGlobalNotifications() {
 
     joined.forEach((group) => {
       // Shared expenses
-      const eRef = dbRef(`payments/${group.id}/${month}`)
+      const eRef = dbRef(`${DB_NODES.SHARED_EXPENSES}/${group.id}/${month}`)
       const eFn = (snap) => {
         const notifs = []
         if (snap.exists()) {
@@ -227,11 +299,20 @@ export function useGlobalNotifications() {
               payment.updateRequest &&
               !payment.updateRequest.approvals?.some((a) => a.mobile === me)
             ) {
+              const ch = payment.updateRequest.changes || {}
+              const diffParts = []
+              if (ch.amount !== undefined && ch.amount !== payment.amount)
+                diffParts.push(`Amount: ${payment.amount}→${ch.amount}`)
+              if (ch.description !== undefined && ch.description !== payment.description)
+                diffParts.push(`Desc: "${payment.description}"→"${ch.description}"`)
+              if (ch.payer !== undefined && ch.payer !== payment.payer)
+                diffParts.push(`Payer: ${payment.payer}→${ch.payer}`)
+              const diffStr = diffParts.length ? ` [${diffParts.join(' | ')}]` : ''
               notifs.push({
                 id: `exp-upd-${group.id}-${paymentId}`,
                 icon: '🧾',
                 title: group.name,
-                description: `Update expense: ${payment.description || payment.amount}`,
+                description: `Update expense${diffStr || ': ' + (payment.description || payment.amount)}`,
                 tab: Tabs.SHARED_EXPENSES,
                 groupId: group.id,
                 category: 'Shared Expenses'
@@ -245,7 +326,7 @@ export function useGlobalNotifications() {
       listeners.push({ r: eRef, fn: eFn })
 
       // Shared loans
-      const lRef = dbRef(`loans/${group.id}/${month}`)
+      const lRef = dbRef(`${DB_NODES.SHARED_LOANS}/${group.id}/${month}`)
       const lFn = (snap) => {
         const notifs = []
         if (snap.exists()) {
@@ -269,11 +350,22 @@ export function useGlobalNotifications() {
               loan.updateRequest &&
               !loan.updateRequest.approvals?.some((a) => a.mobile === me)
             ) {
+              const ch = loan.updateRequest.changes || {}
+              const diffParts = []
+              if (ch.amount !== undefined && ch.amount !== loan.amount)
+                diffParts.push(`Amount: ${loan.amount}→${ch.amount}`)
+              if (ch.description !== undefined && ch.description !== loan.description)
+                diffParts.push(`Desc: "${loan.description}"→"${ch.description}"`)
+              if (ch.giver !== undefined && ch.giver !== loan.giver)
+                diffParts.push(`Giver: ${loan.giver}→${ch.giver}`)
+              if (ch.receiver !== undefined && ch.receiver !== loan.receiver)
+                diffParts.push(`Receiver: ${loan.receiver}→${ch.receiver}`)
+              const diffStr = diffParts.length ? ` [${diffParts.join(' | ')}]` : ''
               notifs.push({
                 id: `loan-upd-${group.id}-${loanId}`,
                 icon: '💰',
                 title: group.name,
-                description: `Update loan: ${loan.description || loan.amount}`,
+                description: `Update loan${diffStr || ': ' + (loan.description || loan.amount)}`,
                 tab: Tabs.SHARED_LOANS,
                 groupId: group.id,
                 category: 'Shared Loans'

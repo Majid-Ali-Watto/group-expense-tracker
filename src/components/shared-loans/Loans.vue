@@ -27,12 +27,8 @@
             ]"
           >
             <span class="font-medium">{{ notif.message }}</span>
-            <span v-if="notif.byName" class="text-gray-600 ml-2"
-              >({{
-                notif.byMobile
-                  ? `${notif.byName} (${notif.byMobile})`
-                  : notif.byName
-              }})</span
+            <span v-if="notif.byMobile" class="text-gray-600 ml-2"
+              >({{ getUserName(notif.byMobile) }})</span
             >
           </div>
           <el-button size="small" text @click="dismissNotification(notif.id)">
@@ -73,10 +69,38 @@
           <div class="text-sm text-gray-700 mb-2">
             <p v-if="request.type === 'update'">
               <strong>Proposed Changes:</strong><br />
-              Amount: {{ formatAmount(request.changes.amount) }}<br />
-              Giver: {{ getUserName(request.changes.giver) }}<br />
-              Receiver: {{ getUserName(request.changes.receiver) }}<br />
-              Description: {{ request.changes.description }}
+              <template v-if="request.changes.amount !== undefined">
+                Amount:
+                <span v-if="request.current?.amount !== undefined && String(request.current.amount) !== String(request.changes.amount)">
+                  <span class="line-through text-gray-400">{{ formatAmount(request.current.amount) }}</span>
+                  &nbsp;→&nbsp;
+                </span>
+                <span class="font-medium">{{ formatAmount(request.changes.amount) }}</span><br />
+              </template>
+              <template v-if="request.changes.giver !== undefined">
+                Giver:
+                <span v-if="request.current?.giver && request.current.giver !== request.changes.giver">
+                  <span class="line-through text-gray-400">{{ getUserName(request.current.giver) }}</span>
+                  &nbsp;→&nbsp;
+                </span>
+                <span class="font-medium">{{ getUserName(request.changes.giver) }}</span><br />
+              </template>
+              <template v-if="request.changes.receiver !== undefined">
+                Receiver:
+                <span v-if="request.current?.receiver && request.current.receiver !== request.changes.receiver">
+                  <span class="line-through text-gray-400">{{ getUserName(request.current.receiver) }}</span>
+                  &nbsp;→&nbsp;
+                </span>
+                <span class="font-medium">{{ getUserName(request.changes.receiver) }}</span><br />
+              </template>
+              <template v-if="request.changes.description !== undefined">
+                Description:
+                <span v-if="request.current?.description !== undefined && request.current.description !== request.changes.description">
+                  <span class="line-through text-gray-400">{{ request.current.description }}</span>
+                  &nbsp;→&nbsp;
+                </span>
+                <span class="font-medium">{{ request.changes.description }}</span>
+              </template>
             </p>
             <p v-else>
               <strong>Loan to be deleted:</strong><br />

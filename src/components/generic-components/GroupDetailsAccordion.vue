@@ -71,7 +71,7 @@
               size="small"
               type="info"
             >
-              {{ member.name }} ({{
+              {{ userStore.getUserByMobile(member.mobile)?.name || member.mobile }} ({{
                 displayMobileForGroup(member.mobile, group)
               }})
             </el-tag>
@@ -103,10 +103,10 @@
               <div
                 class="w-7 h-7 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-semibold shrink-0"
               >
-                {{ member.name.charAt(0).toUpperCase() }}
+                {{ (userStore.getUserByMobile(member.mobile)?.name || member.mobile).charAt(0).toUpperCase() }}
               </div>
               <div class="text-sm text-gray-700">
-                {{ member.name }}
+                {{ userStore.getUserByMobile(member.mobile)?.name || member.mobile }}
                 <span class="text-gray-500 font-bold text-xs ml-1"
                   >({{ displayMobileForGroup(member.mobile, group) }})</span
                 >
@@ -120,8 +120,11 @@
 </template>
 <script setup>
 import { computed, ref } from 'vue'
+import { useUserStore } from '../../stores/userStore'
 
 const showMembersDialog = ref(false)
+
+const userStore = useUserStore()
 
 const props = defineProps({
   group: {

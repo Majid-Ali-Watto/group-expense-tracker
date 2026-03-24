@@ -62,23 +62,6 @@
             Reject
           </el-button>
         </div>
-        <!-- Final action when all approved - owner or any member if no owner -->
-        <div
-          v-else-if="
-            allMembersApprovedJoinRequest(group, request.mobile) &&
-            (group.ownerMobile === authStore.getActiveUser ||
-              !group.members.some((m) => m.mobile === group.ownerMobile))
-          "
-          class="flex gap-1"
-        >
-          <el-button
-            size="small"
-            type="primary"
-            @click="finalApproveJoinRequest(group.id, request)"
-          >
-            Add to Group
-          </el-button>
-        </div>
         <div v-else class="text-xs text-green-700">
           ✓ You have approved this request
           <span
@@ -466,10 +449,6 @@ const props = defineProps({
     required: true
   },
   rejectJoinRequest: {
-    type: Function,
-    required: true
-  },
-  finalApproveJoinRequest: {
     type: Function,
     required: true
   },

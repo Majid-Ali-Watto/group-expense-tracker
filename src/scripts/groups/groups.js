@@ -1,4 +1,5 @@
 import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue'
+import { GROUP_CATEGORIES } from '../../assets/enums'
 import { useAuthStore } from '../../stores/authStore'
 import { useGroupStore } from '../../stores/groupStore'
 import { useUserStore } from '../../stores/userStore'
@@ -15,6 +16,8 @@ import {
   formatMemberDisplay,
   formatUserDisplay
 } from '../../utils/user-display'
+import { DB_NODES } from '../../constants/db-nodes'
+import { useDebouncedRef } from '../../utils/useDebouncedRef'
 import {
   isMemberOfGroup,
   allMembersApproved,
@@ -41,9 +44,10 @@ import {
 
 export const Groups = () => {
   const showCreateGroup = ref(false)
-  const searchQuery = ref('')
+  const searchQuery = useDebouncedRef('', 300)
   const sortOrder = ref('') // '' | 'asc' | 'desc'
   const filterByUser = ref('')
+  const filterByCategory = ref('')
   const pinnedGroupIds = ref([])
 
   const openCreateGroup = () => {
@@ -65,7 +69,7 @@ export const Groups = () => {
   }
   const { read, updateData, removeData, dbRef, setData } = useFireBase()
 
-  const groups = ref([])
+  const groups = computed(() => groupStore.getGroups || [])
   const groupBalances = ref({})
   let groupsListener = null
 
@@ -95,6 +99,12 @@ export const Groups = () => {
       value: member.mobile
     }))
   )
+
+  // All categories for the filter dropdown
+  const allCategoryOptions = computed(() => [
+    { label: '🗂️ All', value: '' },
+    ...GROUP_CATEGORIES
+  ])
 
   // Filtered groups based on search query, user filter, and sort order
   const filteredGroups = computed(() => {
@@ -129,6 +139,10 @@ export const Groups = () => {
       result = result.filter((g) =>
         g.members?.some((m) => m.mobile === filterByUser.value)
       )
+    }
+
+    if (filterByCategory.value) {
+      result = result.filter((g) => g.category === filterByCategory.value)
     }
 
     if (sortOrder.value === 'asc') {
@@ -174,38 +188,60 @@ export const Groups = () => {
     if (!group) return
     const me = authStore.getActiveUser
     const myName = userStore.getUserByMobile(me)?.name || me
-    const newMembers = [...(group.members || []), { mobile: me, name: myName }]
+    const newMembers = [...(group.members || []), { mobile: me }]
     const newPending = (group.pendingMembers || []).filter(
       (m) => m.mobile !== me
     )
-    await updateData(
-      `groups/${groupId}`,
-      () => ({
-        members: newMembers,
-        pendingMembers: newPending.length ? newPending : null
-      }),
-      'You have joined the group!'
-    )
-    groupStore.addGroup({
+    let updatedGroup = {
       ...group,
       members: newMembers,
-      pendingMembers: newPending
-    })
+      pendingMembers: newPending.length ? newPending : null
+    }
+    // Notify the group creator
+    if (group.ownerMobile && group.ownerMobile !== me) {
+      updatedGroup = appendNotificationForUser(updatedGroup, group.ownerMobile, {
+        id: Date.now().toString() + Math.random(),
+        type: 'invitation-accepted',
+        message: `${myName} (${maskMobile(me)}) accepted your invitation to join "${group.name}"`,  
+        updatedBy: me,
+        timestamp: Date.now()
+      })
+    }
+    const payload = {
+      members: updatedGroup.members,
+      pendingMembers: updatedGroup.pendingMembers
+    }
+    if (updatedGroup.notifications) payload.notifications = updatedGroup.notifications
+    await updateData(`${DB_NODES.GROUPS}/${groupId}`, () => payload, 'You have joined the group!')
+    groupStore.addGroup(updatedGroup)
   }
 
   async function rejectInvitation(groupId) {
     const group = groups.value.find((g) => g.id === groupId)
     if (!group) return
     const me = authStore.getActiveUser
+    const myName = userStore.getUserByMobile(me)?.name || me
     const newPending = (group.pendingMembers || []).filter(
       (m) => m.mobile !== me
     )
-    await updateData(
-      `groups/${groupId}`,
-      () => ({ pendingMembers: newPending.length ? newPending : null }),
-      'Invitation declined.'
-    )
-    groupStore.addGroup({ ...group, pendingMembers: newPending })
+    let updatedGroup = {
+      ...group,
+      pendingMembers: newPending.length ? newPending : null
+    }
+    // Notify the group creator
+    if (group.ownerMobile && group.ownerMobile !== me) {
+      updatedGroup = appendNotificationForUser(updatedGroup, group.ownerMobile, {
+        id: Date.now().toString() + Math.random(),
+        type: 'invitation-declined',
+        message: `${myName} (${maskMobile(me)}) declined your invitation to join "${group.name}"`,  
+        updatedBy: me,
+        timestamp: Date.now()
+      })
+    }
+    const payload = { pendingMembers: updatedGroup.pendingMembers }
+    if (updatedGroup.notifications) payload.notifications = updatedGroup.notifications
+    await updateData(`${DB_NODES.GROUPS}/${groupId}`, () => payload, 'Invitation declined.')
+    groupStore.addGroup(updatedGroup)
   }
 
   const editDialogVisible = ref(false)
@@ -261,7 +297,7 @@ export const Groups = () => {
     // Fetch users — needed for group creation and member display
     // Only include verified users to prevent unverified accounts from being added to groups
     try {
-      const users = await read('users')
+      const users = await read(DB_NODES.USERS)
       if (users) {
         const list = Object.keys(users)
           .filter((k) => users[k].emailVerified === true) // Only verified users
@@ -277,15 +313,15 @@ export const Groups = () => {
     }
 
     // Set up real-time listener for groups
-    const groupsRef = dbRef('groups')
+    const groupsRef = dbRef(DB_NODES.GROUPS)
 
     groupsListener = onValue(
       groupsRef,
       (snapshot) => {
         if (snapshot.exists()) {
           const data = snapshot.val()
-          groups.value = Object.keys(data).map((k) => ({ id: k, ...data[k] }))
-          groupStore.setGroups(groups.value)
+          const groupList = Object.keys(data).map((k) => ({ id: k, ...data[k] }))
+          groupStore.setGroups(groupList)
 
           // Auto-select the user's group on first load if none is already active
           if (!groupStore.getActiveGroup) {
@@ -296,7 +332,6 @@ export const Groups = () => {
             if (myGroup) groupStore.setActiveGroup(myGroup.id)
           }
         } else {
-          groups.value = []
           groupStore.setGroups([])
         }
       },
@@ -309,7 +344,7 @@ export const Groups = () => {
   onUnmounted(() => {
     // Clean up the listener when component is unmounted
     if (groupsListener) {
-      const groupsRef = dbRef('groups')
+      const groupsRef = dbRef(DB_NODES.GROUPS)
       off(groupsRef, 'value', groupsListener)
     }
   })
@@ -333,7 +368,7 @@ export const Groups = () => {
       const currentMonth = new Date()
       const monthNode = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}`
       const paymentsByMonth =
-        (await read(`payments/${groupId}/${monthNode}`, false)) || {}
+        (await read(`${DB_NODES.SHARED_EXPENSES}/${groupId}/${monthNode}`, false)) || {}
 
       Object.values(paymentsByMonth || {}).forEach((payment) => {
         const amount = parseFloat(payment.amount) || 0
@@ -372,9 +407,9 @@ export const Groups = () => {
 
       // Shared loans
       const loansMonthNode =
-        (await read(`loans/${groupId}/${monthNode}`, false)) || null
+        (await read(`${DB_NODES.SHARED_LOANS}/${groupId}/${monthNode}`, false)) || null
       const loansSource =
-        loansMonthNode || (await read(`loans/${groupId}`, false)) || {} // fallback for legacy flat storage
+        loansMonthNode || (await read(`${DB_NODES.SHARED_LOANS}/${groupId}`, false)) || {} // fallback for legacy flat storage
 
       const isSameMonth = (dateStr) => {
         if (!dateStr) return false
@@ -427,13 +462,16 @@ export const Groups = () => {
       )
       if (!changed) return
 
-      await updateData(`groups/${groupId}`, () => record, '')
+      const remaining = record.notifications?.[mobile]
+      const notifPath = `${DB_NODES.GROUPS}/${groupId}/notifications/${mobile}`
 
-      const groupIndex = groups.value.findIndex((g) => g.id === groupId)
-      if (groupIndex !== -1) {
-        groups.value[groupIndex] = record
-        groupStore.updateGroup(record)
+      if (remaining && remaining.length) {
+        await setData(notifPath, remaining, '')
+      } else {
+        await removeData(notifPath)
       }
+
+      groupStore.updateGroup(record)
     } catch (err) {
       showError(err.message || err)
     }
@@ -444,9 +482,7 @@ export const Groups = () => {
       id: Date.now().toString() + Math.random(),
       type,
       message,
-      rejectedByName:
-        userStore.getUserByMobile(authStore.getActiveUser)?.name ||
-        authStore.getActiveUser,
+      rejectedBy: authStore.getActiveUser,
       timestamp: Date.now()
     }
 
@@ -524,8 +560,7 @@ export const Groups = () => {
     }
 
     const newMember = {
-      mobile: user.mobile,
-      name: user.name
+      mobile: user.mobile
     }
 
     await requestAddMember(addMemberGroupId.value, newMember)
@@ -541,7 +576,6 @@ export const Groups = () => {
       if (!group) return
 
       const mobile = authStore.getActiveUser
-      const userName = userStore.getUserByMobile(mobile)?.name || mobile
 
       // Initialize joinRequests array if it doesn't exist
       if (!group.joinRequests) {
@@ -551,18 +585,12 @@ export const Groups = () => {
       // Add request with empty approvals array
       group.joinRequests.push({
         mobile,
-        name: userName,
         approvals: [] // Initialize approvals for all members to vote
       })
 
-      await updateData(`groups/${groupId}`, () => group, 'Join request sent')
+      await updateData(`${DB_NODES.GROUPS}/${groupId}`, () => group, 'Join request sent')
 
-      // Update local state
-      const index = groups.value.findIndex((g) => g.id === groupId)
-      if (index !== -1) {
-        groups.value[index] = group
-        groupStore.updateGroup(group)
-      }
+      groupStore.updateGroup(group)
 
       showSuccess('Join request sent to group owner')
     } catch (err) {
@@ -583,14 +611,9 @@ export const Groups = () => {
         (r) => r.mobile !== mobile
       )
 
-      await updateData(`groups/${groupId}`, () => group, 'Request cancelled')
+      await updateData(`${DB_NODES.GROUPS}/${groupId}`, () => group, 'Request cancelled')
 
-      // Update local state
-      const index = groups.value.findIndex((g) => g.id === groupId)
-      if (index !== -1) {
-        groups.value[index] = group
-        groupStore.updateGroup(group)
-      }
+      groupStore.updateGroup(group)
 
       showSuccess('Join request cancelled')
     } catch (err) {
@@ -605,7 +628,6 @@ export const Groups = () => {
       if (!group) return
 
       const mobile = authStore.getActiveUser
-      const userName = userStore.getUserByMobile(mobile)?.name || mobile
 
       // Find the join request
       const request = group.joinRequests.find((r) => r.mobile === requestMobile)
@@ -617,16 +639,34 @@ export const Groups = () => {
       }
 
       // Add approval
-      request.approvals.push({ mobile, name: userName })
+      request.approvals.push({ mobile })
 
-      await updateData(`groups/${groupId}`, () => group, 'Approval recorded')
+      // Auto-add member if all existing members have now approved
+      if (allMembersApprovedJoinRequest(group, requestMobile)) {
+        if (!group.members.find((m) => m.mobile === requestMobile)) {
+          group.members.push({ mobile: requestMobile })
+        }
 
-      // Update local state
-      const index = groups.value.findIndex((g) => g.id === groupId)
-      if (index !== -1) {
-        groups.value[index] = group
+        const ownerExists = group.members.some((m) => m.mobile === group.ownerMobile)
+        if (!group.ownerMobile || !ownerExists) {
+          group.ownerMobile = requestMobile
+        }
+
+        group.joinRequests = (group.joinRequests || []).filter(
+          (r) => r.mobile !== requestMobile
+        )
+
+        await updateData(`${DB_NODES.GROUPS}/${groupId}`, () => group, 'Member added')
+
         groupStore.updateGroup(group)
+
+        showSuccess(`${userStore.getUserByMobile(requestMobile)?.name || requestMobile} has been added to the group`)
+        return
       }
+
+      await updateData(`${DB_NODES.GROUPS}/${groupId}`, () => group, 'Approval recorded')
+
+      groupStore.updateGroup(group)
 
       showSuccess('You have approved this join request')
     } catch (err) {
@@ -648,7 +688,7 @@ export const Groups = () => {
 
       // Add user to members
       if (!group.members.find((m) => m.mobile === request.mobile)) {
-        group.members.push({ mobile: request.mobile, name: request.name })
+        group.members.push({ mobile: request.mobile })
       }
 
       // If group has no owner or owner is not a member, set the new member as owner
@@ -664,16 +704,11 @@ export const Groups = () => {
         (r) => r.mobile !== request.mobile
       )
 
-      await updateData(`groups/${groupId}`, () => group, 'Member added')
+      await updateData(`${DB_NODES.GROUPS}/${groupId}`, () => group, 'Member added')
 
-      // Update local state
-      const index = groups.value.findIndex((g) => g.id === groupId)
-      if (index !== -1) {
-        groups.value[index] = group
-        groupStore.updateGroup(group)
-      }
+      groupStore.updateGroup(group)
 
-      showSuccess(`${request.name} has been added to the group`)
+      showSuccess(`${userStore.getUserByMobile(request.mobile)?.name || request.mobile} has been added to the group`)
     } catch (err) {
       showError(err.message || err)
     }
@@ -685,8 +720,7 @@ export const Groups = () => {
       const group = groups.value.find((g) => g.id === groupId)
       if (!group) return
 
-      const requestUser = group.joinRequests?.find((r) => r.mobile === mobile)
-      const requestUserName = requestUser?.name || mobile
+      const requestUserName = userStore.getUserByMobile(mobile)?.name || mobile
 
       // Remove from join requests
       group.joinRequests = (group.joinRequests || []).filter(
@@ -696,17 +730,21 @@ export const Groups = () => {
       // Create notification for members
       createNotification(
         group,
-        `Join request from ${requestUserName} was rejected`
+        `Join request from ${requestUserName} (${maskMobile(mobile)}) was rejected`
       )
 
-      await updateData(`groups/${groupId}`, () => group, 'Request rejected')
+      // Notify the requester
+      appendNotificationForUser(group, mobile, {
+        id: Date.now().toString() + Math.random(),
+        type: 'rejection',
+        message: `Your request to join "${group.name}" was rejected`,
+        rejectedBy: authStore.getActiveUser,
+        timestamp: Date.now()
+      })
 
-      // Update local state
-      const index = groups.value.findIndex((g) => g.id === groupId)
-      if (index !== -1) {
-        groups.value[index] = group
-        groupStore.updateGroup(group)
-      }
+      await updateData(`${DB_NODES.GROUPS}/${groupId}`, () => group, 'Request rejected')
+
+      groupStore.updateGroup(group)
 
       showSuccess('Join request rejected')
     } catch (err) {
@@ -727,9 +765,37 @@ export const Groups = () => {
     showSuccess(`Selected group: ${group.name}`)
   }
 
+  function removeGroupLocally(groupId) {
+    groupStore.removeGroup(groupId)
+
+    if (groupStore.getActiveGroup === groupId) {
+      groupStore.setActiveGroup(null)
+    }
+  }
+
   // Request group deletion (owner only)
   async function requestGroupDeletion(groupId) {
     try {
+      const group = groups.value.find((g) => g.id === groupId)
+      if (!group) return
+
+      if (group.members.length === 1) {
+        await ElMessageBox.confirm(
+          'You are the only member in this group. It will be deleted immediately without any approval step.',
+          'Delete Group',
+          {
+            confirmButtonText: 'Delete Group',
+            cancelButtonText: 'Cancel',
+            type: 'warning'
+          }
+        )
+
+        await removeData(`${DB_NODES.GROUPS}/${groupId}`)
+        removeGroupLocally(groupId)
+        showSuccess('Group deleted successfully')
+        return
+      }
+
       await ElMessageBox.confirm(
         'This will send a deletion request to all group members. The group can only be deleted after all members approve.',
         'Request Group Deletion',
@@ -740,9 +806,6 @@ export const Groups = () => {
         }
       )
 
-      const group = groups.value.find((g) => g.id === groupId)
-      if (!group) return
-
       // Initialize deletion request
       group.deleteRequest = {
         requested: true,
@@ -752,17 +815,12 @@ export const Groups = () => {
       }
 
       await updateData(
-        `groups/${groupId}`,
+        `${DB_NODES.GROUPS}/${groupId}`,
         () => group,
         'Deletion request sent'
       )
 
-      // Update local state
-      const index = groups.value.findIndex((g) => g.id === groupId)
-      if (index !== -1) {
-        groups.value[index] = group
-        groupStore.updateGroup(group)
-      }
+      groupStore.updateGroup(group)
 
       showSuccess('Deletion request sent to all members')
     } catch (err) {
@@ -779,7 +837,6 @@ export const Groups = () => {
       if (!group) return
 
       const mobile = authStore.getActiveUser
-      const userName = userStore.getUserByMobile(mobile)?.name || mobile
 
       // Add approval
       if (!group.deleteRequest.approvals) {
@@ -788,22 +845,24 @@ export const Groups = () => {
 
       group.deleteRequest.approvals.push({
         mobile,
-        name: userName,
         approvedAt: new Date().toISOString()
       })
 
+      if (allMembersApproved(group)) {
+        // All members approved — delete the group immediately
+        await removeData(`${DB_NODES.GROUPS}/${groupId}`)
+        removeGroupLocally(groupId)
+        showSuccess('All members approved. Group has been deleted.')
+        return
+      }
+
       await updateData(
-        `groups/${groupId}/deleteRequest`,
+        `${DB_NODES.GROUPS}/${groupId}/deleteRequest`,
         () => group.deleteRequest,
         ''
       )
 
-      // Update local state with new object to trigger reactivity
-      const index = groups.value.findIndex((g) => g.id === groupId)
-      if (index !== -1) {
-        groups.value[index] = { ...group }
-        groupStore.updateGroup({ ...group })
-      }
+      groupStore.updateGroup({ ...group })
 
       showSuccess('You have approved the deletion request')
     } catch (err) {
@@ -827,28 +886,26 @@ export const Groups = () => {
       const group = groups.value.find((g) => g.id === groupId)
       if (!group) return
 
+      const me = authStore.getActiveUser
+      const myName = userStore.getUserByMobile(me)?.name || me
+
       // Create notification for members
-      createNotification(group, `Deletion request was rejected`)
+      createNotification(group, `Group deletion request cancelled by ${myName} (${maskMobile(me)})`)
 
       // Remove deletion request from local object
       delete group.deleteRequest
 
       // Update notifications in database
       await updateData(
-        `groups/${groupId}/notifications`,
+        `${DB_NODES.GROUPS}/${groupId}/notifications`,
         () => group.notifications,
         ''
       )
 
       // Explicitly remove the deleteRequest from Firebase
-      await removeData(`groups/${groupId}/deleteRequest`)
+      await removeData(`${DB_NODES.GROUPS}/${groupId}/deleteRequest`)
 
-      // Update local state with new object to trigger reactivity
-      const index = groups.value.findIndex((g) => g.id === groupId)
-      if (index !== -1) {
-        groups.value[index] = { ...group }
-        groupStore.updateGroup({ ...group })
-      }
+      groupStore.updateGroup({ ...group })
 
       showSuccess('Deletion request has been rejected and cancelled')
     } catch (err) {
@@ -880,16 +937,8 @@ export const Groups = () => {
       )
 
       // Delete from Firebase
-      await removeData(`groups/${groupId}`)
-
-      // Update local state
-      groups.value = groups.value.filter((g) => g.id !== groupId)
-      groupStore.removeGroup(groupId)
-
-      if (groupStore.getActiveGroup === groupId) {
-        groupStore.setActiveGroup(null)
-      }
-
+      await removeData(`${DB_NODES.GROUPS}/${groupId}`)
+      removeGroupLocally(groupId)
       showSuccess('Group deleted successfully')
     } catch (err) {
       if (err !== 'cancel') {
@@ -959,19 +1008,18 @@ export const Groups = () => {
         }
 
         // Create notification for members
+        const changeParts = []
+        if (nameChanged)
+          changeParts.push(`Name: "${group.name}" → "${editForm.value.name}"`)
+        if (descriptionChanged)
+          changeParts.push(
+            `Description: "${group.description || '(empty)'}" → "${editForm.value.description || '(empty)'}"`,
+          )
         const notification = {
           id: Date.now().toString(),
           type: 'group_updated',
-          message:
-            nameChanged && descriptionChanged
-              ? `Group name changed to "${editForm.value.name}" and description updated`
-              : nameChanged
-                ? `Group name changed to "${editForm.value.name}"`
-                : `Group description updated`,
+          message: `Group updated — ${changeParts.join(' | ')}`,
           updatedBy: authStore.getActiveUser,
-          updatedByName:
-            userStore.getUserByMobile(authStore.getActiveUser)?.name ||
-            authStore.getActiveUser,
           timestamp: Date.now()
         }
 
@@ -990,12 +1038,11 @@ export const Groups = () => {
         })
 
         await updateData(
-          `groups/${editingGroupId.value}`,
+          `${DB_NODES.GROUPS}/${editingGroupId.value}`,
           () => updatedGroup,
           'Group updated'
         )
 
-        groups.value[groupIndex] = updatedGroup
         groupStore.updateGroup(updatedGroup)
         editDialogVisible.value = false
         showSuccess('Group updated and members notified')
@@ -1017,34 +1064,21 @@ export const Groups = () => {
         // Create edit request
         const editRequest = {
           requestedBy: authStore.getActiveUser,
-          requestedByName:
-            userStore.getUserByMobile(authStore.getActiveUser)?.name ||
-            authStore.getActiveUser,
           name: editForm.value.name,
-          newMembers: editForm.value.members.map((m) => ({
-            mobile: m,
-            name: userStore.getUserByMobile(m)?.name || m
-          })),
-          addedMembers: addedMembers.map((m) => ({
-            mobile: m,
-            name: userStore.getUserByMobile(m)?.name || m
-          })),
-          removedMembers: removedMembers.map((m) => ({
-            mobile: m,
-            name: userStore.getUserByMobile(m)?.name || m
-          })),
+          newMembers: editForm.value.members.map((m) => ({ mobile: m })),
+          addedMembers: addedMembers.map((m) => ({ mobile: m })),
+          removedMembers: removedMembers.map((m) => ({ mobile: m })),
           approvals: []
         }
 
         group.editRequest = editRequest
 
         await updateData(
-          `groups/${editingGroupId.value}`,
+          `${DB_NODES.GROUPS}/${editingGroupId.value}`,
           () => group,
           'Edit request sent'
         )
 
-        groups.value[groupIndex] = group
         groupStore.updateGroup(group)
         editDialogVisible.value = false
         showSuccess('Edit request sent to all members')
@@ -1056,12 +1090,11 @@ export const Groups = () => {
         }
 
         await updateData(
-          `groups/${editingGroupId.value}`,
+          `${DB_NODES.GROUPS}/${editingGroupId.value}`,
           () => updatedGroup,
           'Group name updated'
         )
 
-        groups.value[groupIndex] = updatedGroup
         groupStore.updateGroup(updatedGroup)
         editDialogVisible.value = false
         showSuccess('Group name updated successfully')
@@ -1084,7 +1117,6 @@ export const Groups = () => {
       if (!group || !hasEditRequest(group)) return
 
       const mobile = authStore.getActiveUser
-      const userName = userStore.getUserByMobile(mobile)?.name || mobile
 
       // Create new editRequest with added approval
       const currentApprovals = group.editRequest.approvals || []
@@ -1094,7 +1126,7 @@ export const Groups = () => {
         return showSuccess('You have already approved this request')
       }
 
-      const newApprovals = [...currentApprovals, { mobile, name: userName }]
+      const newApprovals = [...currentApprovals, { mobile }]
 
       const updatedEditRequest = {
         ...group.editRequest,
@@ -1118,11 +1150,11 @@ export const Groups = () => {
         // Remove editRequest from final group
         delete finalGroup.editRequest
 
-        await setData(`groups/${groupId}`, finalGroup, 'Edit applied')
+        await setData(`${DB_NODES.GROUPS}/${groupId}`, finalGroup, 'Edit applied')
         showSuccess('Edit changes applied successfully')
       } else {
         // Just save the approval
-        await setData(`groups/${groupId}/editRequest`, updatedEditRequest, '')
+        await setData(`${DB_NODES.GROUPS}/${groupId}/editRequest`, updatedEditRequest, '')
         showSuccess('Your approval has been recorded')
       }
     } catch (err) {
@@ -1145,29 +1177,32 @@ export const Groups = () => {
       const group = groups.value.find((g) => g.id === groupId)
       if (!group || !hasEditRequest(group)) return
 
+      const me = authStore.getActiveUser
+      const myName = userStore.getUserByMobile(me)?.name || me
+      const er = group.editRequest
+      const erParts = []
+      if (er.name && er.name !== group.name) erParts.push(`name → "${er.name}"`)
+      if ((er.addedMembers || []).length) erParts.push(`+${er.addedMembers.length} member${er.addedMembers.length > 1 ? 's' : ''}`)
+      if ((er.removedMembers || []).length) erParts.push(`-${er.removedMembers.length} member${er.removedMembers.length > 1 ? 's' : ''}`)
+      const erDetail = erParts.length ? ` [${erParts.join(' | ')}]` : ''
+
       // Create notification for members
-      createNotification(group, `Edit request was rejected`)
+      createNotification(group, `Group edit request cancelled by ${myName} (${maskMobile(me)})${erDetail}`)
 
       // Remove the edit request from local object
       delete group.editRequest
 
       // Update notifications in database first
       await updateData(
-        `groups/${groupId}/notifications`,
+        `${DB_NODES.GROUPS}/${groupId}/notifications`,
         () => group.notifications,
         ''
       )
 
       // Explicitly remove the editRequest from Firebase
-      await removeData(`groups/${groupId}/editRequest`)
+      await removeData(`${DB_NODES.GROUPS}/${groupId}/editRequest`)
 
-      // Force update local state
-      const groupIndex = groups.value.findIndex((g) => g.id === groupId)
-      if (groupIndex !== -1) {
-        // Create a new object to trigger reactivity
-        groups.value[groupIndex] = { ...group }
-        groupStore.updateGroup({ ...group })
-      }
+      groupStore.updateGroup({ ...group })
 
       showSuccess('Edit request rejected')
     } catch (err) {
@@ -1189,18 +1224,16 @@ export const Groups = () => {
       }
 
       const mobile = authStore.getActiveUser
-      const userName = userStore.getUserByMobile(mobile)?.name || mobile
 
       const addMemberRequest = {
         requestedBy: mobile,
-        requestedByName: userName,
         requestedAt: new Date().toISOString(),
         newMember: newMember,
-        approvals: [{ mobile, name: userName }]
+        approvals: [{ mobile }]
       }
 
       await setData(
-        `groups/${groupId}/addMemberRequest`,
+        `${DB_NODES.GROUPS}/${groupId}/addMemberRequest`,
         addMemberRequest,
         'Add member request sent to all members'
       )
@@ -1215,7 +1248,6 @@ export const Groups = () => {
       if (!group || !hasAddMemberRequest(group)) return
 
       const mobile = authStore.getActiveUser
-      const userName = userStore.getUserByMobile(mobile)?.name || mobile
 
       const currentApprovals = group.addMemberRequest.approvals || []
 
@@ -1225,10 +1257,10 @@ export const Groups = () => {
 
       const updatedRequest = {
         ...group.addMemberRequest,
-        approvals: [...currentApprovals, { mobile, name: userName }]
+        approvals: [...currentApprovals, { mobile }]
       }
 
-      await setData(`groups/${groupId}/addMemberRequest`, updatedRequest, '')
+      await setData(`${DB_NODES.GROUPS}/${groupId}/addMemberRequest`, updatedRequest, '')
 
       showSuccess('Your approval has been recorded')
     } catch (err) {
@@ -1255,7 +1287,7 @@ export const Groups = () => {
       delete updatedGroup.addMemberRequest
 
       await setData(
-        `groups/${groupId}`,
+        `${DB_NODES.GROUPS}/${groupId}`,
         updatedGroup,
         'New member added successfully'
       )
@@ -1276,7 +1308,7 @@ export const Groups = () => {
         }
       )
 
-      await removeData(`groups/${groupId}/addMemberRequest`)
+      await removeData(`${DB_NODES.GROUPS}/${groupId}/addMemberRequest`)
       showSuccess('Add member request rejected')
     } catch (err) {
       if (err !== 'cancel') {
@@ -1288,6 +1320,72 @@ export const Groups = () => {
   // ========== Leave Group Functions ==========
   async function requestLeaveGroup(groupId) {
     try {
+      const group = groups.value.find((g) => g.id === groupId)
+      if (!group) return
+
+      const mobile = authStore.getActiveUser
+      const isOwner = group.ownerMobile === mobile
+      const memberCount = group.members.length
+
+      if (memberCount === 1) {
+        await ElMessageBox.confirm(
+          'You are the only member in this group. Leaving will immediately delete the empty group without any approval step.',
+          'Leave Group',
+          {
+            confirmButtonText: 'Leave and Delete Group',
+            cancelButtonText: 'Cancel',
+            type: 'warning'
+          }
+        )
+
+        await removeData(`${DB_NODES.GROUPS}/${groupId}`)
+        removeGroupLocally(groupId)
+        showSuccess('You left the group and it was deleted automatically.')
+        return
+      }
+
+      // Owner-specific logic
+      if (isOwner && memberCount > 2) {
+        // Must transfer ownership first before leaving
+        await ElMessageBox.confirm(
+          'You are the group owner. You must transfer ownership to another member before leaving the group.',
+          'Transfer Ownership Required',
+          {
+            confirmButtonText: 'Transfer Ownership',
+            cancelButtonText: 'Cancel',
+            type: 'warning'
+          }
+        )
+        showTransferOwnershipDialog(groupId)
+        return
+      }
+
+      if (isOwner && memberCount === 2) {
+        const otherMember = group.members.find((m) => m.mobile !== mobile)
+        const otherName = otherMember ? (userStore.getUserByMobile(otherMember.mobile)?.name || otherMember.mobile) : 'the other member'
+
+        await ElMessageBox.confirm(
+          `You are the owner. If approved, ownership will be automatically transferred to ${otherName} when you leave.`,
+          'Leave Group',
+          {
+            confirmButtonText: 'Send Request',
+            cancelButtonText: 'Cancel',
+            type: 'warning'
+          }
+        )
+
+        if (!group.leaveRequests) group.leaveRequests = []
+        group.leaveRequests.push({ mobile, approvals: [] })
+
+        await updateData(`${DB_NODES.GROUPS}/${groupId}`, () => group, 'Leave request sent')
+
+        groupStore.updateGroup({ ...group })
+
+        showSuccess('Leave request sent for approval')
+        return
+      }
+
+      // Normal leave request flow for non-owners (or solo owner)
       await ElMessageBox.confirm(
         'This will send a leave request to all group members. You can only leave after all members approve.',
         'Request to Leave Group',
@@ -1298,32 +1396,18 @@ export const Groups = () => {
         }
       )
 
-      const group = groups.value.find((g) => g.id === groupId)
-      if (!group) return
-
-      const mobile = authStore.getActiveUser
-      const userName = userStore.getUserByMobile(mobile)?.name || mobile
-
-      // Initialize leaveRequests array if it doesn't exist
       if (!group.leaveRequests) {
         group.leaveRequests = []
       }
 
-      // Add leave request
       group.leaveRequests.push({
         mobile,
-        name: userName,
         approvals: []
       })
 
-      await updateData(`groups/${groupId}`, () => group, 'Leave request sent')
+      await updateData(`${DB_NODES.GROUPS}/${groupId}`, () => group, 'Leave request sent')
 
-      // Update local state
-      const index = groups.value.findIndex((g) => g.id === groupId)
-      if (index !== -1) {
-        groups.value[index] = group
-        groupStore.updateGroup(group)
-      }
+      groupStore.updateGroup(group)
 
       showSuccess('Leave request sent to all members')
     } catch (err) {
@@ -1339,7 +1423,6 @@ export const Groups = () => {
       if (!group) return
 
       const mobile = authStore.getActiveUser
-      const userName = userStore.getUserByMobile(mobile)?.name || mobile
 
       // Find leave request
       const leaveReq = group.leaveRequests.find((r) => r.mobile === leaveMobile)
@@ -1351,7 +1434,7 @@ export const Groups = () => {
       }
 
       // Add approval
-      leaveReq.approvals.push({ mobile, name: userName })
+      leaveReq.approvals.push({ mobile })
 
       // Check if all members approved
       const allApproved = group.members.every(
@@ -1361,6 +1444,14 @@ export const Groups = () => {
       )
 
       if (allApproved) {
+        // If the leaving member is the owner, auto-transfer ownership to another member
+        if (group.ownerMobile === leaveMobile) {
+          const newOwner = group.members.find((m) => m.mobile !== leaveMobile)
+          if (newOwner) {
+            group.ownerMobile = newOwner.mobile
+          }
+        }
+
         // Remove member from group
         group.members = group.members.filter((m) => m.mobile !== leaveMobile)
         // Remove leave request
@@ -1368,19 +1459,14 @@ export const Groups = () => {
           (r) => r.mobile !== leaveMobile
         )
 
-        await updateData(`groups/${groupId}`, () => group, 'Member left group')
-        showSuccess(`${leaveReq.name} has left the group`)
+        await updateData(`${DB_NODES.GROUPS}/${groupId}`, () => group, 'Member left group')
+        showSuccess(`${userStore.getUserByMobile(leaveMobile)?.name || leaveMobile} has left the group`)
       } else {
-        await updateData(`groups/${groupId}`, () => group, 'Approval recorded')
+        await updateData(`${DB_NODES.GROUPS}/${groupId}`, () => group, 'Approval recorded')
         showSuccess('You have approved the leave request')
       }
 
-      // Update local state
-      const index = groups.value.findIndex((g) => g.id === groupId)
-      if (index !== -1) {
-        groups.value[index] = group
-        groupStore.updateGroup(group)
-      }
+      groupStore.updateGroup(group)
     } catch (err) {
       showError(err.message || err)
     }
@@ -1401,10 +1487,7 @@ export const Groups = () => {
       const group = groups.value.find((g) => g.id === groupId)
       if (!group) return
 
-      const leaveReq = group.leaveRequests?.find(
-        (r) => r.mobile === leaveMobile
-      )
-      const leavingUserName = leaveReq?.name || leaveMobile
+      const leavingUserName = userStore.getUserByMobile(leaveMobile)?.name || leaveMobile
 
       // Remove leave request
       group.leaveRequests = (group.leaveRequests || []).filter(
@@ -1414,21 +1497,16 @@ export const Groups = () => {
       // Create notification for members
       createNotification(
         group,
-        `Leave request from ${leavingUserName} was rejected`
+        `Leave request from ${leavingUserName} (${maskMobile(leaveMobile)}) was rejected`
       )
 
       await updateData(
-        `groups/${groupId}`,
+        `${DB_NODES.GROUPS}/${groupId}`,
         () => group,
         'Leave request rejected'
       )
 
-      // Update local state
-      const index = groups.value.findIndex((g) => g.id === groupId)
-      if (index !== -1) {
-        groups.value[index] = group
-        groupStore.updateGroup(group)
-      }
+      groupStore.updateGroup(group)
 
       showSuccess('Leave request rejected')
     } catch (err) {
@@ -1474,19 +1552,12 @@ export const Groups = () => {
       }
 
       await updateData(
-        `groups/${transferOwnershipGroupId.value}`,
+        `${DB_NODES.GROUPS}/${transferOwnershipGroupId.value}`,
         () => group,
         'Transfer request sent'
       )
 
-      // Update local state
-      const index = groups.value.findIndex(
-        (g) => g.id === transferOwnershipGroupId.value
-      )
-      if (index !== -1) {
-        groups.value[index] = group
-        groupStore.updateGroup(group)
-      }
+      groupStore.updateGroup(group)
 
       transferDialogVisible.value = false
       showSuccess('Ownership transfer request sent to all members')
@@ -1503,14 +1574,13 @@ export const Groups = () => {
       if (!group) return
 
       const mobile = authStore.getActiveUser
-      const userName = userStore.getUserByMobile(mobile)?.name || mobile
 
       // Add approval
       if (!group.transferOwnershipRequest.approvals) {
         group.transferOwnershipRequest.approvals = []
       }
 
-      group.transferOwnershipRequest.approvals.push({ mobile, name: userName })
+      group.transferOwnershipRequest.approvals.push({ mobile })
 
       // Check if all members approved
       const allApproved = group.members.every((member) =>
@@ -1527,30 +1597,25 @@ export const Groups = () => {
 
         // Update owner in database
         await updateData(
-          `groups/${groupId}/ownerMobile`,
+          `${DB_NODES.GROUPS}/${groupId}/ownerMobile`,
           () => group.ownerMobile,
           ''
         )
 
         // Explicitly remove the transferOwnershipRequest from Firebase
-        await removeData(`groups/${groupId}/transferOwnershipRequest`)
+        await removeData(`${DB_NODES.GROUPS}/${groupId}/transferOwnershipRequest`)
 
         showSuccess('Ownership has been transferred successfully')
       } else {
         await updateData(
-          `groups/${groupId}/transferOwnershipRequest`,
+          `${DB_NODES.GROUPS}/${groupId}/transferOwnershipRequest`,
           () => group.transferOwnershipRequest,
           ''
         )
         showSuccess('You have approved the ownership transfer')
       }
 
-      // Update local state with new object to trigger reactivity
-      const index = groups.value.findIndex((g) => g.id === groupId)
-      if (index !== -1) {
-        groups.value[index] = { ...group }
-        groupStore.updateGroup({ ...group })
-      }
+      groupStore.updateGroup({ ...group })
     } catch (err) {
       showError(err.message || err)
     }
@@ -1571,14 +1636,13 @@ export const Groups = () => {
       const group = groups.value.find((g) => g.id === groupId)
       if (!group) return
 
-      const newOwnerName =
-        userStore.getUserByMobile(group.transferOwnershipRequest?.newOwner)
-          ?.name || group.transferOwnershipRequest?.newOwner
+      const newOwnerMobile = group.transferOwnershipRequest?.newOwner
+      const newOwnerName = userStore.getUserByMobile(newOwnerMobile)?.name || newOwnerMobile
 
       // Create notification for members
       createNotification(
         group,
-        `Ownership transfer request to ${newOwnerName} was rejected`
+        `Ownership transfer request to ${newOwnerName} (${maskMobile(newOwnerMobile)}) was rejected`
       )
 
       // Remove transfer request from local object
@@ -1586,20 +1650,15 @@ export const Groups = () => {
 
       // Update notifications in database
       await updateData(
-        `groups/${groupId}/notifications`,
+        `${DB_NODES.GROUPS}/${groupId}/notifications`,
         () => group.notifications,
         ''
       )
 
       // Explicitly remove the transferOwnershipRequest from Firebase
-      await removeData(`groups/${groupId}/transferOwnershipRequest`)
+      await removeData(`${DB_NODES.GROUPS}/${groupId}/transferOwnershipRequest`)
 
-      // Update local state with new object to trigger reactivity
-      const index = groups.value.findIndex((g) => g.id === groupId)
-      if (index !== -1) {
-        groups.value[index] = { ...group }
-        groupStore.updateGroup({ ...group })
-      }
+      groupStore.updateGroup({ ...group })
 
       showSuccess('Ownership transfer request rejected')
     } catch (err) {
@@ -1772,8 +1831,10 @@ export const Groups = () => {
     searchQuery,
     sortOrder,
     filterByUser,
+    filterByCategory,
     allGroupMembers,
     allGroupMemberOptions,
+    allCategoryOptions,
     filteredGroups,
     joinedGroups,
     otherGroups,
@@ -1923,19 +1984,13 @@ export const Groups = () => {
       },
       // OWNER DELETE ACTIONS
       {
-        label: `Delete Now (${getDeleteApprovals(group).length}/${group.members.length})`,
-        show: isOwner && hasDeleteRequest(group) && allMembersApproved(group),
-        type: 'danger',
-        onClick: () => deleteGroup(group.id)
-      },
-      {
         label: `Delete Pending (${getDeleteApprovals(group).length}/${group.members.length})`,
-        show: isOwner && hasDeleteRequest(group) && !allMembersApproved(group),
+        show: isOwner && hasDeleteRequest(group),
         disabled: true,
         type: ''
       },
       {
-        label: 'Request Delete',
+        label: group.members.length === 1 ? 'Delete Group' : 'Request Delete',
         show: isOwner && !hasDeleteRequest(group),
         type: 'danger',
         onClick: () => requestGroupDeletion(group.id)

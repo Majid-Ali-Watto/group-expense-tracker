@@ -5,6 +5,7 @@ import getCurrentMonth from '../../utils/getCurrentMonth'
 import getWhoAddedTransaction from '../../utils/whoAdded'
 import useFireBase from '../../api/firebase-apis'
 import { useReceiptUpload } from '../../utils/useReceiptUpload'
+import { DB_NODES } from '../../constants/db-nodes'
 
 export const ExpenseForm = (props, emit) => {
   const { saveData, updateData, deleteData } = useFireBase()
@@ -85,7 +86,7 @@ export const ExpenseForm = (props, emit) => {
 
         if (whatTask == 'Save') {
           saveData(
-            `expenses/${activeUser.value}/${getCurrentMonth()}`,
+            `${DB_NODES.PERSONAL_EXPENSES}/${activeUser.value}/${getCurrentMonth()}`,
             () => getExpenseData(receiptUrl, receiptMeta),
             expenseForm,
             'Expense added successfully!',
@@ -100,7 +101,7 @@ export const ExpenseForm = (props, emit) => {
           )
         } else if (whatTask == 'Update') {
           updateData(
-            `expenses/${activeUser.value}/${selectedMonth.value}/${props.row.id}`,
+            `${DB_NODES.PERSONAL_EXPENSES}/${activeUser.value}/${selectedMonth.value}/${props.row.id}`,
             () => getExpenseData(receiptUrl, receiptMeta),
             `Expense record with ID ${props.row.id} updated successfully`
           )
@@ -108,7 +109,7 @@ export const ExpenseForm = (props, emit) => {
         } else if (whatTask == 'Delete') {
           deleteExistingReceipts()
           deleteData(
-            `expenses/${activeUser.value}/${selectedMonth.value}/${props.row.id}`,
+            `${DB_NODES.PERSONAL_EXPENSES}/${activeUser.value}/${selectedMonth.value}/${props.row.id}`,
             `Expense record with ID ${props.row.id} deleted successfully`
           )
           emit('closeModal')

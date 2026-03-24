@@ -1,9 +1,10 @@
 import { get, ref as Ref, remove, update, push, set } from 'firebase/database'
-import { database } from '../firebase'
+import { database, auth } from '../firebase'
 import { startLoading, stopLoading } from '../utils/loading'
 import { showError, showSuccess } from '../utils/showAlerts'
 import { resetForm } from '../utils/reset-form'
 import getCurrentMonth, { dateToMonthNode } from '../utils/getCurrentMonth'
+import { DB_NODES } from '../constants/db-nodes'
 export default function useFireBase() {
   /**
    * The function `dbRef` returns a reference to a specific location in a database based on the provided
@@ -110,10 +111,10 @@ export default function useFireBase() {
     const data = getData()
     push(dbRef(url), data)
       .then(async () => {
-        if (url.includes('payments')) {
+        if (url.includes(DB_NODES.SHARED_EXPENSES)) {
           // payer may be mobile id; write a simplified expenses entry keyed by payer identifier
           const payerKey = data.payer || 'unknown'
-          const newUrl = `expenses/${payerKey}/${dateToMonthNode(data.date)}`
+          const newUrl = `${DB_NODES.PERSONAL_EXPENSES}/${payerKey}/${dateToMonthNode(data.date)}`
           await push(dbRef(newUrl), getNewData(data))
         }
         showSuccess(message)
@@ -147,7 +148,15 @@ export default function useFireBase() {
 
   async function readShallow(path) {
     const baseUrl = import.meta.env.VITE_DATABASE_URL
-    const res = await fetch(`${baseUrl}/${path}.json?shallow=true`)
+    let tokenParam = ''
+    try {
+      const currentUser = auth.currentUser
+      if (currentUser) {
+        const token = await currentUser.getIdToken()
+        tokenParam = `&auth=${token}`
+      }
+    } catch { /* proceed without token */ }
+    const res = await fetch(`${baseUrl}/${path}.json?shallow=true${tokenParam}`)
     if (!res.ok) return []
     const data = await res.json()
     return data ? Object.keys(data) : []

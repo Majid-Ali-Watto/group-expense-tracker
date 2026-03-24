@@ -34,31 +34,29 @@
       </GenericInputField>
     </div>
 
-    <!-- Sort & Filter controls -->
-    <div class="flex flex-wrap justify-between items-center gap-2 mb-4">
-      <el-button-group size="small">
-        <el-button
-          :type="sortOrder === '' ? 'primary' : ''"
-          @click="sortOrder = ''"
-          >Default</el-button
-        >
-        <el-button
-          :type="sortOrder === 'asc' ? 'primary' : ''"
-          @click="sortOrder = 'asc'"
-          >A→Z</el-button
-        >
-        <el-button
-          :type="sortOrder === 'desc' ? 'primary' : ''"
-          @click="sortOrder = 'desc'"
-          >Z→A</el-button
-        >
+    <!-- Sort & Filter controls — always one row -->
+    <div class="flex items-center gap-2 mb-4 min-w-0">
+      <el-button-group size="small" class="flex-shrink-0">
+        <el-button :type="sortOrder === '' ? 'primary' : ''" @click="sortOrder = ''">Default</el-button>
+        <el-button :type="sortOrder === 'asc' ? 'primary' : ''" @click="sortOrder = 'asc'">A→Z</el-button>
+        <el-button :type="sortOrder === 'desc' ? 'primary' : ''" @click="sortOrder = 'desc'">Z→A</el-button>
       </el-button-group>
+      <GenericDropDown
+        v-model="filterByCategory"
+        :options="allCategoryOptions"
+        placeholder="Category"
+        size="small"
+        select-class="w-full"
+        class="flex-1 min-w-0"
+        :wrap-form-item="false"
+      />
       <GenericDropDown
         v-model="filterByUser"
         :options="allGroupMemberOptions"
-        placeholder="Filter by member"
+        placeholder="Member"
         size="small"
-        select-class="w-[150px] max-w-[200px]"
+        select-class="w-full"
+        class="flex-1 min-w-0"
         :wrap-form-item="false"
       />
     </div>
@@ -91,6 +89,7 @@
                   userStore.getUserByMobile(group.ownerMobile)?.name ||
                   group.ownerMobile
                 }}
+                ({{ displayMobileForGroup(group.ownerMobile, group) }})
               </span>
             </div>
             <div
@@ -99,6 +98,9 @@
             >
               {{ group.description }}
             </div>
+            <el-tag v-if="group.category" size="small" type="info" effect="plain" class="!text-xs mt-1.5 !w-fit">
+              {{ group.category }}
+            </el-tag>
           </div>
           <div class="flex gap-2 flex-shrink-0">
             <el-button
@@ -192,6 +194,9 @@
               }}
               ({{ displayMobileForGroup(group.ownerMobile, group) }})
             </p>
+            <el-tag v-if="group.category" size="small" type="info" effect="plain" class="!text-xs mt-1.5 !w-fit">
+              {{ group.category }}
+            </el-tag>
           </div>
 
           <!-- Notifications for current user -->
@@ -227,7 +232,7 @@
           :get-join-requests="getJoinRequests"
           :approve-member-join-request="approveMemberJoinRequest"
           :reject-join-request="rejectJoinRequest"
-          :final-approve-join-request="finalApproveJoinRequest"
+
           :approve-group-deletion="approveGroupDeletion"
           :reject-group-deletion="rejectGroupDeletion"
           :approve-leave-request="approveLeaveRequest"
@@ -268,6 +273,9 @@
             }}
             ({{ displayMobileForGroup(group.ownerMobile, group) }})
           </p>
+          <el-tag v-if="group.category" size="small" type="info" effect="plain" class="!text-xs mb-2 !w-fit">
+            {{ group.category }}
+          </el-tag>
 
           <!-- Notifications for current user -->
           <group-notifications-for-current-user
@@ -295,7 +303,7 @@
           :get-join-requests="getJoinRequests"
           :approve-member-join-request="approveMemberJoinRequest"
           :reject-join-request="rejectJoinRequest"
-          :final-approve-join-request="finalApproveJoinRequest"
+
           :approve-group-deletion="approveGroupDeletion"
           :reject-group-deletion="rejectGroupDeletion"
           :approve-leave-request="approveLeaveRequest"
@@ -488,7 +496,9 @@ const {
   searchQuery,
   sortOrder,
   filterByUser,
+  filterByCategory,
   allGroupMemberOptions,
+  allCategoryOptions,
   joinedGroups,
   otherGroups,
   pendingInvitations,
@@ -517,7 +527,6 @@ const {
   // Join request
   getJoinRequests,
   approveMemberJoinRequest,
-  finalApproveJoinRequest,
   rejectJoinRequest,
 
   // Leave group actions

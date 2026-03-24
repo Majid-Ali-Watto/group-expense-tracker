@@ -242,12 +242,13 @@ import {
   ReceiptUploadField
 } from '../generic-components'
 import { LoanForm } from '../../scripts/shared-loans/loan-form'
+import { DB_NODES } from '../../constants/db-nodes'
 import AddNewTransactionButton from '../generic-components/AddNewTransactionButton.vue'
 
 const emit = defineEmits(['closeModal', 'closeForm'])
 const props = defineProps({
   row: Object,
-  dbRef: { type: String, default: 'loans' },
+  dbRef: { type: String, default: () => DB_NODES.SHARED_LOANS },
   isPersonal: { type: Boolean, default: false },
   showForm: { type: Boolean, default: false }
 })

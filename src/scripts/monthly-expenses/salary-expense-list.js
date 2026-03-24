@@ -5,6 +5,7 @@ import { useDataStore } from '../../stores/dataStore'
 import getCurrentMonth from '../../utils/getCurrentMonth'
 import { showError } from '../../utils/showAlerts'
 import useFireBase from '../../api/firebase-apis'
+import { DB_NODES } from '../../constants/db-nodes'
 
 export const SalaryExpenseList = () => {
   const formatAmount = inject('formatAmount')
@@ -27,7 +28,7 @@ export const SalaryExpenseList = () => {
 
   const fetchMonths = async () => {
     try {
-      months.value = await readShallow(`expenses/${activeUser.value}`)
+      months.value = await readShallow(`${DB_NODES.PERSONAL_EXPENSES}/${activeUser.value}`)
     } catch (error) {
       showError('Failed to load months. Please try again.')
       console.error(error)
@@ -36,7 +37,7 @@ export const SalaryExpenseList = () => {
 
   const fetchSalary = () => {
     const salaryRef = dbRef(
-      `salaries/${activeUser.value}/${selectedMonth.value}`
+      `${DB_NODES.SALARIES}/${activeUser.value}/${selectedMonth.value}`
     )
     if (salaryListener) off(salaryRef, 'value', salaryListener)
 
@@ -55,7 +56,7 @@ export const SalaryExpenseList = () => {
 
   const fetchExpenses = () => {
     const expensesRef = dbRef(
-      `expenses/${activeUser.value}/${selectedMonth.value}`
+      `${DB_NODES.PERSONAL_EXPENSES}/${activeUser.value}/${selectedMonth.value}`
     )
     if (expensesListener) off(expensesRef, 'value', expensesListener)
 
@@ -96,13 +97,13 @@ export const SalaryExpenseList = () => {
   onUnmounted(() => {
     if (salaryListener)
       off(
-        dbRef(`salaries/${activeUser.value}/${selectedMonth.value}`),
+        dbRef(`${DB_NODES.SALARIES}/${activeUser.value}/${selectedMonth.value}`),
         'value',
         salaryListener
       )
     if (expensesListener)
       off(
-        dbRef(`expenses/${activeUser.value}/${selectedMonth.value}`),
+        dbRef(`${DB_NODES.PERSONAL_EXPENSES}/${activeUser.value}/${selectedMonth.value}`),
         'value',
         expensesListener
       )

@@ -142,6 +142,7 @@
         v-if="activeGroup"
         @click="requestSettlement"
         type="success"
+        size="small"
       >
         Request Settlement
       </GenericButton>

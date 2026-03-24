@@ -4,6 +4,7 @@ import { useGroupStore } from '../../stores/groupStore'
 import useFireBase from '../../api/firebase-apis'
 import { ElMessageBox } from 'element-plus'
 import { showError, showSuccess } from '../../utils/showAlerts'
+import { DB_NODES } from '../../constants/db-nodes'
 
 export const NetPosition = () => {
   const authStore = useAuthStore()
@@ -35,12 +36,12 @@ export const NetPosition = () => {
 
     try {
       // Get all months for this group's payments
-      const months = await readShallow(`payments/${groupId}`)
+      const months = await readShallow(`${DB_NODES.SHARED_EXPENSES}/${groupId}`)
       if (!months || months.length === 0) return result
 
       // Fetch payments for each month
       for (const month of months) {
-        const payments = await read(`payments/${groupId}/${month}`, false)
+        const payments = await read(`${DB_NODES.SHARED_EXPENSES}/${groupId}/${month}`, false)
         if (!payments) continue
 
         Object.values(payments).forEach((payment) => {
@@ -109,12 +110,12 @@ export const NetPosition = () => {
 
     try {
       // Get all months for this group's loans
-      const months = await readShallow(`loans/${groupId}`)
+      const months = await readShallow(`${DB_NODES.SHARED_LOANS}/${groupId}`)
       if (!months || months.length === 0) return result
 
       // Fetch loans for each month
       for (const month of months) {
-        const loans = await read(`loans/${groupId}/${month}`, false)
+        const loans = await read(`${DB_NODES.SHARED_LOANS}/${groupId}/${month}`, false)
         if (!loans) continue
 
         Object.values(loans).forEach((loan) => {
@@ -155,12 +156,12 @@ export const NetPosition = () => {
 
     try {
       // Get all months for personal loans
-      const months = await readShallow(`personal-loans/${userMobile}`)
+      const months = await readShallow(`${DB_NODES.PERSONAL_LOANS}/${userMobile}`)
       if (!months || months.length === 0) return result
 
       // Fetch loans for each month
       for (const month of months) {
-        const loans = await read(`personal-loans/${userMobile}/${month}`, false)
+        const loans = await read(`${DB_NODES.PERSONAL_LOANS}/${userMobile}/${month}`, false)
         if (!loans) continue
 
         Object.values(loans).forEach((loan) => {

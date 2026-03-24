@@ -31,6 +31,14 @@
           multiple
           required
         />
+        <GenericDropDown
+          v-model="groupForm.category"
+          label="Category"
+          label-position="top"
+          :options="categoryOptions"
+          placeholder="Select a category (optional)"
+          size="small"
+        />
         <div class="flex flex-row justify-end gap-2">
           <slot name="clear"></slot>
           <el-button type="primary" size="small" @click="createGroup"
@@ -47,12 +55,14 @@ import { groupRules } from '../../assets/validation-rules'
 import { GroupsCreate } from '../../scripts/groups/groups-create'
 import { GenericDropDown } from '../generic-components'
 import GenericInputField from '../generic-components/GenericInputField.vue'
+import { GROUP_CATEGORIES } from '../../assets/enums'
 
 const emit = defineEmits(['groupCreated'])
 const props = defineProps({
   preselectedMember: { type: String, default: null }
 })
 
+const categoryOptions = GROUP_CATEGORIES
 const { groupForm, groupFormRef, usersOptions, createGroup } = GroupsCreate(
   emit,
   props

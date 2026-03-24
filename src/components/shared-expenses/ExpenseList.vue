@@ -242,6 +242,7 @@ import Summary from './Summary.vue'
 import Table from '../shared/Table.vue'
 import GenericDropDown from '../generic-components/GenericDropDown.vue'
 import { ExpenseList } from '../../scripts/shared-expenses/expense-list'
+import { DB_NODES } from '../../constants/db-nodes'
 const NotificationsForCurrentUser = defineAsyncComponent(
   () => import('../generic-components/NotificationsForCurrentUser.vue')
 )
@@ -252,7 +253,7 @@ const ShowPaymentDetails = defineAsyncComponent(
 const props = defineProps({
   payments: Array,
   isHistory: { type: Boolean, default: false },
-  dbRef: { type: String, default: 'payments' }
+  dbRef: { type: String, default: () => DB_NODES.SHARED_EXPENSES }
 })
 
 const {

@@ -3,6 +3,7 @@ import { useUsersOptions } from '../../utils/useUsersOptions'
 import getWhoAddedTransaction from '../../utils/whoAdded'
 import useFireBase from '../../api/firebase-apis'
 import { useAuthStore } from '../../stores/authStore'
+import { DB_NODES } from '../../constants/db-nodes'
 import { useGroupStore } from '../../stores/groupStore'
 import { useUserStore } from '../../stores/userStore'
 import { showError } from '../../utils/showAlerts'
@@ -352,7 +353,7 @@ export const LoanForm = (props, emit) => {
               if (expenseCopy) {
                 const mockFormRef = { value: { resetFields: () => {} } }
                 saveData(
-                  `expenses/${activeUser.value}/${getCurrentMonth()}`,
+                  `${DB_NODES.PERSONAL_EXPENSES}/${activeUser.value}/${getCurrentMonth()}`,
                   () => expenseCopy,
                   mockFormRef,
                   'Expense copy added to Personal Expenses.',

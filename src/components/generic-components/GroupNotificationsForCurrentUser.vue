@@ -7,8 +7,8 @@
     >
       <div class="text-xs text-blue-800">
         <span class="font-medium">{{ notif.message }}</span>
-        <span class="text-gray-600 ml-2"
-          >(by {{ notif.updatedByName || notif.rejectedByName }})</span
+        <span v-if="notif.updatedBy || notif.rejectedBy" class="text-gray-600 ml-2"
+          >(by {{ formatActor(notif.updatedBy || notif.rejectedBy) }})</span
         >
       </div>
       <el-button
@@ -23,8 +23,18 @@
 </template>
 <script setup>
 import { getUserNotifications } from '../../helpers/users'
+import { useUserStore } from '../../stores/userStore'
+import { useAuthStore } from '../../stores/authStore'
+import { formatUserDisplay } from '../../utils/user-display'
 
-defineProps({
+const userStore = useUserStore()
+const authStore = useAuthStore()
+const storeProxy = {
+  get getActiveUser() { return authStore.getActiveUser },
+  getUserByMobile: (m) => userStore.getUserByMobile(m)
+}
+
+const props = defineProps({
   group: {
     type: Object,
     required: true
@@ -34,4 +44,7 @@ defineProps({
     required: true
   }
 })
+
+const formatActor = (mobile) =>
+  formatUserDisplay(storeProxy, mobile, { group: props.group })
 </script>

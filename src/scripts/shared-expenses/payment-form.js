@@ -7,6 +7,7 @@ import { useGroupStore } from '../../stores/groupStore'
 import { useUserStore } from '../../stores/userStore'
 import useFireBase from '../../api/firebase-apis'
 import { buildRequestMeta } from '../../utils/buildRequestMeta'
+import { DB_NODES } from '../../constants/db-nodes'
 import { useReceiptUpload } from '../../utils/useReceiptUpload'
 
 export const PaymentForm = (props, emit) => {
@@ -211,7 +212,7 @@ export const PaymentForm = (props, emit) => {
 
         if (whatTask == 'Save') {
           saveData(
-            `payments/${groupId}/${monthYear}`,
+            `${DB_NODES.SHARED_EXPENSES}/${groupId}/${monthYear}`,
             () => getPaymentData(receiptUrls, receiptMeta),
             transactionForm,
             'Transaction successfully saved.',
@@ -238,13 +239,13 @@ export const PaymentForm = (props, emit) => {
           )
         } else if (whatTask == 'Update') {
           createUpdateRequest(
-            `payments/${groupId}/${monthYear}/${props.row.id}`,
+            `${DB_NODES.SHARED_EXPENSES}/${groupId}/${monthYear}/${props.row.id}`,
             receiptUrls,
             receiptMeta
           )
         } else if (whatTask == 'Delete') {
           createDeleteRequest(
-            `payments/${groupId}/${monthYear}/${props.row.id}`
+            `${DB_NODES.SHARED_EXPENSES}/${groupId}/${monthYear}/${props.row.id}`
           )
         }
       }

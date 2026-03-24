@@ -2,6 +2,7 @@ import { onMounted, ref } from 'vue'
 import { ElMessageBox } from 'element-plus'
 import useFireBase from '../../api/firebase-apis'
 import { useAuthStore } from '../../stores/authStore'
+import { DB_NODES } from '../../constants/db-nodes'
 import { useGroupStore } from '../../stores/groupStore'
 import { showError, showSuccess } from '../../utils/showAlerts'
 import { encryptForSession, encryptForStore } from '../../utils/sessionCrypto'
@@ -91,7 +92,7 @@ export const Login = () => {
 
   async function findUserByEmail(email) {
     try {
-      const usersSnapshot = await read('users')
+      const usersSnapshot = await read(DB_NODES.USERS)
       if (!usersSnapshot) return null
 
       // Find user with matching email
@@ -178,7 +179,7 @@ export const Login = () => {
       }
 
       // Check if mobile already exists in database
-      const existingUserByMobile = await read(`users/${mobileValue}`)
+      const existingUserByMobile = await read(`${DB_NODES.USERS}/${mobileValue}`)
       if (existingUserByMobile) {
         return showError('An account with this mobile number already exists')
       }
@@ -208,10 +209,11 @@ export const Login = () => {
         name: normalizedName,
         mobile: mobileValue,
         email: emailValue,
+        uid: userCredential.user.uid,
         emailVerified: false // Will be set to true on first successful login
       }
 
-      await updateData(`users/${mobileValue}`, () => userData, '')
+      await updateData(`${DB_NODES.USERS}/${mobileValue}`, () => userData, '')
 
       // Handle remember me
       if (rememberMe) {
@@ -307,16 +309,17 @@ export const Login = () => {
         )
       }
 
-      // Mark user as verified in database (since they passed email verification check)
-      if (!user.emailVerified) {
+      // Always sync uid and emailVerified on login (backfills existing users without uid)
+      if (!user.emailVerified || !user.uid) {
         const verifiedUserData = {
           name: user.name,
           email: user.email,
           mobile: user.mobile,
+          uid: userCredential.user.uid,
           emailVerified: true,
           ...(user.addedBy ? { addedBy: user.addedBy } : {})
         }
-        await updateData(`users/${user.mobile}`, () => verifiedUserData, '')
+        await updateData(`${DB_NODES.USERS}/${user.mobile}`, () => verifiedUserData, '')
       }
 
       // Hide resend verification option on successful login

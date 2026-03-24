@@ -4,6 +4,7 @@ import { useGroupStore } from '../../stores/groupStore'
 import { useUserStore } from '../../stores/userStore'
 import useFireBase from '../../api/firebase-apis'
 import { showError } from '../../utils/showAlerts'
+import { DB_NODES } from '../../constants/db-nodes'
 import { formatUserDisplay } from '../../utils/user-display'
 
 export const GroupsCreate = (emit, props) => {
@@ -18,7 +19,7 @@ export const GroupsCreate = (emit, props) => {
   }
   const { updateData } = useFireBase()
 
-  const groupForm = ref({ name: '', description: '', members: [] })
+  const groupForm = ref({ name: '', description: '', members: [], category: '' })
   const groupFormRef = ref(null)
 
   const usersOptions = computed(() =>
@@ -96,29 +97,28 @@ export const GroupsCreate = (emit, props) => {
       id,
       name: groupForm.value.name,
       description: groupForm.value.description || '',
+      category: groupForm.value.category || '',
       ownerMobile: authStore.getActiveUser,
       // Only the creator joins immediately; all others receive an invitation
       members: [
         {
-          mobile: creatorMobile,
-          name: userStore.getUserByMobile(creatorMobile)?.name || creatorMobile
+          mobile: creatorMobile
         }
       ],
       pendingMembers: allSelected
         .filter((m) => m !== creatorMobile)
         .map((m) => ({
-          mobile: m,
-          name: userStore.getUserByMobile(m)?.name || m
+          mobile: m
         }))
     }
     try {
       await updateData(
-        `groups/${id}`,
+        `${DB_NODES.GROUPS}/${id}`,
         () => payload,
         'Group created — invitations sent to selected members'
       )
       groupStore.addGroup(payload)
-      groupForm.value = { name: '', description: '', members: [] }
+      groupForm.value = { name: '', description: '', members: [], category: '' }
       if (emit) emit('groupCreated')
     } catch (err) {
       showError(err)

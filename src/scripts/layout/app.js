@@ -4,6 +4,7 @@ import { useTabStore } from '../../stores/tabStore'
 import { useGroupStore } from '../../stores/groupStore'
 import { useUserStore } from '../../stores/userStore'
 import useFireBase from '../../api/firebase-apis'
+import { DB_NODES } from '../../constants/db-nodes'
 import { tabs as allTabs } from '../../assets/data'
 import { Tabs } from '../../assets/enums'
 import { getActiveTab } from '../../utils/active-tab'
@@ -71,7 +72,7 @@ export const App = () => {
       if (!firebaseUser || !firebaseUser.emailVerified || loggedIn.value) return
 
       try {
-        const usersData = await read('users', false)
+        const usersData = await read(DB_NODES.USERS, false)
         if (!usersData) return
 
         const entry = Object.entries(usersData).find(
@@ -197,7 +198,7 @@ export const App = () => {
     // Verify user exists in database
     // Note: loginCode is only in Firebase Auth, not in database
     try {
-      const user = await read(`users/${mobile}`, loading)
+      const user = await read(`${DB_NODES.USERS}/${mobile}`, loading)
       return !!user
     } catch {
       return false

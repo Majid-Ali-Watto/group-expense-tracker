@@ -6,6 +6,7 @@ import { useUserStore } from '../../stores/userStore'
 import { useDataStore } from '../../stores/dataStore'
 import useFireBase from '../../api/firebase-apis'
 import { appendNotificationForUser } from '../../utils/recordNotifications'
+import { DB_NODES } from '../../constants/db-nodes'
 import { useApprovalRequests } from '../../utils/useApprovalRequests'
 import { formatUserDisplay } from '../../utils/user-display'
 import {
@@ -79,7 +80,7 @@ export const Loans = () => {
   const fetchMonths = async () => {
     const groupId = groupStore.getActiveGroup || 'global'
     try {
-      months.value = await readShallow(`loans/${groupId}`)
+      months.value = await readShallow(`${DB_NODES.SHARED_LOANS}/${groupId}`)
       if (months.value.length) selectedMonth.value = getCurrentMonth()
     } catch {
       showError('Failed to load months. Please try again.')
@@ -89,7 +90,7 @@ export const Loans = () => {
 
   const fetchLoans = () => {
     const groupId = groupStore.getActiveGroup || 'global'
-    const loansRef = dbRef(`loans/${groupId}/${selectedMonth.value}`)
+    const loansRef = dbRef(`${DB_NODES.SHARED_LOANS}/${groupId}/${selectedMonth.value}`)
     if (loansListener && currentLoansRef)
       off(currentLoansRef, 'value', loansListener)
     currentLoansRef = loansRef
@@ -228,7 +229,7 @@ export const Loans = () => {
       description: loan.description
     }),
     buildItemPath: ({ groupId, monthYear, itemId }) =>
-      `loans/${groupId}/${monthYear}/${itemId}`,
+      `${DB_NODES.SHARED_LOANS}/${groupId}/${monthYear}/${itemId}`,
     cleanupDeletedReceipts: (loan) => {
       const deletedMeta = loan?.receiptMeta
       if (!deletedMeta) return

@@ -4,6 +4,7 @@ import { set, update, onValue, off } from 'firebase/database'
 import getCurrentMonth from '../../utils/getCurrentMonth'
 import useFireBase from '../../api/firebase-apis'
 import { useAuthStore } from '../../stores/authStore'
+import { DB_NODES } from '../../constants/db-nodes'
 import { useDataStore } from '../../stores/dataStore'
 import { showError, showSuccess } from '../../utils/showAlerts'
 
@@ -49,7 +50,7 @@ export const SalaryForm = () => {
 
     try {
       const monthRef = dbRef(
-        `salaries/${authStore.activeUser}/${selectedMonth.value}`
+        `${DB_NODES.SALARIES}/${authStore.activeUser}/${selectedMonth.value}`
       )
       await set(monthRef, {
         salary: form.value.salary,
@@ -79,10 +80,10 @@ export const SalaryForm = () => {
       )
 
       const monthRef = dbRef(
-        `salaries/${authStore.activeUser}/${selectedMonth.value}`
+        `${DB_NODES.SALARIES}/${authStore.activeUser}/${selectedMonth.value}`
       )
       const data = await read(
-        `salaries/${authStore.activeUser}/${selectedMonth.value}`
+        `${DB_NODES.SALARIES}/${authStore.activeUser}/${selectedMonth.value}`
       )
 
       if (data) {
@@ -102,7 +103,7 @@ export const SalaryForm = () => {
 
   const listenForSalaryChanges = () => {
     const monthRef = dbRef(
-      `salaries/${authStore.activeUser}/${selectedMonth.value}`
+      `${DB_NODES.SALARIES}/${authStore.activeUser}/${selectedMonth.value}`
     )
 
     salaryListener = onValue(monthRef, (snapshot) => {
@@ -150,7 +151,7 @@ export const SalaryForm = () => {
   onUnmounted(() => {
     if (salaryListener) {
       const monthRef = dbRef(
-        `salaries/${authStore.activeUser}/${getCurrentMonth()}`
+        `${DB_NODES.SALARIES}/${authStore.activeUser}/${getCurrentMonth()}`
       )
       off(monthRef, 'value', salaryListener)
     }

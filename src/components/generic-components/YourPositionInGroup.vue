@@ -3,8 +3,8 @@
     <div class="flex items-center justify-between mb-2">
       <span class="text-xs font-semibold position-title">Your Position</span>
       <el-tag size="small" type="info">{{
-        userStore.getUserByMobile(authStore.getActiveUser)?.name ||
-        authStore.getActiveUser
+        (userStore.getUserByMobile(authStore.getActiveUser)?.name || authStore.getActiveUser) +
+        ' (' + authStore.getActiveUser + ')'
       }}</el-tag>
     </div>
     <div v-if="balance.loading" class="text-xs position-text">

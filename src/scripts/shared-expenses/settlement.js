@@ -5,6 +5,7 @@ import { useUserStore } from '../../stores/userStore'
 import useFireBase from '../../api/firebase-apis'
 import { showError, showSuccess } from '../../utils/showAlerts'
 import { ElMessageBox } from 'element-plus'
+import { DB_NODES } from '../../constants/db-nodes'
 
 export const Settlement = (props) => {
   const { updateData, deleteData, setData } = useFireBase()
@@ -87,20 +88,18 @@ export const Settlement = (props) => {
       }
 
       const mobile = authStore.getActiveUser
-      const userName = userStore.getUserByMobile(mobile)?.name || mobile
 
       const newSettlementRequest = {
         requested: true,
         requestedBy: mobile,
-        requestedByName: userName,
         requestedAt: new Date().toISOString(),
         month: props.selectedMonth,
-        approvals: [{ mobile, name: userName }]
+        approvals: [{ mobile }]
       }
 
       const groupId = activeGroup.value
       await setData(
-        `groups/${groupId}/settlementRequest`,
+        `${DB_NODES.GROUPS}/${groupId}/settlementRequest`,
         newSettlementRequest,
         'Settlement request sent successfully'
       )
@@ -115,17 +114,16 @@ export const Settlement = (props) => {
       if (!hasSettlementRequest.value) return
 
       const mobile = authStore.getActiveUser
-      const userName = userStore.getUserByMobile(mobile)?.name || mobile
 
       const updatedRequest = { ...settlementRequest.value }
       if (!updatedRequest.approvals) {
         updatedRequest.approvals = []
       }
 
-      updatedRequest.approvals.push({ mobile, name: userName })
+      updatedRequest.approvals.push({ mobile })
 
       const groupId = activeGroup.value
-      await setData(`groups/${groupId}/settlementRequest`, updatedRequest, '')
+      await setData(`${DB_NODES.GROUPS}/${groupId}/settlementRequest`, updatedRequest, '')
 
       showSuccess('You have approved the settlement request')
     } catch (error) {
@@ -150,7 +148,7 @@ export const Settlement = (props) => {
 
       const groupId = activeGroup.value
       const { removeData } = useFireBase()
-      await removeData(`groups/${groupId}/settlementRequest`)
+      await removeData(`${DB_NODES.GROUPS}/${groupId}/settlementRequest`)
 
       showSuccess('Settlement request rejected')
     } catch (error) {
@@ -190,16 +188,16 @@ export const Settlement = (props) => {
           : `${groupId}/${props.selectedMonth}`
 
       updateData(
-        `payments-backup/${monthPath}`,
+        `${DB_NODES.SHARED_EXPENSES_BACKUP}/${monthPath}`,
         getData,
         'Expenses added to Backup successfully!'
       )
-      deleteData(`payments/${monthPath}`, props.selectedMonth + ' data deleted')
+      deleteData(`${DB_NODES.SHARED_EXPENSES}/${monthPath}`, props.selectedMonth + ' data deleted')
 
       // Remove settlement request if exists
       if (activeGroup.value && hasSettlementRequest.value) {
         const { removeData } = useFireBase()
-        await removeData(`groups/${activeGroup.value}/settlementRequest`)
+        await removeData(`${DB_NODES.GROUPS}/${activeGroup.value}/settlementRequest`)
       }
     } catch (error) {
       if (error != 'cancel') showError(error)

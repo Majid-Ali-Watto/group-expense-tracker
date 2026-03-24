@@ -2,6 +2,7 @@ import { ref, computed, onMounted, onUnmounted, inject, watch } from 'vue'
 import { onValue, off } from '../../firebase'
 import useFireBase from '../../api/firebase-apis'
 import { useAuthStore } from '../../stores/authStore'
+import { DB_NODES } from '../../constants/db-nodes'
 import { useUserStore } from '../../stores/userStore'
 import { useDataStore } from '../../stores/dataStore'
 import getCurrentMonth from '../../utils/getCurrentMonth'
@@ -40,7 +41,7 @@ export const PersonalLoans = () => {
 
   const fetchMonths = async () => {
     try {
-      const keys = await readShallow(`personal-loans/${activeUser.value}`)
+      const keys = await readShallow(`${DB_NODES.PERSONAL_LOANS}/${activeUser.value}`)
       months.value = keys.sort((a, b) => b.localeCompare(a))
 
       if (months.value.length && selectedMonth.value === 'All') {
@@ -56,7 +57,7 @@ export const PersonalLoans = () => {
   }
 
   const fetchLoans = () => {
-    const basePath = `personal-loans/${activeUser.value}`
+    const basePath = `${DB_NODES.PERSONAL_LOANS}/${activeUser.value}`
 
     if (loansListener && currentLoansRef) {
       off(currentLoansRef, 'value', loansListener)

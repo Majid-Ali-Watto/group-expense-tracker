@@ -18,14 +18,14 @@
               <span v-if="item.type === 'delete'">
                 Delete request by
                 <strong>
-                  {{ item.request.requestedByName }} ({{
+                  {{ userStore.getUserByMobile(item.request.requestedBy)?.name || item.request.requestedBy }} ({{
                     displayMobile(item.request.requestedBy)
                   }})
                 </strong>
               </span>
               <span v-else>
                 Rename to "<strong>{{ item.request.newName }}</strong
-                >" — by {{ item.request.requestedByName }} ({{
+                >" — by {{ userStore.getUserByMobile(item.request.requestedBy)?.name || item.request.requestedBy }} ({{
                   displayMobile(item.request.requestedBy)
                 }})
               </span>
@@ -296,9 +296,11 @@ import { defineAsyncComponent } from 'vue'
 import { loginRules as rules } from '../../assets/validation-rules'
 import { Users } from '../../scripts/users/users'
 import GenericInputField from '../generic-components/GenericInputField.vue'
+import { useUserStore } from '../../stores/userStore'
 const GroupsCreate = defineAsyncComponent(
   () => import('../groups/GroupsCreate.vue')
 )
+const userStore = useUserStore()
 
 const {
   searchQuery,

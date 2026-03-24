@@ -29,9 +29,10 @@
             </p>
             <p
               v-overflow-popup="{ title: 'User Name' }"
-              class="text-base font-bold text-gray-800 truncate"
+              class="truncate"
             >
-              {{ displayName }}
+              <span class="text-base font-bold text-gray-800">{{ displayName }}</span>
+              <span class="ml-1 text-xs font-medium text-gray-500">({{ authStore.getActiveUser }})</span>
             </p>
           </div>
         </div>
@@ -84,9 +85,10 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import GenericDropDown from './GenericDropDown.vue'
 import { useGroupStore } from '../../stores/groupStore'
+import { useAuthStore } from '../../stores/authStore'
 import { showSuccess } from '../../utils/showAlerts'
 import { isMemberOfGroup } from '../../helpers/users'
 
@@ -95,6 +97,7 @@ defineProps({
 })
 
 const groupStore = useGroupStore()
+const authStore = useAuthStore()
 
 const joinedGroups = computed(() =>
   groupStore.getGroups.filter((g) => isMemberOfGroup(g))
@@ -104,10 +107,18 @@ const selectedGroupId = ref(groupStore.getActiveGroup)
 
 watch(
   () => groupStore.getActiveGroup,
-  (newId) => {
-    selectedGroupId.value = newId
-  }
+  (newId) => { selectedGroupId.value = newId }
 )
+
+// Re-sync when groups finish loading from Firebase so El-Select
+// can resolve the label from the now-available options list.
+// Reset to null first to force el-select to re-match value → label.
+watch(joinedGroups, async () => {
+  const id = groupStore.getActiveGroup
+  selectedGroupId.value = null
+  await nextTick()
+  selectedGroupId.value = id
+})
 
 function handleSelectGroup(id) {
   const group = groupStore.getGroupById(id)

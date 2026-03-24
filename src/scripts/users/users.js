@@ -2,11 +2,13 @@ import { ref, computed, onMounted } from 'vue'
 import { ElMessageBox } from 'element-plus'
 import useFireBase from '../../api/firebase-apis'
 import { useAuthStore } from '../../stores/authStore'
+import { DB_NODES } from '../../constants/db-nodes'
 import { useGroupStore } from '../../stores/groupStore'
 import { useUserStore } from '../../stores/userStore'
 import { showError } from '../../utils/showAlerts'
 import { maskMobile } from '../../utils/maskMobile'
 import { auth, deleteUser } from '../../firebase'
+import { useDebouncedRef } from '../../utils/useDebouncedRef'
 
 export const Users = () => {
   const authStore = useAuthStore()
@@ -21,7 +23,7 @@ export const Users = () => {
   const groups = computed(() => groupStore.getGroups || [])
   const activeUser = computed(() => authStore.getActiveUser)
 
-  const searchQuery = ref('')
+  const searchQuery = useDebouncedRef('', 300)
   const sortOrder = ref('') // '' | 'asc' | 'desc'
   const sharedGroupsOnly = ref(false)
 
@@ -85,7 +87,7 @@ export const Users = () => {
   // Load full user data (app.js only loads minimal fields)
   // Only show verified users to prevent unverified accounts from being added to groups
   onMounted(async () => {
-    const rawUsers = await read('users')
+    const rawUsers = await read(DB_NODES.USERS)
     if (!rawUsers) return
     Object.keys(rawUsers).forEach((mobile) => {
       const u = rawUsers[mobile]
@@ -157,7 +159,7 @@ export const Users = () => {
       return showError('Name can only contain alphabets and single spaces')
     }
 
-    const user = await read(`users/${mobile}`)
+    const user = await read(`${DB_NODES.USERS}/${mobile}`)
     if (!user) return showError('User not found')
     if (user.deleteRequest)
       return showError('A delete request is pending for this user')
@@ -165,13 +167,12 @@ export const Users = () => {
       return showError('An update request is already pending for this user')
 
     const me = activeUser.value
-    const myName = userStore.getUserByMobile(me)?.name
     const requiredApprovals = getGroupOwnerMobiles(mobile)
 
     if (requiredApprovals.length === 0) {
       const updated = { ...user, name: newName }
       await updateData(
-        `users/${mobile}`,
+        `${DB_NODES.USERS}/${mobile}`,
         () => updated,
         'User updated successfully'
       )
@@ -179,13 +180,12 @@ export const Users = () => {
     } else {
       const updateRequest = {
         requestedBy: me,
-        requestedByName: myName,
         newName,
         requiredApprovals,
         approvals: []
       }
       await updateData(
-        `users/${mobile}`,
+        `${DB_NODES.USERS}/${mobile}`,
         () => ({ updateRequest }),
         'Update request sent to group owners for approval'
       )
@@ -215,7 +215,7 @@ export const Users = () => {
         }
       )
 
-      const user = await read(`users/${mobile}`)
+      const user = await read(`${DB_NODES.USERS}/${mobile}`)
       if (!user) return showError('User not found')
       if (user.deleteRequest)
         return showError('A delete request is already pending for this user')
@@ -225,11 +225,10 @@ export const Users = () => {
         )
 
       const me = activeUser.value
-      const myName = userStore.getUserByMobile(me)?.name
 
       if (ownerMobiles.length === 0) {
         // Delete from Realtime Database
-        await deleteData(`users/${mobile}`, `User ${name} deleted`)
+        await deleteData(`${DB_NODES.USERS}/${mobile}`, `User ${name} deleted`)
         userStore.setUsers(
           [...userStore.getUsers].filter((u) => u.mobile !== mobile)
         )
@@ -257,12 +256,11 @@ export const Users = () => {
       } else {
         const deleteRequest = {
           requestedBy: me,
-          requestedByName: myName,
           requiredApprovals: ownerMobiles,
           approvals: []
         }
         await updateData(
-          `users/${mobile}`,
+          `${DB_NODES.USERS}/${mobile}`,
           () => ({ deleteRequest }),
           'Delete request sent to group owners for approval'
         )
@@ -279,8 +277,7 @@ export const Users = () => {
 
   async function approveRequest(userMobile, type) {
     const me = activeUser.value
-    const myName = userStore.getUserByMobile(me)?.name
-    const user = await read(`users/${userMobile}`)
+    const user = await read(`${DB_NODES.USERS}/${userMobile}`)
     if (!user) return showError('User not found')
 
     const request = type === 'delete' ? user.deleteRequest : user.updateRequest
@@ -288,7 +285,7 @@ export const Users = () => {
 
     const newApprovals = [
       ...(request.approvals || []),
-      { mobile: me, name: myName }
+      { mobile: me }
     ]
     const allApproved = request.requiredApprovals.every((r) =>
       newApprovals.some((a) => a.mobile === r)
@@ -296,7 +293,7 @@ export const Users = () => {
 
     if (type === 'delete' && allApproved) {
       // Delete from Realtime Database
-      await deleteData(`users/${userMobile}`, `User ${user.name} deleted`)
+      await deleteData(`${DB_NODES.USERS}/${userMobile}`, `User ${user.name} deleted`)
       userStore.setUsers(
         [...userStore.getUsers].filter((u) => u.mobile !== userMobile)
       )
@@ -324,7 +321,7 @@ export const Users = () => {
     } else if (type === 'update' && allApproved) {
       const updated = { ...user, name: request.newName, updateRequest: null }
       await updateData(
-        `users/${userMobile}`,
+        `${DB_NODES.USERS}/${userMobile}`,
         () => updated,
         `User name updated to "${request.newName}"`
       )
@@ -337,7 +334,7 @@ export const Users = () => {
       const field = type === 'delete' ? 'deleteRequest' : 'updateRequest'
       const updatedRequest = { ...request, approvals: newApprovals }
       await updateData(
-        `users/${userMobile}`,
+        `${DB_NODES.USERS}/${userMobile}`,
         () => ({ [field]: updatedRequest }),
         'Approval recorded'
       )
@@ -360,12 +357,12 @@ export const Users = () => {
         }
       )
 
-      const user = await read(`users/${userMobile}`)
+      const user = await read(`${DB_NODES.USERS}/${userMobile}`)
       if (!user) return showError('User not found')
 
       const field = type === 'delete' ? 'deleteRequest' : 'updateRequest'
       await updateData(
-        `users/${userMobile}`,
+        `${DB_NODES.USERS}/${userMobile}`,
         () => ({ [field]: null }),
         `${type === 'delete' ? 'Delete' : 'Update'} request rejected`
       )

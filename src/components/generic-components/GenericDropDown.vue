@@ -9,6 +9,7 @@
       :disabled="disabled"
       :multiple="multiple"
       :size="size"
+      :allow-create="allowCreate"
       :collapse-tags="collapseTags"
       :collapse-tags-tooltip="collapseTagsTooltip"
       popper-class="gdd-popper"
@@ -93,6 +94,10 @@ const props = defineProps({
   formItemClass: {
     type: String,
     default: 'w-full'
+  },
+  allowCreate: {
+    type: Boolean,
+    default: false
   },
   collapseTags: {
     type: Boolean,

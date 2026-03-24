@@ -6,8 +6,7 @@ import {
   onUnmounted,
   reactive,
   ref,
-  watch,
-  nextTick
+  watch
 } from 'vue'
 import { useAuthStore } from '../../stores/authStore'
 import { useTabStore } from '../../stores/tabStore'
@@ -21,8 +20,10 @@ import { formatUserDisplay } from '../../utils/user-display'
 import { buildRequestMeta } from '../../utils/buildRequestMeta'
 import { startLoading, stopLoading } from '../../utils/loading'
 import { showSuccess, showError } from '../../utils/showAlerts'
-import { ref as firebaseRef, set } from 'firebase/database'
+import { ref as firebaseRef, update as updateDb } from 'firebase/database'
 import { database } from '../../firebase'
+import { DB_NODES } from '../../constants/db-nodes'
+import { useDebouncedRef } from '../../utils/useDebouncedRef'
 
 export const Table = (props) => {
   const clickTimeout = ref(null)
@@ -70,7 +71,7 @@ export const Table = (props) => {
     if (activeTab.value === Tabs.PERSONAL_LOANS) {
       return {
         ...base,
-        dbRef: 'personal-loans',
+        dbRef: DB_NODES.PERSONAL_LOANS,
         isPersonal: true,
         showForm: true
       }
@@ -93,54 +94,52 @@ export const Table = (props) => {
 
   const formatAmount = inject('formatAmount')
 
+  function waitForComponentRef(timeoutMs = 5000) {
+    if (childRef.value?.componentRef) return Promise.resolve(childRef.value.componentRef)
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        stop()
+        reject(new Error('Form is not ready. Please try again.'))
+      }, timeoutMs)
+      const stop = watch(
+        () => childRef.value?.componentRef,
+        (val) => {
+          if (val) {
+            clearTimeout(timer)
+            stop()
+            resolve(val)
+          }
+        },
+        { immediate: true }
+      )
+    })
+  }
+
   async function update() {
-    await nextTick()
-
-    // Wait for component to be fully mounted with retries
-    let retries = 0
-    while (!childRef.value?.componentRef && retries < 10) {
-      await new Promise((resolve) => setTimeout(resolve, 50))
-      retries++
+    try {
+      const ref = await waitForComponentRef()
+      ref.validateForm('Update')
+    } catch (e) {
+      ElMessage.error(e.message)
     }
-
-    if (!childRef.value?.componentRef) {
-      ElMessage.error('Form is not ready. Please try again.')
-      return
-    }
-    childRef.value.componentRef.validateForm('Update')
   }
 
   async function remove() {
-    await nextTick()
-
-    // Wait for component to be fully mounted with retries
-    let retries = 0
-    while (!childRef.value?.componentRef && retries < 10) {
-      await new Promise((resolve) => setTimeout(resolve, 50))
-      retries++
+    try {
+      const ref = await waitForComponentRef()
+      ref.validateForm('Delete')
+    } catch (e) {
+      ElMessage.error(e.message)
     }
-
-    if (!childRef.value?.componentRef) {
-      ElMessage.error('Form is not ready. Please try again.')
-      return
-    }
-    childRef.value.componentRef.validateForm('Delete')
   }
 
   async function duplicate() {
-    await nextTick()
-
-    let retries = 0
-    while (!childRef.value?.componentRef && retries < 10) {
-      await new Promise((resolve) => setTimeout(resolve, 50))
-      retries++
+    try {
+      const ref = await waitForComponentRef()
+      ref.validateForm('Save')
+    } catch (e) {
+      ElMessage.error(e.message)
     }
-
-    if (!childRef.value?.componentRef) {
-      ElMessage.error('Form is not ready. Please try again.')
-      return
-    }
-    childRef.value.componentRef.validateForm('Save')
   }
 
   function updateScreenWidth() {
@@ -228,7 +227,10 @@ export const Table = (props) => {
   }
 
   const handleDoubleClick = (row) => {
-    const addedBy = row?.whoAdded || 'N/A'
+    const whoAdded = row?.whoAdded
+    const addedBy = whoAdded
+      ? formatUserDisplay(storeProxy, whoAdded, { group: activeGroupObj.value })
+      : 'N/A'
     const when = row?.whenAdded || 'N/A'
 
     ElMessage({
@@ -678,37 +680,33 @@ export const Table = (props) => {
       const month = props.reportMonth
       const user = authStore.getActiveUser
       const tab = activeTab.value
+      const updates = {}
+      const deleteRequestMeta = isShared ? buildRequestMeta(storeProxy) : null
 
       for (const row of eligible) {
         const key = props.keys[row._origIndex]
 
         if (tab === Tabs.SHARED_EXPENSES) {
-          await set(
-            firebaseRef(
-              database,
-              `payments/${groupId}/${month}/${key}/deleteRequest`
-            ),
-            buildRequestMeta(storeProxy)
-          )
+          updates[
+            `${DB_NODES.SHARED_EXPENSES}/${groupId}/${month}/${key}/deleteRequest`
+          ] = deleteRequestMeta
         } else if (tab === Tabs.SHARED_LOANS) {
-          await set(
-            firebaseRef(
-              database,
-              `loans/${groupId}/${month}/${key}/deleteRequest`
-            ),
-            buildRequestMeta(storeProxy)
-          )
+          updates[
+            `${DB_NODES.SHARED_LOANS}/${groupId}/${month}/${key}/deleteRequest`
+          ] = deleteRequestMeta
         } else if (tab === Tabs.PERSONAL_LOANS) {
-          const path = key.includes('/')
-            ? `personal-loans/${user}/${key}`
-            : `personal-loans/${user}/${month}/${key}`
-          await remove(firebaseRef(database, path))
+          updates[
+            key.includes('/')
+            ? `${DB_NODES.PERSONAL_LOANS}/${user}/${key}`
+            : `${DB_NODES.PERSONAL_LOANS}/${user}/${month}/${key}`
+          ] = null
         } else if (tab === Tabs.PERSONAL_EXPENSES) {
-          await remove(
-            firebaseRef(database, `expenses/${user}/${month}/${key}`)
-          )
+          updates[`${DB_NODES.PERSONAL_EXPENSES}/${user}/${month}/${key}`] =
+            null
         }
       }
+
+      await updateDb(firebaseRef(database), updates)
 
       clearSelection()
       if (isShared) {
@@ -842,7 +840,7 @@ export const Table = (props) => {
   })
 
   // --- Filter & Sort ---
-  const filterText = ref('')
+  const filterText = useDebouncedRef('', 300)
   const sortKey = ref(null)
   const sortOrder = ref('asc')
 

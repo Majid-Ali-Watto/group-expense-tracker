@@ -1,8 +1,9 @@
 <!-- eslint-disable vue/multi-word-component-names -->
 <template>
   <el-header
-    class="kharchafy-header flex items-center justify-between shadow-md fixed top-0 left-0 w-full z-50 !bg-green-600 !text-white transition-all duration-300"
+    class="kharchafy-header flex flex-col shadow-md fixed top-0 left-0 w-full z-50 !bg-green-600 !text-white transition-all duration-300"
   >
+    <div class="flex items-center justify-between w-full h-20">
     <div class="flex flex-col items-start gap-0">
       <span
         class="text-xl sm:text-2xl md:text-3xl font-extrabold text-white tracking-wide drop-shadow-sm"
@@ -202,6 +203,23 @@
         </button>
         <template #dropdown>
           <el-dropdown-menu class="mobile-dropdown-menu">
+            <!-- Navigation tabs — only when logged in and tabs exist -->
+            <template v-if="loggedIn && tabs.length">
+              <div class="mobile-menu-section-label">Navigation</div>
+              <el-dropdown-item
+                v-for="tab in tabs"
+                :key="tab"
+                @click="$emit('tab-change', tab)"
+              >
+                <div class="flex items-center gap-3" :class="{ 'is-active-tab': tab === activeTab }">
+                  <svg class="w-5 h-5 menu-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                  </svg>
+                  <span>{{ tab }}</span>
+                </div>
+              </el-dropdown-item>
+              <div class="mobile-menu-divider" />
+            </template>
             <!-- Help — always visible -->
             <el-dropdown-item @click="showHelp = true">
               <div class="flex items-center gap-3">
@@ -278,6 +296,8 @@
         </template>
       </el-dropdown>
     </div>
+    </div>
+
   </el-header>
 
   <!-- Help Dialog — rendered outside el-header so it can overlay correctly -->
@@ -302,13 +322,15 @@ const HelpDialog = defineAsyncComponent(
 
 const props = defineProps({
   loggedIn: { type: Boolean, default: false },
+  tabs: { type: Array, default: () => [] },
+  activeTab: { type: String, default: '' },
   isDarkTheme: { type: Boolean, default: false },
   toggleTheme: { type: Function, default: () => {} },
   notifications: { type: Array, default: () => [] },
   notificationCount: { type: Number, default: 0 }
 })
 
-const emit = defineEmits(['click-log', 'show-net-position', 'navigate-to-tab'])
+const emit = defineEmits(['click-log', 'show-net-position', 'navigate-to-tab', 'tab-change'])
 
 const {
   notifVisible,
@@ -328,8 +350,58 @@ const {
   --el-header-height: 80px;
 }
 
-/* Since the header is fixed, remember to add padding-top to your 
-   main content container (like el-main) so it doesn't hide behind the header! */
+/* Navigation section label in hamburger menu */
+.mobile-menu-section-label {
+  padding: 8px 20px 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #9ca3af;
+}
+
+.mobile-menu-divider {
+  height: 1px;
+  background: #e5e7eb;
+  margin: 4px 12px 4px;
+}
+
+:deep(.is-active-tab) {
+  color: var(--el-color-primary);
+  font-weight: 600;
+}
+
+:deep(.is-active-tab svg.menu-icon) {
+  stroke: var(--el-color-primary);
+}
+
+/* Style the parent li when inner div is active */
+:deep(.el-dropdown-menu__item:has(.is-active-tab)) {
+  background-color: var(--el-color-primary-light-9);
+  border-left: 3px solid var(--el-color-primary);
+  padding-left: 17px;
+}
+
+:root.dark-theme .mobile-menu-section-label {
+  color: #6b7280;
+}
+
+:root.dark-theme .mobile-menu-divider {
+  background: #4b5563;
+}
+
+:root.dark-theme :deep(.is-active-tab) {
+  color: #93c5fd;
+}
+
+:root.dark-theme :deep(.is-active-tab svg.menu-icon) {
+  stroke: #93c5fd;
+}
+
+:root.dark-theme :deep(.el-dropdown-menu__item:has(.is-active-tab)) {
+  background-color: #1e3a5f;
+  border-left-color: #93c5fd;
+}
 
 .hamburger-btn {
   display: flex;
@@ -423,7 +495,19 @@ const {
 }
 
 :root.dark-theme :deep(.mobile-dropdown-menu .el-dropdown-menu__item) {
-  color: #e5e7eb;
+  color: #e5e7eb !important;
+}
+
+:root.dark-theme :deep(.mobile-dropdown-menu .el-dropdown-menu__item span) {
+  color: #e5e7eb !important;
+}
+
+:root.dark-theme :deep(.mobile-dropdown-menu .el-dropdown-menu__item svg) {
+  stroke: #e5e7eb;
+}
+
+:root.dark-theme :deep(.mobile-dropdown-menu .el-dropdown-menu__item .el-icon) {
+  color: #e5e7eb !important;
 }
 
 :root.dark-theme
@@ -612,5 +696,60 @@ const {
 
 :root.dark-theme .notif-arrow {
   color: #6b7280;
+}
+</style>
+
+<!-- Global (non-scoped) styles for teleported dropdown dark mode -->
+<style>
+:root.dark-theme .mobile-dropdown-menu {
+  background-color: #374151 !important;
+  border-color: #4b5563 !important;
+}
+
+:root.dark-theme .mobile-dropdown-menu .el-dropdown-menu__item {
+  color: #e5e7eb !important;
+}
+
+:root.dark-theme .mobile-dropdown-menu .el-dropdown-menu__item span {
+  color: #e5e7eb !important;
+}
+
+:root.dark-theme .mobile-dropdown-menu .el-dropdown-menu__item svg {
+  stroke: #e5e7eb;
+}
+
+:root.dark-theme .mobile-dropdown-menu .el-dropdown-menu__item .el-icon {
+  color: #e5e7eb !important;
+}
+
+:root.dark-theme .mobile-dropdown-menu .el-dropdown-menu__item:not(.is-disabled):hover {
+  background-color: #4b5563 !important;
+  color: #93c5fd !important;
+}
+
+:root.dark-theme .mobile-dropdown-menu .el-dropdown-menu__item:not(.is-disabled):hover svg {
+  stroke: #93c5fd;
+}
+
+:root.dark-theme .mobile-dropdown-menu .el-dropdown-menu__item:not(.is-disabled):hover .el-icon {
+  color: #93c5fd !important;
+}
+
+:root.dark-theme .mobile-dropdown-menu .el-dropdown-menu__item.is-divided {
+  border-top-color: #4b5563 !important;
+}
+
+:root.dark-theme .mobile-dropdown-menu .is-active-tab {
+  color: #93c5fd !important;
+  font-weight: 600;
+}
+
+:root.dark-theme .mobile-dropdown-menu .is-active-tab svg {
+  stroke: #93c5fd !important;
+}
+
+:root.dark-theme .mobile-dropdown-menu .el-dropdown-menu__item:has(.is-active-tab) {
+  background-color: #1e3a5f !important;
+  border-left-color: #93c5fd !important;
 }
 </style>
