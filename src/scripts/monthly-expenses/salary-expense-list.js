@@ -35,7 +35,9 @@ export const SalaryExpenseList = () => {
   const fetchMonths = async () => {
     monthsLoaded.value = false
     try {
-      months.value = await readShallow(`${DB_NODES.PERSONAL_EXPENSES}/${activeUser.value}`)
+      months.value = await readShallow(
+        `${DB_NODES.PERSONAL_EXPENSES}/${activeUser.value}`
+      )
     } catch (error) {
       showError('Failed to load months. Please try again.')
       console.error(error)
@@ -113,13 +115,17 @@ export const SalaryExpenseList = () => {
     if (loadingTimeout) clearTimeout(loadingTimeout)
     if (salaryListener)
       off(
-        dbRef(`${DB_NODES.SALARIES}/${activeUser.value}/${selectedMonth.value}`),
+        dbRef(
+          `${DB_NODES.SALARIES}/${activeUser.value}/${selectedMonth.value}`
+        ),
         'value',
         salaryListener
       )
     if (expensesListener)
       off(
-        dbRef(`${DB_NODES.PERSONAL_EXPENSES}/${activeUser.value}/${selectedMonth.value}`),
+        dbRef(
+          `${DB_NODES.PERSONAL_EXPENSES}/${activeUser.value}/${selectedMonth.value}`
+        ),
         'value',
         expensesListener
       )

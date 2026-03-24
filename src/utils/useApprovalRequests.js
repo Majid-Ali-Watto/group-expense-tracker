@@ -30,10 +30,14 @@ export function useApprovalRequests({
     }
     const parts = []
     if (changes.amount !== undefined) parts.push(`Amount: ${changes.amount}`)
-    if (changes.description !== undefined) parts.push(`Description: "${changes.description}"`)
-    if (changes.payer !== undefined) parts.push(`Payer: ${resolveUser(changes.payer)}`)
-    if (changes.giver !== undefined) parts.push(`Giver: ${resolveUser(changes.giver)}`)
-    if (changes.receiver !== undefined) parts.push(`Receiver: ${resolveUser(changes.receiver)}`)
+    if (changes.description !== undefined)
+      parts.push(`Description: "${changes.description}"`)
+    if (changes.payer !== undefined)
+      parts.push(`Payer: ${resolveUser(changes.payer)}`)
+    if (changes.giver !== undefined)
+      parts.push(`Giver: ${resolveUser(changes.giver)}`)
+    if (changes.receiver !== undefined)
+      parts.push(`Receiver: ${resolveUser(changes.receiver)}`)
     if (changes.date !== undefined) parts.push(`Date: ${changes.date}`)
     return parts.length ? ` [${parts.join(' | ')}]` : ''
   }
@@ -172,7 +176,8 @@ export function useApprovalRequests({
 
     await deleteData(`${itemPath}/${request.type}Request`, '')
 
-    const changesSummary = request.type === 'update' ? summarizeChanges(request.changes) : ''
+    const changesSummary =
+      request.type === 'update' ? summarizeChanges(request.changes) : ''
     const notification = {
       id: Date.now().toString() + Math.random(),
       type: 'approved',
@@ -277,7 +282,8 @@ export function useApprovalRequests({
       monthYear: request.monthYear,
       itemId
     })
-    const changesSummary = request.type === 'update' ? summarizeChanges(request.changes) : ''
+    const changesSummary =
+      request.type === 'update' ? summarizeChanges(request.changes) : ''
     const notification = {
       id: Date.now().toString() + Math.random(),
       type: 'rejected',

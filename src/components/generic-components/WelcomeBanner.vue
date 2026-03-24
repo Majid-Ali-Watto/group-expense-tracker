@@ -27,12 +27,13 @@
             <p class="text-xs sm:text-sm text-gray-500 font-medium mb-0.5">
               Welcome back
             </p>
-            <p
-              v-overflow-popup="{ title: 'User Name' }"
-              class="truncate"
-            >
-              <span class="text-base font-bold text-gray-800">{{ displayName }}</span>
-              <span class="ml-1 text-xs font-medium text-gray-500">({{ authStore.getActiveUser }})</span>
+            <p v-overflow-popup="{ title: 'User Name' }" class="truncate">
+              <span class="text-base font-bold text-gray-800">{{
+                displayName
+              }}</span>
+              <span class="ml-1 text-xs font-medium text-gray-500"
+                >({{ authStore.getActiveUser }})</span
+              >
             </p>
           </div>
         </div>
@@ -107,7 +108,9 @@ const selectedGroupId = ref(groupStore.getActiveGroup)
 
 watch(
   () => groupStore.getActiveGroup,
-  (newId) => { selectedGroupId.value = newId }
+  (newId) => {
+    selectedGroupId.value = newId
+  }
 )
 
 // Re-sync when groups finish loading from Firebase so El-Select

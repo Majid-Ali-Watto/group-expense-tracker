@@ -95,7 +95,8 @@ export const Table = (props) => {
   const formatAmount = inject('formatAmount')
 
   function waitForComponentRef(timeoutMs = 5000) {
-    if (childRef.value?.componentRef) return Promise.resolve(childRef.value.componentRef)
+    if (childRef.value?.componentRef)
+      return Promise.resolve(childRef.value.componentRef)
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
         stop()
@@ -697,8 +698,8 @@ export const Table = (props) => {
         } else if (tab === Tabs.PERSONAL_LOANS) {
           updates[
             key.includes('/')
-            ? `${DB_NODES.PERSONAL_LOANS}/${user}/${key}`
-            : `${DB_NODES.PERSONAL_LOANS}/${user}/${month}/${key}`
+              ? `${DB_NODES.PERSONAL_LOANS}/${user}/${key}`
+              : `${DB_NODES.PERSONAL_LOANS}/${user}/${month}/${key}`
           ] = null
         } else if (tab === Tabs.PERSONAL_EXPENSES) {
           updates[`${DB_NODES.PERSONAL_EXPENSES}/${user}/${month}/${key}`] =

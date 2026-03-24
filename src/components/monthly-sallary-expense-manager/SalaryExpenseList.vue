@@ -2,69 +2,69 @@
   <div class="w-full" ref="content">
     <LoadingSkeleton v-if="isContentLoading" mode="page" />
     <template v-else>
-    <!-- Stats bar -->
-    <div class="sel-stats">
-      <div class="sel-stat">
-        <span class="sel-stat-label">Total Spent</span>
-        <span
-          v-overflow-popup="{ title: 'Total Spent' }"
-          class="sel-stat-value sel-danger"
-          >{{ formatAmount(totalSpent) }}</span
-        >
+      <!-- Stats bar -->
+      <div class="sel-stats">
+        <div class="sel-stat">
+          <span class="sel-stat-label">Total Spent</span>
+          <span
+            v-overflow-popup="{ title: 'Total Spent' }"
+            class="sel-stat-value sel-danger"
+            >{{ formatAmount(totalSpent) }}</span
+          >
+        </div>
+        <div class="sel-divider" />
+        <div class="sel-stat">
+          <span class="sel-stat-label">Remaining</span>
+          <span
+            v-overflow-popup="{ title: 'Remaining' }"
+            class="sel-stat-value sel-success"
+            >{{ formatAmount(remaining) }}</span
+          >
+        </div>
+        <div class="sel-divider" />
+        <div class="sel-stat sel-stat-end">
+          <span class="sel-stat-label">Transactions</span>
+          <span
+            v-overflow-popup="{ title: 'Transactions' }"
+            class="sel-stat-value"
+            >{{ expenses.length }}
+            <span class="sel-month">{{ selectedMonth }}</span></span
+          >
+        </div>
       </div>
-      <div class="sel-divider" />
-      <div class="sel-stat">
-        <span class="sel-stat-label">Remaining</span>
-        <span
-          v-overflow-popup="{ title: 'Remaining' }"
-          class="sel-stat-value sel-success"
-          >{{ formatAmount(remaining) }}</span
-        >
-      </div>
-      <div class="sel-divider" />
-      <div class="sel-stat sel-stat-end">
-        <span class="sel-stat-label">Transactions</span>
-        <span
-          v-overflow-popup="{ title: 'Transactions' }"
-          class="sel-stat-value"
-          >{{ expenses.length }}
-          <span class="sel-month">{{ selectedMonth }}</span></span
-        >
-      </div>
-    </div>
 
-    <!-- Filter -->
-    <div class="sel-filter no-print-pdf">
-      <div class="sel-filter-toggle">
-        <span class="sel-filter-label">Filter by month</span>
-        <el-button
-          circle
-          type="primary"
-          size="small"
-          class="sm:hidden"
-          :icon="Filter"
-          @click="showFilters = !showFilters"
-        />
+      <!-- Filter -->
+      <div class="sel-filter no-print-pdf">
+        <div class="sel-filter-toggle">
+          <span class="sel-filter-label">Filter by month</span>
+          <el-button
+            circle
+            type="primary"
+            size="small"
+            class="sm:hidden"
+            :icon="Filter"
+            @click="showFilters = !showFilters"
+          />
+        </div>
+        <div :class="showFilters ? 'block' : 'hidden sm:block'">
+          <GenericDropDown
+            size="small"
+            v-model="selectedMonth"
+            label="Select Month"
+            placeholder="Select month"
+            :options="months"
+            @update:modelValue="fetchExpenses"
+          />
+        </div>
       </div>
-      <div :class="showFilters ? 'block' : 'hidden sm:block'">
-        <GenericDropDown
-          size="small"
-          v-model="selectedMonth"
-          label="Select Month"
-          placeholder="Select month"
-          :options="months"
-          @update:modelValue="fetchExpenses"
-        />
-      </div>
-    </div>
 
-    <Table
-      downloadTitle="Personal_Expenses"
-      :rows="expenses"
-      :keys="keys"
-      :dataRef="content"
-      :reportMonth="selectedMonth"
-    />
+      <Table
+        downloadTitle="Personal_Expenses"
+        :rows="expenses"
+        :keys="keys"
+        :dataRef="content"
+        :reportMonth="selectedMonth"
+      />
     </template>
   </div>
 </template>

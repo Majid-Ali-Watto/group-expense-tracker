@@ -47,7 +47,9 @@ export const PersonalLoans = () => {
   const fetchMonths = async () => {
     monthsLoaded.value = false
     try {
-      const keys = await readShallow(`${DB_NODES.PERSONAL_LOANS}/${activeUser.value}`)
+      const keys = await readShallow(
+        `${DB_NODES.PERSONAL_LOANS}/${activeUser.value}`
+      )
       months.value = keys.sort((a, b) => b.localeCompare(a))
 
       if (months.value.length && selectedMonth.value === 'All') {
@@ -104,7 +106,9 @@ export const PersonalLoans = () => {
       }
       loansListener = handleAll
       currentLoansRef = allLoansRef
-      onValue(allLoansRef, handleAll, () => { loansLoaded.value = true })
+      onValue(allLoansRef, handleAll, () => {
+        loansLoaded.value = true
+      })
     } else {
       const monthPath = `${basePath}/${selectedMonth.value}`
       const monthLoansRef = dbRef(monthPath)
@@ -134,7 +138,9 @@ export const PersonalLoans = () => {
       }
       loansListener = handleMonth
       currentLoansRef = monthLoansRef
-      onValue(monthLoansRef, handleMonth, () => { loansLoaded.value = true })
+      onValue(monthLoansRef, handleMonth, () => {
+        loansLoaded.value = true
+      })
     }
   }
 

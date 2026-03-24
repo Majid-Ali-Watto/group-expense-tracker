@@ -63,7 +63,8 @@ export const Groups = () => {
     },
     getUserByMobile: (m) => userStore.getUserByMobile(m)
   }
-  const { read, readShallow, updateData, removeData, dbRef, setData } = useFireBase()
+  const { read, readShallow, updateData, removeData, dbRef, setData } =
+    useFireBase()
 
   const groups = computed(() => groupStore.getGroups || [])
   const groupBalances = ref({})
@@ -195,20 +196,29 @@ export const Groups = () => {
     }
     // Notify the group creator
     if (group.ownerMobile && group.ownerMobile !== me) {
-      updatedGroup = appendNotificationForUser(updatedGroup, group.ownerMobile, {
-        id: Date.now().toString() + Math.random(),
-        type: 'invitation-accepted',
-        message: `${myName} (${maskMobile(me)}) accepted your invitation to join "${group.name}"`,  
-        updatedBy: me,
-        timestamp: Date.now()
-      })
+      updatedGroup = appendNotificationForUser(
+        updatedGroup,
+        group.ownerMobile,
+        {
+          id: Date.now().toString() + Math.random(),
+          type: 'invitation-accepted',
+          message: `${myName} (${maskMobile(me)}) accepted your invitation to join "${group.name}"`,
+          updatedBy: me,
+          timestamp: Date.now()
+        }
+      )
     }
     const payload = {
       members: updatedGroup.members,
       pendingMembers: updatedGroup.pendingMembers
     }
-    if (updatedGroup.notifications) payload.notifications = updatedGroup.notifications
-    await updateData(`${DB_NODES.GROUPS}/${groupId}`, () => payload, 'You have joined the group!')
+    if (updatedGroup.notifications)
+      payload.notifications = updatedGroup.notifications
+    await updateData(
+      `${DB_NODES.GROUPS}/${groupId}`,
+      () => payload,
+      'You have joined the group!'
+    )
     groupStore.addGroup(updatedGroup)
   }
 
@@ -226,17 +236,26 @@ export const Groups = () => {
     }
     // Notify the group creator
     if (group.ownerMobile && group.ownerMobile !== me) {
-      updatedGroup = appendNotificationForUser(updatedGroup, group.ownerMobile, {
-        id: Date.now().toString() + Math.random(),
-        type: 'invitation-declined',
-        message: `${myName} (${maskMobile(me)}) declined your invitation to join "${group.name}"`,  
-        updatedBy: me,
-        timestamp: Date.now()
-      })
+      updatedGroup = appendNotificationForUser(
+        updatedGroup,
+        group.ownerMobile,
+        {
+          id: Date.now().toString() + Math.random(),
+          type: 'invitation-declined',
+          message: `${myName} (${maskMobile(me)}) declined your invitation to join "${group.name}"`,
+          updatedBy: me,
+          timestamp: Date.now()
+        }
+      )
     }
     const payload = { pendingMembers: updatedGroup.pendingMembers }
-    if (updatedGroup.notifications) payload.notifications = updatedGroup.notifications
-    await updateData(`${DB_NODES.GROUPS}/${groupId}`, () => payload, 'Invitation declined.')
+    if (updatedGroup.notifications)
+      payload.notifications = updatedGroup.notifications
+    await updateData(
+      `${DB_NODES.GROUPS}/${groupId}`,
+      () => payload,
+      'Invitation declined.'
+    )
     groupStore.addGroup(updatedGroup)
   }
 
@@ -322,7 +341,10 @@ export const Groups = () => {
         isPageLoading.value = false
         if (snapshot.exists()) {
           const data = snapshot.val()
-          const groupList = Object.keys(data).map((k) => ({ id: k, ...data[k] }))
+          const groupList = Object.keys(data).map((k) => ({
+            id: k,
+            ...data[k]
+          }))
           groupStore.setGroups(groupList)
 
           // Auto-select the user's group on first load if none is already active
@@ -371,7 +393,10 @@ export const Groups = () => {
       const currentMonth = new Date()
       const monthNode = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}`
       const paymentsByMonth =
-        (await read(`${DB_NODES.SHARED_EXPENSES}/${groupId}/${monthNode}`, false)) || {}
+        (await read(
+          `${DB_NODES.SHARED_EXPENSES}/${groupId}/${monthNode}`,
+          false
+        )) || {}
 
       Object.values(paymentsByMonth || {}).forEach((payment) => {
         const amount = parseFloat(payment.amount) || 0
@@ -410,9 +435,14 @@ export const Groups = () => {
 
       // Shared loans
       const loansMonthNode =
-        (await read(`${DB_NODES.SHARED_LOANS}/${groupId}/${monthNode}`, false)) || null
+        (await read(
+          `${DB_NODES.SHARED_LOANS}/${groupId}/${monthNode}`,
+          false
+        )) || null
       const loansSource =
-        loansMonthNode || (await read(`${DB_NODES.SHARED_LOANS}/${groupId}`, false)) || {} // fallback for legacy flat storage
+        loansMonthNode ||
+        (await read(`${DB_NODES.SHARED_LOANS}/${groupId}`, false)) ||
+        {} // fallback for legacy flat storage
 
       const isSameMonth = (dateStr) => {
         if (!dateStr) return false
@@ -591,7 +621,11 @@ export const Groups = () => {
         approvals: [] // Initialize approvals for all members to vote
       })
 
-      await updateData(`${DB_NODES.GROUPS}/${groupId}`, () => group, 'Join request sent')
+      await updateData(
+        `${DB_NODES.GROUPS}/${groupId}`,
+        () => group,
+        'Join request sent'
+      )
 
       groupStore.updateGroup(group)
 
@@ -614,7 +648,11 @@ export const Groups = () => {
         (r) => r.mobile !== mobile
       )
 
-      await updateData(`${DB_NODES.GROUPS}/${groupId}`, () => group, 'Request cancelled')
+      await updateData(
+        `${DB_NODES.GROUPS}/${groupId}`,
+        () => group,
+        'Request cancelled'
+      )
 
       groupStore.updateGroup(group)
 
@@ -650,7 +688,9 @@ export const Groups = () => {
           group.members.push({ mobile: requestMobile })
         }
 
-        const ownerExists = group.members.some((m) => m.mobile === group.ownerMobile)
+        const ownerExists = group.members.some(
+          (m) => m.mobile === group.ownerMobile
+        )
         if (!group.ownerMobile || !ownerExists) {
           group.ownerMobile = requestMobile
         }
@@ -659,15 +699,25 @@ export const Groups = () => {
           (r) => r.mobile !== requestMobile
         )
 
-        await updateData(`${DB_NODES.GROUPS}/${groupId}`, () => group, 'Member added')
+        await updateData(
+          `${DB_NODES.GROUPS}/${groupId}`,
+          () => group,
+          'Member added'
+        )
 
         groupStore.updateGroup(group)
 
-        showSuccess(`${userStore.getUserByMobile(requestMobile)?.name || requestMobile} has been added to the group`)
+        showSuccess(
+          `${userStore.getUserByMobile(requestMobile)?.name || requestMobile} has been added to the group`
+        )
         return
       }
 
-      await updateData(`${DB_NODES.GROUPS}/${groupId}`, () => group, 'Approval recorded')
+      await updateData(
+        `${DB_NODES.GROUPS}/${groupId}`,
+        () => group,
+        'Approval recorded'
+      )
 
       groupStore.updateGroup(group)
 
@@ -707,11 +757,17 @@ export const Groups = () => {
         (r) => r.mobile !== request.mobile
       )
 
-      await updateData(`${DB_NODES.GROUPS}/${groupId}`, () => group, 'Member added')
+      await updateData(
+        `${DB_NODES.GROUPS}/${groupId}`,
+        () => group,
+        'Member added'
+      )
 
       groupStore.updateGroup(group)
 
-      showSuccess(`${userStore.getUserByMobile(request.mobile)?.name || request.mobile} has been added to the group`)
+      showSuccess(
+        `${userStore.getUserByMobile(request.mobile)?.name || request.mobile} has been added to the group`
+      )
     } catch (err) {
       showError(err.message || err)
     }
@@ -745,7 +801,11 @@ export const Groups = () => {
         timestamp: Date.now()
       })
 
-      await updateData(`${DB_NODES.GROUPS}/${groupId}`, () => group, 'Request rejected')
+      await updateData(
+        `${DB_NODES.GROUPS}/${groupId}`,
+        () => group,
+        'Request rejected'
+      )
 
       groupStore.updateGroup(group)
 
@@ -893,7 +953,10 @@ export const Groups = () => {
       const myName = userStore.getUserByMobile(me)?.name || me
 
       // Create notification for members
-      createNotification(group, `Group deletion request cancelled by ${myName} (${maskMobile(me)})`)
+      createNotification(
+        group,
+        `Group deletion request cancelled by ${myName} (${maskMobile(me)})`
+      )
 
       // Remove deletion request from local object
       delete group.deleteRequest
@@ -1016,7 +1079,7 @@ export const Groups = () => {
           changeParts.push(`Name: "${group.name}" → "${editForm.value.name}"`)
         if (descriptionChanged)
           changeParts.push(
-            `Description: "${group.description || '(empty)'}" → "${editForm.value.description || '(empty)'}"`,
+            `Description: "${group.description || '(empty)'}" → "${editForm.value.description || '(empty)'}"`
           )
         const notification = {
           id: Date.now().toString(),
@@ -1165,11 +1228,19 @@ export const Groups = () => {
         // Remove editRequest from final group
         delete finalGroup.editRequest
 
-        await setData(`${DB_NODES.GROUPS}/${groupId}`, finalGroup, 'Edit applied')
+        await setData(
+          `${DB_NODES.GROUPS}/${groupId}`,
+          finalGroup,
+          'Edit applied'
+        )
         showSuccess('Edit changes applied successfully')
       } else {
         // Just save the approval
-        await setData(`${DB_NODES.GROUPS}/${groupId}/editRequest`, updatedEditRequest, '')
+        await setData(
+          `${DB_NODES.GROUPS}/${groupId}/editRequest`,
+          updatedEditRequest,
+          ''
+        )
         showSuccess('Your approval has been recorded')
       }
     } catch (err) {
@@ -1197,12 +1268,21 @@ export const Groups = () => {
       const er = group.editRequest
       const erParts = []
       if (er.name && er.name !== group.name) erParts.push(`name → "${er.name}"`)
-      if ((er.addedMembers || []).length) erParts.push(`+${er.addedMembers.length} member${er.addedMembers.length > 1 ? 's' : ''}`)
-      if ((er.removedMembers || []).length) erParts.push(`-${er.removedMembers.length} member${er.removedMembers.length > 1 ? 's' : ''}`)
+      if ((er.addedMembers || []).length)
+        erParts.push(
+          `+${er.addedMembers.length} member${er.addedMembers.length > 1 ? 's' : ''}`
+        )
+      if ((er.removedMembers || []).length)
+        erParts.push(
+          `-${er.removedMembers.length} member${er.removedMembers.length > 1 ? 's' : ''}`
+        )
       const erDetail = erParts.length ? ` [${erParts.join(' | ')}]` : ''
 
       // Create notification for members
-      createNotification(group, `Group edit request cancelled by ${myName} (${maskMobile(me)})${erDetail}`)
+      createNotification(
+        group,
+        `Group edit request cancelled by ${myName} (${maskMobile(me)})${erDetail}`
+      )
 
       // Remove the edit request from local object
       delete group.editRequest
@@ -1275,7 +1355,11 @@ export const Groups = () => {
         approvals: [...currentApprovals, { mobile }]
       }
 
-      await setData(`${DB_NODES.GROUPS}/${groupId}/addMemberRequest`, updatedRequest, '')
+      await setData(
+        `${DB_NODES.GROUPS}/${groupId}/addMemberRequest`,
+        updatedRequest,
+        ''
+      )
 
       showSuccess('Your approval has been recorded')
     } catch (err) {
@@ -1351,15 +1435,23 @@ export const Groups = () => {
 
     // Block if the user has a non-zero net balance across all recorded months
     try {
-      const expenseMonths = await readShallow(`${DB_NODES.SHARED_EXPENSES}/${group.id}`)
-      const loanMonths = await readShallow(`${DB_NODES.SHARED_LOANS}/${group.id}`)
+      const expenseMonths = await readShallow(
+        `${DB_NODES.SHARED_EXPENSES}/${group.id}`
+      )
+      const loanMonths = await readShallow(
+        `${DB_NODES.SHARED_LOANS}/${group.id}`
+      )
       const allMonths = [...new Set([...expenseMonths, ...loanMonths])]
 
       let net = 0
 
       for (const month of allMonths) {
         // Expenses
-        const payments = (await read(`${DB_NODES.SHARED_EXPENSES}/${group.id}/${month}`, false)) || {}
+        const payments =
+          (await read(
+            `${DB_NODES.SHARED_EXPENSES}/${group.id}/${month}`,
+            false
+          )) || {}
         Object.values(payments).forEach((payment) => {
           const amount = parseFloat(payment.amount) || 0
           if (!amount) return
@@ -1370,13 +1462,18 @@ export const Groups = () => {
             share = parseFloat(selfSplit?.amount) || 0
           } else if (Array.isArray(payment.participants)) {
             const isParticipant = payment.participants.some((p) =>
-              typeof p === 'string' ? p === mobile : p?.mobile === mobile || p?.userId === mobile
+              typeof p === 'string'
+                ? p === mobile
+                : p?.mobile === mobile || p?.userId === mobile
             )
             if (isParticipant) share = amount / payment.participants.length
           }
 
           let credit = 0
-          if (payment.payerMode === 'multiple' && Array.isArray(payment.payers)) {
+          if (
+            payment.payerMode === 'multiple' &&
+            Array.isArray(payment.payers)
+          ) {
             const selfPayer = payment.payers.find((p) => p.mobile === mobile)
             credit = parseFloat(selfPayer?.amount) || 0
           } else if (payment.payer === mobile) {
@@ -1387,7 +1484,11 @@ export const Groups = () => {
         })
 
         // Loans
-        const loans = (await read(`${DB_NODES.SHARED_LOANS}/${group.id}/${month}`, false)) || {}
+        const loans =
+          (await read(
+            `${DB_NODES.SHARED_LOANS}/${group.id}/${month}`,
+            false
+          )) || {}
         Object.values(loans).forEach((loan) => {
           const amt = parseFloat(loan.amount) || 0
           if (!amt) return
@@ -1455,9 +1556,10 @@ export const Groups = () => {
       }
 
       const otherMember = group.members.find((m) => m.mobile !== mobile)
-      const confirmMessage = isOwner && memberCount === 2
-        ? `You are the owner. Ownership will be transferred to ${userStore.getUserByMobile(otherMember.mobile)?.name || otherMember.mobile} when you leave.`
-        : 'Are you sure you want to leave this group?'
+      const confirmMessage =
+        isOwner && memberCount === 2
+          ? `You are the owner. Ownership will be transferred to ${userStore.getUserByMobile(otherMember.mobile)?.name || otherMember.mobile} when you leave.`
+          : 'Are you sure you want to leave this group?'
 
       await ElMessageBox.confirm(confirmMessage, 'Leave Group', {
         confirmButtonText: 'Leave',
@@ -1471,9 +1573,15 @@ export const Groups = () => {
         updatedGroup.ownerMobile = otherMember.mobile
       }
 
-      updatedGroup.members = updatedGroup.members.filter((m) => m.mobile !== mobile)
+      updatedGroup.members = updatedGroup.members.filter(
+        (m) => m.mobile !== mobile
+      )
 
-      await updateData(`${DB_NODES.GROUPS}/${groupId}`, () => updatedGroup, 'You have left the group')
+      await updateData(
+        `${DB_NODES.GROUPS}/${groupId}`,
+        () => updatedGroup,
+        'You have left the group'
+      )
       groupStore.updateGroup(updatedGroup)
       showSuccess('You have left the group')
     } catch (err) {
@@ -1543,7 +1651,9 @@ export const Groups = () => {
 
       // Only the designated new owner may accept
       if (group.transferOwnershipRequest?.newOwner !== mobile) {
-        return showError('Only the designated new owner can accept this transfer')
+        return showError(
+          'Only the designated new owner can accept this transfer'
+        )
       }
 
       // Transfer ownership immediately upon new owner's acceptance
@@ -1581,7 +1691,8 @@ export const Groups = () => {
       if (!group) return
 
       const newOwnerMobile = group.transferOwnershipRequest?.newOwner
-      const newOwnerName = userStore.getUserByMobile(newOwnerMobile)?.name || newOwnerMobile
+      const newOwnerName =
+        userStore.getUserByMobile(newOwnerMobile)?.name || newOwnerMobile
 
       // Create notification for members
       createNotification(

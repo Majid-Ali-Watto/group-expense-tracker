@@ -15,13 +15,21 @@
     </div>
 
     <div class="loading-skeleton__hero">
-      <div class="loading-skeleton__metric" v-for="block in metricCount" :key="block">
+      <div
+        class="loading-skeleton__metric"
+        v-for="block in metricCount"
+        :key="block"
+      >
         <div class="loading-skeleton__line loading-skeleton__line--label"></div>
         <div class="loading-skeleton__line loading-skeleton__line--value"></div>
       </div>
     </div>
 
-    <div class="loading-skeleton__panel" v-for="row in rowCount" :key="`row-${row}`">
+    <div
+      class="loading-skeleton__panel"
+      v-for="row in rowCount"
+      :key="`row-${row}`"
+    >
       <div class="loading-skeleton__line loading-skeleton__line--title"></div>
       <div class="loading-skeleton__line"></div>
       <div class="loading-skeleton__line loading-skeleton__line--short"></div>

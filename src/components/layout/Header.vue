@@ -4,300 +4,318 @@
     class="kharchafy-header flex flex-col shadow-md fixed top-0 left-0 w-full z-50 !bg-green-600 !text-white transition-all duration-300"
   >
     <div class="flex items-center justify-between w-full h-20">
-    <div class="flex flex-col items-start gap-0">
-      <span
-        class="text-xl sm:text-2xl md:text-3xl font-extrabold text-white tracking-wide drop-shadow-sm"
-      >
-        Kharchafy
-      </span>
-      <span
-        class="text-xs sm:text-sm tracking-widest uppercase font-light text-white/90"
-      >
-        Track · Split · Settle
-      </span>
-    </div>
-
-    <div class="flex items-center gap-2">
-      <!-- Notification Bell — shown when logged in -->
-      <div v-if="loggedIn" class="relative">
-        <el-popover
-          v-model:visible="notifVisible"
-          placement="bottom-end"
-          :width="320"
-          trigger="click"
-          popper-class="notif-popover-popper"
+      <div class="flex flex-col items-start gap-0">
+        <span
+          class="text-xl sm:text-2xl md:text-3xl font-extrabold text-white tracking-wide drop-shadow-sm"
         >
-          <template #reference>
-            <button
-              class="bell-btn"
-              :title="`${notificationCount} pending actions`"
-            >
-              <svg
-                class="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+          Kharchafy
+        </span>
+        <span
+          class="text-xs sm:text-sm tracking-widest uppercase font-light text-white/90"
+        >
+          Track · Split · Settle
+        </span>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <!-- Notification Bell — shown when logged in -->
+        <div v-if="loggedIn" class="relative">
+          <el-popover
+            v-model:visible="notifVisible"
+            placement="bottom-end"
+            :width="320"
+            trigger="click"
+            popper-class="notif-popover-popper"
+          >
+            <template #reference>
+              <button
+                class="bell-btn"
+                :title="`${notificationCount} pending actions`"
               >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-                />
-              </svg>
-              <span v-if="notificationCount > 0" class="notif-badge">
-                {{ notificationCount > 99 ? '99+' : notificationCount }}
-              </span>
-            </button>
-          </template>
-
-          <!-- Popover content -->
-          <div class="notif-panel">
-            <div class="notif-panel-header">
-              <span class="font-semibold text-sm">Notifications</span>
-              <span
-                v-if="notificationCount > 0"
-                class="text-xs text-amber-600 font-medium"
-              >
-                {{ notificationCount }} pending
-              </span>
-            </div>
-
-            <div v-if="notifications.length === 0" class="notif-empty">
-              ✅ No pending actions
-            </div>
-
-            <div v-else class="notif-list">
-              <!-- Group by category -->
-              <template v-for="category in notifCategories" :key="category">
-                <div class="notif-category-label">{{ category }}</div>
-                <div
-                  v-for="notif in notifsByCategory[category]"
-                  :key="notif.id"
-                  class="notif-item"
-                  @click="handleNavigate(notif)"
+                <svg
+                  class="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
                 >
-                  <span class="notif-icon">{{ notif.icon }}</span>
-                  <div class="notif-text">
-                    <div
-                      v-overflow-popup="{ title: 'Notification' }"
-                      class="notif-desc"
-                    >
-                      {{ notif.description }}
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                  />
+                </svg>
+                <span v-if="notificationCount > 0" class="notif-badge">
+                  {{ notificationCount > 99 ? '99+' : notificationCount }}
+                </span>
+              </button>
+            </template>
+
+            <!-- Popover content -->
+            <div class="notif-panel">
+              <div class="notif-panel-header">
+                <span class="font-semibold text-sm">Notifications</span>
+                <span
+                  v-if="notificationCount > 0"
+                  class="text-xs text-amber-600 font-medium"
+                >
+                  {{ notificationCount }} pending
+                </span>
+              </div>
+
+              <div v-if="notifications.length === 0" class="notif-empty">
+                ✅ No pending actions
+              </div>
+
+              <div v-else class="notif-list">
+                <!-- Group by category -->
+                <template v-for="category in notifCategories" :key="category">
+                  <div class="notif-category-label">{{ category }}</div>
+                  <div
+                    v-for="notif in notifsByCategory[category]"
+                    :key="notif.id"
+                    class="notif-item"
+                    @click="handleNavigate(notif)"
+                  >
+                    <span class="notif-icon">{{ notif.icon }}</span>
+                    <div class="notif-text">
+                      <div
+                        v-overflow-popup="{ title: 'Notification' }"
+                        class="notif-desc"
+                      >
+                        {{ notif.description }}
+                      </div>
+                      <div
+                        v-overflow-popup="{ title: 'Related Section' }"
+                        class="notif-group"
+                      >
+                        {{ notif.title }}
+                      </div>
                     </div>
-                    <div
-                      v-overflow-popup="{ title: 'Related Section' }"
-                      class="notif-group"
-                    >
-                      {{ notif.title }}
-                    </div>
+                    <span class="notif-arrow">›</span>
                   </div>
-                  <span class="notif-arrow">›</span>
-                </div>
-              </template>
+                </template>
+              </div>
             </div>
-          </div>
-        </el-popover>
-      </div>
+          </el-popover>
+        </div>
 
-      <!-- Desktop buttons - visible on screens >= 640px -->
-      <div class="hidden sm:flex items-center gap-2">
-        <!-- Help — always visible -->
-        <button class="theme-btn" @click="showHelp = true" title="Help">
-          <svg
-            class="w-5 h-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+        <!-- Desktop buttons - visible on screens >= 640px -->
+        <div class="hidden sm:flex items-center gap-2">
+          <!-- Help — always visible -->
+          <button class="theme-btn" @click="showHelp = true" title="Help">
+            <svg
+              class="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+          </button>
+
+          <!-- Theme toggle — always visible -->
+          <button
+            class="theme-btn"
+            @click="toggleTheme"
+            :title="
+              isDarkTheme ? 'Switch to Light Mode' : 'Switch to Dark Mode'
+            "
           >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
-        </button>
+            <!-- Moon: shown in light mode -->
+            <svg
+              v-if="!isDarkTheme"
+              class="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+              />
+            </svg>
+            <!-- Sun: shown in dark mode -->
+            <svg
+              v-else
+              class="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+              />
+            </svg>
+          </button>
 
-        <!-- Theme toggle — always visible -->
-        <button
-          class="theme-btn"
-          @click="toggleTheme"
-          :title="isDarkTheme ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
-        >
-          <!-- Moon: shown in light mode -->
-          <svg
-            v-if="!isDarkTheme"
-            class="w-5 h-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+          <!-- Expenses Summary — only when logged in -->
+          <el-button
+            v-if="loggedIn"
+            type="success"
+            plain
+            size="small"
+            :icon="DataAnalysis"
+            class="net-position-btn"
+            @click="handleNetPosition"
           >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
-            />
-          </svg>
-          <!-- Sun: shown in dark mode -->
-          <svg
-            v-else
-            class="w-5 h-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+            Expenses Summary
+          </el-button>
+
+          <!-- Logout — only when logged in -->
+          <el-button
+            v-if="loggedIn"
+            type="primary"
+            plain
+            size="small"
+            :icon="SwitchButton"
+            class="logout-btn"
+            @click="confirmLogout"
           >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
-            />
-          </svg>
-        </button>
+            Logout
+          </el-button>
+        </div>
 
-        <!-- Expenses Summary — only when logged in -->
-        <el-button
-          v-if="loggedIn"
-          type="success"
-          plain
-          size="small"
-          :icon="DataAnalysis"
-          class="net-position-btn"
-          @click="handleNetPosition"
-        >
-          Expenses Summary
-        </el-button>
-
-        <!-- Logout — only when logged in -->
-        <el-button
-          v-if="loggedIn"
-          type="primary"
-          plain
-          size="small"
-          :icon="SwitchButton"
-          class="logout-btn"
-          @click="confirmLogout"
-        >
-          Logout
-        </el-button>
-      </div>
-
-      <!-- Mobile hamburger menu - visible on screens < 640px -->
-      <el-dropdown trigger="click" class="sm:hidden mobile-menu-dropdown">
-        <button class="hamburger-btn">
-          <svg
-            class="w-6 h-6"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M4 6h16M4 12h16M4 18h16"
-            />
-          </svg>
-        </button>
-        <template #dropdown>
-          <el-dropdown-menu class="mobile-dropdown-menu">
-            <!-- Navigation tabs — only when logged in and tabs exist -->
-            <template v-if="loggedIn && tabs.length">
-              <div class="mobile-menu-section-label">Navigation</div>
-              <el-dropdown-item
-                v-for="tab in tabs"
-                :key="tab"
-                @click="$emit('tab-change', tab)"
-              >
-                <div class="flex items-center gap-3" :class="{ 'is-active-tab': tab === activeTab }">
-                  <svg class="w-5 h-5 menu-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        <!-- Mobile hamburger menu - visible on screens < 640px -->
+        <el-dropdown trigger="click" class="sm:hidden mobile-menu-dropdown">
+          <button class="hamburger-btn">
+            <svg
+              class="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4 6h16M4 12h16M4 18h16"
+              />
+            </svg>
+          </button>
+          <template #dropdown>
+            <el-dropdown-menu class="mobile-dropdown-menu">
+              <!-- Navigation tabs — only when logged in and tabs exist -->
+              <template v-if="loggedIn && tabs.length">
+                <div class="mobile-menu-section-label">Navigation</div>
+                <el-dropdown-item
+                  v-for="tab in tabs"
+                  :key="tab"
+                  @click="$emit('tab-change', tab)"
+                >
+                  <div
+                    class="flex items-center gap-3"
+                    :class="{ 'is-active-tab': tab === activeTab }"
+                  >
+                    <svg
+                      class="w-5 h-5 menu-icon"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+                    <span>{{ tab }}</span>
+                  </div>
+                </el-dropdown-item>
+                <div class="mobile-menu-divider" />
+              </template>
+              <!-- Help — always visible -->
+              <el-dropdown-item @click="showHelp = true">
+                <div class="flex items-center gap-3">
+                  <svg
+                    class="w-5 h-5 menu-icon"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
                   </svg>
-                  <span>{{ tab }}</span>
+                  <span>Help</span>
                 </div>
               </el-dropdown-item>
-              <div class="mobile-menu-divider" />
-            </template>
-            <!-- Help — always visible -->
-            <el-dropdown-item @click="showHelp = true">
-              <div class="flex items-center gap-3">
-                <svg
-                  class="w-5 h-5 menu-icon"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-                <span>Help</span>
-              </div>
-            </el-dropdown-item>
-            <!-- Expenses Summary - only when logged in -->
-            <el-dropdown-item
-              v-if="loggedIn"
-              @click="handleNetPosition"
-              divided
-            >
-              <div class="flex items-center gap-3">
-                <el-icon class="menu-icon" :size="20"><DataAnalysis /></el-icon>
-                <span>Expenses Summary</span>
-              </div>
-            </el-dropdown-item>
-            <!-- Theme Toggle -->
-            <el-dropdown-item @click="toggleTheme" divided>
-              <div class="flex items-center gap-3">
-                <svg
-                  v-if="!isDarkTheme"
-                  class="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
-                  />
-                </svg>
-                <svg
-                  v-else
-                  class="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
-                  />
-                </svg>
-                <span>{{ isDarkTheme ? 'Light Mode' : 'Dark Mode' }}</span>
-              </div>
-            </el-dropdown-item>
+              <!-- Expenses Summary - only when logged in -->
+              <el-dropdown-item
+                v-if="loggedIn"
+                @click="handleNetPosition"
+                divided
+              >
+                <div class="flex items-center gap-3">
+                  <el-icon class="menu-icon" :size="20"
+                    ><DataAnalysis
+                  /></el-icon>
+                  <span>Expenses Summary</span>
+                </div>
+              </el-dropdown-item>
+              <!-- Theme Toggle -->
+              <el-dropdown-item @click="toggleTheme" divided>
+                <div class="flex items-center gap-3">
+                  <svg
+                    v-if="!isDarkTheme"
+                    class="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+                    />
+                  </svg>
+                  <svg
+                    v-else
+                    class="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+                    />
+                  </svg>
+                  <span>{{ isDarkTheme ? 'Light Mode' : 'Dark Mode' }}</span>
+                </div>
+              </el-dropdown-item>
 
-            <!-- Logout - only when logged in -->
-            <el-dropdown-item v-if="loggedIn" @click="confirmLogout">
-              <div class="flex items-center gap-3">
-                <el-icon class="menu-icon" :size="20"><SwitchButton /></el-icon>
-                <span>Logout</span>
-              </div>
-            </el-dropdown-item>
-          </el-dropdown-menu>
-        </template>
-      </el-dropdown>
+              <!-- Logout - only when logged in -->
+              <el-dropdown-item v-if="loggedIn" @click="confirmLogout">
+                <div class="flex items-center gap-3">
+                  <el-icon class="menu-icon" :size="20"
+                    ><SwitchButton
+                  /></el-icon>
+                  <span>Logout</span>
+                </div>
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
+      </div>
     </div>
-    </div>
-
   </el-header>
 
   <!-- Help Dialog — rendered outside el-header so it can overlay correctly -->
@@ -330,7 +348,12 @@ const props = defineProps({
   notificationCount: { type: Number, default: 0 }
 })
 
-const emit = defineEmits(['click-log', 'show-net-position', 'navigate-to-tab', 'tab-change'])
+const emit = defineEmits([
+  'click-log',
+  'show-net-position',
+  'navigate-to-tab',
+  'tab-change'
+])
 
 const {
   notifVisible,
@@ -722,16 +745,24 @@ const {
   color: #e5e7eb !important;
 }
 
-:root.dark-theme .mobile-dropdown-menu .el-dropdown-menu__item:not(.is-disabled):hover {
+:root.dark-theme
+  .mobile-dropdown-menu
+  .el-dropdown-menu__item:not(.is-disabled):hover {
   background-color: #4b5563 !important;
   color: #93c5fd !important;
 }
 
-:root.dark-theme .mobile-dropdown-menu .el-dropdown-menu__item:not(.is-disabled):hover svg {
+:root.dark-theme
+  .mobile-dropdown-menu
+  .el-dropdown-menu__item:not(.is-disabled):hover
+  svg {
   stroke: #93c5fd;
 }
 
-:root.dark-theme .mobile-dropdown-menu .el-dropdown-menu__item:not(.is-disabled):hover .el-icon {
+:root.dark-theme
+  .mobile-dropdown-menu
+  .el-dropdown-menu__item:not(.is-disabled):hover
+  .el-icon {
   color: #93c5fd !important;
 }
 
@@ -748,7 +779,9 @@ const {
   stroke: #93c5fd !important;
 }
 
-:root.dark-theme .mobile-dropdown-menu .el-dropdown-menu__item:has(.is-active-tab) {
+:root.dark-theme
+  .mobile-dropdown-menu
+  .el-dropdown-menu__item:has(.is-active-tab) {
   background-color: #1e3a5f !important;
   border-left-color: #93c5fd !important;
 }

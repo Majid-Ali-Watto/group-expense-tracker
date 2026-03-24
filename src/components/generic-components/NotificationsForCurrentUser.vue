@@ -34,9 +34,6 @@
 </template>
 <script setup>
 import { ElButton } from 'element-plus'
-import { useUserStore } from '../../stores/userStore'
-
-const userStore = useUserStore()
 
 defineProps({
   userNotifications: {

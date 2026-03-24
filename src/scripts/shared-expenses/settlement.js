@@ -123,7 +123,11 @@ export const Settlement = (props) => {
       updatedRequest.approvals.push({ mobile })
 
       const groupId = activeGroup.value
-      await setData(`${DB_NODES.GROUPS}/${groupId}/settlementRequest`, updatedRequest, '')
+      await setData(
+        `${DB_NODES.GROUPS}/${groupId}/settlementRequest`,
+        updatedRequest,
+        ''
+      )
 
       showSuccess('You have approved the settlement request')
     } catch (error) {
@@ -192,12 +196,17 @@ export const Settlement = (props) => {
         getData,
         'Expenses added to Backup successfully!'
       )
-      deleteData(`${DB_NODES.SHARED_EXPENSES}/${monthPath}`, props.selectedMonth + ' data deleted')
+      deleteData(
+        `${DB_NODES.SHARED_EXPENSES}/${monthPath}`,
+        props.selectedMonth + ' data deleted'
+      )
 
       // Remove settlement request if exists
       if (activeGroup.value && hasSettlementRequest.value) {
         const { removeData } = useFireBase()
-        await removeData(`${DB_NODES.GROUPS}/${activeGroup.value}/settlementRequest`)
+        await removeData(
+          `${DB_NODES.GROUPS}/${activeGroup.value}/settlementRequest`
+        )
       }
     } catch (error) {
       if (error != 'cancel') showError(error)

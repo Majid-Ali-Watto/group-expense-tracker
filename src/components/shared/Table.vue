@@ -412,15 +412,15 @@
     </div>
 
     <!-- Edit / Delete dialog -->
-  <el-dialog
-    top="10vh"
-    center
-    destroy-on-close
-    append-to-body
-    v-model="dialogFormVisible"
-    :width="dialogWidth + 'px'"
-    @close="deleteMode = false"
-  >
+    <el-dialog
+      top="10vh"
+      center
+      destroy-on-close
+      append-to-body
+      v-model="dialogFormVisible"
+      :width="dialogWidth + 'px'"
+      @close="deleteMode = false"
+    >
       <template #header>
         <div class="dialog-header">
           <strong v-if="deleteMode">Confirm Delete</strong>

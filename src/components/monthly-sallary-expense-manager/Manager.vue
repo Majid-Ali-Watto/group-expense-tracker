@@ -35,9 +35,7 @@ import { loadAsyncComponent } from '../../utils/async-component'
 
 const AddSalary = loadAsyncComponent(() => import('./SalaryForm.vue'))
 const AddExpense = loadAsyncComponent(() => import('./ExpenseForm.vue'))
-const ExpenseList = loadAsyncComponent(
-  () => import('./SalaryExpenseList.vue')
-)
+const ExpenseList = loadAsyncComponent(() => import('./SalaryExpenseList.vue'))
 
 const showForm = ref(false)
 const setShowForm = () => {

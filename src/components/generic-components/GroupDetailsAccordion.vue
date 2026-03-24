@@ -71,9 +71,10 @@
               size="small"
               type="info"
             >
-              {{ userStore.getUserByMobile(member.mobile)?.name || member.mobile }} ({{
-                displayMobileForGroup(member.mobile, group)
-              }})
+              {{
+                userStore.getUserByMobile(member.mobile)?.name || member.mobile
+              }}
+              ({{ displayMobileForGroup(member.mobile, group) }})
             </el-tag>
             <el-tag
               v-if="memberCount > initialMemberLoadCount"
@@ -103,10 +104,20 @@
               <div
                 class="w-7 h-7 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-semibold shrink-0"
               >
-                {{ (userStore.getUserByMobile(member.mobile)?.name || member.mobile).charAt(0).toUpperCase() }}
+                {{
+                  (
+                    userStore.getUserByMobile(member.mobile)?.name ||
+                    member.mobile
+                  )
+                    .charAt(0)
+                    .toUpperCase()
+                }}
               </div>
               <div class="text-sm text-gray-700">
-                {{ userStore.getUserByMobile(member.mobile)?.name || member.mobile }}
+                {{
+                  userStore.getUserByMobile(member.mobile)?.name ||
+                  member.mobile
+                }}
                 <span class="text-gray-500 font-bold text-xs ml-1"
                   >({{ displayMobileForGroup(member.mobile, group) }})</span
                 >

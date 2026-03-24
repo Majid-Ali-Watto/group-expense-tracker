@@ -296,10 +296,7 @@ export const Users = () => {
     const request = type === 'delete' ? user.deleteRequest : user.updateRequest
     if (!request) return showError('Request not found or already resolved')
 
-    const newApprovals = [
-      ...(request.approvals || []),
-      { mobile: me }
-    ]
+    const newApprovals = [...(request.approvals || []), { mobile: me }]
     const allApproved = request.requiredApprovals.every((r) =>
       newApprovals.some((a) => a.mobile === r)
     )
@@ -307,7 +304,10 @@ export const Users = () => {
     // Only delete requests go through approval; update requests are applied directly
     if (type === 'delete' && allApproved) {
       // Delete from Realtime Database
-      await deleteData(`${DB_NODES.USERS}/${userMobile}`, `User ${user.name} deleted`)
+      await deleteData(
+        `${DB_NODES.USERS}/${userMobile}`,
+        `User ${user.name} deleted`
+      )
       userStore.setUsers(
         [...userStore.getUsers].filter((u) => u.mobile !== userMobile)
       )

@@ -7,7 +7,9 @@
     >
       <div class="text-xs text-blue-800">
         <span class="font-medium">{{ notif.message }}</span>
-        <span v-if="notif.updatedBy || notif.rejectedBy" class="text-gray-600 ml-2"
+        <span
+          v-if="notif.updatedBy || notif.rejectedBy"
+          class="text-gray-600 ml-2"
           >(by {{ formatActor(notif.updatedBy || notif.rejectedBy) }})</span
         >
       </div>
@@ -30,7 +32,9 @@ import { formatUserDisplay } from '../../utils/user-display'
 const userStore = useUserStore()
 const authStore = useAuthStore()
 const storeProxy = {
-  get getActiveUser() { return authStore.getActiveUser },
+  get getActiveUser() {
+    return authStore.getActiveUser
+  },
   getUserByMobile: (m) => userStore.getUserByMobile(m)
 }
 

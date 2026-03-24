@@ -95,10 +95,7 @@ export function getAllAffectedMembers(group) {
   const existingMembers = group.members || []
 
   // Only existing and added members must approve — removed members are notified, not required
-  const allMembers = [
-    ...existingMembers,
-    ...(addedMembers || [])
-  ]
+  const allMembers = [...existingMembers, ...(addedMembers || [])]
 
   // Remove duplicates based on mobile
   const uniqueMembers = allMembers.filter(

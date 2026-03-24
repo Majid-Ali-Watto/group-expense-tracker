@@ -41,7 +41,10 @@ export const NetPosition = () => {
 
       // Fetch payments for each month
       for (const month of months) {
-        const payments = await read(`${DB_NODES.SHARED_EXPENSES}/${groupId}/${month}`, false)
+        const payments = await read(
+          `${DB_NODES.SHARED_EXPENSES}/${groupId}/${month}`,
+          false
+        )
         if (!payments) continue
 
         Object.values(payments).forEach((payment) => {
@@ -115,7 +118,10 @@ export const NetPosition = () => {
 
       // Fetch loans for each month
       for (const month of months) {
-        const loans = await read(`${DB_NODES.SHARED_LOANS}/${groupId}/${month}`, false)
+        const loans = await read(
+          `${DB_NODES.SHARED_LOANS}/${groupId}/${month}`,
+          false
+        )
         if (!loans) continue
 
         Object.values(loans).forEach((loan) => {
@@ -156,12 +162,17 @@ export const NetPosition = () => {
 
     try {
       // Get all months for personal loans
-      const months = await readShallow(`${DB_NODES.PERSONAL_LOANS}/${userMobile}`)
+      const months = await readShallow(
+        `${DB_NODES.PERSONAL_LOANS}/${userMobile}`
+      )
       if (!months || months.length === 0) return result
 
       // Fetch loans for each month
       for (const month of months) {
-        const loans = await read(`${DB_NODES.PERSONAL_LOANS}/${userMobile}/${month}`, false)
+        const loans = await read(
+          `${DB_NODES.PERSONAL_LOANS}/${userMobile}/${month}`,
+          false
+        )
         if (!loans) continue
 
         Object.values(loans).forEach((loan) => {

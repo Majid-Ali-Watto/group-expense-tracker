@@ -5,32 +5,65 @@
       <strong>Proposed Changes:</strong><br />
       <template v-if="request.changes.amount !== undefined">
         Amount:
-        <span v-if="request.current?.amount !== undefined && String(request.current.amount) !== String(request.changes.amount)">
-          <span class="line-through text-gray-400">{{ formatAmount(request.current.amount) }}</span>
+        <span
+          v-if="
+            request.current?.amount !== undefined &&
+            String(request.current.amount) !== String(request.changes.amount)
+          "
+        >
+          <span class="line-through text-gray-400">{{
+            formatAmount(request.current.amount)
+          }}</span>
           &nbsp;→&nbsp;
         </span>
-        <span class="font-medium">{{ formatAmount(request.changes.amount) }}</span><br />
+        <span class="font-medium">{{
+          formatAmount(request.changes.amount)
+        }}</span
+        ><br />
       </template>
       <template v-if="request.changes.payer !== undefined">
         Payer:
-        <span v-if="request.current?.payer && request.current.payer !== request.changes.payer">
-          <span class="line-through text-gray-400">{{ getUserName(request.current.payer) }}</span>
+        <span
+          v-if="
+            request.current?.payer &&
+            request.current.payer !== request.changes.payer
+          "
+        >
+          <span class="line-through text-gray-400">{{
+            getUserName(request.current.payer)
+          }}</span>
           &nbsp;→&nbsp;
         </span>
-        <span class="font-medium">{{ getUserName(request.changes.payer) }}</span><br />
+        <span class="font-medium">{{ getUserName(request.changes.payer) }}</span
+        ><br />
       </template>
       <template v-if="request.changes.description !== undefined">
         Description:
-        <span v-if="request.current?.description !== undefined && request.current.description !== request.changes.description">
-          <span class="line-through text-gray-400">{{ request.current.description }}</span>
+        <span
+          v-if="
+            request.current?.description !== undefined &&
+            request.current.description !== request.changes.description
+          "
+        >
+          <span class="line-through text-gray-400">{{
+            request.current.description
+          }}</span>
           &nbsp;→&nbsp;
         </span>
-        <span class="font-medium">{{ request.changes.description }}</span><br />
+        <span class="font-medium">{{ request.changes.description }}</span
+        ><br />
       </template>
       <template v-if="request.changes.date !== undefined">
         Date:
-        <span v-if="request.current?.date && request.current.date !== request.changes.date">
-          <span class="line-through text-gray-400">{{ request.current.date }}</span>
+        <span
+          v-if="
+            request.current?.date &&
+            request.current.date !== request.changes.date
+          "
+        >
+          <span class="line-through text-gray-400">{{
+            request.current.date
+          }}</span>
           &nbsp;→&nbsp;
         </span>
         <span class="font-medium">{{ request.changes.date }}</span>

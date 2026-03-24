@@ -179,7 +179,9 @@ export const Login = () => {
       }
 
       // Check if mobile already exists in database
-      const existingUserByMobile = await read(`${DB_NODES.USERS}/${mobileValue}`)
+      const existingUserByMobile = await read(
+        `${DB_NODES.USERS}/${mobileValue}`
+      )
       if (existingUserByMobile) {
         return showError('An account with this mobile number already exists')
       }
@@ -319,7 +321,11 @@ export const Login = () => {
           emailVerified: true,
           ...(user.addedBy ? { addedBy: user.addedBy } : {})
         }
-        await updateData(`${DB_NODES.USERS}/${user.mobile}`, () => verifiedUserData, '')
+        await updateData(
+          `${DB_NODES.USERS}/${user.mobile}`,
+          () => verifiedUserData,
+          ''
+        )
       }
 
       // Hide resend verification option on successful login

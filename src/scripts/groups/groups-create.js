@@ -19,7 +19,12 @@ export const GroupsCreate = (emit, props) => {
   }
   const { updateData } = useFireBase()
 
-  const groupForm = ref({ name: '', description: '', members: [], category: '' })
+  const groupForm = ref({
+    name: '',
+    description: '',
+    members: [],
+    category: ''
+  })
   const groupFormRef = ref(null)
 
   const usersOptions = computed(() =>

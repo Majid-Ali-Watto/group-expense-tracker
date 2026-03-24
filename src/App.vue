@@ -77,7 +77,9 @@ import LoadingSkeleton from './components/shared/LoadingSkeleton.vue'
 import { loadAsyncComponent } from './utils/async-component'
 const HOC = loadAsyncComponent(() => import('@/components/layout/HOC.vue'))
 const Login = loadAsyncComponent(() => import('@/components/auth/Login.vue'))
-const Header = loadAsyncComponent(() => import('@/components/layout/Header.vue'))
+const Header = loadAsyncComponent(
+  () => import('@/components/layout/Header.vue')
+)
 const WelcomeBanner = loadAsyncComponent(
   () => import('@/components/generic-components/WelcomeBanner.vue')
 )

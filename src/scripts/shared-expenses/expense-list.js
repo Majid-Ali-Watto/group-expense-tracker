@@ -91,7 +91,6 @@ export const ExpenseList = (props) => {
       )
   })
 
-
   // Fetch available months
   const fetchMonths = async () => {
     const groupId = groupStore.getActiveGroup || 'global'
