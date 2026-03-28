@@ -6,7 +6,7 @@ const tabs = [
   Tabs.SHARED_LOANS,
   Tabs.USERS,
   Tabs.PERSONAL_EXPENSES,
-  Tabs.PERSONAL_LOANS
+  Tabs.PERSONAL_LOANS,
   // Tabs.HISTORY,
 ]
 const LAST_DAY = 1

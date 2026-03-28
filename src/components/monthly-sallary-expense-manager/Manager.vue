@@ -1,8 +1,8 @@
 <!-- eslint-disable vue/multi-word-component-names -->
 <template>
-  <div class="manager-wrap">
-    <div class="manager-top">
-      <div class="manager-col">
+  <div class="flex w-full flex-col gap-3 sm:gap-5">
+    <div class="flex flex-col gap-3 sm:gap-5">
+      <div class="min-w-0">
         <AddNewTransactionButton
           text="Want to add a new expense?"
           :form-open="showForm"
@@ -19,7 +19,7 @@
           </div>
         </Transition>
       </div>
-      <div class="manager-col">
+      <div class="min-w-0">
         <HOC :componentToBeRendered="AddSalary" />
       </div>
     </div>
@@ -42,26 +42,3 @@ const setShowForm = () => {
   showForm.value = !showForm.value
 }
 </script>
-
-<style scoped>
-.manager-wrap {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-  width: 100%;
-}
-.manager-top {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-  align-items: start;
-}
-@media (max-width: 600px) {
-  .manager-top {
-    grid-template-columns: 1fr;
-  }
-}
-.manager-col {
-  min-width: 0;
-}
-</style>

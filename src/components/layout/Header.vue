@@ -102,6 +102,14 @@
 
         <!-- Desktop buttons - visible on screens >= 640px -->
         <div class="hidden sm:flex items-center gap-2">
+          <!-- Bug Report — always visible -->
+          <button class="theme-btn" @click="showBugReport = true" title="Report a Bug">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </button>
+
           <!-- Help — always visible -->
           <button class="theme-btn" @click="showHelp = true" title="Help">
             <svg
@@ -254,6 +262,17 @@
                   <span>Help</span>
                 </div>
               </el-dropdown-item>
+
+              <!-- Bug Report — always visible -->
+              <el-dropdown-item @click="showBugReport = true">
+                <div class="flex items-center gap-3">
+                  <svg class="w-5 h-5 menu-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  <span>Report a Bug</span>
+                </div>
+              </el-dropdown-item>
               <!-- Expenses Summary - only when logged in -->
               <el-dropdown-item
                 v-if="loggedIn"
@@ -326,6 +345,18 @@
     :toggleTheme="toggleTheme"
     @logout="confirmLogout"
   />
+
+  <!-- Bug Report Dialog -->
+  <el-dialog
+    v-model="showBugReport"
+    title="Report a Bug"
+    :width="'min(95vw, 740px)'"
+    :close-on-click-modal="true"
+    :close-on-press-escape="true"
+    class="bug-report-dialog"
+  >
+    <BugReportPage v-if="showBugReport" :view="bugReportView" :open-bug-id="bugReportOpenId" />
+  </el-dialog>
 </template>
 
 <script setup>
@@ -337,6 +368,9 @@ defineOptions({ inheritAttrs: false })
 const HelpDialog = loadAsyncComponent(
   () => import('../generic-components/HelpDialog.vue')
 )
+const BugReportPage = loadAsyncComponent(
+  () => import('../bug-report/BugReport.vue')
+)
 
 const props = defineProps({
   loggedIn: { type: Boolean, default: false },
@@ -345,7 +379,8 @@ const props = defineProps({
   isDarkTheme: { type: Boolean, default: false },
   toggleTheme: { type: Function, default: () => {} },
   notifications: { type: Array, default: () => [] },
-  notificationCount: { type: Number, default: 0 }
+  notificationCount: { type: Number, default: 0 },
+  dismissNotification: { type: Function, default: () => {} }
 })
 
 const emit = defineEmits([
@@ -358,6 +393,9 @@ const emit = defineEmits([
 const {
   notifVisible,
   showHelp,
+  showBugReport,
+  bugReportView,
+  bugReportOpenId,
   confirmLogout,
   handleNetPosition,
   handleNavigate,
@@ -784,5 +822,33 @@ const {
   .el-dropdown-menu__item:has(.is-active-tab) {
   background-color: #1e3a5f !important;
   border-left-color: #93c5fd !important;
+}
+
+/* Support & Bug Report dialog dark theme */
+:root.dark-theme .support-dialog .el-dialog,
+:root.dark-theme .bug-report-dialog .el-dialog {
+  background-color: #1f2937 !important;
+}
+
+:root.dark-theme .support-dialog .el-dialog__title,
+:root.dark-theme .bug-report-dialog .el-dialog__title {
+  color: #f9fafb !important;
+}
+
+:root.dark-theme .support-dialog .el-dialog__header,
+:root.dark-theme .bug-report-dialog .el-dialog__header {
+  border-bottom-color: #374151 !important;
+}
+
+:root.dark-theme .support-dialog .el-dialog__headerbtn .el-dialog__close,
+:root.dark-theme .bug-report-dialog .el-dialog__headerbtn .el-dialog__close {
+  color: #9ca3af !important;
+}
+
+/* Make dialog body scrollable on small screens */
+.support-dialog .el-dialog__body,
+.bug-report-dialog .el-dialog__body {
+  max-height: 80vh;
+  overflow-y: auto;
 }
 </style>

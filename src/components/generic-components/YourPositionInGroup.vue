@@ -14,45 +14,51 @@
       Calculating...
     </div>
     <div v-else class="space-y-2 text-sm">
-      <div class="flex items-center justify-between">
-        <span class="position-text">Shared Expenses</span>
-        <el-tag
-          :type="expenseState.type"
-          size="small"
-          :class="expenseState.customClass"
-        >
-          {{ expenseState.label }}
-        </el-tag>
-        <span class="font-semibold" :class="expenseState.textClass">
-          Rs. {{ expenseState.abs }}
-        </span>
+      <div class="flex justify-between gap-2">
+        <span class="position-text shrink-0">Shared Expenses</span>
+        <div class="flex items-center gap-1.5 flex-wrap justify-end">
+          <el-tag
+            :type="expenseState.type"
+            size="small"
+            :class="expenseState.customClass"
+          >
+            {{ expenseState.label }}
+          </el-tag>
+          <span class="font-semibold" :class="expenseState.textClass">
+            Rs. {{ expenseState.abs }}
+          </span>
+        </div>
       </div>
-      <div class="flex items-center justify-between">
-        <span class="position-text">Shared Loans</span>
-        <el-tag
-          :type="loanState.type"
-          size="small"
-          :class="loanState.customClass"
-        >
-          {{ loanState.label }}
-        </el-tag>
-        <span class="font-semibold" :class="loanState.textClass">
-          Rs. {{ loanState.abs }}
-        </span>
+      <div class="flex items-center justify-between gap-2">
+        <span class="position-text shrink-0">Shared Loans</span>
+        <div class="flex items-center gap-1.5 flex-wrap justify-end">
+          <el-tag
+            :type="loanState.type"
+            size="small"
+            :class="loanState.customClass"
+          >
+            {{ loanState.label }}
+          </el-tag>
+          <span class="font-semibold" :class="loanState.textClass">
+            Rs. {{ loanState.abs }}
+          </span>
+        </div>
       </div>
       <el-divider class="!my-2" />
-      <div class="flex items-center justify-between">
-        <span class="position-label">Net Amount</span>
-        <el-tag
-          :type="netState.type"
-          size="small"
-          :class="netState.customClass"
-        >
-          {{ netState.label }}
-        </el-tag>
-        <span class="font-bold text-base" :class="netState.textClass">
-          Rs. {{ netState.abs }}
-        </span>
+      <div class="flex items-center justify-between gap-2">
+        <span class="position-label shrink-0">Net Amount</span>
+        <div class="flex items-center gap-1.5 flex-wrap justify-end">
+          <el-tag
+            :type="netState.type"
+            size="small"
+            :class="netState.customClass"
+          >
+            {{ netState.label }}
+          </el-tag>
+          <span class="font-bold text-base" :class="netState.textClass">
+            Rs. {{ netState.abs }}
+          </span>
+        </div>
       </div>
     </div>
     <div class="text-[11px] position-hint mt-2">

@@ -304,6 +304,7 @@ export const Login = () => {
 
       // Find user in database
       const user = await findUserByEmail(emailValue)
+      console.log("🚀 ~ handleLogin ~ user:", user)
 
       if (!user) {
         return showError(

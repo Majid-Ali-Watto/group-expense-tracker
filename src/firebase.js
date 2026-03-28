@@ -7,7 +7,9 @@ import {
   update,
   remove,
   get,
-  off
+  set,
+  off,
+  runTransaction
 } from 'firebase/database'
 import {
   getAuth,
@@ -45,7 +47,9 @@ export {
   update,
   remove,
   get,
+  set,
   off,
+  runTransaction,
   auth,
   createUserWithEmailAndPassword,
   sendPasswordResetEmail,

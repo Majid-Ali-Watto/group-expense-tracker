@@ -5,7 +5,8 @@ export const Tabs = {
   PERSONAL_LOANS: 'Personal Loans',
   HISTORY: 'History',
   USERS: 'Users',
-  GROUPS: 'Groups'
+  GROUPS: 'Groups',
+  BUG_RESOLVER: 'Bug Reports'
 }
 
 export const GROUP_CATEGORIES = [

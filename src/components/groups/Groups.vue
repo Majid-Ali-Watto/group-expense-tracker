@@ -103,15 +103,24 @@
               <div class="font-semibold text-gray-800 dark:text-gray-100">
                 {{ group.name }}
               </div>
-              <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                Invited by
-                <span class="font-medium">
-                  {{
-                    userStore.getUserByMobile(group.ownerMobile)?.name ||
-                    group.ownerMobile
-                  }}
-                  ({{ displayMobileForGroup(group.ownerMobile, group) }})
-                </span>
+              <div class="flex flex-wrap items-center gap-x-4 gap-y-0.5 mt-0.5">
+                <div class="text-xs text-gray-500 dark:text-gray-400">
+                  Invited by
+                  <span class="font-medium">
+                    {{
+                      userStore.getUserByMobile(group.ownerMobile)?.name ||
+                      group.ownerMobile
+                    }}
+                    ({{ displayMobileForGroup(group.ownerMobile, group) }})
+                  </span>
+                </div>
+                <div
+                  v-if="group.category"
+                  class="text-xs text-gray-500 dark:text-gray-400"
+                >
+                  Category:
+                  <span class="font-medium">{{ group.category }}</span>
+                </div>
               </div>
               <div
                 v-if="group.description"
@@ -119,15 +128,6 @@
               >
                 {{ group.description }}
               </div>
-              <el-tag
-                v-if="group.category"
-                size="small"
-                type="info"
-                effect="plain"
-                class="!text-xs mt-1.5 !w-fit"
-              >
-                {{ group.category }}
-              </el-tag>
             </div>
             <div class="flex gap-2 flex-shrink-0">
               <el-button
@@ -218,23 +218,24 @@
                   </template>
                 </el-dropdown>
               </div>
-              <p class="text-xs text-gray-500 mt-0.5">
-                Owner:
-                {{
-                  userStore.getUserByMobile(group.ownerMobile)?.name ||
-                  group.ownerMobile
-                }}
-                ({{ displayMobileForGroup(group.ownerMobile, group) }})
-              </p>
-              <el-tag
-                v-if="group.category"
-                size="small"
-                type="info"
-                effect="plain"
-                class="!text-xs mt-1.5 !w-fit"
+              <div
+                class="flex flex-wrap items-center justify-between gap-y-0.5 mt-0.5"
               >
-                {{ group.category }}
-              </el-tag>
+                <p class="text-xs text-gray-500 dark:text-gray-400">
+                  Owner:
+                  {{
+                    userStore.getUserByMobile(group.ownerMobile)?.name ||
+                    group.ownerMobile
+                  }}
+                  ({{ displayMobileForGroup(group.ownerMobile, group) }})
+                </p>
+                <p
+                  v-if="group.category"
+                  class="text-xs text-gray-500 dark:text-gray-400"
+                >
+                  Category: {{ group.category }}
+                </p>
+              </div>
             </div>
 
             <!-- Notifications for current user -->
@@ -301,23 +302,22 @@
           <!-- Group Header -->
           <div class="mb-3">
             <h3 class="font-semibold text-lg mb-0.5">{{ group.name }}</h3>
-            <p class="text-xs text-gray-500 mb-2">
-              Owner:
-              {{
-                userStore.getUserByMobile(group.ownerMobile)?.name ||
-                group.ownerMobile
-              }}
-              ({{ displayMobileForGroup(group.ownerMobile, group) }})
-            </p>
-            <el-tag
-              v-if="group.category"
-              size="small"
-              type="info"
-              effect="plain"
-              class="!text-xs mb-2 !w-fit"
-            >
-              {{ group.category }}
-            </el-tag>
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-0.5 mb-2">
+              <p class="text-xs text-gray-500 dark:text-gray-400">
+                Owner:
+                {{
+                  userStore.getUserByMobile(group.ownerMobile)?.name ||
+                  group.ownerMobile
+                }}
+                ({{ displayMobileForGroup(group.ownerMobile, group) }})
+              </p>
+              <p
+                v-if="group.category"
+                class="text-xs text-gray-500 dark:text-gray-400"
+              >
+                Category: {{ group.category }}
+              </p>
+            </div>
 
             <!-- Notifications for current user -->
             <group-notifications-for-current-user

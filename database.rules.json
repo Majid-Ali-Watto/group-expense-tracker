@@ -50,6 +50,27 @@
         ".read": "auth !== null && root.child('users').child($mobile).child('uid').val() === auth.uid",
         ".write": "auth !== null && root.child('users').child($mobile).child('uid').val() === auth.uid"
       }
+    },
+    "bug-reports": {
+      ".read": "auth != null",
+      ".write": true
+    },
+    "bug-report-counters": {
+      ".read": true,
+      ".write": true,
+      "global": {
+        ".validate": "newData.isNumber() && newData.val() >= 0"
+      }
+    },
+    "bug-report-notifications": {
+      "admin": {
+        ".read": "auth != null",
+        ".write": true
+      },
+      "$mobile": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
     }
   }
 }

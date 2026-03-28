@@ -104,7 +104,8 @@ export const Users = () => {
             addedBy: u.addedBy || null,
             maskedMobile: maskMobile(mobile),
             deleteRequest: u.deleteRequest || null,
-            updateRequest: u.updateRequest || null
+            updateRequest: u.updateRequest || null,
+            bugResolver: u.bugResolver === true
           })
         }
       })

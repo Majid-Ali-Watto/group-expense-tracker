@@ -77,17 +77,17 @@ defineEmits(['click', 'close'])
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding: 1rem 1.1rem;
+  padding: 1rem;
   border-radius: 14px;
   background: linear-gradient(
     135deg,
     var(--tab-gradient-start) 0%,
     var(--bg-primary) 100%
   );
-  border: 1.5px solid var(--success-200);
+  border: 1px solid var(--success-200);
   box-shadow: 0 4px 16px -6px rgba(34, 197, 94, 0.18);
   cursor: pointer;
-  min-height: 72px;
+  min-height: 52px;
   transition:
     transform 0.15s ease,
     box-shadow 0.15s ease,
@@ -104,8 +104,8 @@ defineEmits(['click', 'close'])
 }
 .ant-icon-wrap {
   flex-shrink: 0;
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   background: #22c55e;
   display: flex;
@@ -118,8 +118,8 @@ defineEmits(['click', 'close'])
   box-shadow: 0 8px 22px -4px rgba(34, 197, 94, 0.75);
 }
 .ant-icon {
-  width: 20px;
-  height: 20px;
+  width: 15px;
+  height: 15px;
   color: #fff;
 }
 .ant-body {

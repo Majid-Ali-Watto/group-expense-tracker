@@ -14,6 +14,7 @@
           :toggleTheme="toggleTheme"
           :notifications="allNotifications"
           :notificationCount="notificationCount"
+          :dismissNotification="dismissNotification"
         />
         <div
           v-if="!loggedIn"
@@ -23,7 +24,7 @@
             <Login />
           </div>
         </div>
-        <div v-if="loggedIn" class="container mx-auto mt-20">
+        <div v-if="loggedIn" class="container mx-auto mt-20" style="max-width: 980px">
           <!-- Welcome Banner -->
           <WelcomeBanner :displayName="displayName" />
 
@@ -103,7 +104,8 @@ const {
   handleShowNetPosition,
   navigateToTab,
   allNotifications,
-  notificationCount
+  notificationCount,
+  dismissNotification
 } = App()
 </script>
 

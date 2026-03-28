@@ -462,54 +462,69 @@
 
     <template #footer>
       <div class="help-footer">
-        <div class="help-footer-actions">
-          <button
-            class="help-theme-btn"
-            @click="toggleTheme"
-            :title="
-              isDarkTheme ? 'Switch to Light Mode' : 'Switch to Dark Mode'
-            "
-          >
-            <svg
-              v-if="!isDarkTheme"
-              class="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+        <!-- Row 1: Theme + Logout | Close -->
+        <div class="help-footer-row1">
+          <div class="help-footer-left">
+            <button
+              class="help-theme-btn"
+              @click="toggleTheme"
+              size="small"
+              :title="
+                isDarkTheme ? 'Switch to Light Mode' : 'Switch to Dark Mode'
+              "
             >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
-              />
-            </svg>
-            <svg
-              v-else
-              class="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+              <svg
+                v-if="!isDarkTheme"
+                class="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+                />
+              </svg>
+              <svg
+                v-else
+                class="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+                />
+              </svg>
+              {{ isDarkTheme ? 'Light Mode' : 'Dark Mode' }}
+            </button>
+            <el-button
+              v-if="loggedIn"
+              type="warning"
+              plain
+              size="small"
+              @click="handleLogout"
+              >Logout</el-button
             >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
-              />
-            </svg>
-            {{ isDarkTheme ? 'Light Mode' : 'Dark Mode' }}
-          </button>
-          <el-button
-            v-if="loggedIn"
-            type="warning"
-            plain
-            size="small"
-            @click="handleLogout"
-            >Logout</el-button
-          >
+          </div>
+          <el-button size="small" @click="handleClose">Close</el-button>
         </div>
-        <el-button @click="handleClose">Close</el-button>
+        <!-- Row 2: Email -->
+        <div class="help-footer-row2">
+          <span class="help-email-label">Need help?</span>
+          <a href="mailto:majid.teresol@gmail.com" class="help-email-link" title="Email support">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+            majid.teresol@gmail.com
+          </a>
+        </div>
       </div>
     </template>
   </el-dialog>
@@ -625,16 +640,49 @@ const { isMobile, openSections, visible, handleClose, handleLogout } =
 /* Footer */
 .help-footer {
   display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.help-footer-row1 {
+  display: flex;
   align-items: center;
   justify-content: space-between;
   width: 100%;
   gap: 8px;
 }
 
-.help-footer-actions {
+.help-footer-left {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.help-footer-row2 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.help-email-label {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+
+.help-email-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12.5px;
+  color: var(--el-text-color-regular);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.help-email-link:hover {
+  color: #22c55e;
+  text-decoration: underline;
 }
 
 .help-theme-btn {
@@ -713,6 +761,18 @@ const { isMobile, openSections, visible, handleClose, handleLogout } =
 
 :root.dark-theme .help-theme-btn:hover {
   background: #374151;
+}
+
+:root.dark-theme .help-email-label {
+  color: #6b7280;
+}
+
+:root.dark-theme .help-email-link {
+  color: #9ca3af;
+}
+
+:root.dark-theme .help-email-link:hover {
+  color: #4ade80;
 }
 
 :root.dark-theme .help-content::-webkit-scrollbar {

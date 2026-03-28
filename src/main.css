@@ -55,6 +55,14 @@ header > span {
   --hover-bg: #f3f4f6;
   --motion-smooth: cubic-bezier(0.22, 1, 0.36, 1);
   --motion-swift: cubic-bezier(0.34, 1.24, 0.64, 1);
+  --theme-page-turn-sheet: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.98) 0%,
+    rgba(249, 250, 251, 0.98) 52%,
+    rgba(229, 231, 235, 0.92) 78%,
+    rgba(148, 163, 184, 0.16) 100%
+  );
+  --theme-page-turn-shadow: rgba(15, 23, 42, 0.26);
   /* Success palette (base #22c55e) */
   --success-50: #f0fdf4;
   --success-100: #dcfce7;
@@ -85,6 +93,14 @@ header > span {
   --hover-bg: #374151;
   --motion-smooth: cubic-bezier(0.22, 1, 0.36, 1);
   --motion-swift: cubic-bezier(0.34, 1.24, 0.64, 1);
+  --theme-page-turn-sheet: linear-gradient(
+    90deg,
+    rgba(31, 41, 55, 0.99) 0%,
+    rgba(17, 24, 39, 0.98) 52%,
+    rgba(3, 7, 18, 0.94) 78%,
+    rgba(0, 0, 0, 0.24) 100%
+  );
+  --theme-page-turn-shadow: rgba(0, 0, 0, 0.54);
   /* Override Element Plus border variables so el-input, el-textarea, el-select borders match dark theme */
   --el-border-color: #4b5563;
   --el-border-color-light: #374151;
@@ -111,9 +127,74 @@ header > span {
 body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
+  position: relative;
   transition:
     background-color 0.3s ease,
     color 0.3s ease;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 9998;
+  background: var(--theme-page-turn-sheet);
+  box-shadow:
+    inset -32px 0 36px -30px var(--theme-page-turn-shadow),
+    20px 0 32px -28px var(--theme-page-turn-shadow);
+  will-change: transform, opacity, box-shadow;
+}
+
+body.theme-page-turning {
+  overflow-x: clip;
+}
+
+body.theme-page-turning-to-dark::before {
+  transform-origin: right center;
+  animation: theme-book-page-sheet-dark 760ms var(--motion-smooth);
+}
+
+body.theme-page-turning-to-light::before {
+  transform-origin: left center;
+  animation: theme-book-page-sheet-light 760ms var(--motion-smooth);
+}
+
+@keyframes theme-book-page-sheet-dark {
+  0% {
+    opacity: 0;
+    transform: perspective(2400px) rotateY(-92deg) translateX(18%) scaleX(1.02);
+  }
+  18% {
+    opacity: 0.98;
+  }
+  58% {
+    opacity: 1;
+    transform: perspective(2400px) rotateY(-28deg) translateX(4%) scaleX(1.01);
+  }
+  100% {
+    opacity: 0;
+    transform: perspective(2400px) rotateY(0deg) translateX(0) scaleX(1);
+  }
+}
+
+@keyframes theme-book-page-sheet-light {
+  0% {
+    opacity: 0;
+    transform: perspective(2400px) rotateY(92deg) translateX(-18%) scaleX(1.02);
+  }
+  18% {
+    opacity: 0.98;
+  }
+  58% {
+    opacity: 1;
+    transform: perspective(2400px) rotateY(28deg) translateX(-4%) scaleX(1.01);
+  }
+  100% {
+    opacity: 0;
+    transform: perspective(2400px) rotateY(0deg) translateX(0) scaleX(1);
+  }
 }
 
 .overflow-popup-trigger {
@@ -1314,4 +1395,11 @@ button:disabled {
 
 .el-tabs__nav-scroll {
   display: flex;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body::before {
+    animation: none !important;
+    transition: none !important;
+  }
 }

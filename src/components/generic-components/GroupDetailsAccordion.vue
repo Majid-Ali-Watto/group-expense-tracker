@@ -27,7 +27,7 @@
         <!-- Description -->
         <div v-if="group.description">
           <div class="text-xs font-medium text-gray-500 mb-1">Description</div>
-          <div class="text-sm text-gray-700 italic">
+          <div class="text-xs text-gray-500 dark:text-gray-400">
             {{ group.description }}
           </div>
         </div>

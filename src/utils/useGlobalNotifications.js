@@ -271,7 +271,8 @@ export function useGlobalNotifications() {
   // ─── Expense / Loan notifications ────────────────────────────────────────
   const expenseNotifs = ref({})
   const loanNotifs = ref({})
-  const listeners = []
+  const listeners = []       // expense/loan listeners — cleared on group change
+  const bugListeners = []    // bug report listeners — persistent, only cleared on cleanup
 
   function subscribeToExpensesAndLoans() {
     const me = activeUser.value
@@ -444,18 +445,96 @@ export function useGlobalNotifications() {
     { immediate: true }
   )
 
+  // ─── Bug report status notifications (for the reporter) ─────────────────
+  const bugReportNotifs = ref([])
+  const brRef = dbRef(`${DB_NODES.BUG_REPORT_NOTIFICATIONS}/${activeUser.value}`)
+  const brFn = (snap) => {
+    if (!snap.exists()) { bugReportNotifs.value = []; return }
+    const statusLabel = { open: 'Open', 'in-progress': 'In Progress', 'needs-info': 'Needs Info', duplicate: 'Duplicate', 'wont-fix': "Won't Fix", resolved: 'Resolved', closed: 'Closed' }
+    const statusIcon  = { open: '🔴', 'in-progress': '🟡', 'needs-info': '🔵', duplicate: '🟣', 'wont-fix': '⚫', resolved: '🟢', closed: '⚫' }
+    bugReportNotifs.value = Object.entries(snap.val()).map(([id, n]) => ({
+      id: `bugreport-notif-${id}`,
+      icon: n.hasNote ? '💬' : (statusIcon[n.status] ?? '🐛'),
+      title: 'Bug Report',
+      description: n.hasNote
+        ? `Admin added a note to your report "${n.title}"`
+        : `Your report "${n.title}" is now ${statusLabel[n.status] ?? n.status}`,
+      tab: null,
+      action: 'open-bug-report',
+      bugId: id,
+      category: 'Bug Reports'
+    }))
+  }
+  onValue(brRef, brFn)
+  bugListeners.push({ r: brRef, fn: brFn })
+
+  // ─── Admin bug report notifications ───────────────────────────────────────
+  const rawAdminBugReportNotifs = ref([])
+
+  // Read bugResolver directly from Firebase to avoid user-store timing issues
+  const isBugResolver = ref(false)
+  const bugResolverDbRef = dbRef(`${DB_NODES.USERS}/${activeUser.value}/bugResolver`)
+  const bugResolverFn = (snap) => { isBugResolver.value = snap.val() === true }
+  onValue(bugResolverDbRef, bugResolverFn)
+  bugListeners.push({ r: bugResolverDbRef, fn: bugResolverFn })
+
+  const adminBrRef = dbRef(`${DB_NODES.BUG_REPORT_NOTIFICATIONS}/admin`)
+  const adminBrFn = (snap) => {
+    if (!snap.exists()) {
+      rawAdminBugReportNotifs.value = []
+      return
+    }
+    rawAdminBugReportNotifs.value = Object.entries(snap.val()).map(([id, n]) => {
+      const reporter = n.reporterName || 'Reporter'
+      let icon = '💬'
+      let description = `${reporter} replied to "${n.title}"`
+      if (n.action === 'new') {
+        icon = '🐛'
+        description = `${reporter} submitted a new bug report "${n.title}"`
+      } else if (n.action === 'edited') {
+        icon = '✏️'
+        description = `${reporter} edited their report "${n.title}"`
+      } else if (n.action === 'reopened') {
+        icon = '🔄'
+        description = `${reporter} re-opened their report "${n.title}"`
+      }
+      return {
+        id: `bugreport-admin-notif-${id}`,
+        icon,
+        title: 'Bug Reports',
+        description,
+        action: 'open-admin-bug-report',
+        bugId: id,
+        tab: Tabs.BUG_RESOLVER,
+        category: 'Bug Reports'
+      }
+    })
+  }
+  onValue(adminBrRef, adminBrFn)
+  bugListeners.push({ r: adminBrRef, fn: adminBrFn })
+
+  const adminBugReportNotifs = computed(() =>
+    isBugResolver.value ? rawAdminBugReportNotifs.value : []
+  )
+
   const cleanup = () => {
     listeners.forEach(({ r, fn }) => off(r, 'value', fn))
     listeners.length = 0
+    bugListeners.forEach(({ r, fn }) => off(r, 'value', fn))
+    bugListeners.length = 0
     expenseNotifs.value = {}
     loanNotifs.value = {}
+    bugReportNotifs.value = []
+    rawAdminBugReportNotifs.value = []
   }
 
   const allNotifications = computed(() => [
     ...groupNotifications.value,
     ...userNotifications.value,
     ...Object.values(expenseNotifs.value).flat(),
-    ...Object.values(loanNotifs.value).flat()
+    ...Object.values(loanNotifs.value).flat(),
+    ...bugReportNotifs.value,
+    ...adminBugReportNotifs.value
   ])
 
   return {

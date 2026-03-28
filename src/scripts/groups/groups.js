@@ -319,7 +319,8 @@ export const Groups = () => {
           .map((k) => ({
             mobile: k,
             name: users[k].name || '',
-            maskedMobile: maskMobile(k)
+            maskedMobile: maskMobile(k),
+            bugResolver: users[k].bugResolver === true
           }))
         userStore.setUsers(list)
       }

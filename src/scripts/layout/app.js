@@ -38,6 +38,8 @@ export const App = () => {
   // Theme management - Initialize immediately
   const savedTheme = localStorage.getItem('theme')
   const isDarkTheme = ref(savedTheme === 'dark')
+  const THEME_PAGE_TURN_MS = 760
+  let themeAnimationTimeout = null
 
   // Apply theme immediately on load
   const applyTheme = () => {
@@ -54,6 +56,45 @@ export const App = () => {
     }
   }
 
+  const clearThemeAnimation = () => {
+    if (themeAnimationTimeout) {
+      clearTimeout(themeAnimationTimeout)
+      themeAnimationTimeout = null
+    }
+
+    document.body?.classList.remove(
+      'theme-page-turning',
+      'theme-page-turning-to-dark',
+      'theme-page-turning-to-light'
+    )
+  }
+
+  const animateThemeTurn = (nextTheme) => {
+    if (
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    ) {
+      return
+    }
+
+    const body = document.body
+    if (!body) return
+
+    clearThemeAnimation()
+    void body.offsetWidth
+
+    body.classList.add(
+      'theme-page-turning',
+      nextTheme === 'dark'
+        ? 'theme-page-turning-to-dark'
+        : 'theme-page-turning-to-light'
+    )
+
+    themeAnimationTimeout = window.setTimeout(() => {
+      clearThemeAnimation()
+    }, THEME_PAGE_TURN_MS)
+  }
+
   // Apply theme immediately (before mount)
   applyTheme()
 
@@ -61,6 +102,7 @@ export const App = () => {
     isDarkTheme.value = !isDarkTheme.value
     localStorage.setItem('theme', isDarkTheme.value ? 'dark' : 'light')
     applyTheme()
+    animateThemeTurn(isDarkTheme.value ? 'dark' : 'light')
   }
 
   // Apply theme on mount and restore session if Firebase Auth is still active
@@ -106,6 +148,7 @@ export const App = () => {
   })
   onUnmounted(() => {
     if (authUnsubscribe) authUnsubscribe()
+    clearThemeAnimation()
   })
 
   // loggedIn is a computed — cannot be manually overridden via DevTools.
@@ -118,15 +161,24 @@ export const App = () => {
     )
   })
 
-  // Computed tabs based on active group
+  // Computed tabs based on active group + bugResolver privilege
   const tabs = computed(() => {
     const activeGroup = groupStore.getActiveGroup
-    if (!activeGroup) {
-      return allTabs.filter(
-        (tab) => tab !== Tabs.SHARED_EXPENSES && tab !== Tabs.SHARED_LOANS
-      )
+    const mobile = authStore.getActiveUser
+    const user = mobile ? userStore.getUserByMobile(mobile) : null
+    const isBugResolver = user?.bugResolver === true
+
+    let base = activeGroup
+      ? allTabs
+      : allTabs.filter(
+          (tab) => tab !== Tabs.SHARED_EXPENSES && tab !== Tabs.SHARED_LOANS
+        )
+
+    if (isBugResolver && !base.includes(Tabs.BUG_RESOLVER)) {
+      base = [...base, Tabs.BUG_RESOLVER]
     }
-    return allTabs
+
+    return base
   })
 
   const { read } = useFireBase()
@@ -298,6 +350,12 @@ export const App = () => {
   const notificationCount = computed(() => allNotifications.value.length)
   let notificationCleanup = null
 
+  function dismissNotification(notificationId) {
+    allNotifications.value = allNotifications.value.filter(
+      (notif) => notif.id !== notificationId
+    )
+  }
+
   // Watch for login state changes
   watch(
     loggedIn,
@@ -344,6 +402,7 @@ export const App = () => {
     tabTransitionName,
     allNotifications,
     notificationCount,
+    dismissNotification,
     setLoggedInStatus,
     handleActiveTab,
     activeTabComponent,
