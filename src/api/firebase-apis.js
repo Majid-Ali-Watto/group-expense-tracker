@@ -1,5 +1,6 @@
 import { get, ref as Ref, remove, update, push, set } from 'firebase/database'
-import { database, auth } from '../firebase'
+import { getToken } from 'firebase/app-check'
+import { database, auth, appCheck } from '../firebase'
 import { startLoading, stopLoading, withLoading } from '../utils/loading'
 import { showError, showSuccess } from '../utils/showAlerts'
 import { resetForm } from '../utils/reset-form'
@@ -150,6 +151,7 @@ export default function useFireBase() {
     return withLoading(async () => {
       const baseUrl = import.meta.env.VITE_DATABASE_URL
       let tokenParam = ''
+      const headers = {}
       try {
         const currentUser = auth.currentUser
         if (currentUser) {
@@ -159,8 +161,17 @@ export default function useFireBase() {
       } catch {
         /* proceed without token */
       }
+      try {
+        if (appCheck) {
+          const { token } = await getToken(appCheck)
+          headers['X-Firebase-AppCheck'] = token
+        }
+      } catch {
+        /* proceed without App Check token */
+      }
       const res = await fetch(
-        `${baseUrl}/${path}.json?shallow=true${tokenParam}`
+        `${baseUrl}/${path}.json?shallow=true${tokenParam}`,
+        { headers }
       )
       if (!res.ok) return []
       const data = await res.json()

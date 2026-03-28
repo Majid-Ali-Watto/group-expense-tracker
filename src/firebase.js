@@ -1,4 +1,5 @@
 import { initializeApp } from 'firebase/app'
+import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check'
 import {
   getDatabase,
   ref,
@@ -36,10 +37,24 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_APP_ID
 }
 const app = initializeApp(firebaseConfig)
+
+// Enable App Check debug token in development (add the printed token to Firebase Console → App Check)
+if (import.meta.env.DEV) {
+  self.FIREBASE_APPCHECK_DEBUG_TOKEN = true
+}
+let appCheck = null
+if (import.meta.env.VITE_RECAPTCHA_SITE_KEY) {
+  appCheck = initializeAppCheck(app, {
+    provider: new ReCaptchaV3Provider(import.meta.env.VITE_RECAPTCHA_SITE_KEY),
+    isTokenAutoRefreshEnabled: true
+  })
+}
+
 const database = getDatabase(app)
 const auth = getAuth(app)
 
 export {
+  appCheck,
   database,
   ref,
   push,

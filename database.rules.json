@@ -51,25 +51,36 @@
         ".write": "auth !== null && root.child('users').child($mobile).child('uid').val() === auth.uid"
       }
     },
+
     "bug-reports": {
       ".read": "auth != null",
-      ".write": true
+      ".write": "auth != null"
     },
+
     "bug-report-counters": {
-      ".read": true,
-      ".write": true,
+      ".read": "auth != null",
+      ".write": "auth != null",
       "global": {
         ".validate": "newData.isNumber() && newData.val() >= 0"
       }
     },
+
     "bug-report-notifications": {
       "admin": {
         ".read": "auth != null",
-        ".write": true
+        ".write": "auth != null"
       },
       "$mobile": {
         ".read": "auth != null",
         ".write": "auth != null"
+      }
+    },
+
+    "ratelimit": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid",
+        ".validate": "newData.isNumber() && (!data.exists() || (now - data.val() > 3000))"
       }
     }
   }

@@ -119,7 +119,12 @@
               class="text-sm text-gray-700 mb-4"
             ></el-checkbox>
             <!-- Submit Button -->
-            <GenericButton @click="handleSubmit" type="success">
+            <GenericButton
+              @click="handleSubmit"
+              type="success"
+              :loading="isSubmitting"
+              :disabled="isSubmitting"
+            >
               {{ mode === 'register' ? 'Register' : 'Login' }}
             </GenericButton>
 
@@ -220,6 +225,7 @@ const {
   form,
   loginForm,
   mode,
+  isSubmitting,
   emailResetDialogVisible,
   resetEmail,
   isEmailResetLoading,

@@ -19,10 +19,50 @@ import {
   browserSessionPersistence
 } from '../../firebase'
 
+// ── Login rate limiting ────────────────────────────────────────────────────
+const RATE_LIMIT_KEY = '_login_rl'
+const MAX_ATTEMPTS = 5
+const LOCK_DURATION = 15 * 60 * 1000 // 15 minutes
+
+function getRateLimitData() {
+  try {
+    return JSON.parse(localStorage.getItem(RATE_LIMIT_KEY) || '{"count":0,"lockedAt":null}')
+  } catch {
+    return { count: 0, lockedAt: null }
+  }
+}
+
+function isLoginLocked() {
+  const { count, lockedAt } = getRateLimitData()
+  if (count >= MAX_ATTEMPTS && lockedAt) {
+    const remaining = LOCK_DURATION - (Date.now() - lockedAt)
+    if (remaining > 0) return Math.ceil(remaining / 60000) // minutes remaining
+    localStorage.removeItem(RATE_LIMIT_KEY) // lock expired, clear it
+  }
+  return false
+}
+
+function recordFailedAttempt() {
+  const data = getRateLimitData()
+  const count = data.count + 1
+  localStorage.setItem(RATE_LIMIT_KEY, JSON.stringify({
+    count,
+    lockedAt: count >= MAX_ATTEMPTS ? Date.now() : data.lockedAt
+  }))
+}
+
+function clearLoginAttempts() {
+  localStorage.removeItem(RATE_LIMIT_KEY)
+}
+
+// ── Composable ────────────────────────────────────────────────────────────
+
 export const Login = () => {
   const authStore = useAuthStore()
   const groupStore = useGroupStore()
   const { read, updateData } = useFireBase()
+
+  const isSubmitting = ref(false)
 
   const form = ref({
     name: '',
@@ -118,6 +158,7 @@ export const Login = () => {
   }
 
   async function completeLogin(payload, message) {
+    clearLoginAttempts()
     const token = generateUUID()
     const [encryptedSession, encryptedStore] = await Promise.all([
       encryptForSession({ ...payload, token }),
@@ -135,7 +176,12 @@ export const Login = () => {
   // ── Main handlers ─────────────────────────────────────────────────────────
 
   async function handleSubmit() {
-    if (!loginForm.value) return
+    if (!loginForm.value || isSubmitting.value) return
+
+    const minutesLocked = isLoginLocked()
+    if (minutesLocked) {
+      return showError(`Too many failed attempts. Try again in ${minutesLocked} minute(s).`)
+    }
 
     try {
       await loginForm.value.validate()
@@ -143,10 +189,15 @@ export const Login = () => {
       return showError('Please fill in all required fields correctly')
     }
 
-    if (mode.value === 'register') {
-      await handleRegistration()
-    } else {
-      await handleLogin()
+    isSubmitting.value = true
+    try {
+      if (mode.value === 'register') {
+        await handleRegistration()
+      } else {
+        await handleLogin()
+      }
+    } finally {
+      isSubmitting.value = false
     }
   }
 
@@ -346,12 +397,15 @@ export const Login = () => {
       )
     } catch (error) {
       console.error('Login error:', error)
+      recordFailedAttempt()
 
       if (
         error.code === 'auth/wrong-password' ||
         error.code === 'auth/invalid-credential'
       ) {
-        showError('Incorrect password')
+        const { count } = getRateLimitData()
+        const left = MAX_ATTEMPTS - count
+        showError(left > 0 ? `Incorrect password. ${left} attempt(s) remaining.` : 'Incorrect password.')
       } else if (error.code === 'auth/user-not-found') {
         showError('No account found with this email')
       } else if (error.code === 'auth/too-many-requests') {
@@ -483,6 +537,7 @@ export const Login = () => {
     form,
     loginForm,
     mode,
+    isSubmitting,
     emailResetDialogVisible,
     resetEmail,
     isEmailResetLoading,
