@@ -294,7 +294,8 @@
             <el-button
               type="success"
               size="small"
-              :loading="receiptUploading"
+              :loading="receiptUploading || isSubmitting"
+              :disabled="receiptUploading || isSubmitting"
               @click="() => validateForm()"
             >
               {{ receiptUploading ? 'Uploading...' : 'Add Payment' }}
@@ -352,7 +353,8 @@ const {
   existingReceiptUrls,
   setSelectedFiles,
   removeReceipt,
-  isMePayer
+  isMePayer,
+  isSubmitting
 } = PaymentForm(props, emit)
 
 defineExpose({

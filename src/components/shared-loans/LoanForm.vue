@@ -222,7 +222,8 @@
               v-if="isVisible"
               type="success"
               size="small"
-              :loading="receiptUploading"
+              :loading="receiptUploading || isSubmitting"
+              :disabled="receiptUploading || isSubmitting"
               @click="() => validateForm()"
             >
               {{ receiptUploading ? 'Uploading...' : 'Add Loan' }}
@@ -276,7 +277,8 @@ const {
   copyToExpenses,
   selectedGiverUser,
   selectedReceiverUser,
-  usersForDropdown
+  usersForDropdown,
+  isSubmitting
 } = LoanForm(props, emit)
 
 const showGiverDropdown = ref(false)

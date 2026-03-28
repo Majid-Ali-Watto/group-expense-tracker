@@ -1,3 +1,4 @@
+import { ref } from 'vue'
 import { get, ref as Ref, remove, update, push, set } from 'firebase/database'
 import { getToken } from 'firebase/app-check'
 import { database, auth, appCheck } from '../firebase'
@@ -7,6 +8,8 @@ import { resetForm } from '../utils/reset-form'
 import getCurrentMonth, { dateToMonthNode } from '../utils/getCurrentMonth'
 import { DB_NODES } from '../constants/db-nodes'
 export default function useFireBase() {
+  const isSubmitting = ref(false)
+
   /**
    * The function `dbRef` returns a reference to a specific location in a database based on the provided
    * URL.
@@ -47,6 +50,8 @@ export default function useFireBase() {
    * URL in the database.
    */
   async function deleteData(url, message) {
+    if (isSubmitting.value) return
+    isSubmitting.value = true
     const loading = startLoading()
     try {
       await remove(dbRef(url))
@@ -54,6 +59,7 @@ export default function useFireBase() {
     } catch (error) {
       showError(error.message)
     } finally {
+      isSubmitting.value = false
       stopLoading(loading)
     }
   }
@@ -69,7 +75,8 @@ export default function useFireBase() {
    * displayed to indicate a successful operation after updating the data in the database.
    */
   async function updateData(url, getData, message) {
-    console.log('🚀 ~ updateData ~ url:', url)
+    if (isSubmitting.value) return
+    isSubmitting.value = true
     const loading = startLoading()
     try {
       await update(dbRef(url), getData())
@@ -77,6 +84,7 @@ export default function useFireBase() {
     } catch (error) {
       showError(error.message)
     } finally {
+      isSubmitting.value = false
       stopLoading(loading)
     }
   }
@@ -108,6 +116,8 @@ export default function useFireBase() {
    * success message indicating that the data has been saved successfully.
    */
   function saveData(url, getData, formRef, message, onSuccess) {
+    if (isSubmitting.value) return
+    isSubmitting.value = true
     const loading = startLoading()
     const data = getData()
     push(dbRef(url), data)
@@ -127,11 +137,14 @@ export default function useFireBase() {
         showError(error.message)
       })
       .finally(() => {
+        isSubmitting.value = false
         stopLoading(loading)
       })
   }
 
   async function setData(url, data, message) {
+    if (isSubmitting.value) return
+    isSubmitting.value = true
     const loading = startLoading()
     try {
       await set(dbRef(url), data)
@@ -139,6 +152,7 @@ export default function useFireBase() {
     } catch (error) {
       showError(error.message)
     } finally {
+      isSubmitting.value = false
       stopLoading(loading)
     }
   }
@@ -187,6 +201,7 @@ export default function useFireBase() {
     updateData,
     saveData,
     setData,
-    removeData
+    removeData,
+    isSubmitting
   }
 }

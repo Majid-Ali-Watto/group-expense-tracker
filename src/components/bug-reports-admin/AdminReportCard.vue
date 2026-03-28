@@ -574,6 +574,7 @@ defineEmits([
 :root.dark-theme .bra-card-title  { color: #f3f4f6; }
 :root.dark-theme .bra-card-desc   { color: #d1d5db; }
 :root.dark-theme .bra-bug-number-badge { background: #312e81; color: #a5b4fc; }
+:root.dark-theme .bra-cat-badge   { background: #374151; color: #d1d5db; }
 :root.dark-theme .bra-delete-btn  { border-color: #4b5563; color: #6b7280; }
 :root.dark-theme .bra-delete-btn:hover:not(:disabled) { border-color: #ef4444; color: #fca5a5; background: rgba(239,68,68,0.15); }
 </style>

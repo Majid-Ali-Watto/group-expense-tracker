@@ -8,7 +8,7 @@ import { useReceiptUpload } from '../../utils/useReceiptUpload'
 import { DB_NODES } from '../../constants/db-nodes'
 
 export const ExpenseForm = (props, emit) => {
-  const { saveData, updateData, deleteData } = useFireBase()
+  const { saveData, updateData, deleteData, isSubmitting } = useFireBase()
   const isVisible = ref(true)
   const isEditMode = computed(() => !!props.row?.amount)
 
@@ -143,6 +143,7 @@ export const ExpenseForm = (props, emit) => {
     existingReceiptUrls,
     existingReceiptUrl,
     setSelectedFiles,
-    removeReceipt
+    removeReceipt,
+    isSubmitting
   }
 }

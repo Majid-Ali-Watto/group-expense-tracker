@@ -54,7 +54,7 @@ export const LoanForm = (props, emit) => {
 
   const { usersOptions: options } = useUsersOptions()
 
-  const { deleteData, updateData, saveData } = useFireBase()
+  const { deleteData, updateData, saveData, isSubmitting } = useFireBase()
 
   const loanForm = ref(null)
   const isVisible = ref(true)
@@ -487,6 +487,7 @@ export const LoanForm = (props, emit) => {
     copyToExpenses,
     selectedGiverUser,
     selectedReceiverUser,
-    usersForDropdown
+    usersForDropdown,
+    isSubmitting
   }
 }

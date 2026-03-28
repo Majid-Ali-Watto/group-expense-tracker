@@ -17,7 +17,7 @@ export const GroupsCreate = (emit, props) => {
     },
     getUserByMobile: (m) => userStore.getUserByMobile(m)
   }
-  const { updateData } = useFireBase()
+  const { updateData, isSubmitting } = useFireBase()
 
   const groupForm = ref({
     name: '',
@@ -144,6 +144,7 @@ export const GroupsCreate = (emit, props) => {
     groupForm,
     groupFormRef,
     usersOptions,
-    createGroup
+    createGroup,
+    isSubmitting
   }
 }

@@ -11,7 +11,7 @@ import { DB_NODES } from '../../constants/db-nodes'
 import { useReceiptUpload } from '../../utils/useReceiptUpload'
 
 export const PaymentForm = (props, emit) => {
-  const { updateData, saveData } = useFireBase()
+  const { updateData, saveData, isSubmitting } = useFireBase()
   const isVisible = ref(true)
   const authStore = useAuthStore()
   const groupStore = useGroupStore()
@@ -408,6 +408,7 @@ export const PaymentForm = (props, emit) => {
     existingReceiptUrls,
     existingReceiptMeta,
     setSelectedFiles,
-    removeReceipt
+    removeReceipt,
+    isSubmitting
   }
 }

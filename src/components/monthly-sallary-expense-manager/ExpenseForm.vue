@@ -49,7 +49,8 @@
         >
         <el-button
           type="success"
-          :loading="receiptUploading"
+          :loading="receiptUploading || isSubmitting"
+          :disabled="receiptUploading || isSubmitting"
           @click="() => validateForm()"
           size="small"
         >
@@ -85,7 +86,8 @@ const {
   receiptUploading,
   existingReceiptUrls,
   setSelectedFiles,
-  removeReceipt
+  removeReceipt,
+  isSubmitting
 } = ExpenseForm(props, emit)
 
 defineExpose({

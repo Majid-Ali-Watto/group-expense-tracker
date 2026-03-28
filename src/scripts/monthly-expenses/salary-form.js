@@ -26,6 +26,7 @@ export const SalaryForm = () => {
   const salaryForm = ref(null)
   const isSaveEnbl = ref(false)
   const isUpdateEnbl = ref(true)
+  const isSubmitting = ref(false)
   let salaryListener = null
 
   watch(
@@ -45,9 +46,11 @@ export const SalaryForm = () => {
   )
 
   const addSalary = async () => {
+    if (isSubmitting.value) return
     const formValid = await validateForm()
     if (!formValid) return
 
+    isSubmitting.value = true
     try {
       const monthRef = dbRef(
         `${DB_NODES.SALARIES}/${authStore.activeUser}/${selectedMonth.value}`
@@ -61,10 +64,13 @@ export const SalaryForm = () => {
       showSuccess('Salary added successfully!')
     } catch {
       showError('Failed to add salary. Please try again.')
+    } finally {
+      isSubmitting.value = false
     }
   }
 
   const updateSalary = async () => {
+    if (isSubmitting.value) return
     const formValid = await validateForm()
     if (!formValid) return
 
@@ -79,6 +85,7 @@ export const SalaryForm = () => {
         }
       )
 
+      isSubmitting.value = true
       const monthRef = dbRef(
         `${DB_NODES.SALARIES}/${authStore.activeUser}/${selectedMonth.value}`
       )
@@ -98,6 +105,8 @@ export const SalaryForm = () => {
       if (error !== 'cancel') {
         showError(error.message || 'An unexpected error occurred.')
       }
+    } finally {
+      isSubmitting.value = false
     }
   }
 
@@ -165,6 +174,7 @@ export const SalaryForm = () => {
     isSaveEnbl,
     isUpdateEnbl,
     addSalary,
-    updateSalary
+    updateSalary,
+    isSubmitting
   }
 }

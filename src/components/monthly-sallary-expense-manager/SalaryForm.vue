@@ -31,14 +31,16 @@
 
         <div class="flex justify-between">
           <GenericButton
-            :disabled="isSaveEnbl"
+            :disabled="isSaveEnbl || isSubmitting"
+            :loading="isSubmitting"
             type="success"
             @click="addSalary"
           >
             Save Salary
           </GenericButton>
           <GenericButton
-            :disabled="isUpdateEnbl"
+            :disabled="isUpdateEnbl || isSubmitting"
+            :loading="isSubmitting"
             type="warning"
             @click="updateSalary"
           >
@@ -67,6 +69,7 @@ const {
   isSaveEnbl,
   isUpdateEnbl,
   addSalary,
-  updateSalary
+  updateSalary,
+  isSubmitting
 } = SalaryForm()
 </script>
