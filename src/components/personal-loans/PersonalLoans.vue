@@ -13,19 +13,29 @@
         <!-- Month Filter -->
         <div class="flex items-center justify-between mb-2 mt-4 no-print-pdf">
           <span class="text-sm font-semibold text-gray-700">Filters</span>
-          <el-button
-            circle
-            type="primary"
-            size="small"
-            class="sm:hidden"
-            :icon="Filter"
-            @click="showFilters = !showFilters"
-          />
+          <div class="flex items-center gap-2">
+            <el-button
+              v-if="showFilters"
+              size="small"
+              type="danger"
+              plain
+              class="sm:hidden"
+              @click="clearFilters()"
+            >Clear</el-button>
+            <el-button
+              circle
+              :type="showFilters ? 'danger' : 'primary'"
+              size="small"
+              class="sm:hidden"
+              :icon="showFilters ? Close : Filter"
+              @click="showFilters = !showFilters"
+            />
+          </div>
         </div>
-        <el-row
+        <div
           :gutter="5"
           class="filter-bar mb-3 mt-4 no-print-pdf"
-          :class="showFilters ? '' : 'hidden sm:flex'"
+          :class="showFilters ? 'flex sm:flex' : 'hidden sm:flex'"
         >
           <el-col :lg="6" :md="6" :sm="12" :xs="12">
             <GenericDropDown
@@ -49,7 +59,15 @@
               size="small"
             />
           </el-col>
-        </el-row>
+        </div>
+        <el-button
+          v-if="!showFilters"
+          size="small"
+          type="danger"
+          plain
+          class="hidden sm:inline-flex mb-2"
+          @click="clearFilters()"
+        >Clear All Filters</el-button>
         <!-- Accordions -->
         <el-collapse v-model="openPanels" class="mt-4">
           <!-- Summary Statistics -->
@@ -144,7 +162,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useMobileScreen } from '../../utils/useMobileScreen'
-import { Filter } from '@element-plus/icons-vue'
+import { Filter, Close } from '@element-plus/icons-vue'
 import Table from '../shared/Table.vue'
 import BalanceSummaryCard from '../shared/BalanceSummaryCard.vue'
 import GenericDropDown from '../generic-components/GenericDropDown.vue'
@@ -177,7 +195,8 @@ const {
   totalLending,
   totalDebting,
   netPosition,
-  pairwiseSettlements
+  pairwiseSettlements,
+  clearFilters
 } = PersonalLoans()
 
 const showFilters = ref(false)

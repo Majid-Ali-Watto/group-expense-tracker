@@ -1,7 +1,8 @@
 <!-- eslint-disable vue/multi-word-component-names -->
 <template>
+  <div class="min-h-screen flex items-center justify-center px-4 pt-16 pb-12">
   <div
-    class="flex flex-col items-center p-6 max-w-sm mx-auto border rounded-lg shadow-xl"
+    class="flex flex-col items-center p-6 max-w-sm mx-auto border rounded-lg shadow-xl w-full"
   >
     <el-form
       :model="form"
@@ -212,6 +213,7 @@
         </div>
       </div>
     </el-dialog>
+  </div>
   </div>
 </template>
 

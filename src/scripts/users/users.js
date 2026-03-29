@@ -1,4 +1,5 @@
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessageBox } from 'element-plus'
 import useFireBase from '../../api/firebase-apis'
 import { useAuthStore } from '../../stores/authStore'
@@ -25,9 +26,23 @@ export const Users = () => {
   const groups = computed(() => groupStore.getGroups || [])
   const activeUser = computed(() => authStore.getActiveUser)
 
-  const searchQuery = useDebouncedRef('', 300)
-  const sortOrder = ref('') // '' | 'asc' | 'desc'
-  const sharedGroupsOnly = ref(false)
+  const route = useRoute()
+  const router = useRouter()
+  const searchQuery = useDebouncedRef(route.query.q || '', 300)
+  const sortOrder = ref(route.query.sort || '') // '' | 'asc' | 'desc'
+  const sharedGroupsOnly = ref(route.query.shared === '1')
+
+  // Sync filters to URL so they are bookmarkable and shareable
+  watch(
+    [searchQuery, sortOrder, sharedGroupsOnly],
+    () => {
+      const query = {}
+      if (searchQuery.value) query.q = searchQuery.value
+      if (sortOrder.value) query.sort = sortOrder.value
+      if (sharedGroupsOnly.value) query.shared = '1'
+      router.replace({ path: route.path, query })
+    }
+  )
 
   const activeGroupMobiles = computed(() => {
     const groupId = groupStore.getActiveGroup

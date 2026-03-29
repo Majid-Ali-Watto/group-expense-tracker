@@ -1,4 +1,5 @@
 import { ref, computed, onMounted, onUnmounted, inject, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { onValue, off } from '../../firebase'
 import { useAuthStore } from '../../stores/authStore'
 import { useGroupStore } from '../../stores/groupStore'
@@ -27,6 +28,8 @@ export const Loans = () => {
     getUserByMobile: (m) => userStore.getUserByMobile(m)
   }
   const dataStore = useDataStore()
+  const route = useRoute()
+  const router = useRouter()
   const { dbRef, readShallow, updateData, deleteData } = useFireBase()
   const formatAmount = inject('formatAmount')
 
@@ -35,8 +38,19 @@ export const Loans = () => {
     showLoanForm.value = !showLoanForm.value
   }
 
-  const selectedMonth = ref(getCurrentMonth())
-  const selectedGiver = ref('All')
+  const selectedMonth = ref(route.query.month || getCurrentMonth())
+  const selectedGiver = ref(route.query.giver || 'All')
+
+  // Keep URL query params in sync with filter state so the URL is shareable
+  watch(
+    [selectedMonth, selectedGiver],
+    () => {
+      const query = {}
+      if (selectedMonth.value) query.month = selectedMonth.value
+      if (selectedGiver.value && selectedGiver.value !== 'All') query.giver = selectedGiver.value
+      router.replace({ path: route.path, query })
+    }
+  )
   const months = ref([])
   const monthsLoaded = ref(false)
   const loansLoaded = ref(false)
@@ -54,8 +68,8 @@ export const Loans = () => {
       groupObj.value.members.length
     ) {
       return groupObj.value.members.map((m) => ({
-        name: m.name,
-        mobile: m.mobile
+        mobile: m.mobile,
+        name: m.name || userStore.getUserByMobile(m.mobile)?.name || m.mobile
       }))
     }
     return userStore.getUsers && userStore.getUsers.length
@@ -132,9 +146,9 @@ export const Loans = () => {
           rawLoansData.value = {}
         }
       },
-      () => {
+      (error) => {
         loansLoaded.value = true
-        showError('Failed to load loans. Please try again.')
+        if (activeGroup.value) showError('Failed to load loans. Please try again.')
       }
     )
   }
@@ -303,6 +317,10 @@ export const Loans = () => {
     executeRequestManually,
     cancelRequest,
     approveRequest,
-    rejectRequest
+    rejectRequest,
+    clearFilters: () => {
+      selectedMonth.value = getCurrentMonth()
+      selectedGiver.value = 'All'
+    }
   }
 }

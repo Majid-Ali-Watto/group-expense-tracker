@@ -1,83 +1,71 @@
 <template>
-  <Suspense>
-    <template #default>
-      <div>
-        <Header
-          @click-log="setLoggedInStatus"
-          @show-net-position="handleShowNetPosition"
-          @navigate-to-tab="({ tab, groupId }) => navigateToTab(tab, groupId)"
-          @tab-change="handleActiveTab"
-          :loggedIn="loggedIn"
-          :tabs="tabs"
-          :activeTab="activeTab"
-          :isDarkTheme="isDarkTheme"
-          :toggleTheme="toggleTheme"
-          :notifications="allNotifications"
-          :notificationCount="notificationCount"
-          :dismissNotification="dismissNotification"
-        />
-        <div
-          v-if="!loggedIn"
-          class="container min-h-screen flex items-center justify-center mx-auto px-4 pt-24 pb-12"
-        >
-          <div>
-            <Login />
-          </div>
-        </div>
-        <div v-if="loggedIn" class="container mx-auto mt-20" style="max-width: 980px">
-          <!-- Welcome Banner -->
-          <WelcomeBanner :displayName="displayName" />
+  <div>
+    <Header
+      @click-log="setLoggedInStatus"
+      @show-net-position="handleShowNetPosition"
+      @navigate-to-tab="({ tab, groupId }) => navigateToTab(tab, groupId)"
+      @tab-change="handleActiveTab"
+      :loggedIn="loggedIn"
+      :tabs="tabs"
+      :activeTab="activeTab"
+      :isDarkTheme="isDarkTheme"
+      :toggleTheme="toggleTheme"
+      :notifications="allNotifications"
+      :notificationCount="notificationCount"
+      :dismissNotification="dismissNotification"
+    />
 
-          <!-- Tabs -->
-          <el-tabs
-            v-model="activeTab"
-            @tab-change="handleActiveTab"
-            class="demo-tabs"
-            type="card"
-            tab-position="top"
-          >
-            <el-tab-pane
-              v-for="(tab, index) in tabs"
-              :key="index"
-              :label="tab"
-              :name="tab"
-              class="py-2 px-3 sm:px-0"
+    <!-- Tab navigation bar — only shown when authenticated -->
+    <div v-if="loggedIn" class="container mx-auto mt-20" style="max-width: 980px">
+      <WelcomeBanner :displayName="displayName" />
+      <el-tabs
+        v-model="activeTab"
+        @tab-change="handleActiveTab"
+        class="demo-tabs"
+        type="card"
+        tab-position="top"
+      >
+        <el-tab-pane
+          v-for="(tab, index) in tabs"
+          :key="index"
+          :label="tab"
+          :name="tab"
+          class="py-2 px-3 sm:px-0"
+        />
+      </el-tabs>
+    </div>
+
+    <!-- Single RouterView renders everything:
+         /login, /register → Login.vue (self-centered)
+         /groups etc       → tab content (sits below the tab bar above) -->
+    <div
+      :class="loggedIn ? 'container mx-auto' : ''"
+      :style="loggedIn ? 'max-width: 980px' : ''"
+    >
+      <div class="tab-stage">
+        <RouterView v-slot="{ Component }">
+          <Transition :name="tabTransitionName" mode="out-in">
+            <component
+              :is="Component"
+              :key="$route.path"
+              class="tab-stage__panel px-2 mb-4"
             />
-          </el-tabs>
-
-          <div class="tab-stage">
-            <Transition :name="tabTransitionName" mode="out-in">
-              <div :key="activeTab" class="tab-stage__panel">
-                <keep-alive>
-                  <HOC
-                    :key="activeTab"
-                    :componentToBeRendered="activeTabComponent(activeTab)"
-                  />
-                </keep-alive>
-              </div>
-            </Transition>
-          </div>
-        </div>
-
-        <!-- Expenses Summary Dialog -->
-        <NetPositionDialog
-          v-model="showNetPositionDialog"
-          :summary="netPositionSummary"
-        />
+          </Transition>
+        </RouterView>
       </div>
-    </template>
-    <template #fallback>
-      <LoadingSkeleton mode="page" />
-    </template>
-  </Suspense>
+    </div>
+
+    <!-- Expenses Summary Dialog -->
+    <NetPositionDialog
+      v-model="showNetPositionDialog"
+      :summary="netPositionSummary"
+    />
+  </div>
 </template>
 
 <script setup>
 import { App } from './scripts/layout/app'
-import LoadingSkeleton from './components/shared/LoadingSkeleton.vue'
 import { loadAsyncComponent } from './utils/async-component'
-const HOC = loadAsyncComponent(() => import('@/components/layout/HOC.vue'))
-const Login = loadAsyncComponent(() => import('@/components/auth/Login.vue'))
 const Header = loadAsyncComponent(
   () => import('@/components/layout/Header.vue')
 )
@@ -96,7 +84,6 @@ const {
   tabTransitionName,
   setLoggedInStatus,
   handleActiveTab,
-  activeTabComponent,
   isDarkTheme,
   toggleTheme,
   showNetPositionDialog,

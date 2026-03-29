@@ -1,4 +1,5 @@
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessageBox } from 'element-plus'
 import { database, ref as dbRef, onValue, update, set, remove } from '../../firebase'
 import { DB_NODES } from '../../constants/db-nodes'
@@ -31,13 +32,24 @@ const STATUS_ORDER = { open: 0, 'in-progress': 1, 'needs-info': 2, duplicate: 3,
  */
 export const BugReportsAdmin = () => {
   // ── Report list state ─────────────────────────────────────────────────────
+  const route = useRoute()
+  const router = useRouter()
   const loading = ref(true)
   const reports = ref([])
   const expandedIds = ref(new Set())
-  const activeStatusFilter = ref('all')
-  const activeSeverityFilter = ref('all')
-  const searchQuery = ref('')
+  const activeStatusFilter = ref(route.query.status || 'all')
+  const activeSeverityFilter = ref(route.query.severity || 'all')
+  const searchQuery = ref(route.query.q || '')
   const deletingId = ref(null)
+
+  // Sync all filters to URL so admin views are shareable / bookmarkable
+  watch([searchQuery, activeStatusFilter, activeSeverityFilter], () => {
+    const query = {}
+    if (searchQuery.value.trim()) query.q = searchQuery.value.trim()
+    if (activeStatusFilter.value !== 'all') query.status = activeStatusFilter.value
+    if (activeSeverityFilter.value !== 'all') query.severity = activeSeverityFilter.value
+    router.replace({ path: route.path, query })
+  })
 
   const statusFilters = computed(() => [
     { label: 'All',          value: 'all',          count: reports.value.length, selectLabel: `All (${reports.value.length})` },

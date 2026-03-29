@@ -24,6 +24,7 @@ import { ref as firebaseRef, update as updateDb } from 'firebase/database'
 import { database } from '../../firebase'
 import { DB_NODES } from '../../constants/db-nodes'
 import { useDebouncedRef } from '../../utils/useDebouncedRef'
+import { useRoute, useRouter } from 'vue-router'
 
 export const Table = (props) => {
   const clickTimeout = ref(null)
@@ -841,9 +842,20 @@ export const Table = (props) => {
   })
 
   // --- Filter & Sort ---
-  const filterText = useDebouncedRef('', 300)
+  const route = useRoute()
+  const router = useRouter()
+  const filterText = useDebouncedRef(route.query.search || '', 300)
   const sortKey = ref(null)
   const sortOrder = ref('asc')
+
+  // Sync table search to URL so it survives sharing and is bookmarkable.
+  // Uses route.path so it works on any tab without knowing which tab it is.
+  watch(filterText, (val) => {
+    const query = { ...route.query }
+    if (val.trim()) query.search = val.trim()
+    else delete query.search
+    router.replace({ path: route.path, query })
+  })
 
   function clearSort() {
     sortKey.value = null

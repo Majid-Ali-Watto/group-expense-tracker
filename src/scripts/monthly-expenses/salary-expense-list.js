@@ -1,5 +1,6 @@
 import { computed, inject, ref, onMounted, watch, onUnmounted } from 'vue'
-import { onValue, off } from '../../firebase'
+import { useRoute, useRouter } from 'vue-router'
+import { onValue, off, auth, onAuthStateChanged } from '../../firebase'
 import { useAuthStore } from '../../stores/authStore'
 import { useDataStore } from '../../stores/dataStore'
 import getCurrentMonth from '../../utils/getCurrentMonth'
@@ -13,8 +14,10 @@ export const SalaryExpenseList = () => {
   const authStore = useAuthStore()
   const dataStore = useDataStore()
 
-  const activeUser = ref(authStore.activeUser)
-  const selectedMonth = ref(getCurrentMonth())
+  const activeUser = computed(() => authStore.getActiveUser)
+  const route = useRoute()
+  const router = useRouter()
+  const selectedMonth = ref(route.query.month || getCurrentMonth())
   const expenses = ref([])
   const keys = ref([])
   const totalSpent = ref(0)
@@ -34,6 +37,7 @@ export const SalaryExpenseList = () => {
 
   const fetchMonths = async () => {
     monthsLoaded.value = false
+    if (!activeUser.value) { monthsLoaded.value = true; return }
     try {
       months.value = await readShallow(
         `${DB_NODES.PERSONAL_EXPENSES}/${activeUser.value}`
@@ -48,6 +52,7 @@ export const SalaryExpenseList = () => {
 
   const fetchSalary = () => {
     salaryLoaded.value = false
+    if (!activeUser.value) { salaryLoaded.value = true; return }
     const salaryRef = dbRef(
       `${DB_NODES.SALARIES}/${activeUser.value}/${selectedMonth.value}`
     )
@@ -62,14 +67,17 @@ export const SalaryExpenseList = () => {
       },
       (error) => {
         salaryLoaded.value = true
-        showError('Failed to load salary. Please try again.')
-        console.error(error)
+        if (activeUser.value) {
+          showError('Failed to load salary. Please try again.')
+          console.error(error)
+        }
       }
     )
   }
 
   const fetchExpenses = () => {
     expensesLoaded.value = false
+    if (!activeUser.value) { expensesLoaded.value = true; return }
     const expensesRef = dbRef(
       `${DB_NODES.PERSONAL_EXPENSES}/${activeUser.value}/${selectedMonth.value}`
     )
@@ -95,8 +103,10 @@ export const SalaryExpenseList = () => {
       },
       (error) => {
         expensesLoaded.value = true
-        showError('Failed to load expenses. Please try again.')
-        console.error(error)
+        if (activeUser.value) {
+          showError('Failed to load expenses. Please try again.')
+          console.error(error)
+        }
       }
     )
   }
@@ -109,9 +119,14 @@ export const SalaryExpenseList = () => {
     dataStore.setCurrentMonth(selectedMonth.value)
     fetchSalary()
     fetchExpenses()
+    // Sync to URL so the selected month is bookmarkable
+    const query = {}
+    if (selectedMonth.value !== getCurrentMonth()) query.month = selectedMonth.value
+    router.replace({ path: route.path, query })
   })
 
   onUnmounted(() => {
+    if (unsubscribeAuth) unsubscribeAuth()
     if (loadingTimeout) clearTimeout(loadingTimeout)
     if (salaryListener)
       off(
@@ -132,15 +147,22 @@ export const SalaryExpenseList = () => {
   })
 
   let loadingTimeout = null
+  let unsubscribeAuth = null
   onMounted(() => {
-    fetchMonths()
-    fetchSalary()
-    fetchExpenses()
     loadingTimeout = setTimeout(() => {
       monthsLoaded.value = true
       salaryLoaded.value = true
       expensesLoaded.value = true
     }, 8000)
+
+    unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
+      if (!firebaseUser) return
+      unsubscribeAuth?.()
+      unsubscribeAuth = null
+      fetchMonths()
+      fetchSalary()
+      fetchExpenses()
+    })
 
     setTimeout(() => {
       dataStore.setSalaryRef(content.value)
@@ -157,6 +179,9 @@ export const SalaryExpenseList = () => {
     months,
     content,
     isContentLoading,
-    fetchExpenses
+    fetchExpenses,
+    clearFilters: () => {
+      selectedMonth.value = getCurrentMonth()
+    }
   }
 }

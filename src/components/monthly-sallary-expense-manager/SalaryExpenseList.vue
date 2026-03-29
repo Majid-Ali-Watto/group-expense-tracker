@@ -14,24 +14,43 @@
       <div class="sel-filter no-print-pdf">
         <div class="sel-filter-toggle">
           <span class="sel-filter-label">Filter by month</span>
-          <el-button
-            circle
-            type="primary"
-            size="small"
-            class="sm:hidden"
-            :icon="Filter"
-            @click="showFilters = !showFilters"
-          />
+          <div class="flex items-center gap-2">
+            <el-button
+              v-if="showFilters"
+              size="small"
+              type="danger"
+              plain
+              class="sm:hidden"
+              @click="clearFilters()"
+            >Clear</el-button>
+            <el-button
+              circle
+              :type="showFilters ? 'danger' : 'primary'"
+              size="small"
+              class="sm:hidden"
+              :icon="showFilters ? Close : Filter"
+              @click="showFilters = !showFilters"
+            />
+          </div>
         </div>
-        <div :class="showFilters ? 'block' : 'hidden sm:block'">
-          <GenericDropDown
+        <div class="flex items-center gap-2">
+          <div :class="showFilters ? 'block flex-1' : 'hidden sm:block flex-1'">
+            <GenericDropDown
+              size="small"
+              v-model="selectedMonth"
+              label="Select Month"
+              placeholder="Select month"
+              :options="months"
+              @update:modelValue="fetchExpenses"
+            />
+          </div>
+          <el-button
             size="small"
-            v-model="selectedMonth"
-            label="Select Month"
-            placeholder="Select month"
-            :options="months"
-            @update:modelValue="fetchExpenses"
-          />
+            type="danger"
+            plain
+            class="hidden sm:inline-flex flex-shrink-0"
+            @click="clearFilters()"
+          >Clear All</el-button>
         </div>
       </div>
 
@@ -48,7 +67,7 @@
 
 <script setup>
 import { ref } from 'vue'
-import { Filter } from '@element-plus/icons-vue'
+import { Filter, Close } from '@element-plus/icons-vue'
 import Table from '../shared/Table.vue'
 import GenericDropDown from '../generic-components/GenericDropDown.vue'
 import LoadingSkeleton from '../shared/LoadingSkeleton.vue'
@@ -65,7 +84,8 @@ const {
   months,
   content,
   isContentLoading,
-  fetchExpenses
+  fetchExpenses,
+  clearFilters
 } = SalaryExpenseList()
 const showFilters = ref(false)
 </script>

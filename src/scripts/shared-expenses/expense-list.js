@@ -1,4 +1,5 @@
 import { computed, onMounted, onUnmounted, ref, watch, inject } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useUsersOptions } from '../../utils/useUsersOptions'
 import { useAuthStore } from '../../stores/authStore'
 import { useGroupStore } from '../../stores/groupStore'
@@ -26,6 +27,8 @@ export const ExpenseList = (props) => {
     },
     getUserByMobile: (m) => userStore.getUserByMobile(m)
   }
+  const route = useRoute()
+  const router = useRouter()
   const { dbRef, readShallow, updateData, deleteData } = useFireBase()
   const formatAmount = inject('formatAmount')
 
@@ -39,11 +42,28 @@ export const ExpenseList = (props) => {
   const payments = ref([])
   const paymentKeys = ref([])
   const rawPaymentsData = ref({})
-  const selectedMonth = ref(getCurrentMonth())
-  const selectedFriend = ref('All')
-  const selectedPayerMode = ref('all')
-  const selectedSplitMode = ref('all')
-  const selectedParticipants = ref([])
+  const selectedMonth = ref(route.query.month || getCurrentMonth())
+  const selectedFriend = ref(route.query.payer || 'All')
+  const selectedPayerMode = ref(route.query.payerMode || 'all')
+  const selectedSplitMode = ref(route.query.splitMode || 'all')
+  const selectedParticipants = ref(
+    route.query.participants ? route.query.participants.split(',') : []
+  )
+
+  // Keep URL query params in sync with filter state so the URL is shareable
+  watch(
+    [selectedMonth, selectedFriend, selectedPayerMode, selectedSplitMode, selectedParticipants],
+    () => {
+      const query = {}
+      if (selectedMonth.value) query.month = selectedMonth.value
+      if (selectedFriend.value && selectedFriend.value !== 'All') query.payer = selectedFriend.value
+      if (selectedPayerMode.value && selectedPayerMode.value !== 'all') query.payerMode = selectedPayerMode.value
+      if (selectedSplitMode.value && selectedSplitMode.value !== 'all') query.splitMode = selectedSplitMode.value
+      if (selectedParticipants.value?.length) query.participants = selectedParticipants.value.join(',')
+      router.replace({ path: route.path, query })
+    },
+    { deep: true }
+  )
 
   const activeUser = computed(() => authStore.getActiveUser)
   const activeGroup = computed(() => groupStore.getActiveGroup)
@@ -140,9 +160,9 @@ export const ExpenseList = (props) => {
           rawPaymentsData.value = {}
         }
       },
-      () => {
+      (error) => {
         paymentsLoaded.value = true
-        showError('Failed to load expenses. Please try again.')
+        if (activeGroup.value) showError('Failed to load expenses. Please try again.')
       }
     )
   }
@@ -281,6 +301,12 @@ export const ExpenseList = (props) => {
     executeRequestManually,
     cancelRequest,
     approveRequest,
-    rejectRequest
+    rejectRequest,
+    clearFilters: () => {
+      selectedMonth.value = getCurrentMonth()
+      selectedFriend.value = 'All'
+      selectedPayerMode.value = 'all'
+      selectedSplitMode.value = 'all'
+    }
   }
 }

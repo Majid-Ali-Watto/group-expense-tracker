@@ -1,4 +1,5 @@
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessageBox } from 'element-plus'
 import useFireBase from '../../api/firebase-apis'
 import { useAuthStore } from '../../stores/authStore'
@@ -58,6 +59,8 @@ function clearLoginAttempts() {
 // ── Composable ────────────────────────────────────────────────────────────
 
 export const Login = () => {
+  const route = useRoute()
+  const router = useRouter()
   const authStore = useAuthStore()
   const groupStore = useGroupStore()
   const { read, updateData } = useFireBase()
@@ -73,7 +76,20 @@ export const Login = () => {
   })
 
   const loginForm = ref(null)
-  const mode = ref('login') // 'login' or 'register'
+  // Initialize mode from the current URL path
+  const mode = ref(route.path === '/register' ? 'register' : 'login')
+
+  // When the URL changes (e.g. browser back/forward), sync the mode
+  watch(() => route.path, (path) => {
+    const next = path === '/register' ? 'register' : 'login'
+    if (mode.value !== next) mode.value = next
+  })
+
+  // When user clicks the Login/Register toggle, update the URL to match
+  watch(mode, (val) => {
+    const target = val === 'register' ? '/register' : '/login'
+    if (route.path !== target) router.push(target)
+  })
 
   // Email reset dialog state
   const emailResetDialogVisible = ref(false)

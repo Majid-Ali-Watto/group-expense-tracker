@@ -1,4 +1,5 @@
 import { ref, computed, onMounted, onUnmounted, inject, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { onValue, off } from '../../firebase'
 import useFireBase from '../../api/firebase-apis'
 import { useAuthStore } from '../../stores/authStore'
@@ -22,15 +23,25 @@ export const PersonalLoans = () => {
     },
     getUserByMobile: (m) => userStore.getUserByMobile(m)
   }
+  const route = useRoute()
+  const router = useRouter()
   const loans = ref([])
   const loanKeys = ref([])
   const loanContent = ref(null)
-  const selectedMonth = ref('All')
-  const selectedGiver = ref('All')
+  const selectedMonth = ref(route.query.month || 'All')
+  const selectedGiver = ref(route.query.giver || 'All')
   const months = ref([])
   const showLoanForm = ref(false)
   const monthsLoaded = ref(false)
   const loansLoaded = ref(false)
+
+  // Sync filters to URL so they are bookmarkable and shareable
+  watch([selectedMonth, selectedGiver], () => {
+    const query = {}
+    if (selectedMonth.value && selectedMonth.value !== 'All') query.month = selectedMonth.value
+    if (selectedGiver.value && selectedGiver.value !== 'All') query.giver = selectedGiver.value
+    router.replace({ path: route.path, query })
+  })
 
   const closeLoanForm = () => {
     showLoanForm.value = !showLoanForm.value
@@ -297,6 +308,10 @@ export const PersonalLoans = () => {
     totalLending,
     totalDebting,
     netPosition,
-    pairwiseSettlements
+    pairwiseSettlements,
+    clearFilters: () => {
+      selectedMonth.value = 'All'
+      selectedGiver.value = 'All'
+    }
   }
 }

@@ -1,4 +1,5 @@
 import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { GROUP_CATEGORIES } from '../../assets/enums'
 import { useAuthStore } from '../../stores/authStore'
 import { useGroupStore } from '../../stores/groupStore'
@@ -6,7 +7,7 @@ import { useUserStore } from '../../stores/userStore'
 import useFireBase from '../../api/firebase-apis'
 import { showError, showSuccess } from '../../utils/showAlerts'
 import { ElMessageBox } from 'element-plus'
-import { onValue, off } from '../../firebase'
+import { onValue, off, auth, onAuthStateChanged } from '../../firebase'
 import { maskMobile } from '../../utils/maskMobile'
 import {
   appendNotificationForUser,
@@ -40,10 +41,12 @@ import {
 export const Groups = () => {
   const isPageLoading = ref(true)
   const showCreateGroup = ref(false)
-  const searchQuery = useDebouncedRef('', 300)
-  const sortOrder = ref('') // '' | 'asc' | 'desc'
-  const filterByUser = ref('')
-  const filterByCategory = ref('')
+  const route = useRoute()
+  const router = useRouter()
+  const searchQuery = useDebouncedRef(route.query.q || '', 300)
+  const sortOrder = ref(route.query.sort || '') // '' | 'asc' | 'desc'
+  const filterByUser = ref(route.query.user || '')
+  const filterByCategory = ref(route.query.category || '')
   const pinnedGroupIds = ref([])
 
   const openCreateGroup = () => {
@@ -53,6 +56,27 @@ export const Groups = () => {
   const closeCreateGroup = () => {
     showCreateGroup.value = false
   }
+
+  // Sync all filters to URL so they are bookmarkable and shareable
+  watch(
+    [searchQuery, sortOrder, filterByUser, filterByCategory],
+    () => {
+      const query = {}
+      if (searchQuery.value) query.q = searchQuery.value
+      if (sortOrder.value) query.sort = sortOrder.value
+      if (filterByUser.value) query.user = filterByUser.value
+      if (filterByCategory.value) query.category = filterByCategory.value
+      router.replace({ path: route.path, query })
+    }
+  )
+
+  // When create-group dialog closes via any path, remove ?new from URL
+  watch(showCreateGroup, (open) => {
+    if (!open && route.query.new) {
+      const { new: _, ...rest } = route.query
+      router.replace({ path: route.path, query: rest })
+    }
+  })
 
   const authStore = useAuthStore()
   const groupStore = useGroupStore()
@@ -306,8 +330,25 @@ export const Groups = () => {
     return group?.joinRequests || []
   }
 
-  onMounted(async () => {
+  onMounted(() => {
     loadPins()
+
+    // Open the create-group dialog immediately if the URL contains ?new=1
+    // (e.g., a shared link or bookmarked shortcut)
+    if (route.query.new === '1') {
+      showCreateGroup.value = true
+    }
+
+    // Wait for Firebase Auth to confirm the current user before reading RTDB.
+    // Without this, the onValue listener fires before the auth token is attached
+    // to the request, causing permission_denied even though loggedIn is true in Pinia.
+    const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
+      unsubscribeAuth() // one-shot — we only need the first confirmation
+
+      if (!firebaseUser) {
+        isPageLoading.value = false
+        return
+      }
 
     // Fetch users — needed for group creation and member display
     // Only include verified users to prevent unverified accounts from being added to groups
@@ -362,9 +403,14 @@ export const Groups = () => {
       },
       (error) => {
         isPageLoading.value = false
-        console.error('Error loading groups:', error)
+        // Ignore permission errors that fire after logout — Firebase revokes the
+        // auth token before this listener is detached (on component unmount).
+        if (authStore.getActiveUser) {
+          console.error('Error loading groups:', error)
+        }
       }
     )
+    }) // end onAuthStateChanged
   })
 
   onUnmounted(() => {

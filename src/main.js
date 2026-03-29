@@ -3,6 +3,7 @@ import 'element-plus/dist/index.css'
 import { createPinia } from 'pinia'
 import { createApp } from 'vue'
 import App from './App.vue'
+import router from './router'
 import overflowPopup from './directives/overflow-popup'
 import './main.css'
 import { toCapitalize } from './utils/string-formatting'
@@ -22,4 +23,5 @@ String.prototype.toCapitalize = toCapitalize
 app.directive('overflow-popup', overflowPopup)
 app.use(ElementPlus)
 app.use(createPinia())
+app.use(router)
 app.mount('#app')

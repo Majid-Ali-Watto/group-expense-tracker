@@ -1,5 +1,6 @@
 <template>
-  <div>
+  <GroupAccessGuard :group-id="$route.params.groupId">
+    <div>
     <el-alert
       v-if="memberCount > 2"
       title="Shared loans are designed for managing loans between two people."
@@ -10,10 +11,12 @@
     />
     <Loans v-else />
   </div>
+  </GroupAccessGuard>
 </template>
 
 <script setup>
 import { computed } from 'vue'
+import GroupAccessGuard from '../shared/GroupAccessGuard.vue'
 import { useGroupStore } from '../../stores/groupStore'
 import { loadAsyncComponent } from '../../utils/async-component'
 

@@ -1,5 +1,6 @@
 <template>
-  <div class="space-y-4">
+  <GroupAccessGuard :group-id="$route.params.groupId">
+    <div class="space-y-4">
     <!-- Plus Button -->
 
     <AddNewTransactionButton
@@ -308,10 +309,12 @@
     <!-- Expense List (only in add mode, not dialog edit mode) -->
     <HOC v-if="!isEditMode" :componentToBeRendered="ExpenseList" />
   </div>
+  </GroupAccessGuard>
 </template>
 
 <script setup>
 import HOC from '../layout/HOC.vue'
+import GroupAccessGuard from '../shared/GroupAccessGuard.vue'
 import {
   DataTimePicker,
   AmountInput,

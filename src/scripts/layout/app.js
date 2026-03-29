@@ -1,4 +1,5 @@
 import { ref, onUnmounted, onMounted, computed, watch, nextTick } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '../../stores/authStore'
 import { useTabStore } from '../../stores/tabStore'
 import { useGroupStore } from '../../stores/groupStore'
@@ -7,7 +8,7 @@ import useFireBase from '../../api/firebase-apis'
 import { DB_NODES } from '../../constants/db-nodes'
 import { tabs as allTabs } from '../../assets/data'
 import { Tabs } from '../../assets/enums'
-import { getActiveTab } from '../../utils/active-tab'
+import { TAB_ROUTES, ROUTE_TABS, GROUP_TABS } from '../../router'
 import { showError } from '../../utils/showAlerts'
 import {
   decryptFromSession,
@@ -18,16 +19,16 @@ import {
 import { useGlobalNotifications } from '../../utils/useGlobalNotifications'
 import { generateUUID } from '../../utils/uuid'
 import { auth, onAuthStateChanged, signOut } from '../../firebase'
+import { maskMobile } from '../../utils/maskMobile'
 import { NetPosition } from '../generic/net-position'
 
 export const App = () => {
+  const router = useRouter()
+  const route = useRoute()
   const authStore = useAuthStore()
   const tabStore = useTabStore()
   const groupStore = useGroupStore()
   const userStore = useUserStore()
-
-  // Holds the saved tab to restore after HOC loads groups/users data
-  const pendingTabRestore = ref(null)
 
   // Expenses Summary state
   const showNetPositionDialog = ref(false)
@@ -135,12 +136,41 @@ export const App = () => {
         authStore.setSessionToken(encryptedStore)
         authStore.setActiveLoginCode('')
 
-        // Queue the saved tab — Groups opens first so HOC can load data,
-        // then the watcher below applies the restore once users are ready
-        const savedTab = sessionStorage.getItem('_activeTab')
-        if (savedTab && allTabs.includes(savedTab)) {
-          pendingTabRestore.value = savedTab
+        // Populate userStore immediately so displayName is never "Guest" on any tab.
+        // We already have the full users payload — just map it into the store.
+        Object.keys(usersData).forEach((m) => {
+          const u = usersData[m]
+          if (u.emailVerified === true) {
+            userStore.addUser({ mobile: m, name: u.name || '', maskedMobile: maskMobile(m) })
+          }
+        })
+
+        // Restore last route — this is a page-refresh, not a fresh login.
+        // Restore the active group first so group-gated route guards pass.
+        const savedGroupId = sessionStorage.getItem('_lastGroupId')
+        if (savedGroupId) groupStore.setActiveGroup(savedGroupId)
+
+        // Also fetch groups so getGroupById works on any tab (not just Groups tab).
+        // This is a one-time read — same cost as GroupAccessGuard.vue does on demand.
+        try {
+          const groupsData = await read(DB_NODES.GROUPS, false)
+          if (groupsData) {
+            const groupList = Object.keys(groupsData).map(k => ({ id: k, ...groupsData[k] }))
+            groupStore.setGroups(groupList)
+          }
+        } catch {
+          // Non-fatal — Groups tab will load them when visited
         }
+
+        const savedRoute = sessionStorage.getItem('_lastRoute')
+        // Strip query params from the second path segment before checking validAppRoutes.
+        // e.g. '/personal-loans?month=2026-02' → segment[1]='personal-loans?month=...' → strip '?' → '/personal-loans'
+        const savedBasePath = savedRoute
+          ? '/' + savedRoute.split('/')[1].split('?')[0]
+          : null
+        const destination =
+          savedBasePath && validAppRoutes.has(savedBasePath) ? savedRoute : '/groups'
+        router.replace(destination)
       } catch (e) {
         console.error('Auto session restore failed:', e)
       }
@@ -189,9 +219,44 @@ export const App = () => {
     () => groupStore.getGroupById(groupStore.getActiveGroup)?.name
   )
 
-  // Current active tab from store
-  const activeTab = ref(tabStore.getActiveTab || tabs.value[0])
+  // Active tab derived from current route path; synced back to tabStore
+  const activeTab = ref(ROUTE_TABS['/' + route.path.split('/')[1]] || Tabs.GROUPS)
   const tabTransitionName = ref('tab-page-forward')
+
+  // Valid app route paths (used to filter out /login, /register, /)
+  const validAppRoutes = new Set(Object.values(TAB_ROUTES))
+
+  // Keep activeTab in sync when route changes, and persist last route to sessionStorage
+  watch(
+    () => route.path,
+    (path) => {
+      // Strip dynamic segment: /shared-expenses/groupId → /shared-expenses
+      const basePath = '/' + path.split('/')[1]
+      const tab = ROUTE_TABS[basePath] || Tabs.GROUPS
+      if (tab !== activeTab.value) {
+        updateTabTransition(tab)
+        activeTab.value = tab
+        tabStore.setActiveTab(tab)
+      }
+      // Save last app route (full path incl. groupId and query params) so page-refresh can restore it
+      if (validAppRoutes.has(basePath)) {
+        sessionStorage.setItem('_lastRoute', route.fullPath)
+      }
+    }
+  )
+
+  // Persist the active group separately so it survives page refresh on any tab.
+  // This is a dedicated watcher rather than part of the route watcher because
+  // the route watcher fires before Pinia is hydrated on reload — reading
+  // getActiveGroup there would always be null and wipe the saved value.
+  watch(
+    () => groupStore.getActiveGroup,
+    (gid) => {
+      if (!loggedIn.value) return
+      if (gid) sessionStorage.setItem('_lastGroupId', gid)
+      else sessionStorage.removeItem('_lastGroupId')
+    }
+  )
 
   function updateTabTransition(nextTab) {
     const currentIndex = tabs.value.indexOf(activeTab.value)
@@ -206,34 +271,18 @@ export const App = () => {
       nextIndex > currentIndex ? 'tab-page-forward' : 'tab-page-backward'
   }
 
-  // Once HOC loads users (signal that group/user data is ready), apply the queued tab restore
-  const stopTabRestoreWatch = watch(
-    () => userStore.users.length,
-    (len) => {
-      if (len > 0 && pendingTabRestore.value) {
-        const tab = pendingTabRestore.value
-        pendingTabRestore.value = null
-        if (tabs.value.includes(tab)) {
-          updateTabTransition(tab)
-          activeTab.value = tab
-          tabStore.setActiveTab(tab)
-        }
-        stopTabRestoreWatch()
-      }
-    }
-  )
-
   async function logout() {
     authStore.setActiveUser(null)
     groupStore.setActiveGroup(null)
     authStore.setSessionToken(null)
     authStore.setActiveLoginCode(null)
     sessionStorage.removeItem('_session')
-    sessionStorage.removeItem('_activeTab')
-    pendingTabRestore.value = null
+    sessionStorage.removeItem('_lastRoute')
+    sessionStorage.removeItem('_lastGroupId')
     // rememberMeData (name + mobile) is intentionally kept if Remember Me was enabled.
     // It was already cleared during login when Remember Me is OFF.
     await signOut(auth)
+    router.replace('/login')
   }
 
   // Header emits false on logout click; any other caller also uses this
@@ -277,7 +326,11 @@ export const App = () => {
     updateTabTransition(tab)
     activeTab.value = tab
     tabStore.setActiveTab(tab)
-    sessionStorage.setItem('_activeTab', tab)
+    const gid = groupStore.getActiveGroup
+    const path = GROUP_TABS.has(tab) && gid
+      ? `${TAB_ROUTES[tab]}/${gid}`
+      : TAB_ROUTES[tab]
+    router.push(path)
 
     const verified = await verifyUser()
     if (!verified) {
@@ -297,6 +350,14 @@ export const App = () => {
         logout()
         return
       }
+      // Fresh login from /login or /register → honour ?redirect if present,
+      // otherwise go to /groups. Clear any stale saved route.
+      if (route.path === '/login' || route.path === '/register') {
+        sessionStorage.removeItem('_lastRoute')
+        sessionStorage.removeItem('_lastGroupId')
+        const redirectTo = route.query.redirect
+        router.replace(typeof redirectTo === 'string' && redirectTo.startsWith('/') ? redirectTo : '/groups')
+      }
       verifyInterval = setInterval(async () => {
         const verified = await verifyUser(false)
         if (!verified) {
@@ -315,11 +376,6 @@ export const App = () => {
   onUnmounted(() => {
     if (verifyInterval) clearInterval(verifyInterval)
   })
-
-  // Map activeTab to dynamic components
-  const activeTabComponent = (activeTab) => {
-    return getActiveTab(activeTab)
-  }
 
   // Handle Expenses Summary button click
   async function handleShowNetPosition() {
@@ -342,7 +398,11 @@ export const App = () => {
     updateTabTransition(tab)
     activeTab.value = tab
     tabStore.setActiveTab(tab)
-    sessionStorage.setItem('_activeTab', tab)
+    const gid = groupId || groupStore.getActiveGroup
+    const path = GROUP_TABS.has(tab) && gid
+      ? `${TAB_ROUTES[tab]}/${gid}`
+      : TAB_ROUTES[tab]
+    router.push(path)
   }
 
   // Initialize notification system only after successful login
@@ -405,7 +465,6 @@ export const App = () => {
     dismissNotification,
     setLoggedInStatus,
     handleActiveTab,
-    activeTabComponent,
     isDarkTheme,
     toggleTheme,
     showNetPositionDialog,

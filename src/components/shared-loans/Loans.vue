@@ -209,45 +209,54 @@
         <!-- Mobile filter toggle -->
         <div class="flex items-center justify-between mb-2 mt-4">
           <span class="text-sm font-semibold text-gray-700">Filters</span>
-          <el-button
-            circle
-            type="primary"
-            size="small"
-            class="sm:hidden"
-            :icon="Filter"
-            @click="showFilters = !showFilters"
-          />
+          <div class="flex items-center gap-2">
+            <el-button
+              v-if="showFilters"
+              size="small"
+              type="danger"
+              plain
+              class="sm:hidden"
+              @click="clearFilters()"
+            >Clear</el-button>
+            <el-button
+              circle
+              :type="showFilters ? 'danger' : 'primary'"
+              size="small"
+              class="sm:hidden"
+              :icon="showFilters ? Close : Filter"
+              @click="showFilters = !showFilters"
+            />
+          </div>
         </div>
-        <!-- Filters -->
-        <el-row
-          :gutter="5"
-          class="filter-bar mb-3 mt-4 hidden sm:flex"
-          justify="space-between"
-        >
-          <!-- Month Selection -->
-          <el-col :lg="6" :md="6" :sm="12" :xs="12">
-            <GenericDropDown
-              v-model="selectedMonth"
-              label="Month"
-              placeholder="Select Month"
-              :options="months"
-              size="small"
-            />
-          </el-col>
-          <el-col :lg="6" :md="6" :sm="12" :xs="12">
-            <!-- Giver Selection -->
-            <GenericDropDown
-              v-model="selectedGiver"
-              label="Giver"
-              placeholder="Select Giver"
-              :options="[
-                { label: 'All Givers', value: 'All' },
-                ...usersOptions
-              ]"
-              size="small"
-            />
-          </el-col>
-        </el-row>
+        <!-- Filters: desktop always visible, with Clear All button -->
+        <div class="hidden sm:flex items-center justify-between mb-3 mt-4 gap-2">
+          <el-row :gutter="5" class="filter-bar flex-1" justify="space-between">
+            <!-- Month Selection -->
+            <el-col :lg="6" :md="6" :sm="12" :xs="12">
+              <GenericDropDown
+                v-model="selectedMonth"
+                label="Month"
+                placeholder="Select Month"
+                :options="months"
+                size="small"
+              />
+            </el-col>
+            <el-col :lg="6" :md="6" :sm="12" :xs="12">
+              <!-- Giver Selection -->
+              <GenericDropDown
+                v-model="selectedGiver"
+                label="Giver"
+                placeholder="Select Giver"
+                :options="[
+                  { label: 'All Givers', value: 'All' },
+                  ...usersOptions
+                ]"
+                size="small"
+              />
+            </el-col>
+          </el-row>
+          <el-button size="small" type="danger" plain class="flex-shrink-0" @click="clearFilters()">Clear All</el-button>
+        </div>
         <!-- Mobile filters (toggle) -->
         <Transition name="form-slide">
           <el-row
@@ -305,7 +314,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { Filter } from '@element-plus/icons-vue'
+import { Filter, Close } from '@element-plus/icons-vue'
 import Table from '../shared/Table.vue'
 import BalanceSummaryCard from '../shared/BalanceSummaryCard.vue'
 import GenericDropDown from '../generic-components/GenericDropDown.vue'
@@ -338,7 +347,8 @@ const {
   executeRequestManually,
   cancelRequest,
   approveRequest,
-  rejectRequest
+  rejectRequest,
+  clearFilters
 } = Loans()
 
 const showFilters = ref(false)
