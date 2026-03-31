@@ -9,12 +9,12 @@ import { Tabs } from '../assets/enums'
 // internal async component handling and causes an infinite navigation loop.
 const Groups = () => import('@/components/groups/Groups.vue')
 const Login = () => import('@/components/auth/Login.vue')
-const PaymentForm = () => import('@/components/shared-expenses/PaymentForm.vue')
+const SharedExpenses = () => import('@/components/shared-expenses/SharedExpenses.vue')
 const SharedLoansGuard = () =>
   import('@/components/shared-loans/SharedLoansGuard.vue')
 const Users = () => import('@/components/users/Users.vue')
-const SalaryManager = () =>
-  import('@/components/monthly-sallary-expense-manager/Manager.vue')
+const PersonalExpenses = () =>
+  import('@/components/personal-expenses/PersonalExpenses.vue')
 const PersonalLoans = () =>
   import('@/components/personal-loans/PersonalLoans.vue')
 const BugReportsAdmin = () =>
@@ -67,7 +67,7 @@ const routes = [
   {
     // groupId is part of the path so it survives page refresh and is shareable
     path: '/shared-expenses/:groupId',
-    component: PaymentForm,
+    component: SharedExpenses,
     meta: { tab: Tabs.SHARED_EXPENSES, requiresAuth: true }
   },
   {
@@ -82,7 +82,7 @@ const routes = [
   },
   {
     path: '/personal-expenses',
-    component: SalaryManager,
+    component: PersonalExpenses,
     meta: { tab: Tabs.PERSONAL_EXPENSES, requiresAuth: true }
   },
   {

@@ -42,7 +42,7 @@ service cloud.firestore {
     // firebase-apis.js).  Consider moving the cross-posting to a Cloud Function so
     // this rule can be tightened to owner-only writes in the future.
     // The parent document (personal-expenses/{mobile}) is also accessed:
-    //   - read: fetchMonths in salary-expense-list.js reads months[] from the parent doc
+    //   - read: fetchMonths in personal-expense-list.js reads months[] from the parent doc
     //   - write: saveData tracks months via arrayUnion on the parent doc (cross-poster writes)
     match /personal-expenses/{mobile} {
       allow read: if request.auth != null && request.auth.uid == ownerUid(mobile);

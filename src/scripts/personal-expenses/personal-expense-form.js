@@ -7,7 +7,7 @@ import useFireBase from '../../api/firebase-apis'
 import { useReceiptUpload } from '../../utils/useReceiptUpload'
 import { DB_NODES } from '../../constants/db-nodes'
 
-export const ExpenseForm = (props, emit) => {
+export const PersonalExpenseForm = (props, emit) => {
   const { saveData, updateData, deleteData, isSubmitting } = useFireBase()
   const isVisible = ref(true)
   const isEditMode = computed(() => !!props.row?.amount)

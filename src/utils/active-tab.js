@@ -4,8 +4,8 @@ const PersonalLoans = loadAsyncComponent(
   () => import('@/components/personal-loans/PersonalLoans.vue')
 )
 
-const PaymentForm = loadAsyncComponent(
-  () => import('@/components/shared-expenses/PaymentForm.vue')
+const SharedExpenses = loadAsyncComponent(
+  () => import('@/components/shared-expenses/SharedExpenses.vue')
 )
 const LoanForm = loadAsyncComponent(
   () => import('@/components/shared-loans/LoanForm.vue')
@@ -13,11 +13,11 @@ const LoanForm = loadAsyncComponent(
 const SharedLoansGuard = loadAsyncComponent(
   () => import('@/components/shared-loans/SharedLoansGuard.vue')
 )
-const SalaryManager = loadAsyncComponent(
-  () => import('@/components/monthly-sallary-expense-manager/Manager.vue')
+const PersonalExpenses = loadAsyncComponent(
+  () => import('@/components/personal-expenses/PersonalExpenses.vue')
 )
-const SalaryExpenseForm = loadAsyncComponent(
-  () => import('@/components/monthly-sallary-expense-manager/ExpenseForm.vue')
+const PersonalExpenseForm = loadAsyncComponent(
+  () => import('@/components/personal-expenses/PersonalExpenseForm.vue')
 )
 const History = loadAsyncComponent(
   () => import('@/components/history/History.vue')
@@ -34,11 +34,11 @@ const BugReportsAdmin = loadAsyncComponent(
 export function getActiveTab(activeTab) {
   switch (activeTab) {
     case Tabs.SHARED_EXPENSES:
-      return PaymentForm
+      return SharedExpenses
     case Tabs.SHARED_LOANS:
       return SharedLoansGuard
     case Tabs.PERSONAL_EXPENSES:
-      return SalaryManager
+      return PersonalExpenses
     case Tabs.PERSONAL_LOANS:
       return PersonalLoans
     case Tabs.HISTORY:
@@ -58,12 +58,12 @@ export function getActiveTab(activeTab) {
 export function getEditComponent(activeTab) {
   switch (activeTab) {
     case Tabs.SHARED_EXPENSES:
-      return PaymentForm
+      return SharedExpenses
     case Tabs.SHARED_LOANS:
     case Tabs.PERSONAL_LOANS:
       return LoanForm
     case Tabs.PERSONAL_EXPENSES:
-      return SalaryExpenseForm
+      return PersonalExpenseForm
     default:
       return null
   }

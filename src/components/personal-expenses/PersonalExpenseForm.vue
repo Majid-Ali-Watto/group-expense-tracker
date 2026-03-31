@@ -74,7 +74,7 @@ import {
   GenericInput,
   ReceiptUploadField
 } from '../generic-components'
-import { ExpenseForm } from '../../scripts/monthly-expenses/expense-form'
+import { PersonalExpenseForm } from '../../scripts/personal-expenses/personal-expense-form'
 
 const emit = defineEmits(['closeModal', 'click'])
 const props = defineProps({
@@ -94,7 +94,7 @@ const {
   setSelectedFiles,
   removeReceipt,
   isSubmitting
-} = ExpenseForm(props, emit)
+} = PersonalExpenseForm(props, emit)
 
 function handleCancel() {
   resetForm()

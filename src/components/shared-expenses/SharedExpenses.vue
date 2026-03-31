@@ -330,7 +330,7 @@ import {
 import GenericInputField from '../generic-components/GenericInputField.vue'
 import GenericInputNumber from '../generic-components/GenericInputNumber.vue'
 import { rules } from '../../assets/validation-rules'
-import { PaymentForm } from '../../scripts/shared-expenses/payment-form'
+import { SharedExpenses } from '../../scripts/shared-expenses/shared-expenses'
 import AddNewTransactionButton from '../generic-components/AddNewTransactionButton.vue'
 import { loadAsyncComponent } from '../../utils/async-component'
 
@@ -364,7 +364,7 @@ const {
   removeReceipt,
   isMePayer,
   isSubmitting
-} = PaymentForm(props, emit)
+} = SharedExpenses(props, emit)
 
 defineExpose({
   validateForm

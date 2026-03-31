@@ -58,8 +58,8 @@ import { Filter, Close } from '@element-plus/icons-vue'
 import Table from '../shared/Table.vue'
 import GenericDropDown from '../generic-components/GenericDropDown.vue'
 import LoadingSkeleton from '../shared/LoadingSkeleton.vue'
-import SalaryExpenseStats from './SalaryExpenseStats.vue'
-import { SalaryExpenseList } from '../../scripts/monthly-expenses/salary-expense-list'
+import PersonalExpenseStats from './PersonalExpenseStats.vue'
+import { PersonalExpenseList } from '../../scripts/personal-expenses/personal-expense-list'
 
 const {
   formatAmount,
@@ -73,7 +73,7 @@ const {
   isContentLoading,
   fetchExpenses,
   clearFilters
-} = SalaryExpenseList()
+} = PersonalExpenseList()
 const showFilters = ref(false)
 </script>
 

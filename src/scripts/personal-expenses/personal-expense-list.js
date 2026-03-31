@@ -9,7 +9,7 @@ import useFireBase from '../../api/firebase-apis'
 import { DB_NODES } from '../../constants/db-nodes'
 import { getCache, setCache } from '../../utils/queryCache'
 
-export const SalaryExpenseList = () => {
+export const PersonalExpenseList = () => {
   const formatAmount = inject('formatAmount')
   const { dbRef, read, readShallow } = useFireBase()
   const authStore = useAuthStore()
