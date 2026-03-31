@@ -168,15 +168,16 @@ export const Table = (props) => {
         'whenAdded',
         'whoAdded',
         'group',
-        'participants',
+        // 'participants',
         'updateRequest',
         'deleteRequest',
         'notifications',
         'payerMode',
         'splitMode',
-        'splitItems',
+        // 'splitItems',
         'receiptMeta',
-        'receiptUrls'
+        'receiptUrls',
+        'id'
       ]
       if (isSharedLoans) excludedCols.push('giverName', 'receiverName')
 
@@ -186,10 +187,16 @@ export const Table = (props) => {
 
       cols.push('receiptUrls')
 
-      return cols.map((key) => ({
-        label: key,
-        key: key === 'payers' ? 'payer' : key
-      }))
+      return cols
+        .map((key) => ({
+          label: key,
+          key: key === 'payers' ? 'payer' : key
+        }))
+        .sort((a, b) => {
+          if (a.label < b.label) return -1
+          if (a.label > b.label) return 1
+          return 0
+        })
     }
 
     return []
@@ -693,12 +700,13 @@ export const Table = (props) => {
           )
           batch.update(docRef, { deleteRequest: deleteRequestMeta })
         } else if (tab === Tabs.PERSONAL_LOANS) {
+          const loanMonth = row._month || month
           const docRef = doc(
             database,
             DB_NODES.PERSONAL_LOANS,
             user,
             'months',
-            month,
+            loanMonth,
             'loans',
             key
           )

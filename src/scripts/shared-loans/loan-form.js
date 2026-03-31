@@ -374,8 +374,10 @@ export const LoanForm = (props, emit) => {
               receiptMeta
             )
           } else {
+            const updateMonth = props.row._month || monthYear
+            const personalUpdatePath = `${props.dbRef}/${authStore.getActiveUser}/months/${updateMonth}/loans`
             updateData(
-              `${loanPath}/${props.row.id}`,
+              `${personalUpdatePath}/${props.row.id}`,
               () => getLoanData(receiptUrls, receiptMeta),
               `Loan record with ID ${props.row.id} updated successfully`
             )
@@ -389,9 +391,11 @@ export const LoanForm = (props, emit) => {
               `${props.dbRef}/${groupId}/months/${monthYear}/loans/${props.row.id}`
             )
           } else {
+            const deleteMonth = props.row._month || monthYear
+            const personalDeletePath = `${props.dbRef}/${authStore.getActiveUser}/months/${deleteMonth}/loans`
             deleteExistingReceipts()
             deleteData(
-              `${loanPath}/${props.row.id}`,
+              `${personalDeletePath}/${props.row.id}`,
               `Loan record with ID ${props.row.id} deleted successfully`
             )
             emit('closeModal')

@@ -51,6 +51,7 @@ export const PersonalLoans = () => {
 
   let loansListener = null
   let currentLoansRef = null
+  let _readAllGeneration = 0
   const isContentLoading = computed(
     () => !monthsLoaded.value || !loansLoaded.value
   )
@@ -115,7 +116,8 @@ export const PersonalLoans = () => {
       unsubscribe()
 
       // Eager read for All: use getDocs per month
-      readAllLoans(basePath)
+      _readAllGeneration++
+      readAllLoans(basePath, _readAllGeneration)
     } else {
       const monthPath = `${basePath}/months/${selectedMonth.value}/loans`
       const monthLoansRef = dbRef(monthPath)
@@ -150,11 +152,13 @@ export const PersonalLoans = () => {
     }
   }
 
-  async function readAllLoans(basePath) {
+  async function readAllLoans(basePath, generation) {
     loansLoaded.value = false
     try {
       // Read all month document IDs first
       const monthIds = await readShallow(`${basePath}/months`)
+      // Bail out if a newer call has been issued (race condition guard)
+      if (generation !== _readAllGeneration) return
       const allLoans = []
       const allKeys = []
       for (const monthId of monthIds) {
@@ -163,11 +167,13 @@ export const PersonalLoans = () => {
           `${basePath}/months/${monthId}/loans`,
           false
         )
+        if (generation !== _readAllGeneration) return
         if (monthLoans) {
           Object.entries(monthLoans).forEach(([loanId, loan]) => {
             if (loan && loan.amount) {
-              allLoans.push(loan)
-              allKeys.push(`${monthId}/${loanId}`)
+              // Embed _month so table.js can build the correct Firestore path
+              allLoans.push({ ...loan, _month: monthId })
+              allKeys.push(loanId)
             }
           })
         }
@@ -178,7 +184,7 @@ export const PersonalLoans = () => {
       showError('Failed to load loans. Please try again.')
       console.error(error)
     } finally {
-      loansLoaded.value = true
+      if (generation === _readAllGeneration) loansLoaded.value = true
     }
   }
 
