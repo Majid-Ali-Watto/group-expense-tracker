@@ -1,7 +1,7 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { auth, onAuthStateChanged } from '../../firebase'
-import useFireBase from '../../api/firebase-apis'
+import useFireBase from '../../composables/useFirebase'
 import { useAuthStore } from '../../stores/authStore'
 import { useGroupStore } from '../../stores/groupStore'
 import { useUserStore } from '../../stores/userStore'

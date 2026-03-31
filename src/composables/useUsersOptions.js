@@ -2,7 +2,7 @@ import { computed } from 'vue'
 import { useAuthStore } from '../stores/authStore'
 import { useGroupStore } from '../stores/groupStore'
 import { useUserStore } from '../stores/userStore'
-import { formatMemberDisplay, formatUserDisplay } from './user-display'
+import { formatMemberDisplay, formatUserDisplay } from '../utils/user-display'
 
 export function useUsersOptions() {
   const authStore = useAuthStore()

@@ -1,7 +1,7 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessageBox } from 'element-plus'
-import useFireBase from '../../api/firebase-apis'
+import useFireBase from '../../composables/useFirebase'
 import { useAuthStore } from '../../stores/authStore'
 import { DB_NODES } from '../../constants/db-nodes'
 import { useGroupStore } from '../../stores/groupStore'
@@ -15,7 +15,7 @@ import {
   collection,
   database
 } from '../../firebase'
-import { useDebouncedRef } from '../../utils/useDebouncedRef'
+import { useDebouncedRef } from '../../composables/useDebouncedRef'
 import { appendNotificationForUser } from '../../utils/recordNotifications'
 
 export const Users = () => {

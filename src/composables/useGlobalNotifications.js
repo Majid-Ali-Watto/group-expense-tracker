@@ -3,11 +3,11 @@ import { useAuthStore } from '../stores/authStore'
 import { useGroupStore } from '../stores/groupStore'
 import { useUserStore } from '../stores/userStore'
 import { onSnapshot, collection, database } from '../firebase'
-import useFireBase from '../api/firebase-apis'
+import useFireBase from './useFirebase'
 import { Tabs } from '../assets/enums'
-import getCurrentMonth from './getCurrentMonth'
+import getCurrentMonth from '../utils/getCurrentMonth'
 import { DB_NODES } from '../constants/db-nodes'
-import { maskMobile } from './maskMobile'
+import { maskMobile } from '../utils/maskMobile'
 import {
   isMemberOfGroup,
   hasPendingRequest,

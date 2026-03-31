@@ -22,7 +22,7 @@ import {
   uploadToFirebaseStorage,
   deleteFromFirebaseStorage
 } from './firebaseStorageUpload'
-import { getStorageConfig } from './useAppConfig'
+import { getStorageConfig } from '../composables/useAppConfig'
 
 // ── Session-level provider health ──────────────────────────────────────────
 let _cloudinaryHealthy = true

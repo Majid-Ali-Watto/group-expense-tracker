@@ -4,7 +4,7 @@ import { useAuthStore } from '../../stores/authStore'
 import { useTabStore } from '../../stores/tabStore'
 import { useGroupStore } from '../../stores/groupStore'
 import { useUserStore } from '../../stores/userStore'
-import useFireBase from '../../api/firebase-apis'
+import useFireBase from '../../composables/useFirebase'
 import { DB_NODES } from '../../constants/db-nodes'
 import { tabs as allTabs } from '../../assets/data'
 import { Tabs } from '../../assets/enums'
@@ -16,11 +16,11 @@ import {
   encryptForSession,
   encryptForStore
 } from '../../utils/sessionCrypto'
-import { useGlobalNotifications } from '../../utils/useGlobalNotifications'
+import { useGlobalNotifications } from '../../composables/useGlobalNotifications'
 import { generateUUID } from '../../utils/uuid'
 import { auth, onAuthStateChanged, signOut } from '../../firebase'
 import { maskMobile } from '../../utils/maskMobile'
-import { loadAppConfig } from '../../utils/useAppConfig'
+import { loadAppConfig } from '../../composables/useAppConfig'
 import { clearAllCache } from '../../utils/queryCache'
 import { NetPosition } from '../generic/net-position'
 

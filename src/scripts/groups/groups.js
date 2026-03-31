@@ -4,7 +4,7 @@ import { GROUP_CATEGORIES } from '../../assets/enums'
 import { useAuthStore } from '../../stores/authStore'
 import { useGroupStore } from '../../stores/groupStore'
 import { useUserStore } from '../../stores/userStore'
-import useFireBase from '../../api/firebase-apis'
+import useFireBase from '../../composables/useFirebase'
 import { showError, showSuccess } from '../../utils/showAlerts'
 import { ElMessageBox } from 'element-plus'
 import {
@@ -28,7 +28,7 @@ import {
   formatUserDisplay
 } from '../../utils/user-display'
 import { DB_NODES } from '../../constants/db-nodes'
-import { useDebouncedRef } from '../../utils/useDebouncedRef'
+import { useDebouncedRef } from '../../composables/useDebouncedRef'
 import { buildSharedGroupsLocation } from '../../utils/shared-groups'
 import {
   isMemberOfGroup,

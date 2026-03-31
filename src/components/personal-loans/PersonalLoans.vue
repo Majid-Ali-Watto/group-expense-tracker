@@ -147,7 +147,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { useMobileScreen } from '../../utils/useMobileScreen'
+import { useMobileScreen } from '../../composables/useMobileScreen'
 import { Filter, Close } from '@element-plus/icons-vue'
 import Table from '../shared/Table.vue'
 import BalanceSummaryCard from '../shared/BalanceSummaryCard.vue'

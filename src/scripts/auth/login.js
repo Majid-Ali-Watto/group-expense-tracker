@@ -1,15 +1,15 @@
 import { onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessageBox } from 'element-plus'
-import useFireBase from '../../api/firebase-apis'
+import useFireBase from '../../composables/useFirebase'
 import { useAuthStore } from '../../stores/authStore'
 import { DB_NODES } from '../../constants/db-nodes'
 import { useGroupStore } from '../../stores/groupStore'
 import { showError, showSuccess } from '../../utils/showAlerts'
 import { encryptForSession, encryptForStore } from '../../utils/sessionCrypto'
 import { generateUUID } from '../../utils/uuid'
-import { checkForAppUpdate } from '../../utils/useAppUpdate'
-import { loadAppConfig } from '../../utils/useAppConfig'
+import { checkForAppUpdate } from '../../composables/useAppUpdate'
+import { loadAppConfig } from '../../composables/useAppConfig'
 import {
   auth,
   sendPasswordResetEmail,

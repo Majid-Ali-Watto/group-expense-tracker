@@ -22,7 +22,7 @@ import { startLoading, stopLoading } from '../../utils/loading'
 import { showSuccess, showError } from '../../utils/showAlerts'
 import { database, writeBatch, doc } from '../../firebase'
 import { DB_NODES } from '../../constants/db-nodes'
-import { useDebouncedRef } from '../../utils/useDebouncedRef'
+import { useDebouncedRef } from '../../composables/useDebouncedRef'
 import { useRoute, useRouter } from 'vue-router'
 
 export const Table = (props) => {

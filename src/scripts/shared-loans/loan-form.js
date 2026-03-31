@@ -1,7 +1,7 @@
 import { ref, watch, computed, nextTick } from 'vue'
-import { useUsersOptions } from '../../utils/useUsersOptions'
+import { useUsersOptions } from '../../composables/useUsersOptions'
 import getWhoAddedTransaction from '../../utils/whoAdded'
-import useFireBase from '../../api/firebase-apis'
+import useFireBase from '../../composables/useFirebase'
 import { useAuthStore } from '../../stores/authStore'
 import { DB_NODES } from '../../constants/db-nodes'
 import { useGroupStore } from '../../stores/groupStore'
@@ -10,7 +10,7 @@ import { showError } from '../../utils/showAlerts'
 import { maskMobile } from '../../utils/maskMobile'
 import { buildRequestMeta } from '../../utils/buildRequestMeta'
 import getCurrentMonth from '../../utils/getCurrentMonth'
-import { useReceiptUpload } from '../../utils/useReceiptUpload'
+import { useReceiptUpload } from '../../composables/useReceiptUpload'
 
 export const LoanForm = (props, emit) => {
   const authStore = useAuthStore()

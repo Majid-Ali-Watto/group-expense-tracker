@@ -1,7 +1,7 @@
 import { computed } from 'vue'
 import { ElMessageBox } from 'element-plus'
-import { appendNotificationForUser } from './recordNotifications'
-import { maskMobile } from './maskMobile'
+import { appendNotificationForUser } from '../utils/recordNotifications'
+import { maskMobile } from '../utils/maskMobile'
 import { deleteField } from '../firebase'
 
 export function useApprovalRequests({

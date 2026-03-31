@@ -5,7 +5,7 @@ import { useAuthStore } from '../../stores/authStore'
 import { useDataStore } from '../../stores/dataStore'
 import getCurrentMonth from '../../utils/getCurrentMonth'
 import { showError } from '../../utils/showAlerts'
-import useFireBase from '../../api/firebase-apis'
+import useFireBase from '../../composables/useFirebase'
 import { DB_NODES } from '../../constants/db-nodes'
 import { getCache, setCache } from '../../utils/queryCache'
 

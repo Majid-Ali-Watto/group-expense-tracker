@@ -1,7 +1,7 @@
 import { ref, computed } from 'vue'
 import { useAuthStore } from '../../stores/authStore'
 import { useGroupStore } from '../../stores/groupStore'
-import useFireBase from '../../api/firebase-apis'
+import useFireBase from '../../composables/useFirebase'
 import { ElMessageBox } from 'element-plus'
 import { showError, showSuccess } from '../../utils/showAlerts'
 import { DB_NODES } from '../../constants/db-nodes'

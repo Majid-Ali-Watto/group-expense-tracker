@@ -1,7 +1,7 @@
 import { ref, computed, onMounted, onUnmounted, inject, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { onSnapshot } from '../../firebase'
-import useFireBase from '../../api/firebase-apis'
+import useFireBase from '../../composables/useFirebase'
 import { useAuthStore } from '../../stores/authStore'
 import { DB_NODES } from '../../constants/db-nodes'
 import { useUserStore } from '../../stores/userStore'

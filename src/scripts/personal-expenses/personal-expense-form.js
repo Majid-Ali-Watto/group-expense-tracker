@@ -3,8 +3,8 @@ import { useAuthStore } from '../../stores/authStore'
 import { useDataStore } from '../../stores/dataStore'
 import getCurrentMonth from '../../utils/getCurrentMonth'
 import getWhoAddedTransaction from '../../utils/whoAdded'
-import useFireBase from '../../api/firebase-apis'
-import { useReceiptUpload } from '../../utils/useReceiptUpload'
+import useFireBase from '../../composables/useFirebase'
+import { useReceiptUpload } from '../../composables/useReceiptUpload'
 import { DB_NODES } from '../../constants/db-nodes'
 
 export const PersonalExpenseForm = (props, emit) => {

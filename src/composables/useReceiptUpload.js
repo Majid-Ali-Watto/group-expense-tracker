@@ -1,6 +1,6 @@
 import { computed, ref, unref } from 'vue'
-import { uploadReceipt, deleteReceipt } from './uploadReceipt'
-import { showError } from './showAlerts'
+import { uploadReceipt, deleteReceipt } from '../utils/uploadReceipt'
+import { showError } from '../utils/showAlerts'
 
 const ALLOWED_TYPES = [
   'image/jpeg',
