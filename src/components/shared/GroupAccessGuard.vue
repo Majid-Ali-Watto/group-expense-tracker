@@ -85,14 +85,10 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { useAuthStore } from '../../stores/authStore'
-import { useGroupStore } from '../../stores/groupStore'
-import { useUserStore } from '../../stores/userStore'
-import useFireBase from '../../composables/useFirebase'
-import { DB_NODES } from '../../constants/db-nodes'
-import { maskMobile } from '../../utils/maskMobile'
-import { appendNotificationForUser } from '../../utils/recordNotifications'
-import { showError } from '../../utils/showAlerts'
+import { useAuthStore, useGroupStore, useUserStore } from '@/stores'
+import { useFireBase } from '@/composables'
+import { DB_NODES } from '@/constants'
+import { maskMobile, appendNotificationForUser, showError } from '@/utils'
 import LoadingSkeleton from './LoadingSkeleton.vue'
 
 defineOptions({ inheritAttrs: false })

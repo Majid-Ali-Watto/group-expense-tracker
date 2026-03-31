@@ -428,8 +428,8 @@
 
 <script setup>
 import { SwitchButton, DataAnalysis } from '@element-plus/icons-vue'
-import { Header } from '../../scripts/layout/header'
-import { loadAsyncComponent } from '../../utils/async-component'
+import { Header } from '@/scripts/layout'
+import { loadAsyncComponent } from '@/utils'
 
 defineOptions({ inheritAttrs: false })
 const HelpDialog = loadAsyncComponent(

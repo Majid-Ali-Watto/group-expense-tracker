@@ -10,12 +10,17 @@ import {
   getDocs,
   arrayUnion
 } from 'firebase/firestore'
-import { database } from '../firebase'
-import { startLoading, stopLoading, withLoading } from '../utils/loading'
-import { showError, showSuccess } from '../utils/showAlerts'
-import { resetForm } from '../utils/reset-form'
-import getCurrentMonth, { dateToMonthNode } from '../utils/getCurrentMonth'
-import { DB_NODES } from '../constants/db-nodes'
+import { database } from '@/firebase'
+import {
+  startLoading,
+  stopLoading,
+  withLoading,
+  showError,
+  showSuccess,
+  resetForm
+} from '@/utils'
+import { getCurrentMonth, dateToMonthNode } from '@/utils'
+import { DB_NODES } from '@/constants'
 
 export default function useFireBase() {
   const isSubmitting = ref(false)

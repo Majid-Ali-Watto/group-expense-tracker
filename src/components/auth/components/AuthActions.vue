@@ -80,7 +80,7 @@
 </template>
 
 <script setup>
-import { GenericButton } from '../../generic-components'
+import { GenericButton } from '@/components/generic-components'
 
 defineProps({
   mode: { type: String, required: true },

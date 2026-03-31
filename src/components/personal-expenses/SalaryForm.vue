@@ -56,10 +56,10 @@
 
 <script setup>
 import { ref } from 'vue'
-import { rules } from '../../assets/validation-rules'
-import { GenericButton } from '../generic-components'
-import { SalaryForm } from '../../scripts/personal-expenses/salary-form'
-import GenericInputNumber from '../generic-components/GenericInputNumber.vue'
+import { rules } from '@/assets'
+import { GenericButton } from '@/components/generic-components'
+import { SalaryForm } from '@/scripts/personal-expenses'
+import { GenericInputNumber } from '@/components/generic-components'
 
 const activePanel = ref([])
 

@@ -295,12 +295,12 @@
 </template>
 
 <script setup>
-import LoadingSkeleton from '../shared/LoadingSkeleton.vue'
-import { loginRules as rules } from '../../assets/validation-rules'
-import { Users } from '../../scripts/users/users'
-import GenericInputField from '../generic-components/GenericInputField.vue'
-import { useUserStore } from '../../stores/userStore'
-import { loadAsyncComponent } from '../../utils/async-component'
+import { LoadingSkeleton } from '@/components/shared'
+import { loginRules as rules } from '@/assets'
+import { Users } from '@/scripts/users'
+import { GenericInputField } from '@/components/generic-components'
+import { useUserStore } from '@/stores'
+import { loadAsyncComponent } from '@/utils'
 const GroupsCreate = loadAsyncComponent(
   () => import('../groups/GroupsCreate.vue')
 )

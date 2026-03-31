@@ -1,10 +1,9 @@
 import { ref, computed } from 'vue'
-import { useAuthStore } from '../../stores/authStore'
-import { useGroupStore } from '../../stores/groupStore'
-import useFireBase from '../../composables/useFirebase'
+import { useAuthStore, useGroupStore } from '@/stores'
+import { useFireBase } from '@/composables'
 import { ElMessageBox } from 'element-plus'
-import { showError, showSuccess } from '../../utils/showAlerts'
-import { DB_NODES } from '../../constants/db-nodes'
+import { showError, showSuccess } from '@/utils'
+import { DB_NODES } from '@/constants'
 
 export const NetPosition = () => {
   const authStore = useAuthStore()

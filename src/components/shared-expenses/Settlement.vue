@@ -25,12 +25,7 @@
 
     <!-- Settlement Request Section -->
     <div
-      v-if="
-        activeGroup &&
-        hasSettlementRequest &&
-        !isHistory &&
-        settlements.length > 0
-      "
+      v-if="activeGroup && hasSettlementRequest && settlements.length > 0"
       class="pending-card mt-4 pt-3 p-3 rounded"
     >
       <div class="pending-title text-sm font-medium mb-2">
@@ -129,7 +124,7 @@
 
     <!-- Action Buttons when no settlement request -->
     <div
-      v-if="!isHistory && !hasSettlementRequest && settlements.length > 0"
+      v-if="!hasSettlementRequest && settlements.length > 0"
       style="
         display: flex !important;
         justify-content: end !important;
@@ -161,19 +156,15 @@
 
 <script setup>
 import { computed } from 'vue'
-import { GenericButton } from '../generic-components'
-import BalanceSummaryCard from '../shared/BalanceSummaryCard.vue'
-import { Settlement } from '../../scripts/shared-expenses/settlement'
-import {
-  formatMemberDisplay,
-  formatUserDisplay
-} from '../../utils/user-display'
+import { GenericButton } from '@/components/generic-components'
+import { BalanceSummaryCard } from '@/components/shared'
+import { Settlement } from '@/scripts/shared-expenses'
+import { formatMemberDisplay, formatUserDisplay } from '@/utils'
 
 const props = defineProps({
   payments: Array,
   keys: Array,
-  selectedMonth: String,
-  isHistory: { type: Boolean, default: false }
+  selectedMonth: String
 })
 
 const {

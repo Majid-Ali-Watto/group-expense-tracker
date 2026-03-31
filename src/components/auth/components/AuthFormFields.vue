@@ -41,7 +41,7 @@
 </template>
 
 <script setup>
-import GenericInputField from '../../generic-components/GenericInputField.vue'
+import { GenericInputField } from '@/components/generic-components'
 
 const props = defineProps({
   mode: { type: String, required: true },

@@ -1,6 +1,5 @@
 import { ref, computed } from 'vue'
-import { downloadPDF } from '../../utils/downloadDataProcedures'
-import getCurrentMonth from '../../utils/getCurrentMonth'
+import { downloadPDF, getCurrentMonth } from '@/utils'
 
 export const NetPositionDialog = (props, emit, formatAmount) => {
   const isMobile = ref(window.innerWidth < 768)

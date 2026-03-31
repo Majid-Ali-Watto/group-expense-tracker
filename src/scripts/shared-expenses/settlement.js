@@ -1,12 +1,10 @@
 import { computed, inject, ref } from 'vue'
-import { useAuthStore } from '../../stores/authStore'
-import { useGroupStore } from '../../stores/groupStore'
-import { useUserStore } from '../../stores/userStore'
-import useFireBase from '../../composables/useFirebase'
-import { showError, showSuccess } from '../../utils/showAlerts'
+import { useAuthStore, useGroupStore, useUserStore } from '@/stores'
+import { useFireBase } from '@/composables'
+import { showError, showSuccess } from '@/utils'
 import { ElMessageBox } from 'element-plus'
-import { DB_NODES } from '../../constants/db-nodes'
-import { database, writeBatch, doc, deleteField } from '../../firebase'
+import { DB_NODES } from '@/constants'
+import { database, writeBatch, doc, deleteField } from '@/firebase'
 
 export const Settlement = (props) => {
   const { updateData } = useFireBase()

@@ -1,11 +1,8 @@
 import { ref, computed, watch } from 'vue'
-import { useAuthStore } from '../../stores/authStore'
-import { useGroupStore } from '../../stores/groupStore'
-import { useUserStore } from '../../stores/userStore'
-import useFireBase from '../../composables/useFirebase'
-import { showError } from '../../utils/showAlerts'
-import { DB_NODES } from '../../constants/db-nodes'
-import { formatUserDisplay } from '../../utils/user-display'
+import { useAuthStore, useGroupStore, useUserStore } from '@/stores'
+import { useFireBase } from '@/composables'
+import { showError, formatUserDisplay } from '@/utils'
+import { DB_NODES } from '@/constants'
 
 export const GroupsCreate = (emit, props) => {
   const authStore = useAuthStore()
@@ -114,7 +111,9 @@ export const GroupsCreate = (emit, props) => {
       pendingMembers,
       // Flat array of all mobile numbers (members + pending) used for
       // efficient per-user Firestore queries via array-contains.
-      memberMobiles: [...new Set([creatorMobile, ...pendingMembers.map((m) => m.mobile)])]
+      memberMobiles: [
+        ...new Set([creatorMobile, ...pendingMembers.map((m) => m.mobile)])
+      ]
     }
     try {
       await setData(

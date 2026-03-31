@@ -70,9 +70,9 @@
 
 <script setup>
 import { ref } from 'vue'
-import { useMobileScreen } from '../../composables/useMobileScreen'
-import { Summary } from '../../scripts/shared-expenses/summary'
-import { loadAsyncComponent } from '../../utils/async-component'
+import { useMobileScreen } from '@/composables'
+import { Summary } from '@/scripts/shared-expenses'
+import { loadAsyncComponent } from '@/utils'
 const DonutChart = loadAsyncComponent(
   () => import('../generic-components/DonutChart.vue')
 )

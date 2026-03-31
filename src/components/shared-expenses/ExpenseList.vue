@@ -96,8 +96,19 @@
       <div class="flex items-center justify-between mb-2">
         <span class="text-sm font-semibold text-gray-700">Filters</span>
         <div class="flex items-center gap-2">
-          <button v-if="showFilters" class="clear-filter-link sm:hidden" @click="clearFilters()">Clear</button>
-          <button class="clear-filter-link hidden sm:inline" @click="clearFilters()">Clear</button>
+          <button
+            v-if="showFilters"
+            class="clear-filter-link sm:hidden"
+            @click="clearFilters()"
+          >
+            Clear
+          </button>
+          <button
+            class="clear-filter-link hidden sm:inline"
+            @click="clearFilters()"
+          >
+            Clear
+          </button>
           <el-button
             circle
             :type="showFilters ? 'danger' : 'primary'"
@@ -225,7 +236,6 @@
           :payments="filteredPayments"
           :keys="paymentKeys"
           :selectedMonth="selectedMonth"
-          :isHistory="isHistory"
         />
         <el-divider />
         <div class="flex justify-between">
@@ -244,7 +254,7 @@
           downloadTitle="Shared Expenses"
           :keys="paymentKeys"
           :dataRef="pdfContent"
-          :showPopup="!isHistory"
+          :showPopup="true"
           :reportMonth="selectedMonth"
         />
       </div>
@@ -256,12 +266,11 @@ import { ref } from 'vue'
 import { Filter, Close } from '@element-plus/icons-vue'
 import Settlement from './Settlement.vue'
 import Summary from './Summary.vue'
-import Table from '../shared/Table.vue'
-import GenericDropDown from '../generic-components/GenericDropDown.vue'
-import { ExpenseList } from '../../scripts/shared-expenses/expense-list'
-import { DB_NODES } from '../../constants/db-nodes'
-import LoadingSkeleton from '../shared/LoadingSkeleton.vue'
-import { loadAsyncComponent } from '../../utils/async-component'
+import { Table, LoadingSkeleton } from '@/components/shared'
+import { GenericDropDown } from '@/components/generic-components'
+import { ExpenseList } from '@/scripts/shared-expenses'
+import { DB_NODES } from '@/constants'
+import { loadAsyncComponent } from '@/utils'
 const NotificationsForCurrentUser = loadAsyncComponent(
   () => import('../generic-components/NotificationsForCurrentUser.vue')
 )
@@ -271,7 +280,6 @@ const ShowPaymentDetails = loadAsyncComponent(
 
 const props = defineProps({
   payments: Array,
-  isHistory: { type: Boolean, default: false },
   dbRef: { type: String, default: () => DB_NODES.SHARED_EXPENSES }
 })
 

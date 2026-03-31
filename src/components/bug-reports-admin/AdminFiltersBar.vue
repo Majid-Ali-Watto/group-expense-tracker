@@ -57,8 +57,10 @@
 </template>
 
 <script setup>
-import GenericDropDown from '../generic-components/GenericDropDown.vue'
-import GenericInputField from '../generic-components/GenericInputField.vue'
+import {
+  GenericDropDown,
+  GenericInputField
+} from '@/components/generic-components'
 
 defineProps({
   activeStatusFilter: { type: String, default: 'all' },

@@ -101,9 +101,9 @@
 </template>
 
 <script setup>
-import LoadingSkeleton from '../shared/LoadingSkeleton.vue'
-import GroupDetailsAccordion from '../generic-components/GroupDetailsAccordion.vue'
-import { SharedGroups } from '../../scripts/groups/shared-groups'
+import { LoadingSkeleton } from '@/components/shared'
+import { GroupDetailsAccordion } from '@/components/generic-components'
+import { SharedGroups } from '@/scripts/groups'
 
 const {
   loading,

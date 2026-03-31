@@ -11,9 +11,9 @@ import {
   deleteDoc,
   onSnapshot,
   onAuthStateChanged
-} from '../../firebase'
-import { DB_NODES } from '../../constants/db-nodes'
-import { showError, showSuccess } from '../../utils/showAlerts'
+} from '@/firebase'
+import { DB_NODES } from '@/constants'
+import { showError, showSuccess } from '@/utils'
 import { NoteThread } from './note-thread'
 
 export const STATUS_OPTIONS = [

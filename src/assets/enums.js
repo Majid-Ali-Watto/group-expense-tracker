@@ -3,7 +3,6 @@ export const Tabs = {
   SHARED_LOANS: 'Shared Loans',
   PERSONAL_EXPENSES: 'Personal Expenses',
   PERSONAL_LOANS: 'Personal Loans',
-  HISTORY: 'History',
   USERS: 'Users',
   GROUPS: 'Groups',
   BUG_RESOLVER: 'Bug Reports'

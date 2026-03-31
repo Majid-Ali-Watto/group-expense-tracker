@@ -16,9 +16,9 @@
 
 <script setup>
 import { computed } from 'vue'
-import GroupAccessGuard from '../shared/GroupAccessGuard.vue'
-import { useGroupStore } from '../../stores/groupStore'
-import { loadAsyncComponent } from '../../utils/async-component'
+import { GroupAccessGuard } from '@/components/shared'
+import { useGroupStore } from '@/stores'
+import { loadAsyncComponent } from '@/utils'
 
 const Loans = loadAsyncComponent(() => import('./Loans.vue'))
 

@@ -9,7 +9,8 @@ import { Tabs } from '../assets/enums'
 // internal async component handling and causes an infinite navigation loop.
 const Groups = () => import('@/components/groups/Groups.vue')
 const Login = () => import('@/components/auth/Login.vue')
-const SharedExpenses = () => import('@/components/shared-expenses/SharedExpenses.vue')
+const SharedExpenses = () =>
+  import('@/components/shared-expenses/SharedExpenses.vue')
 const SharedLoansGuard = () =>
   import('@/components/shared-loans/SharedLoansGuard.vue')
 const Users = () => import('@/components/users/Users.vue')

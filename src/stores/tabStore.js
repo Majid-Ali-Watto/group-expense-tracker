@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { Tabs } from '../assets/enums'
+import { Tabs } from '@/assets'
 
 export const useTabStore = defineStore('tab', {
   state: () => ({

@@ -14,8 +14,19 @@
         <div class="flex items-center justify-between mb-2 mt-4 no-print-pdf">
           <span class="text-sm font-semibold text-gray-700">Filters</span>
           <div class="flex items-center gap-2">
-            <button v-if="showFilters" class="clear-filter-link sm:hidden" @click="clearFilters()">Clear</button>
-            <button class="clear-filter-link hidden sm:inline" @click="clearFilters()">Clear</button>
+            <button
+              v-if="showFilters"
+              class="clear-filter-link sm:hidden"
+              @click="clearFilters()"
+            >
+              Clear
+            </button>
+            <button
+              class="clear-filter-link hidden sm:inline"
+              @click="clearFilters()"
+            >
+              Clear
+            </button>
             <el-button
               circle
               :type="showFilters ? 'danger' : 'primary'"
@@ -147,14 +158,12 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { useMobileScreen } from '../../composables/useMobileScreen'
+import { useMobileScreen } from '@/composables'
 import { Filter, Close } from '@element-plus/icons-vue'
-import Table from '../shared/Table.vue'
-import BalanceSummaryCard from '../shared/BalanceSummaryCard.vue'
-import GenericDropDown from '../generic-components/GenericDropDown.vue'
-import { PersonalLoans } from '../../scripts/personal-loans/personal-loans'
-import LoadingSkeleton from '../shared/LoadingSkeleton.vue'
-import { loadAsyncComponent } from '../../utils/async-component'
+import { Table, BalanceSummaryCard, LoadingSkeleton } from '@/components/shared'
+import { GenericDropDown } from '@/components/generic-components'
+import { PersonalLoans } from '@/scripts/personal-loans'
+import { loadAsyncComponent } from '@/utils'
 const LoanForm = loadAsyncComponent(
   () => import('../shared-loans/LoanForm.vue')
 )

@@ -1,12 +1,10 @@
 import { ref, computed, onMounted, onUnmounted, inject, watch } from 'vue'
 import { ElMessageBox } from 'element-plus'
-import { onSnapshot } from '../../firebase'
-import getCurrentMonth from '../../utils/getCurrentMonth'
-import useFireBase from '../../composables/useFirebase'
-import { useAuthStore } from '../../stores/authStore'
-import { DB_NODES } from '../../constants/db-nodes'
-import { useDataStore } from '../../stores/dataStore'
-import { showError, showSuccess } from '../../utils/showAlerts'
+import { onSnapshot } from '@/firebase'
+import { getCurrentMonth, showError, showSuccess } from '@/utils'
+import { useFireBase } from '@/composables'
+import { useAuthStore, useDataStore } from '@/stores'
+import { DB_NODES } from '@/constants'
 
 export const SalaryForm = () => {
   const formatAmount = inject('formatAmount')

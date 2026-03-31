@@ -221,7 +221,7 @@ import { inject } from 'vue'
 import DonutChart from './DonutChart.vue'
 import BarChart from './BarChart.vue'
 import GenericButton from './GenericButton.vue'
-import { NetPositionDialog } from '../../scripts/generic/net-position-dialog'
+import { NetPositionDialog } from '@/scripts/generic'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },

@@ -333,7 +333,7 @@
 </template>
 
 <script setup>
-import NoteThread from '../bug-reports/NoteThread.vue'
+import { NoteThread } from '@/components/bug-reports'
 
 defineProps({
   myReports: { type: Array, default: () => [] },

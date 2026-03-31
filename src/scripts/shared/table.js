@@ -8,21 +8,28 @@ import {
   ref,
   watch
 } from 'vue'
-import { useAuthStore } from '../../stores/authStore'
-import { useTabStore } from '../../stores/tabStore'
-import { useGroupStore } from '../../stores/groupStore'
-import { useUserStore } from '../../stores/userStore'
-import { getEditComponent } from '../../utils/active-tab'
-import { Tabs } from '../../assets/enums'
-import { downloadExcel, downloadPDF } from '../../utils/downloadDataProcedures'
-import getCurrentMonth from '../../utils/getCurrentMonth'
-import { formatUserDisplay } from '../../utils/user-display'
-import { buildRequestMeta } from '../../utils/buildRequestMeta'
-import { startLoading, stopLoading } from '../../utils/loading'
-import { showSuccess, showError } from '../../utils/showAlerts'
-import { database, writeBatch, doc } from '../../firebase'
-import { DB_NODES } from '../../constants/db-nodes'
-import { useDebouncedRef } from '../../composables/useDebouncedRef'
+import {
+  useAuthStore,
+  useTabStore,
+  useGroupStore,
+  useUserStore
+} from '@/stores'
+import {
+  getEditComponent,
+  downloadExcel,
+  downloadPDF,
+  getCurrentMonth,
+  formatUserDisplay,
+  buildRequestMeta,
+  startLoading,
+  stopLoading,
+  showSuccess,
+  showError
+} from '@/utils'
+import { Tabs } from '@/assets'
+import { database, writeBatch, doc } from '@/firebase'
+import { DB_NODES } from '@/constants'
+import { useDebouncedRef } from '@/composables'
 import { useRoute, useRouter } from 'vue-router'
 
 export const Table = (props) => {

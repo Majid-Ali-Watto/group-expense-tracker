@@ -1,19 +1,23 @@
 import { computed, onMounted, onUnmounted, ref, watch, inject } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useUsersOptions } from '../../composables/useUsersOptions'
-import { useAuthStore } from '../../stores/authStore'
-import { useGroupStore } from '../../stores/groupStore'
-import { useUserStore } from '../../stores/userStore'
-import { onSnapshot } from '../../firebase'
-import useFireBase from '../../composables/useFirebase'
-import { checkDaily } from '../../utils/notifications'
-import getCurrentMonth from '../../utils/getCurrentMonth'
-import { showError } from '../../utils/showAlerts'
-import { appendNotificationForUser } from '../../utils/recordNotifications'
-import { useApprovalRequests } from '../../composables/useApprovalRequests'
-import { formatUserDisplay } from '../../utils/user-display'
-import { deleteReceipt, cleanupOldReceipts } from '../../utils/uploadReceipt'
-import { getCache, setCache } from '../../utils/queryCache'
+import {
+  useUsersOptions,
+  useFireBase,
+  useApprovalRequests
+} from '@/composables'
+import { useAuthStore, useGroupStore, useUserStore } from '@/stores'
+import { onSnapshot } from '@/firebase'
+import {
+  checkDaily,
+  getCurrentMonth,
+  showError,
+  appendNotificationForUser,
+  formatUserDisplay,
+  deleteReceipt,
+  cleanupOldReceipts,
+  getCache,
+  setCache
+} from '@/utils'
 
 export const ExpenseList = (props) => {
   const authStore = useAuthStore()
@@ -185,7 +189,11 @@ export const ExpenseList = (props) => {
           rawPaymentsData.value = data
           paymentKeys.value = keysArray
           payments.value = paymentsArray
-          setCache(paymentsPath, { raw: data, list: paymentsArray, keys: keysArray })
+          setCache(paymentsPath, {
+            raw: data,
+            list: paymentsArray,
+            keys: keysArray
+          })
         } else {
           paymentKeys.value = []
           payments.value = []
@@ -213,8 +221,6 @@ export const ExpenseList = (props) => {
   const filteredPayments = computed(() => {
     const selected = normalize(selectedFriend.value)
     return payments.value?.filter((payment) => {
-      if (props.isHistory) return true
-
       // Payer filter (supports single and multiple payers)
       if (selected !== 'All') {
         if (Array.isArray(payment.payers) && payment.payers.length) {

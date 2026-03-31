@@ -27,7 +27,7 @@
 </template>
 
 <script setup>
-import GenericButton from '../generic-components/GenericButton.vue'
+import { GenericButton } from '@/components/generic-components'
 
 defineProps({
   bugNumber: { type: [String, Number], default: null }

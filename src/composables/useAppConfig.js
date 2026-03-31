@@ -11,9 +11,9 @@
  *   - false → provider is explicitly disabled; never used, even as fallback
  */
 
-import { database, doc, getDoc } from '../firebase'
-import { DB_NODES } from '../constants/db-nodes'
-import { setCacheEnabled } from '../utils/queryCache'
+import { database, doc, getDoc } from '@/firebase'
+import { DB_NODES } from '@/constants'
+import { setCacheEnabled } from '@/utils'
 
 // Module-level singleton — loaded once per session, shared everywhere
 const _config = {

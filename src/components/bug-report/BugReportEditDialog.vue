@@ -207,8 +207,7 @@
 
 <script setup>
 import { ref } from 'vue'
-import MarkdownEditor from '../generic-components/MarkdownEditor.vue'
-import GenericButton from '../generic-components/GenericButton.vue'
+import { MarkdownEditor, GenericButton } from '@/components/generic-components'
 
 const localEditFormRef = ref(null)
 const localEditFileInputRef = ref(null)

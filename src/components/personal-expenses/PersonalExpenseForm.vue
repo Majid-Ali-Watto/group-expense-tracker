@@ -67,14 +67,14 @@
 </template>
 
 <script setup>
-import { rules } from '../../assets/validation-rules'
+import { rules } from '@/assets'
 import {
   GenericButton,
   AmountInput,
   GenericInput,
   ReceiptUploadField
-} from '../generic-components'
-import { PersonalExpenseForm } from '../../scripts/personal-expenses/personal-expense-form'
+} from '@/components/generic-components'
+import { PersonalExpenseForm } from '@/scripts/personal-expenses'
 
 const emit = defineEmits(['closeModal', 'click'])
 const props = defineProps({

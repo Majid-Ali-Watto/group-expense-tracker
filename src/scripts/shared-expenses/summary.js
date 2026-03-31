@@ -1,8 +1,6 @@
 import { computed, inject } from 'vue'
-import { useAuthStore } from '../../stores/authStore'
-import { useGroupStore } from '../../stores/groupStore'
-import { useUserStore } from '../../stores/userStore'
-import { formatUserDisplay } from '../../utils/user-display'
+import { useAuthStore, useGroupStore, useUserStore } from '@/stores'
+import { formatUserDisplay } from '@/utils'
 
 export const Summary = (props) => {
   const formatAmount = inject('formatAmount')

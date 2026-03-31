@@ -1,10 +1,13 @@
 import { ref } from 'vue'
 import { ElMessageBox } from 'element-plus'
-import { database, doc, updateDoc, deleteField } from '../../firebase'
-import { DB_NODES } from '../../constants/db-nodes'
-import { uploadToCloudinary } from '../../utils/cloudinaryUpload'
-import { showError, showSuccess } from '../../utils/showAlerts'
-import { generateUUID } from '../../utils/uuid'
+import { database, doc, updateDoc, deleteField } from '@/firebase'
+import { DB_NODES } from '@/constants'
+import {
+  uploadToCloudinary,
+  showError,
+  showSuccess,
+  generateUUID
+} from '@/utils'
 
 export const REACTION_EMOJIS = ['👍', '❤️', '😄', '😮', '😢', '👎']
 
@@ -101,10 +104,6 @@ export const NoteThread = ({ actorKeyFn, idPrefix, pickerWrapClass }) => {
       report.id
     )
   }
-
-  // function noteDocRef(report, note) {
-  //   return { reportRef: reportDocRef(report), noteId: note.id }
-  // }
 
   async function saveNoteEdit(report, note, textOverride) {
     const text = (textOverride ?? noteEditText.value).trim()

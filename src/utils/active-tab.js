@@ -1,4 +1,4 @@
-import { Tabs } from '../assets/enums'
+import { Tabs } from '@/assets'
 import { loadAsyncComponent } from './async-component'
 const PersonalLoans = loadAsyncComponent(
   () => import('@/components/personal-loans/PersonalLoans.vue')
@@ -19,9 +19,6 @@ const PersonalExpenses = loadAsyncComponent(
 const PersonalExpenseForm = loadAsyncComponent(
   () => import('@/components/personal-expenses/PersonalExpenseForm.vue')
 )
-const History = loadAsyncComponent(
-  () => import('@/components/history/History.vue')
-)
 const Users = loadAsyncComponent(() => import('@/components/users/Users.vue'))
 const Groups = loadAsyncComponent(
   () => import('@/components/groups/Groups.vue')
@@ -41,8 +38,6 @@ export function getActiveTab(activeTab) {
       return PersonalExpenses
     case Tabs.PERSONAL_LOANS:
       return PersonalLoans
-    case Tabs.HISTORY:
-      return History
     case Tabs.USERS:
       return Users
     case Tabs.GROUPS:

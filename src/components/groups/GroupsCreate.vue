@@ -57,11 +57,10 @@
 </template>
 
 <script setup>
-import { groupRules } from '../../assets/validation-rules'
-import { GroupsCreate } from '../../scripts/groups/groups-create'
-import { GenericDropDown } from '../generic-components'
-import GenericInputField from '../generic-components/GenericInputField.vue'
-import { GROUP_CATEGORIES } from '../../assets/enums'
+import { groupRules, GROUP_CATEGORIES } from '@/assets'
+import { GroupsCreate } from '@/scripts/groups'
+import { GenericDropDown } from '@/components/generic-components'
+import { GenericInputField } from '@/components/generic-components'
 
 const emit = defineEmits(['groupCreated'])
 const props = defineProps({

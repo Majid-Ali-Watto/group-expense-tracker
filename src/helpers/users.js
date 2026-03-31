@@ -1,6 +1,5 @@
-import { useAuthStore } from '../stores/authStore'
-import { useUserStore } from '../stores/userStore'
-import { maskMobile } from '../utils/maskMobile'
+import { useAuthStore, useUserStore } from '@/stores'
+import { maskMobile } from '@/utils'
 // Check if current user is a member of the group
 
 export function isMemberOfGroup(group) {

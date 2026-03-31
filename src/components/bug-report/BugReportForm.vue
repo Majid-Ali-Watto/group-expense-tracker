@@ -6,7 +6,6 @@
     label-position="top"
     class="bug-form"
   >
-
     <el-form-item label="Bug category" prop="category">
       <el-select
         :model-value="form.category"
@@ -184,9 +183,11 @@
 
 <script setup>
 import { ref } from 'vue'
-import GenericDropDown from '../generic-components/GenericDropDown.vue'
-import GenericButton from '../generic-components/GenericButton.vue'
-import MarkdownEditor from '../generic-components/MarkdownEditor.vue'
+import {
+  GenericDropDown,
+  GenericButton,
+  MarkdownEditor
+} from '@/components/generic-components'
 
 const localFormRef = ref(null)
 const localFileInputRef = ref(null)

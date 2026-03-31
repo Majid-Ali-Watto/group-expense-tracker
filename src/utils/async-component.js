@@ -1,5 +1,5 @@
 import { defineAsyncComponent } from 'vue'
-import LoadingSkeleton from '../components/shared/LoadingSkeleton.vue'
+import { LoadingSkeleton } from '@/components/shared'
 
 export function loadAsyncComponent(loader) {
   return defineAsyncComponent({

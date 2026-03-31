@@ -321,14 +321,14 @@
 
 <script setup>
 import { ref, watch } from 'vue'
-import { REACTION_EMOJIS } from '../../scripts/bug-reports/note-thread'
 import {
+  REACTION_EMOJIS,
   markdownToHtml,
   formatDate,
   copyText,
   downloadImage
-} from '../../scripts/bug-reports/markdown'
-import MarkdownEditor from '../generic-components/MarkdownEditor.vue'
+} from '@/scripts/bug-reports'
+import { MarkdownEditor } from '@/components/generic-components'
 
 const props = defineProps({
   notes: { type: Array, default: () => [] },

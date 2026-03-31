@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import getCurrentMonth from '../utils/getCurrentMonth'
+import { getCurrentMonth } from '@/utils'
 
 export const useDataStore = defineStore('data', {
   state: () => ({

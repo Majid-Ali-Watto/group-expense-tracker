@@ -2,8 +2,8 @@ import { ElMessageBox } from 'element-plus'
 import { downloadPDF } from './downloadDataProcedures'
 import { showError, showSuccess } from './showAlerts'
 import getCurrentMonth from './getCurrentMonth'
-import { useDataStore } from '../stores/dataStore'
-import { LAST_DAY, MIDDLE_DAY } from '../assets/data'
+import { useDataStore } from '@/stores'
+import { LAST_DAY, MIDDLE_DAY } from '@/assets'
 
 export function checkLastDayOfMonth() {
   const today = new Date()

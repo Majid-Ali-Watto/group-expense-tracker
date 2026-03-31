@@ -1,15 +1,16 @@
 import { ref, computed, onMounted, onUnmounted, inject, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { onSnapshot } from '../../firebase'
-import useFireBase from '../../composables/useFirebase'
-import { useAuthStore } from '../../stores/authStore'
-import { DB_NODES } from '../../constants/db-nodes'
-import { useUserStore } from '../../stores/userStore'
-import { useDataStore } from '../../stores/dataStore'
-import getCurrentMonth from '../../utils/getCurrentMonth'
-import { showError } from '../../utils/showAlerts'
-import { formatUserDisplay } from '../../utils/user-display'
-import { getCache, setCache } from '../../utils/queryCache'
+import { onSnapshot } from '@/firebase'
+import { useFireBase } from '@/composables'
+import { useAuthStore, useUserStore, useDataStore } from '@/stores'
+import { DB_NODES } from '@/constants'
+import {
+  getCurrentMonth,
+  showError,
+  formatUserDisplay,
+  getCache,
+  setCache
+} from '@/utils'
 
 export const PersonalLoans = () => {
   const formatAmount = inject('formatAmount')
@@ -74,7 +75,10 @@ export const PersonalLoans = () => {
     monthsLoaded.value = false
     try {
       // Fast path: read months[] array recorded on the grandparent document
-      const parentDoc = await read(`${DB_NODES.PERSONAL_LOANS}/${activeUser.value}`, false)
+      const parentDoc = await read(
+        `${DB_NODES.PERSONAL_LOANS}/${activeUser.value}`,
+        false
+      )
       if (parentDoc?.months?.length) {
         months.value = [...parentDoc.months].sort((a, b) => b.localeCompare(a))
       } else {

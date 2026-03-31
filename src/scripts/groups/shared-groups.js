@@ -1,15 +1,16 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { auth, onAuthStateChanged } from '../../firebase'
-import useFireBase from '../../composables/useFirebase'
-import { useAuthStore } from '../../stores/authStore'
-import { useGroupStore } from '../../stores/groupStore'
-import { useUserStore } from '../../stores/userStore'
-import { DB_NODES } from '../../constants/db-nodes'
-import { normalizeSharedGroupIds } from '../../utils/shared-groups'
-import { appendNotificationForUser } from '../../utils/recordNotifications'
-import { maskMobile } from '../../utils/maskMobile'
-import { showError, showSuccess } from '../../utils/showAlerts'
+import { auth, onAuthStateChanged } from '@/firebase'
+import { useFireBase } from '@/composables'
+import { useAuthStore, useGroupStore, useUserStore } from '@/stores'
+import { DB_NODES } from '@/constants'
+import {
+  normalizeSharedGroupIds,
+  appendNotificationForUser,
+  maskMobile,
+  showError,
+  showSuccess
+} from '@/utils'
 
 export const SharedGroups = () => {
   const route = useRoute()

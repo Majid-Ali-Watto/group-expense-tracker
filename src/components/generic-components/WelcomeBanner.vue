@@ -88,10 +88,9 @@
 <script setup>
 import { ref, computed, watch, nextTick } from 'vue'
 import GenericDropDown from './GenericDropDown.vue'
-import { useGroupStore } from '../../stores/groupStore'
-import { useAuthStore } from '../../stores/authStore'
-import { showSuccess } from '../../utils/showAlerts'
-import { isMemberOfGroup } from '../../helpers/users'
+import { useGroupStore, useAuthStore } from '@/stores'
+import { showSuccess } from '@/utils'
+import { isMemberOfGroup } from '@/helpers'
 
 defineProps({
   displayName: String

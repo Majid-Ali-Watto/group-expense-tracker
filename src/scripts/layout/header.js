@@ -1,14 +1,8 @@
 import { ref, computed, watch } from 'vue'
 import { ElMessageBox } from 'element-plus'
-import {
-  database,
-  doc,
-  deleteDoc,
-  updateDoc,
-  deleteField
-} from '../../firebase'
-import { DB_NODES } from '../../constants/db-nodes'
-import { showError, showSuccess } from '../../utils/showAlerts'
+import { database, doc, deleteDoc, updateDoc, deleteField } from '@/firebase'
+import { DB_NODES } from '@/constants'
+import { showError, showSuccess } from '@/utils'
 
 export const Header = (props, emit) => {
   const notifVisible = ref(false)

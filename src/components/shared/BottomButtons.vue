@@ -38,7 +38,7 @@
 </template>
 
 <script setup>
-import { BottomButtons } from '../../scripts/shared/bottom-buttons'
+import { BottomButtons } from '@/scripts/shared'
 
 const emit = defineEmits(['update', 'delete', 'duplicate', 'cancel'])
 

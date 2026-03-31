@@ -128,14 +128,14 @@ import BugReportTips from './BugReportTips.vue'
 import BugReportForm from './BugReportForm.vue'
 import MyReportsView from './MyReportsView.vue'
 import BugReportEditDialog from './BugReportEditDialog.vue'
-import { BugReport } from '../../scripts/bug-reports/bug-report'
 import {
+  BugReport,
   markdownToHtml,
   formatDate,
   copyText,
   downloadImage,
   notesOf
-} from '../../scripts/bug-reports/markdown'
+} from '@/scripts/bug-reports'
 
 const props = defineProps({
   view: { type: String, default: 'form' },
@@ -144,7 +144,6 @@ const props = defineProps({
 
 const {
   authStore,
-  isLoggedIn,
   activeView,
   form,
   formRef,

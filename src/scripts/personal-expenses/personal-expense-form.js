@@ -1,11 +1,8 @@
 import { ref, watch, computed } from 'vue'
-import { useAuthStore } from '../../stores/authStore'
-import { useDataStore } from '../../stores/dataStore'
-import getCurrentMonth from '../../utils/getCurrentMonth'
-import getWhoAddedTransaction from '../../utils/whoAdded'
-import useFireBase from '../../composables/useFirebase'
-import { useReceiptUpload } from '../../composables/useReceiptUpload'
-import { DB_NODES } from '../../constants/db-nodes'
+import { useAuthStore, useDataStore } from '@/stores'
+import { getCurrentMonth, getWhoAddedTransaction } from '@/utils'
+import { useFireBase, useReceiptUpload } from '@/composables'
+import { DB_NODES } from '@/constants'
 
 export const PersonalExpenseForm = (props, emit) => {
   const { saveData, updateData, deleteData, isSubmitting } = useFireBase()

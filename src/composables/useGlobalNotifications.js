@@ -1,13 +1,10 @@
 import { computed, ref, watch } from 'vue'
-import { useAuthStore } from '../stores/authStore'
-import { useGroupStore } from '../stores/groupStore'
-import { useUserStore } from '../stores/userStore'
-import { onSnapshot, collection, database } from '../firebase'
+import { useAuthStore, useGroupStore, useUserStore } from '@/stores'
+import { onSnapshot, collection, database } from '@/firebase'
 import useFireBase from './useFirebase'
-import { Tabs } from '../assets/enums'
-import getCurrentMonth from '../utils/getCurrentMonth'
-import { DB_NODES } from '../constants/db-nodes'
-import { maskMobile } from '../utils/maskMobile'
+import { Tabs } from '@/assets'
+import { getCurrentMonth, maskMobile } from '@/utils'
+import { DB_NODES } from '@/constants'
 import {
   isMemberOfGroup,
   hasPendingRequest,
@@ -20,7 +17,7 @@ import {
   hasUserApprovedDeletion,
   hasUserApprovedJoinRequest,
   isCurrentUserPendingOwner
-} from '../helpers/users'
+} from '@/helpers'
 
 export function useGlobalNotifications() {
   const authStore = useAuthStore()

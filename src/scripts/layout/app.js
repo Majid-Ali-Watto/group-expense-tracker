@@ -1,28 +1,31 @@
 import { ref, onUnmounted, onMounted, computed, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { useAuthStore } from '../../stores/authStore'
-import { useTabStore } from '../../stores/tabStore'
-import { useGroupStore } from '../../stores/groupStore'
-import { useUserStore } from '../../stores/userStore'
-import useFireBase from '../../composables/useFirebase'
-import { DB_NODES } from '../../constants/db-nodes'
-import { tabs as allTabs } from '../../assets/data'
-import { Tabs } from '../../assets/enums'
-import { TAB_ROUTES, ROUTE_TABS, GROUP_TABS } from '../../router'
-import { showError } from '../../utils/showAlerts'
 import {
+  useAuthStore,
+  useTabStore,
+  useGroupStore,
+  useUserStore
+} from '@/stores'
+import {
+  useFireBase,
+  useGlobalNotifications,
+  loadAppConfig
+} from '@/composables'
+import { DB_NODES } from '@/constants'
+import { tabs as allTabs, Tabs } from '@/assets'
+import { TAB_ROUTES, ROUTE_TABS, GROUP_TABS } from '@/router'
+import {
+  showError,
+  generateUUID,
+  maskMobile,
+  clearAllCache,
   decryptFromSession,
   decryptFromStore,
   encryptForSession,
   encryptForStore
-} from '../../utils/sessionCrypto'
-import { useGlobalNotifications } from '../../composables/useGlobalNotifications'
-import { generateUUID } from '../../utils/uuid'
-import { auth, onAuthStateChanged, signOut } from '../../firebase'
-import { maskMobile } from '../../utils/maskMobile'
-import { loadAppConfig } from '../../composables/useAppConfig'
-import { clearAllCache } from '../../utils/queryCache'
-import { NetPosition } from '../generic/net-position'
+} from '@/utils'
+import { auth, onAuthStateChanged, signOut } from '@/firebase'
+import { NetPosition } from '@/scripts/generic'
 
 export const App = () => {
   const router = useRouter()

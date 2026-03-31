@@ -1,4 +1,4 @@
-import { showError, showSuccess } from '../../utils/showAlerts'
+import { showError, showSuccess } from '@/utils'
 
 /**
  * Safe markdown-to-HTML renderer.

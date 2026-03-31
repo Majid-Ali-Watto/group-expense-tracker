@@ -1,22 +1,11 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessageBox } from 'element-plus'
-import useFireBase from '../../composables/useFirebase'
-import { useAuthStore } from '../../stores/authStore'
-import { DB_NODES } from '../../constants/db-nodes'
-import { useGroupStore } from '../../stores/groupStore'
-import { useUserStore } from '../../stores/userStore'
-import { showError } from '../../utils/showAlerts'
-import { maskMobile } from '../../utils/maskMobile'
-import {
-  auth,
-  deleteUser,
-  onSnapshot,
-  collection,
-  database
-} from '../../firebase'
-import { useDebouncedRef } from '../../composables/useDebouncedRef'
-import { appendNotificationForUser } from '../../utils/recordNotifications'
+import { useFireBase, useDebouncedRef } from '@/composables'
+import { useAuthStore, useGroupStore, useUserStore } from '@/stores'
+import { DB_NODES } from '@/constants'
+import { showError, maskMobile, appendNotificationForUser } from '@/utils'
+import { auth, deleteUser, onSnapshot, collection, database } from '@/firebase'
 
 export const Users = () => {
   const isPageLoading = ref(true)
@@ -284,7 +273,6 @@ export const Users = () => {
             const currentUser = auth.currentUser
             if (currentUser) {
               await deleteUser(currentUser)
-              console.log('User deleted from Firebase Authentication')
             }
           } catch (authError) {
             console.error('Error deleting user from Firebase Auth:', authError)
@@ -350,7 +338,6 @@ export const Users = () => {
           const currentUser = auth.currentUser
           if (currentUser) {
             await deleteUser(currentUser)
-            console.log('User deleted from Firebase Authentication')
           }
         } catch (authError) {
           console.error('Error deleting user from Firebase Auth:', authError)

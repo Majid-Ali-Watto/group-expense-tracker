@@ -111,15 +111,13 @@ import AdminReportCard from './AdminReportCard.vue'
 import {
   BugReportsAdmin,
   STATUS_OPTIONS,
-  SEVERITY_OPTIONS
-} from '../../scripts/bug-reports/bug-reports-admin'
-import {
+  SEVERITY_OPTIONS,
   markdownToHtml,
   formatDate,
   copyText,
   downloadImage,
   notesOf
-} from '../../scripts/bug-reports/markdown'
+} from '@/scripts/bug-reports'
 
 const {
   loading,

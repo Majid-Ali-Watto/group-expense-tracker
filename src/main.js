@@ -4,9 +4,9 @@ import { createPinia } from 'pinia'
 import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
-import overflowPopup from './directives/overflow-popup'
+import overflowPopup from '@/directives/overflow-popup'
 import './main.css'
-import { toCapitalize } from './utils/string-formatting'
+import { toCapitalize } from '@/utils'
 const app = createApp(App)
 const PKR = new Intl.NumberFormat('en-PK', {
   style: 'currency',

@@ -68,8 +68,8 @@
 </template>
 
 <script setup>
-import { App } from './scripts/layout/app'
-import { loadAsyncComponent } from './utils/async-component'
+import { App } from '@/scripts/layout'
+import { loadAsyncComponent } from '@/utils'
 const Header = loadAsyncComponent(
   () => import('@/components/layout/Header.vue')
 )

@@ -291,8 +291,8 @@
 </template>
 
 <script setup>
-import NoteThread from '../bug-reports/NoteThread.vue'
-import GenericButton from '../generic-components/GenericButton.vue'
+import { NoteThread } from '@/components/bug-reports'
+import { GenericButton } from '@/components/generic-components'
 
 defineProps({
   report: { type: Object, required: true },

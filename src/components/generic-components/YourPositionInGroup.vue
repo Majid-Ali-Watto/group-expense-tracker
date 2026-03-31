@@ -69,8 +69,7 @@
 </template>
 <script setup>
 import { computed } from 'vue'
-import { useAuthStore } from '../../stores/authStore'
-import { useUserStore } from '../../stores/userStore'
+import { useAuthStore, useUserStore } from '@/stores'
 
 const authStore = useAuthStore()
 const userStore = useUserStore()

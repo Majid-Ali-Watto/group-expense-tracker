@@ -52,13 +52,15 @@
 </template>
 
 <script setup>
-import { loginRules as rules } from '../../assets/validation-rules'
-import { Login } from '../../scripts/auth/login'
-import { loadAsyncComponent } from '../../utils/async-component'
-import AuthActions from './components/AuthActions.vue'
-import AuthFormFields from './components/AuthFormFields.vue'
-import AuthInfoAlert from './components/AuthInfoAlert.vue'
-import AuthModeToggle from './components/AuthModeToggle.vue'
+import { loginRules as rules } from '@/assets'
+import { Login } from '@/scripts/auth'
+import { loadAsyncComponent } from '@/utils'
+import {
+  AuthActions,
+  AuthFormFields,
+  AuthInfoAlert,
+  AuthModeToggle
+} from '@/components/auth/components'
 const PasswordResetDialog = loadAsyncComponent(
   () => import('./components/PasswordResetDialog.vue')
 )

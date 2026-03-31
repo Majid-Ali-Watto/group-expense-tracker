@@ -1,13 +1,10 @@
 import { computed, inject, ref, onMounted, watch, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { onSnapshot, auth, onAuthStateChanged } from '../../firebase'
-import { useAuthStore } from '../../stores/authStore'
-import { useDataStore } from '../../stores/dataStore'
-import getCurrentMonth from '../../utils/getCurrentMonth'
-import { showError } from '../../utils/showAlerts'
-import useFireBase from '../../composables/useFirebase'
-import { DB_NODES } from '../../constants/db-nodes'
-import { getCache, setCache } from '../../utils/queryCache'
+import { onSnapshot, auth, onAuthStateChanged } from '@/firebase'
+import { useAuthStore, useDataStore } from '@/stores'
+import { getCurrentMonth, showError, getCache, setCache } from '@/utils'
+import { useFireBase } from '@/composables'
+import { DB_NODES } from '@/constants'
 
 export const PersonalExpenseList = () => {
   const formatAmount = inject('formatAmount')
@@ -51,7 +48,10 @@ export const PersonalExpenseList = () => {
     }
     try {
       // Fast path: read months[] array recorded on the grandparent document
-      const parentDoc = await read(`${DB_NODES.PERSONAL_EXPENSES}/${activeUser.value}`, false)
+      const parentDoc = await read(
+        `${DB_NODES.PERSONAL_EXPENSES}/${activeUser.value}`,
+        false
+      )
       if (parentDoc?.months?.length) {
         months.value = [...parentDoc.months].sort((a, b) => b.localeCompare(a))
       } else {

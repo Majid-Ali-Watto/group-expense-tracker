@@ -318,21 +318,23 @@
 </template>
 
 <script setup>
-import HOC from '../layout/HOC.vue'
-import GroupAccessGuard from '../shared/GroupAccessGuard.vue'
+import { HOC } from '@/components/layout'
+import { GroupAccessGuard } from '@/components/shared'
 import {
   DataTimePicker,
   AmountInput,
   GenericDropDown,
   GenericInput,
   ReceiptUploadField
-} from '../generic-components'
-import GenericInputField from '../generic-components/GenericInputField.vue'
-import GenericInputNumber from '../generic-components/GenericInputNumber.vue'
-import { rules } from '../../assets/validation-rules'
-import { SharedExpenses } from '../../scripts/shared-expenses/shared-expenses'
-import AddNewTransactionButton from '../generic-components/AddNewTransactionButton.vue'
-import { loadAsyncComponent } from '../../utils/async-component'
+} from '@/components/generic-components'
+import {
+  GenericInputField,
+  GenericInputNumber,
+  AddNewTransactionButton
+} from '@/components/generic-components'
+import { rules } from '@/assets'
+import { SharedExpenses } from '@/scripts/shared-expenses'
+import { loadAsyncComponent } from '@/utils'
 
 const ExpenseList = loadAsyncComponent(() => import('./ExpenseList.vue'))
 const emit = defineEmits(['closeModal'])

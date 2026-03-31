@@ -1,19 +1,24 @@
 import { ref, computed, onMounted, onUnmounted, inject, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { onSnapshot } from '../../firebase'
-import { useAuthStore } from '../../stores/authStore'
-import { useGroupStore } from '../../stores/groupStore'
-import { useUserStore } from '../../stores/userStore'
-import { useDataStore } from '../../stores/dataStore'
-import useFireBase from '../../composables/useFirebase'
-import { appendNotificationForUser } from '../../utils/recordNotifications'
-import { DB_NODES } from '../../constants/db-nodes'
-import { useApprovalRequests } from '../../composables/useApprovalRequests'
-import { formatUserDisplay } from '../../utils/user-display'
-import { deleteReceipt, cleanupOldReceipts } from '../../utils/uploadReceipt'
-import getCurrentMonth from '../../utils/getCurrentMonth'
-import { showError } from '../../utils/showAlerts'
-import { getCache, setCache } from '../../utils/queryCache'
+import { onSnapshot } from '@/firebase'
+import {
+  useAuthStore,
+  useGroupStore,
+  useUserStore,
+  useDataStore
+} from '@/stores'
+import { useFireBase, useApprovalRequests } from '@/composables'
+import {
+  appendNotificationForUser,
+  formatUserDisplay,
+  deleteReceipt,
+  cleanupOldReceipts,
+  getCurrentMonth,
+  showError,
+  getCache,
+  setCache
+} from '@/utils'
+import { DB_NODES } from '@/constants'
 
 export const Loans = () => {
   const authStore = useAuthStore()

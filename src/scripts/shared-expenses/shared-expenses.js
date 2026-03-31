@@ -1,14 +1,9 @@
 import { ref, watch, computed, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
-import { useUsersOptions } from '../../composables/useUsersOptions'
-import getWhoAddedTransaction from '../../utils/whoAdded'
-import { useAuthStore } from '../../stores/authStore'
-import { useGroupStore } from '../../stores/groupStore'
-import { useUserStore } from '../../stores/userStore'
-import useFireBase from '../../composables/useFirebase'
-import { buildRequestMeta } from '../../utils/buildRequestMeta'
-import { DB_NODES } from '../../constants/db-nodes'
-import { useReceiptUpload } from '../../composables/useReceiptUpload'
+import { useUsersOptions, useFireBase, useReceiptUpload } from '@/composables'
+import { getWhoAddedTransaction, buildRequestMeta } from '@/utils'
+import { useAuthStore, useGroupStore, useUserStore } from '@/stores'
+import { DB_NODES } from '@/constants'
 
 export const SharedExpenses = (props, emit) => {
   const { updateData, saveData, isSubmitting } = useFireBase()

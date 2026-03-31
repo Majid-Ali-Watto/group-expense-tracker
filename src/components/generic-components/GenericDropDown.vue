@@ -32,7 +32,7 @@ onErrorCaptured((err) => {
   if (err instanceof TypeError && err.message.includes('scrollTop'))
     return false
 })
-import { GenericDropDown } from '../../scripts/shared/generic-dropdown'
+import { GenericDropDown } from '@/scripts/shared'
 
 const props = defineProps({
   modelValue: {

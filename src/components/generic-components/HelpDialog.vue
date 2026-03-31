@@ -251,10 +251,6 @@
               admin can finalize the settlement. Payments are recorded
               automatically.
             </li>
-            <li>
-              <strong>Settlement History</strong> — Finalized settlements move
-              to the History tab for reference.
-            </li>
           </ul>
         </el-collapse-item>
 
@@ -545,7 +541,7 @@
 </template>
 
 <script setup>
-import { HelpDialog } from '../../scripts/generic/help-dialog'
+import { HelpDialog } from '@/scripts/generic'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },

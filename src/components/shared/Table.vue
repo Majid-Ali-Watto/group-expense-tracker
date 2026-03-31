@@ -546,10 +546,12 @@
 <script setup>
 import { watch } from 'vue'
 import { Search as SearchIcon } from '@element-plus/icons-vue'
-import GenericButton from '../generic-components/GenericButton.vue'
-import GenericInputField from '../generic-components/GenericInputField.vue'
-import HOC from '../layout/HOC.vue'
-import { Table } from '../../scripts/shared/table'
+import {
+  GenericButton,
+  GenericInputField
+} from '@/components/generic-components'
+import { HOC } from '@/components/layout'
+import { Table } from '@/scripts/shared'
 
 const props = defineProps({
   rows: { type: Array, required: true },

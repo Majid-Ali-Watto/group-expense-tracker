@@ -1,11 +1,18 @@
 import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { GROUP_CATEGORIES } from '../../assets/enums'
-import { useAuthStore } from '../../stores/authStore'
-import { useGroupStore } from '../../stores/groupStore'
-import { useUserStore } from '../../stores/userStore'
-import useFireBase from '../../composables/useFirebase'
-import { showError, showSuccess } from '../../utils/showAlerts'
+import { GROUP_CATEGORIES } from '@/assets'
+import { useAuthStore, useGroupStore, useUserStore } from '@/stores'
+import { useFireBase, useDebouncedRef } from '@/composables'
+import {
+  showError,
+  showSuccess,
+  maskMobile,
+  buildSharedGroupsLocation,
+  appendNotificationForUser,
+  removeNotificationForUser,
+  formatMemberDisplay,
+  formatUserDisplay
+} from '@/utils'
 import { ElMessageBox } from 'element-plus'
 import {
   onSnapshot,
@@ -17,19 +24,8 @@ import {
   where,
   getDocs,
   database
-} from '../../firebase'
-import { maskMobile } from '../../utils/maskMobile'
-import {
-  appendNotificationForUser,
-  removeNotificationForUser
-} from '../../utils/recordNotifications'
-import {
-  formatMemberDisplay,
-  formatUserDisplay
-} from '../../utils/user-display'
-import { DB_NODES } from '../../constants/db-nodes'
-import { useDebouncedRef } from '../../composables/useDebouncedRef'
-import { buildSharedGroupsLocation } from '../../utils/shared-groups'
+} from '@/firebase'
+import { DB_NODES } from '@/constants'
 import {
   isMemberOfGroup,
   allMembersApproved,
@@ -47,7 +43,7 @@ import {
   hasUserApprovedDeletion,
   hasUserApprovedJoinRequest,
   isCurrentUserPendingOwner
-} from '../../helpers/users'
+} from '@/helpers'
 
 export const Groups = () => {
   const isPageLoading = ref(true)
@@ -107,8 +103,12 @@ export const Groups = () => {
    */
   function computeMemberMobiles(group) {
     const set = new Set()
-    ;(group.members || []).forEach((m) => { if (m.mobile) set.add(m.mobile) })
-    ;(group.pendingMembers || []).forEach((m) => { if (m.mobile) set.add(m.mobile) })
+    ;(group.members || []).forEach((m) => {
+      if (m.mobile) set.add(m.mobile)
+    })
+    ;(group.pendingMembers || []).forEach((m) => {
+      if (m.mobile) set.add(m.mobile)
+    })
     return [...set]
   }
 
@@ -492,13 +492,6 @@ export const Groups = () => {
       }
 
       // Set up real-time listener for groups.
-      // TODO (P1 scaling): once all group documents have been backfilled with
-      // memberMobiles[], switch to a scoped query to avoid downloading every
-      // group for every user:
-      //   query(collection(database, DB_NODES.GROUPS),
-      //         where('memberMobiles', 'array-contains', mobile))
-      // Prerequisite: run a one-time migration to set memberMobiles on
-      // existing documents created before this field was introduced.
       const groupsRef = dbRef(DB_NODES.GROUPS)
 
       const loadingTimeout = setTimeout(() => {

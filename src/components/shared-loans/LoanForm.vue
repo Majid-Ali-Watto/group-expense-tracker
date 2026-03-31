@@ -241,16 +241,16 @@
 
 <script setup>
 import { ref } from 'vue'
-import { rules } from '../../assets/validation-rules'
+import { rules } from '@/assets'
 import {
   AmountInput,
   GenericDropDown,
   GenericInput,
   ReceiptUploadField
-} from '../generic-components'
-import { LoanForm } from '../../scripts/shared-loans/loan-form'
-import { DB_NODES } from '../../constants/db-nodes'
-import AddNewTransactionButton from '../generic-components/AddNewTransactionButton.vue'
+} from '@/components/generic-components'
+import { LoanForm } from '@/scripts/shared-loans'
+import { DB_NODES } from '@/constants'
+import { AddNewTransactionButton } from '@/components/generic-components'
 
 const emit = defineEmits(['closeModal', 'closeForm'])
 const props = defineProps({

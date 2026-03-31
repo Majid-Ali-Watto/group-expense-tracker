@@ -2,7 +2,7 @@
   <div class="w-full" ref="content">
     <LoadingSkeleton v-if="isContentLoading" mode="page" />
     <template v-else>
-      <SalaryExpenseStats
+      <PersonalExpenseStats
         :format-amount="formatAmount"
         :remaining="remaining"
         :selected-month="selectedMonth"
@@ -15,8 +15,19 @@
         <div class="sel-filter-toggle">
           <span class="sel-filter-label">Filter by month</span>
           <div class="flex items-center gap-2">
-            <button v-if="showFilters" class="clear-filter-link sm:hidden" @click="clearFilters()">Clear</button>
-            <button class="clear-filter-link hidden sm:inline" @click="clearFilters()">Clear</button>
+            <button
+              v-if="showFilters"
+              class="clear-filter-link sm:hidden"
+              @click="clearFilters()"
+            >
+              Clear
+            </button>
+            <button
+              class="clear-filter-link hidden sm:inline"
+              @click="clearFilters()"
+            >
+              Clear
+            </button>
             <el-button
               circle
               :type="showFilters ? 'danger' : 'primary'"
@@ -55,11 +66,10 @@
 <script setup>
 import { ref } from 'vue'
 import { Filter, Close } from '@element-plus/icons-vue'
-import Table from '../shared/Table.vue'
-import GenericDropDown from '../generic-components/GenericDropDown.vue'
-import LoadingSkeleton from '../shared/LoadingSkeleton.vue'
+import { Table, LoadingSkeleton } from '@/components/shared'
+import { GenericDropDown } from '@/components/generic-components'
 import PersonalExpenseStats from './PersonalExpenseStats.vue'
-import { PersonalExpenseList } from '../../scripts/personal-expenses/personal-expense-list'
+import { PersonalExpenseList } from '@/scripts/personal-expenses'
 
 const {
   formatAmount,

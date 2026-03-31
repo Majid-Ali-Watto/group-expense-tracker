@@ -518,18 +518,20 @@
 </template>
 
 <script setup>
-import LoadingSkeleton from '../shared/LoadingSkeleton.vue'
-import { groupRules } from '../../assets/validation-rules'
-import { Groups } from '../../scripts/groups/groups'
-import GenericInputField from '../generic-components/GenericInputField.vue'
-import GroupDetailsAccordion from '../generic-components/GroupDetailsAccordion.vue'
-import YourPositionInGroup from '../generic-components/YourPositionInGroup.vue'
-import GroupActionButtons from '../generic-components/GroupActionButtons.vue'
-import GroupRequestButtons from '../generic-components/GroupRequestButtons.vue'
-import GroupNotificationsForCurrentUser from '../generic-components/GroupNotificationsForCurrentUser.vue'
-import { GenericDropDown } from '../generic-components'
-import GenericButton from '../generic-components/GenericButton.vue'
-import { loadAsyncComponent } from '../../utils/async-component'
+import { LoadingSkeleton } from '@/components/shared'
+import { groupRules } from '@/assets'
+import { Groups } from '@/scripts/groups'
+import {
+  GenericInputField,
+  GroupDetailsAccordion,
+  YourPositionInGroup,
+  GroupActionButtons,
+  GroupRequestButtons,
+  GroupNotificationsForCurrentUser,
+  GenericButton
+} from '@/components/generic-components'
+import { GenericDropDown } from '@/components/generic-components'
+import { loadAsyncComponent } from '@/utils'
 const GroupsCreate = loadAsyncComponent(() => import('./GroupsCreate.vue'))
 const AddNewTransactionButton = loadAsyncComponent(
   () => import('../generic-components/AddNewTransactionButton.vue')

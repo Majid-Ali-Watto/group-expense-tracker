@@ -28,14 +28,16 @@
 </template>
 
 <script setup>
-import AddNewTransactionButton from '../generic-components/AddNewTransactionButton.vue'
-import HOC from '../layout/HOC.vue'
+import { AddNewTransactionButton } from '@/components/generic-components'
+import { HOC } from '@/components/layout'
 import { ref } from 'vue'
-import { loadAsyncComponent } from '../../utils/async-component'
+import { loadAsyncComponent } from '@/utils'
 
 const AddSalary = loadAsyncComponent(() => import('./SalaryForm.vue'))
 const AddExpense = loadAsyncComponent(() => import('./PersonalExpenseForm.vue'))
-const ExpenseList = loadAsyncComponent(() => import('./PersonalExpenseList.vue'))
+const ExpenseList = loadAsyncComponent(
+  () => import('./PersonalExpenseList.vue')
+)
 
 const showForm = ref(false)
 const setShowForm = () => {

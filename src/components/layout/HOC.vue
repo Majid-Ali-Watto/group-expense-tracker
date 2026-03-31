@@ -17,7 +17,7 @@
 
 <script setup>
 import { ref } from 'vue'
-import LoadingSkeleton from '../shared/LoadingSkeleton.vue'
+import { LoadingSkeleton } from '@/components/shared'
 const componentRef = ref(null)
 
 // Props

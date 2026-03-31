@@ -1,15 +1,16 @@
 import { onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessageBox } from 'element-plus'
-import useFireBase from '../../composables/useFirebase'
-import { useAuthStore } from '../../stores/authStore'
-import { DB_NODES } from '../../constants/db-nodes'
-import { useGroupStore } from '../../stores/groupStore'
-import { showError, showSuccess } from '../../utils/showAlerts'
-import { encryptForSession, encryptForStore } from '../../utils/sessionCrypto'
-import { generateUUID } from '../../utils/uuid'
-import { checkForAppUpdate } from '../../composables/useAppUpdate'
-import { loadAppConfig } from '../../composables/useAppConfig'
+import { useFireBase, checkForAppUpdate, loadAppConfig } from '@/composables'
+import { useAuthStore, useGroupStore } from '@/stores'
+import { DB_NODES } from '@/constants'
+import {
+  showError,
+  showSuccess,
+  encryptForSession,
+  encryptForStore,
+  generateUUID
+} from '@/utils'
 import {
   auth,
   sendPasswordResetEmail,
@@ -20,7 +21,7 @@ import {
   setPersistence,
   browserLocalPersistence,
   browserSessionPersistence
-} from '../../firebase'
+} from '@/firebase'
 
 // ── Login rate limiting ────────────────────────────────────────────────────
 const RATE_LIMIT_KEY = '_login_rl'

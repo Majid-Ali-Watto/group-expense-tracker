@@ -53,8 +53,8 @@
 
 <script setup>
 import { computed } from 'vue'
-import { GenericButton } from '../../generic-components'
-import GenericInputField from '../../generic-components/GenericInputField.vue'
+import { GenericButton } from '@/components/generic-components'
+import { GenericInputField } from '@/components/generic-components'
 
 const props = defineProps({
   visible: { type: Boolean, default: false },

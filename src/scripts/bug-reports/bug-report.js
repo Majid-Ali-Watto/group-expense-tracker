@@ -11,13 +11,16 @@ import {
   deleteDoc,
   onSnapshot,
   runTransaction
-} from '../../firebase'
-import { DB_NODES } from '../../constants/db-nodes'
-import { uploadReceipt, cleanupOldReceipts } from '../../utils/uploadReceipt'
-import { useAuthStore } from '../../stores/authStore'
-import { useUserStore } from '../../stores/userStore'
-import { showError, showSuccess } from '../../utils/showAlerts'
-import { generateUUID } from '../../utils/uuid'
+} from '@/firebase'
+import { DB_NODES } from '@/constants'
+import {
+  uploadReceipt,
+  cleanupOldReceipts,
+  showError,
+  showSuccess,
+  generateUUID
+} from '@/utils'
+import { useAuthStore, useUserStore } from '@/stores'
 import { NoteThread } from './note-thread'
 
 const MAX_SCREENSHOTS = 3
@@ -220,7 +223,6 @@ export const BugReport = (props) => {
 
   async function submitReport() {
     const valid = await formRef.value?.validate().catch(() => false)
-    console.log('🚀 ~ submitReport ~ valid:', valid)
     if (!valid) return
     submitting.value = true
     uploadProgress.value = []

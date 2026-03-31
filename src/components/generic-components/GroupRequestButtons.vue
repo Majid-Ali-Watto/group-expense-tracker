@@ -335,13 +335,9 @@ import {
   allMembersApprovedAddMember,
   hasUserApprovedAddMemberRequest,
   isCurrentUserPendingOwner
-} from '../../helpers/users'
-import { useAuthStore } from '../../stores/authStore'
-import { useUserStore } from '../../stores/userStore'
-import {
-  formatMemberDisplay,
-  formatUserDisplay
-} from '../../utils/user-display'
+} from '@/helpers'
+import { useAuthStore, useUserStore } from '@/stores'
+import { formatMemberDisplay, formatUserDisplay } from '@/utils'
 
 const authStore = useAuthStore()
 const userStore = useUserStore()

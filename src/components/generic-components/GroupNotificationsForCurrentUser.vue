@@ -24,10 +24,9 @@
   </div>
 </template>
 <script setup>
-import { getUserNotifications } from '../../helpers/users'
-import { useUserStore } from '../../stores/userStore'
-import { useAuthStore } from '../../stores/authStore'
-import { formatUserDisplay } from '../../utils/user-display'
+import { getUserNotifications } from '@/helpers'
+import { useUserStore, useAuthStore } from '@/stores'
+import { formatUserDisplay } from '@/utils'
 
 const userStore = useUserStore()
 const authStore = useAuthStore()

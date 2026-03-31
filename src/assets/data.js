@@ -7,7 +7,6 @@ const tabs = [
   Tabs.USERS,
   Tabs.PERSONAL_EXPENSES,
   Tabs.PERSONAL_LOANS
-  // Tabs.HISTORY,
 ]
 const LAST_DAY = 1
 const MIDDLE_DAY = 15
