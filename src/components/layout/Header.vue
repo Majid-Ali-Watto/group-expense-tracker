@@ -102,8 +102,9 @@
 
         <!-- Desktop buttons - visible on screens >= 640px -->
         <div class="hidden sm:flex items-center gap-2">
-          <!-- Bug Report — always visible -->
+          <!-- Bug Report — only when logged in -->
           <button
+            v-if="loggedIn"
             class="theme-btn"
             @click="showBugReport = true"
             title="Report a Bug"
@@ -297,8 +298,8 @@
                 </div>
               </el-dropdown-item>
 
-              <!-- Bug Report — always visible -->
-              <el-dropdown-item @click="showBugReport = true">
+              <!-- Bug Report — only when logged in -->
+              <el-dropdown-item v-if="loggedIn" @click="showBugReport = true">
                 <div class="flex items-center gap-3">
                   <svg
                     class="w-5 h-5 menu-icon"

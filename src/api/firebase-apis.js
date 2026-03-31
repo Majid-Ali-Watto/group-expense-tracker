@@ -7,7 +7,8 @@ import {
   updateDoc,
   deleteDoc,
   getDoc,
-  getDocs
+  getDocs,
+  arrayUnion
 } from 'firebase/firestore'
 import { database } from '../firebase'
 import { startLoading, stopLoading, withLoading } from '../utils/loading'
@@ -158,6 +159,22 @@ export default function useFireBase() {
         ) {
           await setDoc(doc(database, parentPath), {}, { merge: true })
         }
+
+        // Also record the month ID on the grandparent collection document so
+        // fetchMonths() can read one document instead of a full getDocs across
+        // the months sub-collection (saves N-1 reads per month list load where
+        // N is the number of months with data).
+        const segs = collectionPath.split('/')
+        if (segs.length >= 5 && segs[segs.length - 3] === 'months') {
+          const grandparentPath = segs.slice(0, 2).join('/')
+          const monthId = segs[segs.length - 2]
+          await setDoc(
+            doc(database, grandparentPath),
+            { months: arrayUnion(monthId) },
+            { merge: true }
+          )
+        }
+
         if (collectionPath.includes(DB_NODES.SHARED_EXPENSES)) {
           // Cross-post a simplified record to the payer's personal-expenses
           const payerKey = data.payer || 'unknown'
@@ -171,6 +188,12 @@ export default function useFireBase() {
               `${DB_NODES.PERSONAL_EXPENSES}/${payerKey}/months/${monthYear}`
             ),
             {},
+            { merge: true }
+          )
+          // Track the month on the personal-expenses parent document
+          await setDoc(
+            doc(database, `${DB_NODES.PERSONAL_EXPENSES}/${payerKey}`),
+            { months: arrayUnion(monthYear) },
             { merge: true }
           )
         }

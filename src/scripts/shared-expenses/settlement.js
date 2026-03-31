@@ -192,39 +192,51 @@ export const Settlement = (props) => {
       const groupId = activeGroup.value || 'global'
       const selectedMonth = props.selectedMonth
 
-      const batch = writeBatch(database)
-      props.payments.forEach((payment, index) => {
-        const key = props.keys[index]
-        const backupRef = doc(
-          database,
-          DB_NODES.SHARED_EXPENSES_BACKUP,
-          groupId,
-          'months',
-          selectedMonth,
-          'payments',
-          key
-        )
-        batch.set(backupRef, payment)
+      // Firestore hard limit: 500 operations per batch.
+      // Each payment costs 2 ops (set to backup + delete from source).
+      // Reserve 1 op for the group settlement-request update in the last chunk.
+      const BATCH_CHUNK = 249 // 249 * 2 = 498 ops + 1 group update = 499 ≤ 500
 
-        const sourceRef = doc(
-          database,
-          DB_NODES.SHARED_EXPENSES,
-          groupId,
-          'months',
-          selectedMonth,
-          'payments',
-          key
-        )
-        batch.delete(sourceRef)
-      })
+      for (let i = 0; i < props.payments.length; i += BATCH_CHUNK) {
+        const chunkPayments = props.payments.slice(i, i + BATCH_CHUNK)
+        const chunkKeys = props.keys.slice(i, i + BATCH_CHUNK)
+        const isLastChunk = i + BATCH_CHUNK >= props.payments.length
 
-      // Remove settlement request from group if exists
-      if (activeGroup.value && hasSettlementRequest.value) {
-        const groupRef = doc(database, DB_NODES.GROUPS, activeGroup.value)
-        batch.update(groupRef, { settlementRequest: deleteField() })
+        const batch = writeBatch(database)
+
+        chunkPayments.forEach((payment, index) => {
+          const key = chunkKeys[index]
+          const backupRef = doc(
+            database,
+            DB_NODES.SHARED_EXPENSES_BACKUP,
+            groupId,
+            'months',
+            selectedMonth,
+            'payments',
+            key
+          )
+          batch.set(backupRef, payment)
+
+          const sourceRef = doc(
+            database,
+            DB_NODES.SHARED_EXPENSES,
+            groupId,
+            'months',
+            selectedMonth,
+            'payments',
+            key
+          )
+          batch.delete(sourceRef)
+        })
+
+        // Include the group settlement-request removal in the last batch
+        if (isLastChunk && activeGroup.value && hasSettlementRequest.value) {
+          const groupRef = doc(database, DB_NODES.GROUPS, activeGroup.value)
+          batch.update(groupRef, { settlementRequest: deleteField() })
+        }
+
+        await batch.commit()
       }
-
-      await batch.commit()
       showSuccess(
         'Expenses added to Backup successfully! ' +
           selectedMonth +

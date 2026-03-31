@@ -27,7 +27,7 @@ export const ExpenseList = (props) => {
   }
   const route = useRoute()
   const router = useRouter()
-  const { dbRef, readShallow, updateData, deleteData } = useFireBase()
+  const { dbRef, read, readShallow, updateData, deleteData } = useFireBase()
   const formatAmount = inject('formatAmount')
 
   const { usersOptions } = useUsersOptions()
@@ -129,7 +129,15 @@ export const ExpenseList = (props) => {
     }
     monthsLoaded.value = false
     try {
-      months.value = await readShallow(monthsPath)
+      // Fast path: read months[] array recorded on the grandparent document
+      // (1 read instead of getDocs across the whole months sub-collection).
+      const parentDoc = await read(`${props.dbRef}/${groupId}`, false)
+      if (parentDoc?.months?.length) {
+        months.value = [...parentDoc.months].sort((a, b) => b.localeCompare(a))
+      } else {
+        // Backward-compat fallback for documents written before months[] was introduced
+        months.value = await readShallow(monthsPath, false)
+      }
       setCache(monthsPath, months.value)
       if (months.value.length) selectedMonth.value = getCurrentMonth()
     } catch (error) {

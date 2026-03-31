@@ -6,48 +6,6 @@
     label-position="top"
     class="bug-form"
   >
-    <!-- Reporter info — shown only when not logged in -->
-    <template v-if="!isLoggedIn">
-      <div class="bug-reporter-notice">
-        <svg
-          class="w-4 h-4"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-          />
-        </svg>
-        You're submitting as a guest. Please provide your name and email so we
-        can follow up with you.
-      </div>
-      <div class="bug-reporter-row">
-        <el-form-item label="Your name" prop="reporterName" class="flex-1">
-          <el-input
-            :model-value="form.reporterName"
-            placeholder="e.g. Ali Hassan"
-            maxlength="60"
-            @update:model-value="
-              $emit('update:form', { ...form, reporterName: $event })
-            "
-          />
-        </el-form-item>
-        <el-form-item label="Your email" prop="reporterEmail" class="flex-1">
-          <el-input
-            :model-value="form.reporterEmail"
-            placeholder="e.g. ali@example.com"
-            maxlength="80"
-            @update:model-value="
-              $emit('update:form', { ...form, reporterEmail: $event })
-            "
-          />
-        </el-form-item>
-      </div>
-    </template>
 
     <el-form-item label="Bug category" prop="category">
       <el-select
@@ -243,7 +201,6 @@ defineExpose({
 
 defineProps({
   form: { type: Object, required: true },
-  isLoggedIn: { type: Boolean, default: false },
   categories: { type: Array, default: () => [] },
   rules: { type: Object, default: () => ({}) },
   severities: { type: Array, default: () => [] },
@@ -277,32 +234,6 @@ defineEmits([
   border-bottom-right-radius: 10px;
   background: var(--el-fill-color-blank);
   margin-bottom: 24px;
-}
-
-/* Guest reporter */
-.bug-reporter-notice {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  padding: 10px 14px;
-  border-radius: 6px;
-  background: #eff6ff;
-  border: 1px solid #bfdbfe;
-  font-size: 13px;
-  color: #1d4ed8;
-  margin-bottom: 16px;
-  line-height: 1.5;
-}
-
-.bug-reporter-row {
-  display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.bug-reporter-row .flex-1 {
-  flex: 1;
-  min-width: 180px;
 }
 
 /* Screenshot upload */

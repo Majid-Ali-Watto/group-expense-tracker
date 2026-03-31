@@ -172,9 +172,7 @@ export const BugReportsAdmin = () => {
 
   // ── Helpers ───────────────────────────────────────────────────────────────
   function mobileKeyOf(report) {
-    return report.reporter?.isGuest
-      ? 'guest'
-      : report.reporter?.mobile || 'guest'
+    return report.reporter?.mobile || 'unknown'
   }
 
   function toggleExpand(id) {
@@ -192,7 +190,7 @@ export const BugReportsAdmin = () => {
         doc(database, DB_NODES.BUG_REPORTS, mobileKey, 'reports', id),
         { status: newStatus }
       )
-      if (report?.reporter?.mobile && !report.reporter.isGuest) {
+      if (report?.reporter?.mobile) {
         await setDoc(
           doc(
             database,
@@ -245,7 +243,7 @@ export const BugReportsAdmin = () => {
           report.id
         )
       ).catch(() => {})
-      if (report.reporter?.mobile && !report.reporter.isGuest) {
+      if (report.reporter?.mobile) {
         await deleteDoc(
           doc(
             database,
@@ -325,7 +323,7 @@ export const BugReportsAdmin = () => {
           { hasReporterReply: null }
         )
       }
-      if (report.reporter?.mobile && !report.reporter.isGuest) {
+      if (report.reporter?.mobile) {
         await setDoc(
           doc(
             database,

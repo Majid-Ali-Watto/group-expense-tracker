@@ -13,7 +13,7 @@ import { getCache, setCache } from '../../utils/queryCache'
 
 export const PersonalLoans = () => {
   const formatAmount = inject('formatAmount')
-  const { dbRef, readShallow } = useFireBase()
+  const { dbRef, read, readShallow } = useFireBase()
   const authStore = useAuthStore()
   const userStore = useUserStore()
   const dataStore = useDataStore()
@@ -73,8 +73,14 @@ export const PersonalLoans = () => {
     }
     monthsLoaded.value = false
     try {
-      const keys = await readShallow(monthsPath)
-      months.value = keys.sort((a, b) => b.localeCompare(a))
+      // Fast path: read months[] array recorded on the grandparent document
+      const parentDoc = await read(`${DB_NODES.PERSONAL_LOANS}/${activeUser.value}`, false)
+      if (parentDoc?.months?.length) {
+        months.value = [...parentDoc.months].sort((a, b) => b.localeCompare(a))
+      } else {
+        const keys = await readShallow(monthsPath, false)
+        months.value = keys.sort((a, b) => b.localeCompare(a))
+      }
       setCache(monthsPath, months.value)
 
       if (months.value.length && selectedMonth.value === 'All') {

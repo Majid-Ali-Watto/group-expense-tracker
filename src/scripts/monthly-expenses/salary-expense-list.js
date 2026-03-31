@@ -11,7 +11,7 @@ import { getCache, setCache } from '../../utils/queryCache'
 
 export const SalaryExpenseList = () => {
   const formatAmount = inject('formatAmount')
-  const { dbRef, readShallow } = useFireBase()
+  const { dbRef, read, readShallow } = useFireBase()
   const authStore = useAuthStore()
   const dataStore = useDataStore()
 
@@ -50,7 +50,13 @@ export const SalaryExpenseList = () => {
       return
     }
     try {
-      months.value = await readShallow(monthsPath)
+      // Fast path: read months[] array recorded on the grandparent document
+      const parentDoc = await read(`${DB_NODES.PERSONAL_EXPENSES}/${activeUser.value}`, false)
+      if (parentDoc?.months?.length) {
+        months.value = [...parentDoc.months].sort((a, b) => b.localeCompare(a))
+      } else {
+        months.value = await readShallow(monthsPath, false)
+      }
       setCache(monthsPath, months.value)
     } catch (error) {
       if (error?.code === 'permission-denied') return

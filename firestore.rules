@@ -37,13 +37,29 @@ service cloud.firestore {
     }
 
     // Personal expenses — read restricted to owner; write open to any authenticated user
-    // (shared-expense writes cross-post to personal-expenses for the payer)
+    // NOTE: write must remain open to all authenticated users because shared-expense
+    // creation cross-posts a record to the payer's personal-expenses (see saveData in
+    // firebase-apis.js).  Consider moving the cross-posting to a Cloud Function so
+    // this rule can be tightened to owner-only writes in the future.
+    // The parent document (personal-expenses/{mobile}) is also accessed:
+    //   - read: fetchMonths in salary-expense-list.js reads months[] from the parent doc
+    //   - write: saveData tracks months via arrayUnion on the parent doc (cross-poster writes)
+    match /personal-expenses/{mobile} {
+      allow read: if request.auth != null && request.auth.uid == ownerUid(mobile);
+      allow write: if request.auth != null;
+    }
     match /personal-expenses/{mobile}/{document=**} {
       allow read: if request.auth != null && request.auth.uid == ownerUid(mobile);
       allow write: if request.auth != null;
     }
 
     // Personal loans — owner only
+    // The parent document (personal-loans/{mobile}) is also accessed:
+    //   - read: fetchMonths reads months[] from the parent doc
+    //   - write: saveData tracks months via arrayUnion on the parent doc
+    match /personal-loans/{mobile} {
+      allow read, write: if request.auth != null && request.auth.uid == ownerUid(mobile);
+    }
     match /personal-loans/{mobile}/{document=**} {
       allow read, write: if request.auth != null && request.auth.uid == ownerUid(mobile);
     }
@@ -53,16 +69,14 @@ service cloud.firestore {
       allow read, write: if request.auth != null && request.auth.uid == ownerUid(mobile);
     }
 
-    // Bug reports — authenticated users can read/write their own; guests can write to the 'guest' bucket
+    // Bug reports — authenticated users can read/write their own only
     match /bug-reports/{mobileKey}/{document=**} {
       allow read, write: if request.auth != null;
-      allow write: if mobileKey == 'guest';
     }
 
     // Collection group rule required for collectionGroup('reports') admin query
     match /{path=**}/reports/{reportId} {
       allow read, write: if request.auth != null;
-      allow write: if true; // allow guest report submissions
     }
 
     // Collection group rules for leave-group balance checks
@@ -73,16 +87,16 @@ service cloud.firestore {
       allow read: if request.auth != null;
     }
 
-    // Bug report counters (global sequence number) — guests also need access to reserve a bug number
+    // Bug report counters (global sequence number) — authenticated users only.
+    // NOTE: A Cloud Function for the counter increment would allow fully locking this rule
+    //       to server-side access only, which is the recommended long-term fix.
     match /bug-report-counters/{counterId} {
-      allow read, write: if true;
+      allow read, write: if request.auth != null;
     }
 
-    // Bug report notifications (admin inbox + per-user inboxes)
-    // Allow guest writes so the admin notification is created on guest submissions
+    // Bug report notifications (admin inbox + per-user inboxes) — authenticated only
     match /bug-report-notifications/{target}/{document=**} {
       allow read, write: if request.auth != null;
-      allow write: if target == 'admin';
     }
 
     // App config — read-only for any authenticated user; written via Admin Console only

@@ -99,6 +99,19 @@ export const Groups = () => {
   const { read, readShallow, updateData, removeData, dbRef, setData } =
     useFireBase()
 
+  /**
+   * Returns a flat, deduplicated array of mobile numbers for all members
+   * (accepted) and pendingMembers (invited).  Stored as `memberMobiles` on
+   * the group document so Firestore's array-contains query can scope the
+   * groups listener to only the current user's relevant groups.
+   */
+  function computeMemberMobiles(group) {
+    const set = new Set()
+    ;(group.members || []).forEach((m) => { if (m.mobile) set.add(m.mobile) })
+    ;(group.pendingMembers || []).forEach((m) => { if (m.mobile) set.add(m.mobile) })
+    return [...set]
+  }
+
   const groups = computed(() => groupStore.getGroups || [])
   const groupBalances = ref({})
   let groupsListener = null
@@ -253,7 +266,8 @@ export const Groups = () => {
     }
     const payload = {
       members: updatedGroup.members,
-      pendingMembers: updatedGroup.pendingMembers
+      pendingMembers: updatedGroup.pendingMembers,
+      memberMobiles: computeMemberMobiles(updatedGroup)
     }
     if (updatedGroup.notifications)
       payload.notifications = updatedGroup.notifications
@@ -291,7 +305,10 @@ export const Groups = () => {
         }
       )
     }
-    const payload = { pendingMembers: updatedGroup.pendingMembers }
+    const payload = {
+      pendingMembers: updatedGroup.pendingMembers,
+      memberMobiles: computeMemberMobiles(updatedGroup)
+    }
     if (updatedGroup.notifications)
       payload.notifications = updatedGroup.notifications
     await updateData(
@@ -474,7 +491,14 @@ export const Groups = () => {
         console.error('Error fetching users:', error)
       }
 
-      // Set up real-time listener for groups
+      // Set up real-time listener for groups.
+      // TODO (P1 scaling): once all group documents have been backfilled with
+      // memberMobiles[], switch to a scoped query to avoid downloading every
+      // group for every user:
+      //   query(collection(database, DB_NODES.GROUPS),
+      //         where('memberMobiles', 'array-contains', mobile))
+      // Prerequisite: run a one-time migration to set memberMobiles on
+      // existing documents created before this field was introduced.
       const groupsRef = dbRef(DB_NODES.GROUPS)
 
       const loadingTimeout = setTimeout(() => {
@@ -857,6 +881,7 @@ export const Groups = () => {
         group.joinRequests = (group.joinRequests || []).filter(
           (r) => r.mobile !== requestMobile
         )
+        group.memberMobiles = computeMemberMobiles(group)
 
         await updateData(
           `${DB_NODES.GROUPS}/${groupId}`,
@@ -915,6 +940,7 @@ export const Groups = () => {
       group.joinRequests = (group.joinRequests || []).filter(
         (r) => r.mobile !== request.mobile
       )
+      group.memberMobiles = computeMemberMobiles(group)
 
       await updateData(
         `${DB_NODES.GROUPS}/${groupId}`,
@@ -1395,6 +1421,7 @@ export const Groups = () => {
         }
         // Remove editRequest from final group
         delete finalGroup.editRequest
+        finalGroup.memberMobiles = computeMemberMobiles(finalGroup)
 
         await setData(
           `${DB_NODES.GROUPS}/${groupId}`,
@@ -1556,6 +1583,7 @@ export const Groups = () => {
         members: updatedMembers
       }
       delete updatedGroup.addMemberRequest
+      updatedGroup.memberMobiles = computeMemberMobiles(updatedGroup)
 
       await setData(
         `${DB_NODES.GROUPS}/${groupId}`,
@@ -1817,6 +1845,7 @@ export const Groups = () => {
       updatedGroup.members = updatedGroup.members.filter(
         (m) => m.mobile !== mobile
       )
+      updatedGroup.memberMobiles = computeMemberMobiles(updatedGroup)
 
       await updateData(
         `${DB_NODES.GROUPS}/${groupId}`,

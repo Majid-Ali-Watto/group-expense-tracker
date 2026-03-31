@@ -27,8 +27,8 @@
         }}
       </p>
     </div>
-    <!-- View switcher — only for logged-in users -->
-    <div v-if="isLoggedIn" class="bug-view-switcher">
+    <!-- View switcher -->
+    <div class="bug-view-switcher">
       <button
         class="bug-view-btn"
         :class="{ 'is-active': activeView === 'form' }"
@@ -51,7 +51,6 @@
 <script setup>
 defineProps({
   activeView: { type: String, required: true },
-  isLoggedIn: { type: Boolean, default: false },
   reportCount: { type: Number, default: 0 }
 })
 

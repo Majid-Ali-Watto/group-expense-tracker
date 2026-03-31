@@ -100,6 +100,9 @@ export const GroupsCreate = (emit, props) => {
 
     const id = Date.now().toString()
     const allSelected = groupForm.value.members || []
+    const pendingMembers = allSelected
+      .filter((m) => m !== creatorMobile)
+      .map((m) => ({ mobile: m }))
     const payload = {
       id,
       name: groupForm.value.name,
@@ -107,16 +110,11 @@ export const GroupsCreate = (emit, props) => {
       category: groupForm.value.category || '',
       ownerMobile: authStore.getActiveUser,
       // Only the creator joins immediately; all others receive an invitation
-      members: [
-        {
-          mobile: creatorMobile
-        }
-      ],
-      pendingMembers: allSelected
-        .filter((m) => m !== creatorMobile)
-        .map((m) => ({
-          mobile: m
-        }))
+      members: [{ mobile: creatorMobile }],
+      pendingMembers,
+      // Flat array of all mobile numbers (members + pending) used for
+      // efficient per-user Firestore queries via array-contains.
+      memberMobiles: [...new Set([creatorMobile, ...pendingMembers.map((m) => m.mobile)])]
     }
     try {
       await setData(

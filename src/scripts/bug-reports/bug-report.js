@@ -40,11 +40,6 @@ export const ALL_CATEGORIES = [
   { label: 'Other', value: 'other' }
 ]
 
-export const GUEST_CATEGORIES = [
-  { label: 'Authentication / Login', value: 'auth' },
-  { label: 'Other', value: 'other' }
-]
-
 export const SEVERITIES = [
   { label: 'Low', value: 'low' },
   { label: 'Medium', value: 'medium' },
@@ -106,9 +101,7 @@ export const BugReport = (props) => {
     return mobile ? userStore.getUserByMobile(mobile) : null
   })
 
-  const categories = computed(() =>
-    isLoggedIn.value ? ALL_CATEGORIES : GUEST_CATEGORIES
-  )
+  const categories = computed(() => ALL_CATEGORIES)
 
   // ── Validation rules ─────────────────────────────────────────────────────
   const rules = computed(() => ({
@@ -130,47 +123,7 @@ export const BugReport = (props) => {
         message: 'Description must be at least 20 characters',
         trigger: 'blur'
       }
-    ],
-    ...(!isLoggedIn.value
-      ? {
-          reporterName: [
-            {
-              required: true,
-              message: 'Please enter your name',
-              trigger: 'blur'
-            },
-            {
-              min: 2,
-              message: 'Name must be at least 2 characters',
-              trigger: 'blur'
-            },
-            {
-              validator: (rule, value, callback) => {
-                if (value && !/^[a-zA-Z\s''-]{2,}$/.test(value.trim())) {
-                  callback(
-                    new Error('Please enter a valid name (letters only)')
-                  )
-                } else {
-                  callback()
-                }
-              },
-              trigger: 'blur'
-            }
-          ],
-          reporterEmail: [
-            {
-              required: true,
-              message: 'Please enter your email',
-              trigger: 'blur'
-            },
-            {
-              type: 'email',
-              message: 'Please enter a valid email address',
-              trigger: 'blur'
-            }
-          ]
-        }
-      : {})
+    ]
   }))
 
   // ── Submit form state ─────────────────────────────────────────────────────
@@ -302,18 +255,11 @@ export const BugReport = (props) => {
         uploadingScreenshots.value = false
       }
 
-      const reporter = isLoggedIn.value
-        ? {
-            name: loggedInUser.value?.name || 'Unknown',
-            email: auth.currentUser?.email || '',
-            mobile: authStore.getActiveUser,
-            isGuest: false
-          }
-        : {
-            name: form.value.reporterName.trim(),
-            email: form.value.reporterEmail.trim() || '',
-            isGuest: true
-          }
+      const reporter = {
+        name: loggedInUser.value?.name || 'Unknown',
+        email: auth.currentUser?.email || '',
+        mobile: authStore.getActiveUser
+      }
 
       const { bugNumber, bugSequence } = await reserveNextBugNumber()
       const report = {
@@ -329,7 +275,7 @@ export const BugReport = (props) => {
         status: 'open'
       }
 
-      const mobileKey = reporter.isGuest ? 'guest' : reporter.mobile
+      const mobileKey = reporter.mobile
       const newDocRef = await addDoc(
         collection(database, DB_NODES.BUG_REPORTS, mobileKey, 'reports'),
         report

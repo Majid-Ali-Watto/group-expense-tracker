@@ -28,7 +28,7 @@ export const Loans = () => {
   const dataStore = useDataStore()
   const route = useRoute()
   const router = useRouter()
-  const { dbRef, readShallow, updateData, deleteData } = useFireBase()
+  const { dbRef, read, readShallow, updateData, deleteData } = useFireBase()
   const formatAmount = inject('formatAmount')
 
   const showLoanForm = ref(false)
@@ -107,7 +107,13 @@ export const Loans = () => {
     }
     monthsLoaded.value = false
     try {
-      months.value = await readShallow(monthsPath)
+      // Fast path: read months[] array recorded on the grandparent document
+      const parentDoc = await read(`${DB_NODES.SHARED_LOANS}/${groupId}`, false)
+      if (parentDoc?.months?.length) {
+        months.value = [...parentDoc.months].sort((a, b) => b.localeCompare(a))
+      } else {
+        months.value = await readShallow(monthsPath, false)
+      }
       setCache(monthsPath, months.value)
       if (months.value.length) selectedMonth.value = getCurrentMonth()
     } catch (error) {

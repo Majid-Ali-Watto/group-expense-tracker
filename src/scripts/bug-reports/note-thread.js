@@ -89,9 +89,7 @@ export const NoteThread = ({ actorKeyFn, idPrefix, pickerWrapClass }) => {
 
   // ── Firebase helpers shared by both sides ─────────────────────────────────
   function mobileKeyOf(report) {
-    return report.reporter?.isGuest
-      ? 'guest'
-      : report.reporter?.mobile || 'guest'
+    return report.reporter?.mobile || 'unknown'
   }
 
   function reportDocRef(report) {

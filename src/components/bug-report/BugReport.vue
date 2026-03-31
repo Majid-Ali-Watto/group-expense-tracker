@@ -2,7 +2,6 @@
   <div class="bug-page">
     <BugReportHeader
       :active-view="activeView"
-      :is-logged-in="isLoggedIn"
       :report-count="myReports.length"
       @update:active-view="activeView = $event"
     />
@@ -19,7 +18,6 @@
       v-if="activeView === 'form' && !submitted"
       ref="formRef"
       :form="form"
-      :is-logged-in="isLoggedIn"
       :categories="categories"
       :rules="rules"
       :severities="severities"
