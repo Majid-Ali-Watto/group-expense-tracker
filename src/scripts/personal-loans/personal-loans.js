@@ -217,8 +217,12 @@ export const PersonalLoans = () => {
       loanKeys.value = allKeys
       setCache(allCacheKey, { list: allLoans, keys: allKeys })
     } catch (error) {
-      showError('Failed to load loans. Please try again.')
-      console.error(error)
+      // Ignore permission errors that fire after logout — Firebase revokes the
+      // auth token before reads complete (on component unmount).
+      if (authStore.getActiveUser) {
+        showError('Failed to load loans. Please try again.')
+        console.error(error)
+      }
     } finally {
       if (generation === _readAllGeneration) loansLoaded.value = true
     }

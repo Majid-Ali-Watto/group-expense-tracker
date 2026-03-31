@@ -364,15 +364,8 @@ export const App = () => {
   let verifyInterval = null
   watch(loggedIn, async (isLoggedIn) => {
     if (isLoggedIn) {
-      // Immediate check — catches anyone who faked store/sessionStorage values
-      const verified = await verifyUser(false)
-      if (!verified) {
-        showError('Session expired. Please login again.')
-        logout()
-        return
-      }
-      // Fresh login from /login or /register → honour ?redirect if present,
-      // otherwise go to /groups. Clear any stale saved route.
+      // Fresh login from /login or /register → navigate immediately so the
+      // login form is replaced at once; verification runs in the background.
       if (route.path === '/login' || route.path === '/register') {
         sessionStorage.removeItem('_lastRoute')
         sessionStorage.removeItem('_lastGroupId')
@@ -382,6 +375,13 @@ export const App = () => {
             ? redirectTo
             : '/groups'
         )
+      }
+      // Background check — catches anyone who faked store/sessionStorage values
+      const verified = await verifyUser(false)
+      if (!verified) {
+        showError('Session expired. Please login again.')
+        logout()
+        return
       }
       verifyInterval = setInterval(async () => {
         const verified = await verifyUser(false)

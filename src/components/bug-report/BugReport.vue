@@ -180,6 +180,7 @@ const {
   handleEditFileChange,
   removeEditNewScreenshot,
   saveEdit,
+  resetEdit,
   replyInputs,
   replyErrors,
   replySavingId,

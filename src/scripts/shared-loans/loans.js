@@ -177,7 +177,9 @@ export const Loans = () => {
       },
       () => {
         loansLoaded.value = true
-        if (activeGroup.value)
+        // Ignore permission errors that fire after logout — Firebase revokes the
+        // auth token before this listener is detached (on component unmount).
+        if (activeGroup.value && authStore.getActiveUser)
           showError('Failed to load loans. Please try again.')
       }
     )
