@@ -9,6 +9,7 @@ import { useDataStore } from '../../stores/dataStore'
 import getCurrentMonth from '../../utils/getCurrentMonth'
 import { showError } from '../../utils/showAlerts'
 import { formatUserDisplay } from '../../utils/user-display'
+import { getCache, setCache } from '../../utils/queryCache'
 
 export const PersonalLoans = () => {
   const formatAmount = inject('formatAmount')
@@ -63,12 +64,18 @@ export const PersonalLoans = () => {
       monthsLoaded.value = true
       return
     }
+    const monthsPath = `${DB_NODES.PERSONAL_LOANS}/${activeUser.value}/months`
+    const cached = getCache(monthsPath)
+    if (cached) {
+      months.value = cached
+      monthsLoaded.value = true
+      return
+    }
     monthsLoaded.value = false
     try {
-      const keys = await readShallow(
-        `${DB_NODES.PERSONAL_LOANS}/${activeUser.value}/months`
-      )
+      const keys = await readShallow(monthsPath)
       months.value = keys.sort((a, b) => b.localeCompare(a))
+      setCache(monthsPath, months.value)
 
       if (months.value.length && selectedMonth.value === 'All') {
         const currentMonthFormatted = getCurrentMonth()
@@ -120,6 +127,14 @@ export const PersonalLoans = () => {
       readAllLoans(basePath, _readAllGeneration)
     } else {
       const monthPath = `${basePath}/months/${selectedMonth.value}/loans`
+      const cached = getCache(monthPath)
+      if (cached) {
+        loans.value = cached.list
+        loanKeys.value = cached.keys
+        loansLoaded.value = true
+      } else {
+        loansLoaded.value = false
+      }
       const monthLoansRef = dbRef(monthPath)
 
       const unsubscribe = onSnapshot(
@@ -138,9 +153,11 @@ export const PersonalLoans = () => {
             })
             loans.value = loansArray
             loanKeys.value = keysArray
+            setCache(monthPath, { list: loansArray, keys: keysArray })
           } else {
             loans.value = []
             loanKeys.value = []
+            setCache(monthPath, { list: [], keys: [] })
           }
         },
         () => {
@@ -153,6 +170,14 @@ export const PersonalLoans = () => {
   }
 
   async function readAllLoans(basePath, generation) {
+    const allCacheKey = `${basePath}/months/__all__`
+    const cached = getCache(allCacheKey)
+    if (cached) {
+      loans.value = cached.list
+      loanKeys.value = cached.keys
+      loansLoaded.value = true
+      return
+    }
     loansLoaded.value = false
     try {
       // Read all month document IDs first
@@ -180,6 +205,7 @@ export const PersonalLoans = () => {
       }
       loans.value = allLoans
       loanKeys.value = allKeys
+      setCache(allCacheKey, { list: allLoans, keys: allKeys })
     } catch (error) {
       showError('Failed to load loans. Please try again.')
       console.error(error)

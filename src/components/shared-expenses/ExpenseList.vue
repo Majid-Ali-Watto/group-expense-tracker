@@ -96,15 +96,8 @@
       <div class="flex items-center justify-between mb-2">
         <span class="text-sm font-semibold text-gray-700">Filters</span>
         <div class="flex items-center gap-2">
-          <el-button
-            v-if="showFilters"
-            size="small"
-            type="danger"
-            plain
-            class="sm:hidden"
-            @click="clearFilters()"
-            >Clear</el-button
-          >
+          <button v-if="showFilters" class="clear-filter-link sm:hidden" @click="clearFilters()">Clear</button>
+          <button class="clear-filter-link hidden sm:inline" @click="clearFilters()">Clear</button>
           <el-button
             circle
             :type="showFilters ? 'danger' : 'primary'"
@@ -115,11 +108,11 @@
           />
         </div>
       </div>
-      <!-- Filters: desktop always visible, with Clear All button -->
-      <div class="hidden sm:flex items-center justify-between mb-1">
-        <el-row :gutter="5" class="filter-bar flex-1" justify="space-between">
+      <!-- Filters: desktop always visible -->
+      <div class="hidden sm:block mb-1">
+        <el-row :gutter="5" class="filter-bar" justify="start">
           <!-- Month Selection -->
-          <el-col :lg="6" :md="6" :sm="12" :xs="12">
+          <el-col :lg="5" :md="5" :sm="12" :xs="12">
             <GenericDropDown
               v-model="selectedMonth"
               label="Month"
@@ -128,7 +121,7 @@
               size="small"
             />
           </el-col>
-          <el-col :lg="6" :md="6" :sm="12" :xs="12">
+          <el-col :lg="5" :md="5" :sm="12" :xs="12">
             <!-- Payer Selection -->
             <GenericDropDown
               v-model="selectedFriend"
@@ -138,7 +131,7 @@
               size="small"
             />
           </el-col>
-          <el-col :lg="6" :md="6" :sm="12" :xs="12">
+          <el-col :lg="5" :md="5" :sm="12" :xs="12">
             <!-- Payer Mode Filter -->
             <GenericDropDown
               v-model="selectedPayerMode"
@@ -152,7 +145,7 @@
               size="small"
             />
           </el-col>
-          <el-col :lg="6" :md="6" :sm="12" :xs="12">
+          <el-col :lg="5" :md="5" :sm="12" :xs="12">
             <!-- Split Mode Filter -->
             <GenericDropDown
               v-model="selectedSplitMode"
@@ -167,14 +160,6 @@
             />
           </el-col>
         </el-row>
-        <el-button
-          size="small"
-          type="danger"
-          plain
-          class="ml-2 flex-shrink-0"
-          @click="clearFilters()"
-          >Clear All</el-button
-        >
       </div>
       <!-- Mobile filters (toggle) -->
       <Transition name="form-slide">

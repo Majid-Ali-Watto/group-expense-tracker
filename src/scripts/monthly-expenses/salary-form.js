@@ -1,4 +1,4 @@
-import { ref, onMounted, onUnmounted, inject, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, inject, watch } from 'vue'
 import { ElMessageBox } from 'element-plus'
 import { onSnapshot } from '../../firebase'
 import getCurrentMonth from '../../utils/getCurrentMonth'
@@ -29,6 +29,8 @@ export const SalaryForm = () => {
   const isSubmitting = ref(false)
   let salaryListener = null
 
+  const activeUser = computed(() => authStore.getActiveUser)
+
   watch(
     () => dataStore.selectedMonth,
     (newMonth) => {
@@ -53,7 +55,7 @@ export const SalaryForm = () => {
     isSubmitting.value = true
     try {
       await setData(
-        `${DB_NODES.SALARIES}/${authStore.activeUser}/months/${selectedMonth.value}`,
+        `${DB_NODES.SALARIES}/${activeUser.value}/months/${selectedMonth.value}`,
         { salary: form.value.salary, month: getCurrentMonth() }
       )
       form.value.salary = null
@@ -83,12 +85,12 @@ export const SalaryForm = () => {
 
       isSubmitting.value = true
       const data = await read(
-        `${DB_NODES.SALARIES}/${authStore.activeUser}/months/${selectedMonth.value}`
+        `${DB_NODES.SALARIES}/${activeUser.value}/months/${selectedMonth.value}`
       )
 
       if (data) {
         await updateData(
-          `${DB_NODES.SALARIES}/${authStore.activeUser}/months/${selectedMonth.value}`,
+          `${DB_NODES.SALARIES}/${activeUser.value}/months/${selectedMonth.value}`,
           () => ({ salary: form.value.salary }),
           'Salary updated successfully!'
         )
@@ -110,22 +112,32 @@ export const SalaryForm = () => {
       salaryListener()
       salaryListener = null
     }
+    if (!activeUser.value) return
     const monthRef = dbRef(
-      `${DB_NODES.SALARIES}/${authStore.activeUser}/months/${selectedMonth.value}`
+      `${DB_NODES.SALARIES}/${activeUser.value}/months/${selectedMonth.value}`
     )
 
-    salaryListener = onSnapshot(monthRef, (snapshot) => {
-      if (snapshot.exists()) {
-        const data = snapshot.data()
-        salaryData.value.salary = data.salary
-        salaryData.value.month = data.month
-        form.value.salary = data.salary
-      } else {
-        salaryData.value.salary = null
-        salaryData.value.month = null
-        form.value.salary = null
+    salaryListener = onSnapshot(
+      monthRef,
+      (snapshot) => {
+        if (snapshot.exists()) {
+          const data = snapshot.data()
+          salaryData.value.salary = data.salary
+          salaryData.value.month = data.month
+          form.value.salary = data.salary
+        } else {
+          salaryData.value.salary = null
+          salaryData.value.month = null
+          form.value.salary = null
+        }
+      },
+      (error) => {
+        if (error?.code !== 'permission-denied') {
+          showError('Failed to load salary data. Please try again.')
+        }
+        console.error('Salary listener error:', error)
       }
-    })
+    )
   }
 
   const validateForm = async () => {
@@ -153,6 +165,10 @@ export const SalaryForm = () => {
 
   onMounted(() => {
     listenForSalaryChanges()
+  })
+
+  watch(activeUser, (user) => {
+    if (user) listenForSalaryChanges()
   })
 
   onUnmounted(() => {

@@ -14,15 +14,8 @@
         <div class="flex items-center justify-between mb-2 mt-4 no-print-pdf">
           <span class="text-sm font-semibold text-gray-700">Filters</span>
           <div class="flex items-center gap-2">
-            <el-button
-              v-if="showFilters"
-              size="small"
-              type="danger"
-              plain
-              class="sm:hidden"
-              @click="clearFilters()"
-              >Clear</el-button
-            >
+            <button v-if="showFilters" class="clear-filter-link sm:hidden" @click="clearFilters()">Clear</button>
+            <button class="clear-filter-link hidden sm:inline" @click="clearFilters()">Clear</button>
             <el-button
               circle
               :type="showFilters ? 'danger' : 'primary'"
@@ -61,15 +54,6 @@
             />
           </el-col>
         </div>
-        <el-button
-          v-if="!showFilters"
-          size="small"
-          type="danger"
-          plain
-          class="hidden sm:inline-flex mb-2"
-          @click="clearFilters()"
-          >Clear All Filters</el-button
-        >
         <!-- Accordions -->
         <el-collapse v-model="openPanels" class="mt-4">
           <!-- Summary Statistics -->

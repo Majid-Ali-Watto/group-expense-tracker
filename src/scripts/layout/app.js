@@ -21,6 +21,7 @@ import { generateUUID } from '../../utils/uuid'
 import { auth, onAuthStateChanged, signOut } from '../../firebase'
 import { maskMobile } from '../../utils/maskMobile'
 import { loadAppConfig } from '../../utils/useAppConfig'
+import { clearAllCache } from '../../utils/queryCache'
 import { NetPosition } from '../generic/net-position'
 
 export const App = () => {
@@ -289,6 +290,7 @@ export const App = () => {
   }
 
   async function logout() {
+    clearAllCache()
     authStore.setActiveUser(null)
     groupStore.setActiveGroup(null)
     authStore.setSessionToken(null)

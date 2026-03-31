@@ -13,6 +13,7 @@ import { appendNotificationForUser } from '../../utils/recordNotifications'
 import { useApprovalRequests } from '../../utils/useApprovalRequests'
 import { formatUserDisplay } from '../../utils/user-display'
 import { deleteReceipt, cleanupOldReceipts } from '../../utils/uploadReceipt'
+import { getCache, setCache } from '../../utils/queryCache'
 
 export const ExpenseList = (props) => {
   const authStore = useAuthStore()
@@ -119,9 +120,17 @@ export const ExpenseList = (props) => {
       return
     }
     const groupId = groupStore.getActiveGroup || 'global'
+    const monthsPath = `${props.dbRef}/${groupId}/months`
+    const cached = getCache(monthsPath)
+    if (cached) {
+      months.value = cached
+      monthsLoaded.value = true
+      return
+    }
     monthsLoaded.value = false
     try {
-      months.value = await readShallow(`${props.dbRef}/${groupId}/months`)
+      months.value = await readShallow(monthsPath)
+      setCache(monthsPath, months.value)
       if (months.value.length) selectedMonth.value = getCurrentMonth()
     } catch (error) {
       if (error?.code === 'permission-denied') return
@@ -134,10 +143,17 @@ export const ExpenseList = (props) => {
   // Fetch expenses for the selected month
   const fetchExpenses = () => {
     const groupId = groupStore.getActiveGroup || 'global'
-    paymentsLoaded.value = false
-    const paymentsRef = dbRef(
-      `${props.dbRef}/${groupId}/months/${selectedMonth.value}/payments`
-    )
+    const paymentsPath = `${props.dbRef}/${groupId}/months/${selectedMonth.value}/payments`
+    const cached = getCache(paymentsPath)
+    if (cached) {
+      rawPaymentsData.value = cached.raw
+      payments.value = cached.list
+      paymentKeys.value = cached.keys
+      paymentsLoaded.value = true
+    } else {
+      paymentsLoaded.value = false
+    }
+    const paymentsRef = dbRef(paymentsPath)
     if (paymentsListener) paymentsListener()
 
     paymentsListener = onSnapshot(
@@ -161,10 +177,12 @@ export const ExpenseList = (props) => {
           rawPaymentsData.value = data
           paymentKeys.value = keysArray
           payments.value = paymentsArray
+          setCache(paymentsPath, { raw: data, list: paymentsArray, keys: keysArray })
         } else {
           paymentKeys.value = []
           payments.value = []
           rawPaymentsData.value = {}
+          setCache(paymentsPath, { raw: {}, list: [], keys: [] })
         }
       },
       () => {

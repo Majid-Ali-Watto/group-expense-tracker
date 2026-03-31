@@ -15,15 +15,8 @@
         <div class="sel-filter-toggle">
           <span class="sel-filter-label">Filter by month</span>
           <div class="flex items-center gap-2">
-            <el-button
-              v-if="showFilters"
-              size="small"
-              type="danger"
-              plain
-              class="sm:hidden"
-              @click="clearFilters()"
-              >Clear</el-button
-            >
+            <button v-if="showFilters" class="clear-filter-link sm:hidden" @click="clearFilters()">Clear</button>
+            <button class="clear-filter-link hidden sm:inline" @click="clearFilters()">Clear</button>
             <el-button
               circle
               :type="showFilters ? 'danger' : 'primary'"
@@ -45,14 +38,6 @@
               @update:modelValue="fetchExpenses"
             />
           </div>
-          <el-button
-            size="small"
-            type="danger"
-            plain
-            class="hidden sm:inline-flex flex-shrink-0"
-            @click="clearFilters()"
-            >Clear All</el-button
-          >
         </div>
       </div>
 

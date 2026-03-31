@@ -210,15 +210,8 @@
         <div class="flex items-center justify-between mb-2 mt-4">
           <span class="text-sm font-semibold text-gray-700">Filters</span>
           <div class="flex items-center gap-2">
-            <el-button
-              v-if="showFilters"
-              size="small"
-              type="danger"
-              plain
-              class="sm:hidden"
-              @click="clearFilters()"
-              >Clear</el-button
-            >
+            <button v-if="showFilters" class="clear-filter-link sm:hidden" @click="clearFilters()">Clear</button>
+            <button class="clear-filter-link hidden sm:inline" @click="clearFilters()">Clear</button>
             <el-button
               circle
               :type="showFilters ? 'danger' : 'primary'"
@@ -229,11 +222,9 @@
             />
           </div>
         </div>
-        <!-- Filters: desktop always visible, with Clear All button -->
-        <div
-          class="hidden sm:flex items-center justify-between mb-3 mt-4 gap-2"
-        >
-          <el-row :gutter="5" class="filter-bar flex-1" justify="space-between">
+        <!-- Filters: desktop always visible -->
+        <div class="hidden sm:block mb-3 mt-4">
+          <el-row :gutter="5" class="filter-bar" justify="start">
             <!-- Month Selection -->
             <el-col :lg="6" :md="6" :sm="12" :xs="12">
               <GenericDropDown
@@ -257,15 +248,8 @@
                 size="small"
               />
             </el-col>
+           
           </el-row>
-          <el-button
-            size="small"
-            type="danger"
-            plain
-            class="flex-shrink-0"
-            @click="clearFilters()"
-            >Clear All</el-button
-          >
         </div>
         <!-- Mobile filters (toggle) -->
         <Transition name="form-slide">
@@ -297,6 +281,7 @@
                 size="small"
               />
             </el-col>
+          
           </el-row>
         </Transition>
         <div ref="loanContent">

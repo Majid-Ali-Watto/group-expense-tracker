@@ -13,6 +13,7 @@ import { formatUserDisplay } from '../../utils/user-display'
 import { deleteReceipt, cleanupOldReceipts } from '../../utils/uploadReceipt'
 import getCurrentMonth from '../../utils/getCurrentMonth'
 import { showError } from '../../utils/showAlerts'
+import { getCache, setCache } from '../../utils/queryCache'
 
 export const Loans = () => {
   const authStore = useAuthStore()
@@ -97,11 +98,17 @@ export const Loans = () => {
       return
     }
     const groupId = groupStore.getActiveGroup || 'global'
+    const monthsPath = `${DB_NODES.SHARED_LOANS}/${groupId}/months`
+    const cached = getCache(monthsPath)
+    if (cached) {
+      months.value = cached
+      monthsLoaded.value = true
+      return
+    }
     monthsLoaded.value = false
     try {
-      months.value = await readShallow(
-        `${DB_NODES.SHARED_LOANS}/${groupId}/months`
-      )
+      months.value = await readShallow(monthsPath)
+      setCache(monthsPath, months.value)
       if (months.value.length) selectedMonth.value = getCurrentMonth()
     } catch (error) {
       if (error?.code === 'permission-denied') return
@@ -114,10 +121,17 @@ export const Loans = () => {
 
   const fetchLoans = () => {
     const groupId = groupStore.getActiveGroup || 'global'
-    loansLoaded.value = false
-    const loansRef = dbRef(
-      `${DB_NODES.SHARED_LOANS}/${groupId}/months/${selectedMonth.value}/loans`
-    )
+    const loansPath = `${DB_NODES.SHARED_LOANS}/${groupId}/months/${selectedMonth.value}/loans`
+    const cached = getCache(loansPath)
+    if (cached) {
+      rawLoansData.value = cached.raw
+      loans.value = cached.list
+      loanKeys.value = cached.keys
+      loansLoaded.value = true
+    } else {
+      loansLoaded.value = false
+    }
+    const loansRef = dbRef(loansPath)
     if (loansListener && currentLoansRef) currentLoansRef()
     currentLoansRef = null
 
@@ -142,10 +156,12 @@ export const Loans = () => {
           rawLoansData.value = data
           loanKeys.value = keysArray
           loans.value = loansArray
+          setCache(loansPath, { raw: data, list: loansArray, keys: keysArray })
         } else {
           loanKeys.value = []
           loans.value = []
           rawLoansData.value = {}
+          setCache(loansPath, { raw: {}, list: [], keys: [] })
         }
       },
       () => {

@@ -379,7 +379,7 @@ export const LoanForm = (props, emit) => {
             updateData(
               `${personalUpdatePath}/${props.row.id}`,
               () => getLoanData(receiptUrls, receiptMeta),
-              `Loan record with ID ${props.row.id} updated successfully`
+              `Loan updated successfully`
             )
             emit('closeModal')
           }
@@ -396,7 +396,7 @@ export const LoanForm = (props, emit) => {
             deleteExistingReceipts()
             deleteData(
               `${personalDeletePath}/${props.row.id}`,
-              `Loan record with ID ${props.row.id} deleted successfully`
+              'Loan deleted successfully'
             )
             emit('closeModal')
           }

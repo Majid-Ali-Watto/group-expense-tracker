@@ -168,24 +168,24 @@ export const Table = (props) => {
         'whenAdded',
         'whoAdded',
         'group',
-        // 'participants',
+        'participants',
         'updateRequest',
         'deleteRequest',
         'notifications',
         'payerMode',
         'splitMode',
-        // 'splitItems',
+        'splitItems',
         'receiptMeta',
         'receiptUrls',
-        'id'
+        'id',
+        '_month',
+        'month'
       ]
       if (isSharedLoans) excludedCols.push('giverName', 'receiverName')
 
       const rowKeys = Object.keys(props.rows[0])
 
       const cols = rowKeys.filter((col) => !excludedCols.includes(col))
-
-      cols.push('receiptUrls')
 
       return cols
         .map((key) => ({
@@ -197,6 +197,7 @@ export const Table = (props) => {
           if (a.label > b.label) return 1
           return 0
         })
+        .concat({ key: 'receiptUrls', label: 'Receipts' })
     }
 
     return []
@@ -831,7 +832,7 @@ export const Table = (props) => {
   watch(
     headers,
     (newHeaders) => {
-      const headerKeys = newHeaders.map((h) => h.key)
+      const headerKeys = newHeaders?.map((h) => h.key)
       const sameKeys =
         headerKeys.length === columnOrder.value.length &&
         headerKeys.every((k) => columnOrder.value.includes(k))

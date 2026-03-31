@@ -7,6 +7,7 @@ import getCurrentMonth from '../../utils/getCurrentMonth'
 import { showError } from '../../utils/showAlerts'
 import useFireBase from '../../api/firebase-apis'
 import { DB_NODES } from '../../constants/db-nodes'
+import { getCache, setCache } from '../../utils/queryCache'
 
 export const SalaryExpenseList = () => {
   const formatAmount = inject('formatAmount')
@@ -41,10 +42,16 @@ export const SalaryExpenseList = () => {
       monthsLoaded.value = true
       return
     }
+    const monthsPath = `${DB_NODES.PERSONAL_EXPENSES}/${activeUser.value}/months`
+    const cached = getCache(monthsPath)
+    if (cached) {
+      months.value = cached
+      monthsLoaded.value = true
+      return
+    }
     try {
-      months.value = await readShallow(
-        `${DB_NODES.PERSONAL_EXPENSES}/${activeUser.value}/months`
-      )
+      months.value = await readShallow(monthsPath)
+      setCache(monthsPath, months.value)
     } catch (error) {
       if (error?.code === 'permission-denied') return
       showError('Failed to load months. Please try again.')
@@ -60,9 +67,16 @@ export const SalaryExpenseList = () => {
       salaryLoaded.value = true
       return
     }
-    const salaryRef = dbRef(
-      `${DB_NODES.SALARIES}/${activeUser.value}/months/${selectedMonth.value}`
-    )
+    const salaryPath = `${DB_NODES.SALARIES}/${activeUser.value}/months/${selectedMonth.value}`
+    const cached = getCache(salaryPath)
+    if (cached !== null) {
+      salary.value = cached
+      salaryLoaded.value = true
+      updateRemaining()
+    } else {
+      salaryLoaded.value = false
+    }
+    const salaryRef = dbRef(salaryPath)
     if (salaryListener) {
       salaryListener()
       salaryListener = null
@@ -73,6 +87,7 @@ export const SalaryExpenseList = () => {
       (snapshot) => {
         salaryLoaded.value = true
         salary.value = snapshot.exists() ? snapshot.data().salary || 0 : 0
+        setCache(salaryPath, salary.value)
         updateRemaining()
       },
       (error) => {
@@ -91,9 +106,18 @@ export const SalaryExpenseList = () => {
       expensesLoaded.value = true
       return
     }
-    const expensesRef = dbRef(
-      `${DB_NODES.PERSONAL_EXPENSES}/${activeUser.value}/months/${selectedMonth.value}/expenses`
-    )
+    const expensesPath = `${DB_NODES.PERSONAL_EXPENSES}/${activeUser.value}/months/${selectedMonth.value}/expenses`
+    const cached = getCache(expensesPath)
+    if (cached) {
+      expenses.value = cached.list
+      keys.value = cached.keys
+      totalSpent.value = expenses.value.reduce((t, e) => t + (e.amount || 0), 0)
+      expensesLoaded.value = true
+      updateRemaining()
+    } else {
+      expensesLoaded.value = false
+    }
+    const expensesRef = dbRef(expensesPath)
     if (expensesListener) {
       expensesListener()
       expensesListener = null
@@ -110,9 +134,12 @@ export const SalaryExpenseList = () => {
             (total, expense) => total + (expense.amount || 0),
             0
           )
+          setCache(expensesPath, { list: expenses.value, keys: keys.value })
         } else {
           expenses.value = []
+          keys.value = []
           totalSpent.value = 0
+          setCache(expensesPath, { list: [], keys: [] })
         }
         updateRemaining()
       },

@@ -122,8 +122,8 @@ export const NoteThread = ({ actorKeyFn, idPrefix, pickerWrapClass }) => {
       })
       cancelNoteEdit()
       showSuccess('Note updated.')
-    } catch (err) {
-      showError('Failed to update note: ' + err.message)
+    } catch {
+      showError('Failed to update note. Please try again.')
     } finally {
       noteEditSavingId.value = null
     }
@@ -148,8 +148,8 @@ export const NoteThread = ({ actorKeyFn, idPrefix, pickerWrapClass }) => {
         [`notes.${note.id}`]: deleteField()
       })
       showSuccess('Note deleted.')
-    } catch (err) {
-      showError('Failed to delete note: ' + err.message)
+    } catch {
+      showError('Failed to delete note. Please try again.')
     }
   }
 
@@ -164,8 +164,8 @@ export const NoteThread = ({ actorKeyFn, idPrefix, pickerWrapClass }) => {
           ? deleteField()
           : true
       })
-    } catch (err) {
-      showError('Failed to update reaction: ' + err.message)
+    } catch {
+      showError('Failed to update reaction. Please try again.')
     }
   }
 

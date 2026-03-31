@@ -110,14 +110,14 @@ export const ExpenseForm = (props, emit) => {
           updateData(
             `${DB_NODES.PERSONAL_EXPENSES}/${activeUser.value}/months/${selectedMonth.value}/expenses/${props.row.id}`,
             () => getExpenseData(receiptUrls, receiptMeta),
-            `Expense record with ID ${props.row.id} updated successfully`
+            'Expense updated successfully'
           )
           emit('closeModal')
         } else if (whatTask == 'Delete') {
           deleteExistingReceipts()
           deleteData(
             `${DB_NODES.PERSONAL_EXPENSES}/${activeUser.value}/months/${selectedMonth.value}/expenses/${props.row.id}`,
-            `Expense record with ID ${props.row.id} deleted successfully`
+            'Expense deleted successfully'
           )
           emit('closeModal')
         }
