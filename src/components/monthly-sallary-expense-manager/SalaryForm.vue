@@ -29,11 +29,12 @@
           placeholder="Enter salary"
         />
 
-        <div class="flex justify-between">
+        <div class="flex flex-wrap justify-end gap-2">
           <GenericButton
             :disabled="isSaveEnbl || isSubmitting"
             :loading="isSubmitting"
             type="success"
+            size="small"
             @click="addSalary"
           >
             Save Salary
@@ -42,6 +43,7 @@
             :disabled="isUpdateEnbl || isSubmitting"
             :loading="isSubmitting"
             type="warning"
+            size="small"
             @click="updateSalary"
           >
             Update Salary

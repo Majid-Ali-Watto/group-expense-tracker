@@ -153,7 +153,31 @@
       <el-divider v-if="joinedGroups.length > 0" />
       <!-- Existing Groups -->
       <!-- Your Groups (joined) -->
-      <h4>Joined Groups</h4>
+      <div class="flex items-center justify-between gap-1">
+        <h4 class="mb-0">Joined Groups</h4>
+        <div class="flex items-center gap-1">
+          <GenericButton
+            size="small"
+            plain
+            type="warning"
+            :disabled="pinnedGroupsForShare.length === 0"
+            @click="sharePinnedGroups"
+            custom-class="!w-fit !px-1"
+          >
+            Share Pinned
+          </GenericButton>
+          <GenericButton
+            size="small"
+            plain
+            type="primary"
+            :disabled="joinedGroupsForShare.length === 0"
+            @click="shareJoinedGroups"
+            custom-class="!w-fit !px-1"
+          >
+            Share Joined
+          </GenericButton>
+        </div>
+      </div>
 
       <no-group-found
         v-if="joinedGroups.length === 0"
@@ -319,12 +343,6 @@
               </p>
             </div>
 
-            <!-- Notifications for current user -->
-            <group-notifications-for-current-user
-              :group="group"
-              :hide-notification="hideNotification"
-            />
-
             <!-- Group Details Accordion -->
             <group-details-accordion
               :group="group"
@@ -332,29 +350,8 @@
               :load-group-balances="loadGroupBalances"
               :display-mobile-for-group="displayMobileForGroup"
             />
-            <!-- Action Buttons - Responsive Layout (visible on sm screens and above) -->
-
-            <group-action-buttons
-              class="hidden sm:flex"
-              :actions="getGroupActions(group)"
-            />
+            <group-action-buttons :actions="getGroupActions(group)" />
           </div>
-
-          <group-request-buttons
-            :group="group"
-            :get-join-requests="getJoinRequests"
-            :approve-member-join-request="approveMemberJoinRequest"
-            :reject-join-request="rejectJoinRequest"
-            :approve-group-deletion="approveGroupDeletion"
-            :reject-group-deletion="rejectGroupDeletion"
-            :approve-edit-request="approveEditRequest"
-            :reject-edit-request="rejectEditRequest"
-            :approve-add-member-request="approveAddMemberRequest"
-            :reject-add-member-request="rejectAddMemberRequest"
-            :finalize-add-member="finalizeAddMember"
-            :approve-ownership-transfer="approveOwnershipTransfer"
-            :reject-ownership-transfer="rejectOwnershipTransfer"
-          />
         </div>
       </div>
       <!-- </fieldset> -->
@@ -364,6 +361,7 @@
         v-model="editDialogVisible"
         title="Edit Group"
         width="90%"
+        append-to-body
         style="max-width: 500px"
       >
         <el-form
@@ -426,6 +424,7 @@
         v-model="addMemberDialogVisible"
         title="Request to Add Member"
         width="90%"
+        append-to-body
         style="max-width: 500px"
       >
         <el-form label-position="top">
@@ -445,6 +444,13 @@
 
         <template #footer>
           <div class="flex justify-end gap-2">
+            <el-button
+              size="small"
+              @click="resetAddMemberForm"
+              style="min-width: 100px"
+            >
+              Reset
+            </el-button>
             <el-button
               size="small"
               @click="addMemberDialogVisible = false"
@@ -469,6 +475,7 @@
         v-model="transferDialogVisible"
         title="Transfer Ownership"
         width="90%"
+        append-to-body
         style="max-width: 500px"
       >
         <el-form label-position="top">
@@ -521,6 +528,7 @@ import GroupActionButtons from '../generic-components/GroupActionButtons.vue'
 import GroupRequestButtons from '../generic-components/GroupRequestButtons.vue'
 import GroupNotificationsForCurrentUser from '../generic-components/GroupNotificationsForCurrentUser.vue'
 import { GenericDropDown } from '../generic-components'
+import GenericButton from '../generic-components/GenericButton.vue'
 import { loadAsyncComponent } from '../../utils/async-component'
 const GroupsCreate = loadAsyncComponent(() => import('./GroupsCreate.vue'))
 const AddNewTransactionButton = loadAsyncComponent(
@@ -558,6 +566,10 @@ const {
 
   isPinned,
   togglePin,
+  joinedGroupsForShare,
+  pinnedGroupsForShare,
+  shareJoinedGroups,
+  sharePinnedGroups,
 
   // Group actions
   openCreateGroup,
@@ -581,6 +593,7 @@ const {
   finalizeAddMember,
   rejectAddMemberRequest,
   submitAddMemberRequest,
+  resetAddMemberForm,
 
   // Notifications
   hideNotification,

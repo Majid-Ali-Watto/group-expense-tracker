@@ -14,12 +14,21 @@ export default defineConfig({
 		host: "0.0.0.0" // Allow access from local network
 	},
 	build: {
-		chunkSizeWarningLimit: 1600 // Increase chunk size warning limit
+		chunkSizeWarningLimit: 1600, // Increase chunk size warning limit
+		rollupOptions: {
+			external: (id) => {
+				// Exclude test files, test folders, and markdown files from the build
+				if (/\/(tests?|__tests?__|e2e|playwright)\//i.test(id)) return true
+				if (/\.(spec|test)\.[jt]sx?$/.test(id)) return true
+				if (/\.md$/i.test(id)) return true
+				return false
+			}
+		}
 	},
 	plugins: [
 		vue(),
 		VitePWA({
-			registerType: "autoUpdate", // Automatically update the service worker when a new version is available
+				registerType: "prompt", // We control when the SW activates so we can show a notification first
 			injectRegister: "auto", // Automatically inject the service worker registration
 			devOptions: {
 				enabled: true // Enable PWA in development mode for testing
@@ -28,7 +37,7 @@ export default defineConfig({
 				name: "Group Expense Tracker",
 				short_name: "ExpenseTracker",
 				description: "Track and manage expenses for a group of friends.",
-				theme_color: "#ffffff",
+				theme_color: "#16a34a",
 				background_color: "#ffffff",
 				start_url: "./", // Ensure it matches the base path
 				icons: [
@@ -45,6 +54,8 @@ export default defineConfig({
 				]
 			},
 			workbox: {
+					// skipWaiting intentionally omitted — we send SKIP_WAITING manually after the user is notified
+					clientsClaim: true, // Take control of all open tabs immediately after activation
 				maximumFileSizeToCacheInBytes: 3 * 1024 * 1024, // Cache files up to 3 MB
 				runtimeCaching: [
 					{

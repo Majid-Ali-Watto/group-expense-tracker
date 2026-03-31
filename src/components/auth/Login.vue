@@ -1,227 +1,67 @@
 <!-- eslint-disable vue/multi-word-component-names -->
 <template>
-  <div class="min-h-screen flex items-center justify-center px-4 pt-16 pb-12">
-  <div
-    class="flex flex-col items-center p-6 max-w-sm mx-auto border rounded-lg shadow-xl w-full"
-  >
-    <el-form
-      :model="form"
-      :rules="rules"
-      ref="loginForm"
-      label-position="top"
-      class="w-full"
+  <div class="min-h-screen flex items-center justify-center px-4 pt-[70px]">
+    <div
+      class="flex flex-col items-center p-6 max-w-sm mx-auto border rounded-lg shadow-xl w-full"
     >
-      <!-- <fieldset class="w-full p-4 border rounded-lg"> -->
-      <!-- <legend>Login / Register</legend> -->
+      <el-form
+        :model="form"
+        :rules="rules"
+        ref="loginForm"
+        label-position="top"
+        class="w-full"
+      >
+        <AuthModeToggle :mode="mode" @update:mode="mode = $event" />
 
-      <!-- Mode Toggle -->
-      <div class="mb-4">
-        <el-segmented
-          v-model="mode"
-          :options="[
-            { label: 'Login', value: 'login' },
-            { label: 'Register', value: 'register' }
-          ]"
-          size="small"
-          class="w-full auth-segment"
-        />
-      </div>
+        <transition name="auth-switch" mode="out-in">
+          <div :key="mode" class="space-y-4">
+            <AuthInfoAlert :mode="mode" />
 
-      <transition name="auth-switch" mode="out-in">
-        <div :key="mode" class="space-y-4">
-          <!-- Info Label -->
-          <el-alert
-            :title="''"
-            :type="mode === 'register' ? 'success' : 'info'"
-            :closable="false"
-            class="mb-4"
-          >
-            <template #default>
-              <span class="text-sm">
-                <template v-if="mode === 'register'">
-                  Create a new account with your name, mobile, email, and login
-                  code.
-                  <strong
-                    >You must verify your email within 48 hours to activate your
-                    account.</strong
-                  >
-                </template>
-                <template v-else>
-                  Login with your email and password.
-                </template>
-              </span>
-            </template>
-          </el-alert>
+            <AuthFormFields
+              :mode="mode"
+              :model-value="form"
+              @update:modelValue="form = $event"
+            />
 
-          <!-- Full Name (only in register mode) -->
-          <GenericInputField
-            v-if="mode === 'register'"
-            v-model="form.name"
-            label="Full Name"
-            prop="name"
-            placeholder="Enter your full name"
-            :maxlength="50"
-          />
-
-          <!-- Mobile Number (only in register mode) -->
-          <GenericInputField
-            v-if="mode === 'register'"
-            v-model="form.mobile"
-            label="Mobile Number"
-            prop="mobile"
-            placeholder="Enter your mobile number"
-            :maxlength="11"
-            @input="form.mobile = form.mobile.replace(/\D/g, '')"
-          />
-
-          <!-- Email -->
-          <GenericInputField
-            v-model="form.email"
-            label="Email"
-            prop="email"
-            type="email"
-            placeholder="Enter your email address"
-          />
-
-          <!-- Password -->
-          <GenericInputField
-            v-model="form.loginCode"
-            label="Password"
-            prop="loginCode"
-            type="password"
-            placeholder="Enter your password (6-15 characters)"
-            :show-password="true"
-            :maxlength="15"
-          />
-
-          <!-- Forgot Password Link (only in login mode) -->
-          <div
-            v-if="mode === 'login'"
-            class="flex flex-col items-end gap-1 -mt-1 mb-2"
-          >
-            <button
-              v-if="showResendVerification"
-              type="button"
-              class="forgot-link"
-              @click="handleResendVerification"
-            >
-              Resend Verification Email
-            </button>
-            <button type="button" class="forgot-link" @click="handleForgotCode">
-              Forgot Password?
-            </button>
+            <AuthActions
+              :mode="mode"
+              :remember-me="form.rememberMe"
+              :is-submitting="isSubmitting"
+              :show-resend-verification="showResendVerification"
+              @update:rememberMe="updateRememberMe"
+              @update:mode="mode = $event"
+              @submit="handleSubmit"
+              @forgot-code="handleForgotCode"
+              @resend-verification="handleResendVerification"
+            />
           </div>
+        </transition>
+      </el-form>
 
-          <div class="flex flex-col">
-            <!-- Remember Me -->
-            <el-checkbox
-              v-model="form.rememberMe"
-              label="Remember Me"
-              class="text-sm text-gray-700 mb-4"
-            ></el-checkbox>
-            <!-- Submit Button -->
-            <GenericButton
-              @click="handleSubmit"
-              type="success"
-              :loading="isSubmitting"
-              :disabled="isSubmitting"
-            >
-              {{ mode === 'register' ? 'Register' : 'Login' }}
-            </GenericButton>
-
-            <!-- Switch to Register -->
-            <p
-              v-if="mode === 'login'"
-              class="text-center text-xs text-gray-500 mt-3"
-            >
-              New to Kharchafy?
-              <button
-                type="button"
-                class="forgot-link font-medium"
-                @click="mode = 'register'"
-              >
-                Register
-              </button>
-            </p>
-
-            <!-- Switch to Login -->
-            <p
-              v-if="mode === 'register'"
-              class="text-center text-xs text-gray-500 mt-3"
-            >
-              Already have an account?
-              <button
-                type="button"
-                class="forgot-link font-medium"
-                @click="mode = 'login'"
-              >
-                Login
-              </button>
-            </p>
-          </div>
-        </div>
-      </transition>
-      <!-- </fieldset> -->
-    </el-form>
-
-    <!-- ── Email Reset Dialog ──────────────────────────────────── -->
-    <el-dialog
-      v-model="emailResetDialogVisible"
-      title="Reset Password via Email"
-      width="92%"
-      style="max-width: 480px"
-      :close-on-click-modal="false"
-    >
-      <div class="space-y-4">
-        <el-alert type="info" :closable="false">
-          <template #default>
-            <div class="text-sm leading-relaxed">
-              We'll send a password reset link to your email. Click the link to
-              set a new password.
-            </div>
-          </template>
-        </el-alert>
-
-        <GenericInputField
-          v-model="resetEmail"
-          label="Registered Email Address"
-          label-position="top"
-          type="email"
-          placeholder="Enter your registered email"
-        />
-
-        <div class="flex gap-3">
-          <el-button
-            type="primary"
-            class="flex-1"
-            @click="sendResetEmail"
-            :loading="isEmailResetLoading"
-            :disabled="isEmailResetLoading"
-            size="small"
-          >
-            Send Reset Link
-          </el-button>
-
-          <el-button
-            type="default"
-            @click="emailResetDialogVisible = false"
-            :disabled="isEmailResetLoading"
-            size="small"
-          >
-            Cancel
-          </el-button>
-        </div>
-      </div>
-    </el-dialog>
-  </div>
+      <PasswordResetDialog
+        v-if="emailResetDialogVisible"
+        :visible="emailResetDialogVisible"
+        :email="resetEmail"
+        :is-loading="isEmailResetLoading"
+        @update:visible="emailResetDialogVisible = $event"
+        @update:email="resetEmail = $event"
+        @send="sendResetEmail"
+      />
+    </div>
   </div>
 </template>
 
 <script setup>
 import { loginRules as rules } from '../../assets/validation-rules'
-import { GenericButton } from '../generic-components'
 import { Login } from '../../scripts/auth/login'
-import GenericInputField from '../generic-components/GenericInputField.vue'
+import { loadAsyncComponent } from '../../utils/async-component'
+import AuthActions from './components/AuthActions.vue'
+import AuthFormFields from './components/AuthFormFields.vue'
+import AuthInfoAlert from './components/AuthInfoAlert.vue'
+import AuthModeToggle from './components/AuthModeToggle.vue'
+const PasswordResetDialog = loadAsyncComponent(
+  () => import('./components/PasswordResetDialog.vue')
+)
 
 const {
   form,
@@ -237,25 +77,13 @@ const {
   sendResetEmail,
   handleResendVerification
 } = Login()
+
+function updateRememberMe(value) {
+  form.value = {
+    ...form.value,
+    rememberMe: value
+  }
+}
 </script>
 
-<style scoped>
-.forgot-link {
-  background: none;
-  border: none;
-  padding: 0;
-  font-size: 0.75rem;
-  color: #16a34a;
-  cursor: pointer;
-  text-decoration: none;
-  text-underline-offset: 2px;
-  transition:
-    color 0.15s ease,
-    text-decoration 0.15s ease;
-}
-
-.forgot-link:hover {
-  color: #15803d;
-  text-decoration: underline;
-}
-</style>
+<style scoped></style>

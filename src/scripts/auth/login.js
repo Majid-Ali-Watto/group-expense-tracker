@@ -8,6 +8,8 @@ import { useGroupStore } from '../../stores/groupStore'
 import { showError, showSuccess } from '../../utils/showAlerts'
 import { encryptForSession, encryptForStore } from '../../utils/sessionCrypto'
 import { generateUUID } from '../../utils/uuid'
+import { checkForAppUpdate } from '../../utils/useAppUpdate'
+import { loadAppConfig } from '../../utils/useAppConfig'
 import {
   auth,
   sendPasswordResetEmail,
@@ -27,7 +29,9 @@ const LOCK_DURATION = 15 * 60 * 1000 // 15 minutes
 
 function getRateLimitData() {
   try {
-    return JSON.parse(localStorage.getItem(RATE_LIMIT_KEY) || '{"count":0,"lockedAt":null}')
+    return JSON.parse(
+      localStorage.getItem(RATE_LIMIT_KEY) || '{"count":0,"lockedAt":null}'
+    )
   } catch {
     return { count: 0, lockedAt: null }
   }
@@ -46,10 +50,13 @@ function isLoginLocked() {
 function recordFailedAttempt() {
   const data = getRateLimitData()
   const count = data.count + 1
-  localStorage.setItem(RATE_LIMIT_KEY, JSON.stringify({
-    count,
-    lockedAt: count >= MAX_ATTEMPTS ? Date.now() : data.lockedAt
-  }))
+  localStorage.setItem(
+    RATE_LIMIT_KEY,
+    JSON.stringify({
+      count,
+      lockedAt: count >= MAX_ATTEMPTS ? Date.now() : data.lockedAt
+    })
+  )
 }
 
 function clearLoginAttempts() {
@@ -63,11 +70,11 @@ export const Login = () => {
   const router = useRouter()
   const authStore = useAuthStore()
   const groupStore = useGroupStore()
-  const { read, updateData } = useFireBase()
+  const { read, setData, updateData } = useFireBase()
 
   const isSubmitting = ref(false)
 
-  const form = ref({
+  const createInitialForm = () => ({
     name: '',
     mobile: '',
     email: '',
@@ -75,15 +82,20 @@ export const Login = () => {
     rememberMe: false
   })
 
+  const form = ref(createInitialForm())
+
   const loginForm = ref(null)
   // Initialize mode from the current URL path
   const mode = ref(route.path === '/register' ? 'register' : 'login')
 
   // When the URL changes (e.g. browser back/forward), sync the mode
-  watch(() => route.path, (path) => {
-    const next = path === '/register' ? 'register' : 'login'
-    if (mode.value !== next) mode.value = next
-  })
+  watch(
+    () => route.path,
+    (path) => {
+      const next = path === '/register' ? 'register' : 'login'
+      if (mode.value !== next) mode.value = next
+    }
+  )
 
   // When user clicks the Login/Register toggle, update the URL to match
   watch(mode, (val) => {
@@ -101,6 +113,9 @@ export const Login = () => {
   const showResendVerification = ref(false)
 
   onMounted(async () => {
+    // Check for a new app version and notify the user if one is being applied
+    checkForAppUpdate()
+
     const storedEmail = localStorage.getItem('rememberedEmail')
     if (storedEmail) {
       form.value.email = storedEmail
@@ -186,6 +201,7 @@ export const Login = () => {
     authStore.setSessionToken(encryptedStore)
     authStore.setActiveLoginCode(payload.loginCode)
     activateUserGroup(payload.mobile)
+    loadAppConfig() // fire-and-forget: load remote config flags after login
     showSuccess(message || 'Login successful!')
   }
 
@@ -196,7 +212,9 @@ export const Login = () => {
 
     const minutesLocked = isLoginLocked()
     if (minutesLocked) {
-      return showError(`Too many failed attempts. Try again in ${minutesLocked} minute(s).`)
+      return showError(
+        `Too many failed attempts. Try again in ${minutesLocked} minute(s).`
+      )
     }
 
     try {
@@ -239,26 +257,23 @@ export const Login = () => {
     }
 
     try {
-      // Check if email already exists in database
-      const existingUserByEmail = await findUserByEmail(emailValue)
-      if (existingUserByEmail) {
-        return showError('An account with this email already exists')
-      }
-
-      // Check if mobile already exists in database
-      const existingUserByMobile = await read(
-        `${DB_NODES.USERS}/${mobileValue}`
-      )
-      if (existingUserByMobile) {
-        return showError('An account with this mobile number already exists')
-      }
-
-      // Create Firebase Auth user
+      // Create Firebase Auth user first — throws auth/email-already-in-use if duplicate.
+      // We create auth before any Firestore read so all subsequent reads are authenticated.
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         emailValue,
         loginCode
       )
+
+      // Now authenticated — check if mobile is already taken in Firestore
+      const existingUserByMobile = await read(
+        `${DB_NODES.USERS}/${mobileValue}`
+      )
+      if (existingUserByMobile) {
+        // Mobile taken — roll back the Auth user we just created
+        await userCredential.user.delete()
+        return showError('An account with this mobile number already exists')
+      }
 
       // Update profile with display name
       await updateProfile(userCredential.user, {
@@ -273,7 +288,7 @@ export const Login = () => {
 
       await sendEmailVerification(userCredential.user, actionCodeSettings)
 
-      // Save user data to Realtime Database (without loginCode - it's only in Firebase Auth)
+      // Save user data to Firestore
       const userData = {
         name: normalizedName,
         mobile: mobileValue,
@@ -282,7 +297,7 @@ export const Login = () => {
         emailVerified: false // Will be set to true on first successful login
       }
 
-      await updateData(`${DB_NODES.USERS}/${mobileValue}`, () => userData, '')
+      await setData(`${DB_NODES.USERS}/${mobileValue}`, userData, '')
 
       // Handle remember me
       if (rememberMe) {
@@ -371,11 +386,10 @@ export const Login = () => {
 
       // Find user in database
       const user = await findUserByEmail(emailValue)
-      console.log("🚀 ~ handleLogin ~ user:", user)
 
       if (!user) {
         return showError(
-          'User data not found in database. Please contact support.'
+          'No account found with this email. Please register first or check your email address.'
         )
       }
 
@@ -417,13 +431,17 @@ export const Login = () => {
 
       if (
         error.code === 'auth/wrong-password' ||
-        error.code === 'auth/invalid-credential'
+        error.code === 'auth/invalid-credential' ||
+        error.code === 'auth/user-not-found' ||
+        error.code === 'auth/firebase-app-check-token-is-invalid'
       ) {
         const { count } = getRateLimitData()
         const left = MAX_ATTEMPTS - count
-        showError(left > 0 ? `Incorrect password. ${left} attempt(s) remaining.` : 'Incorrect password.')
-      } else if (error.code === 'auth/user-not-found') {
-        showError('No account found with this email')
+        showError(
+          left > 0
+            ? `Incorrect email or password. ${left} attempt(s) remaining. If you don't have an account, please register first.`
+            : "Incorrect email or password. If you don't have an account, please register first."
+        )
       } else if (error.code === 'auth/too-many-requests') {
         showError('Too many failed attempts. Please try again later.')
       } else {

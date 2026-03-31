@@ -1,16 +1,16 @@
 <template>
   <GroupAccessGuard :group-id="$route.params.groupId">
     <div>
-    <el-alert
-      v-if="memberCount > 2"
-      title="Shared loans are designed for managing loans between two people."
-      description="This group has more than 2 members. Loan tracking works best between two members only."
-      type="warning"
-      show-icon
-      :closable="false"
-    />
-    <Loans v-else />
-  </div>
+      <el-alert
+        v-if="memberCount > 2"
+        title="Shared loans are designed for managing loans between two people."
+        description="This group has more than 2 members. Loan tracking works best between two members only."
+        type="warning"
+        show-icon
+        :closable="false"
+      />
+      <Loans v-else />
+    </div>
   </GroupAccessGuard>
 </template>
 

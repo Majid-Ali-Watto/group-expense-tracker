@@ -41,7 +41,13 @@
         />
         <div class="flex flex-row justify-end gap-2">
           <slot name="clear"></slot>
-          <el-button type="primary" size="small" :loading="isSubmitting" :disabled="isSubmitting" @click="createGroup"
+          <el-button size="small" @click="resetCreateForm">Reset</el-button>
+          <el-button
+            type="primary"
+            size="small"
+            :loading="isSubmitting"
+            :disabled="isSubmitting"
+            @click="createGroup"
             >Create</el-button
           >
         </div>
@@ -63,8 +69,12 @@ const props = defineProps({
 })
 
 const categoryOptions = GROUP_CATEGORIES
-const { groupForm, groupFormRef, usersOptions, createGroup, isSubmitting } = GroupsCreate(
-  emit,
-  props
-)
+const {
+  groupForm,
+  groupFormRef,
+  usersOptions,
+  createGroup,
+  resetCreateForm,
+  isSubmitting
+} = GroupsCreate(emit, props)
 </script>

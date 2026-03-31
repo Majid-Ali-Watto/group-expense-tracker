@@ -12,25 +12,26 @@ export const ExpenseForm = (props, emit) => {
   const isVisible = ref(true)
   const isEditMode = computed(() => !!props.row?.amount)
 
-  const form = ref({
+  const createInitialForm = () => ({
     amount: null,
     description: '',
     location: '',
     recipient: ''
   })
+  const form = ref(createInitialForm())
 
   const {
     receiptFiles,
     receiptUploading,
     existingReceiptUrls,
-    existingReceiptUrl,
     removeReceipt,
     setSelectedFiles,
     uploadSelectedFiles,
     deleteExistingReceipts
   } = useReceiptUpload({
-    existingUrls: computed(() => props.row?.receiptUrl || null),
-    existingMeta: computed(() => props.row?.receiptMeta || null)
+    // Support both old single-value records and new array format
+    existingUrls: computed(() => props.row?.receiptUrls ?? null),
+    existingMeta: computed(() => props.row?.receiptMeta ?? null)
   })
 
   const expenseForm = ref(null)
@@ -61,6 +62,12 @@ export const ExpenseForm = (props, emit) => {
     { immediate: true, deep: true }
   )
 
+  function resetForm() {
+    form.value = createInitialForm()
+    removeReceipt()
+    expenseForm.value?.clearValidate()
+  }
+
   const validateForm = async (whatTask = 'Save') => {
     // Wait for form ref to be available with retries
     let retries = 0
@@ -81,35 +88,35 @@ export const ExpenseForm = (props, emit) => {
         })
         if (!uploadedReceipts) return
 
-        const receiptUrl = uploadedReceipts.receiptUrl
-        const receiptMeta = uploadedReceipts.receiptMetaSingle
+        const receiptUrls = uploadedReceipts.receiptUrls
+        const receiptMeta = uploadedReceipts.receiptMeta
 
         if (whatTask == 'Save') {
           saveData(
-            `${DB_NODES.PERSONAL_EXPENSES}/${activeUser.value}/${getCurrentMonth()}`,
-            () => getExpenseData(receiptUrl, receiptMeta),
+            `${DB_NODES.PERSONAL_EXPENSES}/${activeUser.value}/months/${getCurrentMonth()}/expenses`,
+            () => getExpenseData(receiptUrls, receiptMeta),
             expenseForm,
             'Expense added successfully!',
             () => {
-              removeReceipt()
               if (isEditMode.value) {
                 emit('closeModal')
               } else {
+                resetForm()
                 emit('click')
               }
             }
           )
         } else if (whatTask == 'Update') {
           updateData(
-            `${DB_NODES.PERSONAL_EXPENSES}/${activeUser.value}/${selectedMonth.value}/${props.row.id}`,
-            () => getExpenseData(receiptUrl, receiptMeta),
+            `${DB_NODES.PERSONAL_EXPENSES}/${activeUser.value}/months/${selectedMonth.value}/expenses/${props.row.id}`,
+            () => getExpenseData(receiptUrls, receiptMeta),
             `Expense record with ID ${props.row.id} updated successfully`
           )
           emit('closeModal')
         } else if (whatTask == 'Delete') {
           deleteExistingReceipts()
           deleteData(
-            `${DB_NODES.PERSONAL_EXPENSES}/${activeUser.value}/${selectedMonth.value}/${props.row.id}`,
+            `${DB_NODES.PERSONAL_EXPENSES}/${activeUser.value}/months/${selectedMonth.value}/expenses/${props.row.id}`,
             `Expense record with ID ${props.row.id} deleted successfully`
           )
           emit('closeModal')
@@ -118,7 +125,7 @@ export const ExpenseForm = (props, emit) => {
     })
   }
 
-  function getExpenseData(receiptUrl = null, receiptMeta = null) {
+  function getExpenseData(receiptUrls = [], receiptMeta = []) {
     return {
       amount: form.value?.amount,
       description: form.value?.description,
@@ -128,7 +135,7 @@ export const ExpenseForm = (props, emit) => {
       whoAdded: getWhoAddedTransaction(),
       date: new Date().toLocaleString('en-PK'),
       whenAdded: new Date().toLocaleString('en-PK'),
-      ...(receiptUrl ? { receiptUrl, receiptMeta } : {})
+      ...(receiptUrls?.length ? { receiptUrls, receiptMeta } : {})
     }
   }
 
@@ -138,10 +145,10 @@ export const ExpenseForm = (props, emit) => {
     form,
     expenseForm,
     validateForm,
+    resetForm,
     receiptFiles,
     receiptUploading,
     existingReceiptUrls,
-    existingReceiptUrl,
     setSelectedFiles,
     removeReceipt,
     isSubmitting

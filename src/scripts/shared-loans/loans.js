@@ -1,6 +1,6 @@
 import { ref, computed, onMounted, onUnmounted, inject, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { onValue, off } from '../../firebase'
+import { onSnapshot } from '../../firebase'
 import { useAuthStore } from '../../stores/authStore'
 import { useGroupStore } from '../../stores/groupStore'
 import { useUserStore } from '../../stores/userStore'
@@ -10,10 +10,7 @@ import { appendNotificationForUser } from '../../utils/recordNotifications'
 import { DB_NODES } from '../../constants/db-nodes'
 import { useApprovalRequests } from '../../utils/useApprovalRequests'
 import { formatUserDisplay } from '../../utils/user-display'
-import {
-  deleteFromCloudinary,
-  cleanupOldReceipts
-} from '../../utils/cloudinaryUpload'
+import { deleteReceipt, cleanupOldReceipts } from '../../utils/uploadReceipt'
 import getCurrentMonth from '../../utils/getCurrentMonth'
 import { showError } from '../../utils/showAlerts'
 
@@ -42,15 +39,13 @@ export const Loans = () => {
   const selectedGiver = ref(route.query.giver || 'All')
 
   // Keep URL query params in sync with filter state so the URL is shareable
-  watch(
-    [selectedMonth, selectedGiver],
-    () => {
-      const query = {}
-      if (selectedMonth.value) query.month = selectedMonth.value
-      if (selectedGiver.value && selectedGiver.value !== 'All') query.giver = selectedGiver.value
-      router.replace({ path: route.path, query })
-    }
-  )
+  watch([selectedMonth, selectedGiver], () => {
+    const query = {}
+    if (selectedMonth.value) query.month = selectedMonth.value
+    if (selectedGiver.value && selectedGiver.value !== 'All')
+      query.giver = selectedGiver.value
+    router.replace({ path: route.path, query })
+  })
   const months = ref([])
   const monthsLoaded = ref(false)
   const loansLoaded = ref(false)
@@ -97,12 +92,19 @@ export const Loans = () => {
 
   // Fetch available months
   const fetchMonths = async () => {
+    if (!authStore.getActiveUser) {
+      monthsLoaded.value = true
+      return
+    }
     const groupId = groupStore.getActiveGroup || 'global'
     monthsLoaded.value = false
     try {
-      months.value = await readShallow(`${DB_NODES.SHARED_LOANS}/${groupId}`)
+      months.value = await readShallow(
+        `${DB_NODES.SHARED_LOANS}/${groupId}/months`
+      )
       if (months.value.length) selectedMonth.value = getCurrentMonth()
-    } catch {
+    } catch (error) {
+      if (error?.code === 'permission-denied') return
       showError('Failed to load months. Please try again.')
     } finally {
       monthsLoaded.value = true
@@ -114,30 +116,30 @@ export const Loans = () => {
     const groupId = groupStore.getActiveGroup || 'global'
     loansLoaded.value = false
     const loansRef = dbRef(
-      `${DB_NODES.SHARED_LOANS}/${groupId}/${selectedMonth.value}`
+      `${DB_NODES.SHARED_LOANS}/${groupId}/months/${selectedMonth.value}/loans`
     )
-    if (loansListener && currentLoansRef)
-      off(currentLoansRef, 'value', loansListener)
-    currentLoansRef = loansRef
+    if (loansListener && currentLoansRef) currentLoansRef()
+    currentLoansRef = null
 
-    loansListener = onValue(
+    const unsubscribe = onSnapshot(
       loansRef,
       (snapshot) => {
         loansLoaded.value = true
-        if (snapshot.exists()) {
-          const data = snapshot.val()
-          rawLoansData.value = data
-
+        if (!snapshot.empty) {
+          const data = {}
           const loansArray = []
           const keysArray = []
 
-          Object.keys(data).forEach((key) => {
-            if (data[key].amount) {
-              loansArray.push(data[key])
-              keysArray.push(key)
+          snapshot.docs.forEach((docSnap) => {
+            const item = { id: docSnap.id, ...docSnap.data() }
+            data[docSnap.id] = item
+            if (item.amount) {
+              loansArray.push(item)
+              keysArray.push(docSnap.id)
             }
           })
 
+          rawLoansData.value = data
           loanKeys.value = keysArray
           loans.value = loansArray
         } else {
@@ -146,11 +148,14 @@ export const Loans = () => {
           rawLoansData.value = {}
         }
       },
-      (error) => {
+      () => {
         loansLoaded.value = true
-        if (activeGroup.value) showError('Failed to load loans. Please try again.')
+        if (activeGroup.value)
+          showError('Failed to load loans. Please try again.')
       }
     )
+    loansListener = unsubscribe
+    currentLoansRef = unsubscribe
   }
 
   // Watch active group and refetch when it changes
@@ -179,9 +184,7 @@ export const Loans = () => {
 
   onUnmounted(() => {
     if (loadingTimeout) clearTimeout(loadingTimeout)
-    if (loansListener) {
-      if (currentLoansRef) off(currentLoansRef, 'value', loansListener)
-    }
+    if (loansListener) loansListener()
   })
 
   setTimeout(() => {
@@ -262,15 +265,13 @@ export const Loans = () => {
       description: loan.description
     }),
     buildItemPath: ({ groupId, monthYear, itemId }) =>
-      `${DB_NODES.SHARED_LOANS}/${groupId}/${monthYear}/${itemId}`,
+      `${DB_NODES.SHARED_LOANS}/${groupId}/months/${monthYear}/loans/${itemId}`,
     cleanupDeletedReceipts: (loan) => {
       const deletedMeta = loan?.receiptMeta
       if (!deletedMeta) return
 
       const metas = Array.isArray(deletedMeta) ? deletedMeta : [deletedMeta]
-      metas.forEach((meta) =>
-        deleteFromCloudinary(meta.publicId, meta.resourceType)
-      )
+      metas.forEach((meta) => deleteReceipt(meta))
     },
     buildUpdatedItem: (loan, request, notification) => {
       cleanupOldReceipts(loan?.receiptMeta, request.changes?.receiptMeta)

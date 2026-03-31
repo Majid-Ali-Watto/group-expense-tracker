@@ -1,6 +1,6 @@
 <template>
   <el-form
-    ref="formRef"
+    ref="localFormRef"
     :model="form"
     :rules="rules"
     label-position="top"
@@ -31,7 +31,9 @@
             :model-value="form.reporterName"
             placeholder="e.g. Ali Hassan"
             maxlength="60"
-            @update:model-value="$emit('update:form', { ...form, reporterName: $event })"
+            @update:model-value="
+              $emit('update:form', { ...form, reporterName: $event })
+            "
           />
         </el-form-item>
         <el-form-item label="Your email" prop="reporterEmail" class="flex-1">
@@ -39,7 +41,9 @@
             :model-value="form.reporterEmail"
             placeholder="e.g. ali@example.com"
             maxlength="80"
-            @update:model-value="$emit('update:form', { ...form, reporterEmail: $event })"
+            @update:model-value="
+              $emit('update:form', { ...form, reporterEmail: $event })
+            "
           />
         </el-form-item>
       </div>
@@ -50,7 +54,9 @@
         :model-value="form.category"
         placeholder="Select a category"
         class="w-full"
-        @update:model-value="$emit('update:form', { ...form, category: $event })"
+        @update:model-value="
+          $emit('update:form', { ...form, category: $event })
+        "
       >
         <el-option
           v-for="cat in categories"
@@ -79,7 +85,9 @@
         :maxlength="1000"
         :show-word-limit="true"
         :show-template="true"
-        @update:model-value="$emit('update:form', { ...form, description: $event })"
+        @update:model-value="
+          $emit('update:form', { ...form, description: $event })
+        "
         @template="$emit('apply-template')"
       />
     </el-form-item>
@@ -124,7 +132,7 @@
           </svg>
           Attach Screenshot
           <input
-            ref="fileInputRef"
+            ref="localFileInputRef"
             type="file"
             accept="image/*"
             multiple
@@ -136,11 +144,7 @@
 
         <!-- File list -->
         <div v-if="screenshots.length" class="bug-file-list">
-          <div
-            v-for="(item, i) in screenshots"
-            :key="i"
-            class="bug-file-item"
-          >
+          <div v-for="(item, i) in screenshots" :key="i" class="bug-file-item">
             <img
               :src="item.preview"
               class="bug-file-thumb"
@@ -148,7 +152,9 @@
             />
             <div class="bug-file-info">
               <span class="bug-file-name">{{ item.file.name }}</span>
-              <span class="bug-file-size">{{ formatSize(item.file.size) }}</span>
+              <span class="bug-file-size">{{
+                formatSize(item.file.size)
+              }}</span>
             </div>
             <button
               type="button"
@@ -193,8 +199,19 @@
     </el-form-item>
 
     <div class="bug-form-actions">
-      <GenericButton type="default" :disabled="isClean || submitting" @click="$emit('reset')">Reset</GenericButton>
-      <GenericButton type="warning" :loading="submitting" @click="$emit('submit')">
+      <GenericButton
+        size="small"
+        type="default"
+        :disabled="isClean || submitting"
+        @click="$emit('reset')"
+        >Reset</GenericButton
+      >
+      <GenericButton
+        size="small"
+        type="warning"
+        :loading="submitting"
+        @click="$emit('submit')"
+      >
         {{
           submitting
             ? uploadingScreenshots
@@ -208,14 +225,24 @@
 </template>
 
 <script setup>
+import { ref } from 'vue'
 import GenericDropDown from '../generic-components/GenericDropDown.vue'
 import GenericButton from '../generic-components/GenericButton.vue'
 import MarkdownEditor from '../generic-components/MarkdownEditor.vue'
 
+const localFormRef = ref(null)
+const localFileInputRef = ref(null)
+
+defineExpose({
+  validate: (...a) => localFormRef.value?.validate(...a),
+  clearValidate: () => localFormRef.value?.clearValidate(),
+  clearFileInput: () => {
+    if (localFileInputRef.value) localFileInputRef.value.value = ''
+  }
+})
+
 defineProps({
   form: { type: Object, required: true },
-  formRef: { type: Object, default: null },
-  fileInputRef: { type: Object, default: null },
   isLoggedIn: { type: Boolean, default: false },
   categories: { type: Array, default: () => [] },
   rules: { type: Object, default: () => ({}) },
@@ -230,15 +257,24 @@ defineProps({
   formatSize: { type: Function, required: true }
 })
 
-defineEmits(['update:form', 'submit', 'reset', 'apply-template', 'file-change', 'remove-screenshot'])
+defineEmits([
+  'update:form',
+  'submit',
+  'reset',
+  'apply-template',
+  'file-change',
+  'remove-screenshot'
+])
 </script>
 
 <style scoped>
 /* Form */
 .bug-form {
-  padding: 24px;
+  padding: 14px;
   border: 1px solid var(--el-border-color);
-  border-radius: 10px;
+  border-top: none;
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 10px;
   background: var(--el-fill-color-blank);
   margin-bottom: 24px;
 }

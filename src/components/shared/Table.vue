@@ -328,25 +328,6 @@
             <template v-else>—</template>
           </span>
 
-          <!-- receiptUrl (single) -->
-          <span
-            v-else-if="column.key === 'receiptUrl'"
-            class="px-2 text-sm et-cell-overflow"
-          >
-            <template v-if="rowData.receiptUrl">
-              <a
-                :href="rowData.receiptUrl"
-                target="_blank"
-                rel="noopener"
-                class="receipt-link hover:underline et-cell-text"
-                @click.stop
-              >
-                Receipt
-              </a>
-            </template>
-            <template v-else>—</template>
-          </span>
-
           <!-- actions -->
           <div
             v-else-if="column.key === '__actions__'"
@@ -515,8 +496,8 @@
     v-model="showMoreDialogVisible"
     :title="showMoreTitle"
     width="95%"
-    destroy-on-close
     append-to-body
+    destroy-on-close
   >
     <ol class="list-decimal pl-4 space-y-2 text-black dark:text-gray-300">
       <li
@@ -536,9 +517,9 @@
     v-model="columnSettingsVisible"
     title="Reorder Columns"
     width="320px"
+    append-to-body
     top="96px"
     destroy-on-close
-    append-to-body
   >
     <p class="col-settings-hint">Drag rows to reorder columns.</p>
     <ul class="col-settings-list">

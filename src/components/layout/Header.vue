@@ -103,10 +103,23 @@
         <!-- Desktop buttons - visible on screens >= 640px -->
         <div class="hidden sm:flex items-center gap-2">
           <!-- Bug Report — always visible -->
-          <button class="theme-btn" @click="showBugReport = true" title="Report a Bug">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          <button
+            class="theme-btn"
+            @click="showBugReport = true"
+            title="Report a Bug"
+          >
+            <svg
+              class="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+              />
             </svg>
           </button>
 
@@ -123,6 +136,27 @@
                 stroke-linejoin="round"
                 stroke-width="2"
                 d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+          </button>
+
+          <!-- Share current URL — always visible -->
+          <button
+            class="theme-btn"
+            @click="shareCurrentUrl"
+            title="Share current page"
+          >
+            <svg
+              class="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M8.684 13.342C9.433 12.402 10.59 11.8 11.889 11.8h1.422m-4.627 1.542a3 3 0 100-4.242m6.632 8.484a3 3 0 104.242 0m-4.242 0l-2.005-2.005m-2.622-6.479L8.684 6.658m6.632 4a3 3 0 104.242-4.242 3 3 0 00-4.242 4.242z"
               />
             </svg>
           </button>
@@ -266,11 +300,38 @@
               <!-- Bug Report — always visible -->
               <el-dropdown-item @click="showBugReport = true">
                 <div class="flex items-center gap-3">
-                  <svg class="w-5 h-5 menu-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  <svg
+                    class="w-5 h-5 menu-icon"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                    />
                   </svg>
                   <span>Report a Bug</span>
+                </div>
+              </el-dropdown-item>
+              <el-dropdown-item @click="shareCurrentUrl">
+                <div class="flex items-center gap-3">
+                  <svg
+                    class="w-5 h-5 menu-icon"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M8.684 13.342C9.433 12.402 10.59 11.8 11.889 11.8h1.422m-4.627 1.542a3 3 0 100-4.242m6.632 8.484a3 3 0 104.242 0m-4.242 0l-2.005-2.005m-2.622-6.479L8.684 6.658m6.632 4a3 3 0 104.242-4.242 3 3 0 00-4.242 4.242z"
+                    />
+                  </svg>
+                  <span>Share This Page</span>
                 </div>
               </el-dropdown-item>
               <!-- Expenses Summary - only when logged in -->
@@ -351,11 +412,16 @@
     v-model="showBugReport"
     title="Report a Bug"
     :width="'min(95vw, 740px)'"
+    append-to-body
     :close-on-click-modal="true"
     :close-on-press-escape="true"
     class="bug-report-dialog"
   >
-    <BugReportPage v-if="showBugReport" :view="bugReportView" :open-bug-id="bugReportOpenId" />
+    <BugReportPage
+      v-if="showBugReport"
+      :view="bugReportView"
+      :open-bug-id="bugReportOpenId"
+    />
   </el-dialog>
 </template>
 
@@ -398,6 +464,7 @@ const {
   bugReportOpenId,
   confirmLogout,
   handleNetPosition,
+  shareCurrentUrl,
   handleNavigate,
   notifsByCategory,
   notifCategories

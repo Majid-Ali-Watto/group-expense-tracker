@@ -27,15 +27,17 @@ export const LoanForm = (props, emit) => {
     emit('closeForm')
   }
 
-  const closeForm = () => {
-    formData.value = {
-      amount: null,
-      loanGiver: '',
-      loanReceiver: '',
-      loanGiverMobile: '',
-      loanReceiverMobile: '',
-      description: ''
-    }
+  const createInitialFormData = () => ({
+    amount: null,
+    loanGiver: '',
+    loanReceiver: '',
+    loanGiverMobile: '',
+    loanReceiverMobile: '',
+    description: ''
+  })
+
+  const resetForm = async () => {
+    formData.value = createInitialFormData()
     isMeGiver.value = false
     isMeReceiver.value = false
     selectedGiverUser.value = ''
@@ -44,11 +46,12 @@ export const LoanForm = (props, emit) => {
     receiverRealMobile.value = ''
     copyToExpenses.value = false
     removeReceipt()
-    setTimeout(() => {
-      if (loanForm.value) {
-        loanForm.value.clearValidate()
-      }
-    }, 0)
+    await nextTick()
+    loanForm.value?.clearValidate()
+  }
+
+  const closeForm = async () => {
+    await resetForm()
     emit('closeForm')
   }
 
@@ -60,14 +63,7 @@ export const LoanForm = (props, emit) => {
   const isVisible = ref(true)
   const isEditMode = computed(() => !!props.row?.amount)
 
-  const formData = ref({
-    amount: null,
-    loanGiver: '',
-    loanReceiver: '',
-    loanGiverMobile: '',
-    loanReceiverMobile: '',
-    description: ''
-  })
+  const formData = ref(createInitialFormData())
 
   const activeUser = computed(() => authStore.getActiveUser)
   const activeUserName = computed(
@@ -97,14 +93,14 @@ export const LoanForm = (props, emit) => {
     receiptFiles,
     receiptUploading,
     existingReceiptUrls,
-    existingReceiptUrl,
     removeReceipt,
     setSelectedFiles,
     uploadSelectedFiles,
     deleteExistingReceipts
   } = useReceiptUpload({
-    existingUrls: computed(() => props.row?.receiptUrl || null),
-    existingMeta: computed(() => props.row?.receiptMeta || null)
+    // Support both old single-value records and new array format
+    existingUrls: computed(() => props.row?.receiptUrls ?? null),
+    existingMeta: computed(() => props.row?.receiptMeta ?? null)
   })
 
   // ========== Copy to Personal Expenses ==========
@@ -315,10 +311,10 @@ export const LoanForm = (props, emit) => {
         const date = new Date()
         const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
         if (props.isPersonal) {
-          loanPath = `${props.dbRef}/${authStore.getActiveUser}/${monthYear}`
+          loanPath = `${props.dbRef}/${authStore.getActiveUser}/months/${monthYear}/loans`
         } else {
           const groupId = groupStore.getActiveGroup || 'global'
-          loanPath = `${props.dbRef}/${groupId}/${monthYear}`
+          loanPath = `${props.dbRef}/${groupId}/months/${monthYear}/loans`
         }
 
         const uploadedReceipts = await uploadSelectedFiles({
@@ -326,8 +322,8 @@ export const LoanForm = (props, emit) => {
         })
         if (!uploadedReceipts) return
 
-        const receiptUrl = uploadedReceipts.receiptUrl
-        const receiptMeta = uploadedReceipts.receiptMetaSingle
+        const receiptUrls = uploadedReceipts.receiptUrls
+        const receiptMeta = uploadedReceipts.receiptMeta
 
         if (whatTask == 'Save') {
           // Capture expense data before saveData resets the form
@@ -346,7 +342,7 @@ export const LoanForm = (props, emit) => {
 
           saveData(
             loanPath,
-            () => getLoanData(receiptUrl, receiptMeta),
+            () => getLoanData(receiptUrls, receiptMeta),
             loanForm,
             'Loan added successfully.',
             () => {
@@ -364,7 +360,7 @@ export const LoanForm = (props, emit) => {
               if (isEditMode.value) {
                 emit('closeModal')
               } else {
-                emit('closeForm')
+                closeForm()
               }
             }
           )
@@ -373,14 +369,14 @@ export const LoanForm = (props, emit) => {
             const groupId = groupStore.getActiveGroup || 'global'
             const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
             createUpdateRequest(
-              `${props.dbRef}/${groupId}/${monthYear}/${props.row.id}`,
-              receiptUrl,
+              `${props.dbRef}/${groupId}/months/${monthYear}/loans/${props.row.id}`,
+              receiptUrls,
               receiptMeta
             )
           } else {
             updateData(
               `${loanPath}/${props.row.id}`,
-              () => getLoanData(receiptUrl, receiptMeta),
+              () => getLoanData(receiptUrls, receiptMeta),
               `Loan record with ID ${props.row.id} updated successfully`
             )
             emit('closeModal')
@@ -390,7 +386,7 @@ export const LoanForm = (props, emit) => {
             const groupId = groupStore.getActiveGroup || 'global'
             const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
             createDeleteRequest(
-              `${props.dbRef}/${groupId}/${monthYear}/${props.row.id}`
+              `${props.dbRef}/${groupId}/months/${monthYear}/loans/${props.row.id}`
             )
           } else {
             deleteExistingReceipts()
@@ -409,8 +405,8 @@ export const LoanForm = (props, emit) => {
     const deleteRequest = buildRequestMeta(storeProxy)
 
     updateData(
-      `${loanPath}/deleteRequest`,
-      () => deleteRequest,
+      loanPath,
+      () => ({ deleteRequest }),
       'Delete request sent. Waiting for approval from all group members.'
     )
     emit('closeModal')
@@ -418,23 +414,23 @@ export const LoanForm = (props, emit) => {
 
   const createUpdateRequest = (
     loanPath,
-    receiptUrl = null,
-    receiptMeta = null
+    receiptUrls = [],
+    receiptMeta = []
   ) => {
     const updateRequest = {
-      changes: getLoanData(receiptUrl, receiptMeta),
+      changes: getLoanData(receiptUrls, receiptMeta),
       ...buildRequestMeta(storeProxy)
     }
 
     updateData(
-      `${loanPath}/updateRequest`,
-      () => updateRequest,
+      loanPath,
+      () => ({ updateRequest }),
       'Update request sent. Waiting for approval from all group members.'
     )
     emit('closeModal')
   }
 
-  function getLoanData(receiptUrl = null, receiptMeta = null) {
+  function getLoanData(receiptUrls = [], receiptMeta = []) {
     const giverMobile = props.isPersonal
       ? giverRealMobile.value ||
         formData.value.loanGiverMobile ||
@@ -454,13 +450,16 @@ export const LoanForm = (props, emit) => {
       [!props.isPersonal ? 'receiver' : 'loanReceiver']: receiverMobile,
       giverName: formData.value.loanGiver,
       receiverName: formData.value.loanReceiver,
+      ...(!props.isPersonal
+        ? { group: groupStore.getActiveGroup || null }
+        : {}),
       date:
         new Date().toLocaleDateString('en-PK') +
         ' ' +
         new Date().toLocaleTimeString(),
       whoAdded: getWhoAddedTransaction(),
       whenAdded: new Date().toLocaleString('en-PK'),
-      ...(receiptUrl ? { receiptUrl, receiptMeta } : {})
+      ...(receiptUrls?.length ? { receiptUrls, receiptMeta } : {})
     }
     return loan
   }
@@ -473,11 +472,11 @@ export const LoanForm = (props, emit) => {
     formData,
     openForm,
     closeForm,
+    resetForm,
     validateForm,
     receiptFiles,
     receiptUploading,
     existingReceiptUrls,
-    existingReceiptUrl,
     setSelectedFiles,
     removeReceipt,
     onGiverMobileBlur,

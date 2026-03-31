@@ -2,14 +2,20 @@
   <div class="sel-stats">
     <div class="sel-stat">
       <span class="sel-stat-label">Total Spent</span>
-      <span v-overflow-popup="{ title: 'Total Spent' }" class="sel-stat-value sel-danger">
+      <span
+        v-overflow-popup="{ title: 'Total Spent' }"
+        class="sel-stat-value sel-danger"
+      >
         {{ formattedTotalSpent }}
       </span>
     </div>
     <div class="sel-divider" />
     <div class="sel-stat">
       <span class="sel-stat-label">Remaining</span>
-      <span v-overflow-popup="{ title: 'Remaining' }" class="sel-stat-value sel-success">
+      <span
+        v-overflow-popup="{ title: 'Remaining' }"
+        class="sel-stat-value sel-success"
+      >
         {{ formattedRemaining }}
       </span>
     </div>

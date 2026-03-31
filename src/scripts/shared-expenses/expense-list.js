@@ -4,7 +4,7 @@ import { useUsersOptions } from '../../utils/useUsersOptions'
 import { useAuthStore } from '../../stores/authStore'
 import { useGroupStore } from '../../stores/groupStore'
 import { useUserStore } from '../../stores/userStore'
-import { onValue, off } from '../../firebase'
+import { onSnapshot } from '../../firebase'
 import useFireBase from '../../api/firebase-apis'
 import { checkDaily } from '../../utils/notifications'
 import getCurrentMonth from '../../utils/getCurrentMonth'
@@ -12,10 +12,7 @@ import { showError } from '../../utils/showAlerts'
 import { appendNotificationForUser } from '../../utils/recordNotifications'
 import { useApprovalRequests } from '../../utils/useApprovalRequests'
 import { formatUserDisplay } from '../../utils/user-display'
-import {
-  deleteFromCloudinary,
-  cleanupOldReceipts
-} from '../../utils/cloudinaryUpload'
+import { deleteReceipt, cleanupOldReceipts } from '../../utils/uploadReceipt'
 
 export const ExpenseList = (props) => {
   const authStore = useAuthStore()
@@ -52,14 +49,24 @@ export const ExpenseList = (props) => {
 
   // Keep URL query params in sync with filter state so the URL is shareable
   watch(
-    [selectedMonth, selectedFriend, selectedPayerMode, selectedSplitMode, selectedParticipants],
+    [
+      selectedMonth,
+      selectedFriend,
+      selectedPayerMode,
+      selectedSplitMode,
+      selectedParticipants
+    ],
     () => {
       const query = {}
       if (selectedMonth.value) query.month = selectedMonth.value
-      if (selectedFriend.value && selectedFriend.value !== 'All') query.payer = selectedFriend.value
-      if (selectedPayerMode.value && selectedPayerMode.value !== 'all') query.payerMode = selectedPayerMode.value
-      if (selectedSplitMode.value && selectedSplitMode.value !== 'all') query.splitMode = selectedSplitMode.value
-      if (selectedParticipants.value?.length) query.participants = selectedParticipants.value.join(',')
+      if (selectedFriend.value && selectedFriend.value !== 'All')
+        query.payer = selectedFriend.value
+      if (selectedPayerMode.value && selectedPayerMode.value !== 'all')
+        query.payerMode = selectedPayerMode.value
+      if (selectedSplitMode.value && selectedSplitMode.value !== 'all')
+        query.splitMode = selectedSplitMode.value
+      if (selectedParticipants.value?.length)
+        query.participants = selectedParticipants.value.join(',')
       router.replace({ path: route.path, query })
     },
     { deep: true }
@@ -102,23 +109,22 @@ export const ExpenseList = (props) => {
   // Clean up listeners on unmount
   onUnmounted(() => {
     if (loadingTimeout) clearTimeout(loadingTimeout)
-    const groupId = groupStore.getActiveGroup || 'global'
-    if (paymentsListener)
-      off(
-        dbRef(`${props.dbRef}/${groupId}/${selectedMonth.value}`),
-        'value',
-        paymentsListener
-      )
+    if (paymentsListener) paymentsListener()
   })
 
   // Fetch available months
   const fetchMonths = async () => {
+    if (!authStore.getActiveUser) {
+      monthsLoaded.value = true
+      return
+    }
     const groupId = groupStore.getActiveGroup || 'global'
     monthsLoaded.value = false
     try {
-      months.value = await readShallow(`${props.dbRef}/${groupId}`)
+      months.value = await readShallow(`${props.dbRef}/${groupId}/months`)
       if (months.value.length) selectedMonth.value = getCurrentMonth()
-    } catch {
+    } catch (error) {
+      if (error?.code === 'permission-denied') return
       showError('Failed to load months. Please try again.')
     } finally {
       monthsLoaded.value = true
@@ -130,28 +136,29 @@ export const ExpenseList = (props) => {
     const groupId = groupStore.getActiveGroup || 'global'
     paymentsLoaded.value = false
     const paymentsRef = dbRef(
-      `${props.dbRef}/${groupId}/${selectedMonth.value}`
+      `${props.dbRef}/${groupId}/months/${selectedMonth.value}/payments`
     )
-    if (paymentsListener) off(paymentsRef, 'value', paymentsListener)
+    if (paymentsListener) paymentsListener()
 
-    paymentsListener = onValue(
+    paymentsListener = onSnapshot(
       paymentsRef,
       (snapshot) => {
         paymentsLoaded.value = true
-        if (snapshot.exists()) {
-          const data = snapshot.val()
-          rawPaymentsData.value = data
-
+        if (!snapshot.empty) {
+          const data = {}
           const paymentsArray = []
           const keysArray = []
 
-          Object.keys(data).forEach((key) => {
-            if (data[key].amount) {
-              paymentsArray.push(data[key])
-              keysArray.push(key)
+          snapshot.docs.forEach((docSnap) => {
+            const item = { id: docSnap.id, ...docSnap.data() }
+            data[docSnap.id] = item
+            if (item.amount) {
+              paymentsArray.push(item)
+              keysArray.push(docSnap.id)
             }
           })
 
+          rawPaymentsData.value = data
           paymentKeys.value = keysArray
           payments.value = paymentsArray
         } else {
@@ -160,9 +167,10 @@ export const ExpenseList = (props) => {
           rawPaymentsData.value = {}
         }
       },
-      (error) => {
+      () => {
         paymentsLoaded.value = true
-        if (activeGroup.value) showError('Failed to load expenses. Please try again.')
+        if (activeGroup.value)
+          showError('Failed to load expenses. Please try again.')
       }
     )
   }
@@ -247,15 +255,13 @@ export const ExpenseList = (props) => {
       date: payment.date
     }),
     buildItemPath: ({ groupId, monthYear, itemId }) =>
-      `${props.dbRef}/${groupId}/${monthYear}/${itemId}`,
+      `${props.dbRef}/${groupId}/months/${monthYear}/payments/${itemId}`,
     cleanupDeletedReceipts: (payment) => {
       const deletedMeta = payment?.receiptMeta
       if (!deletedMeta) return
 
       const metas = Array.isArray(deletedMeta) ? deletedMeta : [deletedMeta]
-      metas.forEach((meta) =>
-        deleteFromCloudinary(meta.publicId, meta.resourceType)
-      )
+      metas.forEach((meta) => deleteReceipt(meta))
     },
     buildUpdatedItem: (payment, request, notification) => {
       cleanupOldReceipts(payment?.receiptMeta, request.changes?.receiptMeta)

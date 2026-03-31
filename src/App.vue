@@ -16,7 +16,11 @@
     />
 
     <!-- Tab navigation bar — only shown when authenticated -->
-    <div v-if="loggedIn" class="container mx-auto mt-20" style="max-width: 980px">
+    <div
+      v-if="loggedIn"
+      class="container mx-auto mt-20"
+      style="max-width: 980px"
+    >
       <WelcomeBanner :displayName="displayName" />
       <el-tabs
         v-model="activeTab"

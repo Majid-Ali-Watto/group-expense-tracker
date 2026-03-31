@@ -6,9 +6,10 @@ import useFireBase from '../../api/firebase-apis'
 import { showError, showSuccess } from '../../utils/showAlerts'
 import { ElMessageBox } from 'element-plus'
 import { DB_NODES } from '../../constants/db-nodes'
+import { database, writeBatch, doc, deleteField } from '../../firebase'
 
 export const Settlement = (props) => {
-  const { updateData, deleteData, setData } = useFireBase()
+  const { updateData } = useFireBase()
   const formatAmount = inject('formatAmount')
   const authStore = useAuthStore()
   const groupStore = useGroupStore()
@@ -98,9 +99,9 @@ export const Settlement = (props) => {
       }
 
       const groupId = activeGroup.value
-      await setData(
-        `${DB_NODES.GROUPS}/${groupId}/settlementRequest`,
-        newSettlementRequest,
+      await updateData(
+        `${DB_NODES.GROUPS}/${groupId}`,
+        () => ({ settlementRequest: newSettlementRequest }),
         'Settlement request sent successfully'
       )
     } catch (error) {
@@ -123,9 +124,9 @@ export const Settlement = (props) => {
       updatedRequest.approvals.push({ mobile })
 
       const groupId = activeGroup.value
-      await setData(
-        `${DB_NODES.GROUPS}/${groupId}/settlementRequest`,
-        updatedRequest,
+      await updateData(
+        `${DB_NODES.GROUPS}/${groupId}`,
+        () => ({ settlementRequest: updatedRequest }),
         ''
       )
 
@@ -151,8 +152,11 @@ export const Settlement = (props) => {
       if (!activeGroup.value) return
 
       const groupId = activeGroup.value
-      const { removeData } = useFireBase()
-      await removeData(`${DB_NODES.GROUPS}/${groupId}/settlementRequest`)
+      await updateData(
+        `${DB_NODES.GROUPS}/${groupId}`,
+        () => ({ settlementRequest: deleteField() }),
+        ''
+      )
 
       showSuccess('Settlement request rejected')
     } catch (error) {
@@ -186,35 +190,49 @@ export const Settlement = (props) => {
       })
 
       const groupId = activeGroup.value || 'global'
-      const monthPath =
-        groupId === 'global'
-          ? props.selectedMonth
-          : `${groupId}/${props.selectedMonth}`
+      const selectedMonth = props.selectedMonth
 
-      updateData(
-        `${DB_NODES.SHARED_EXPENSES_BACKUP}/${monthPath}`,
-        getData,
-        'Expenses added to Backup successfully!'
-      )
-      deleteData(
-        `${DB_NODES.SHARED_EXPENSES}/${monthPath}`,
-        props.selectedMonth + ' data deleted'
-      )
-
-      // Remove settlement request if exists
-      if (activeGroup.value && hasSettlementRequest.value) {
-        const { removeData } = useFireBase()
-        await removeData(
-          `${DB_NODES.GROUPS}/${activeGroup.value}/settlementRequest`
+      const batch = writeBatch(database)
+      props.payments.forEach((payment, index) => {
+        const key = props.keys[index]
+        const backupRef = doc(
+          database,
+          DB_NODES.SHARED_EXPENSES_BACKUP,
+          groupId,
+          'months',
+          selectedMonth,
+          'payments',
+          key
         )
+        batch.set(backupRef, payment)
+
+        const sourceRef = doc(
+          database,
+          DB_NODES.SHARED_EXPENSES,
+          groupId,
+          'months',
+          selectedMonth,
+          'payments',
+          key
+        )
+        batch.delete(sourceRef)
+      })
+
+      // Remove settlement request from group if exists
+      if (activeGroup.value && hasSettlementRequest.value) {
+        const groupRef = doc(database, DB_NODES.GROUPS, activeGroup.value)
+        batch.update(groupRef, { settlementRequest: deleteField() })
       }
+
+      await batch.commit()
+      showSuccess(
+        'Expenses added to Backup successfully! ' +
+          selectedMonth +
+          ' data cleared.'
+      )
     } catch (error) {
       if (error != 'cancel') showError(error)
     }
-  }
-
-  const getData = () => {
-    return updates.value
   }
 
   // Compute balances

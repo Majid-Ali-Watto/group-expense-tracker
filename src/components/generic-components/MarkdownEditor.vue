@@ -2,16 +2,63 @@
   <div class="mde-wrapper" :class="{ 'mde-error': hasError }">
     <!-- Toolbar -->
     <div class="mde-toolbar">
-      <button type="button" class="mde-btn" title="Bold" @mousedown.prevent="wrap('**', '**')"><b>B</b></button>
-      <button type="button" class="mde-btn" title="Italic" @mousedown.prevent="wrap('*', '*')"><i>I</i></button>
-      <button type="button" class="mde-btn mde-btn--mono" title="Inline code" @mousedown.prevent="wrap('`', '`')">&lt;/&gt;</button>
-      <button type="button" class="mde-btn mde-btn--mono" title="Code block" @mousedown.prevent="insertCodeBlock()">&#9641;&thinsp;Block</button>
+      <button
+        type="button"
+        class="mde-btn"
+        title="Bold"
+        @mousedown.prevent="wrap('**', '**')"
+      >
+        <b>B</b>
+      </button>
+      <button
+        type="button"
+        class="mde-btn"
+        title="Italic"
+        @mousedown.prevent="wrap('*', '*')"
+      >
+        <i>I</i>
+      </button>
+      <button
+        type="button"
+        class="mde-btn mde-btn--mono"
+        title="Inline code"
+        @mousedown.prevent="wrap('`', '`')"
+      >
+        &lt;/&gt;
+      </button>
+      <button
+        type="button"
+        class="mde-btn mde-btn--mono"
+        title="Code block"
+        @mousedown.prevent="insertCodeBlock()"
+      >
+        &#9641;&thinsp;Block
+      </button>
       <span class="mde-sep" />
-      <button type="button" class="mde-btn" title="Bullet list" @mousedown.prevent="prefixLine('- ')">&#8226; List</button>
-      <button type="button" class="mde-btn" title="Numbered list" @mousedown.prevent="prefixLine('1. ')">1. List</button>
+      <button
+        type="button"
+        class="mde-btn"
+        title="Bullet list"
+        @mousedown.prevent="prefixLine('- ')"
+      >
+        &#8226; List
+      </button>
+      <button
+        type="button"
+        class="mde-btn"
+        title="Numbered list"
+        @mousedown.prevent="prefixLine('1. ')"
+      >
+        1. List
+      </button>
       <template v-if="showTemplate">
         <span class="mde-sep" />
-        <button type="button" class="mde-btn mde-btn--template" title="Insert bug report template" @mousedown.prevent="$emit('template')">
+        <button
+          type="button"
+          class="mde-btn mde-btn--template"
+          title="Insert bug report template"
+          @mousedown.prevent="$emit('template')"
+        >
           &#128196; Template
         </button>
       </template>
@@ -19,12 +66,23 @@
         <span class="mde-sep" />
         <label
           class="mde-btn mde-btn--image"
-          :class="{ 'is-disabled': localImages.length >= maxImages || disabled }"
+          :class="{
+            'is-disabled': localImages.length >= maxImages || disabled
+          }"
           title="Attach image"
         >
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          <svg
+            class="w-3.5 h-3.5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+            />
           </svg>
           Image
           <input
@@ -58,13 +116,36 @@
     <!-- Attached image previews -->
     <div v-if="allowImages && localImages.length" class="mde-image-list">
       <div v-for="(img, i) in localImages" :key="i" class="mde-image-item">
-        <a :href="img.preview" target="_blank" rel="noopener noreferrer" class="mde-image-thumb-link">
-          <img :src="img.preview" :alt="img.file.name" class="mde-image-thumb" />
+        <a
+          :href="img.preview"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="mde-image-thumb-link"
+        >
+          <img
+            :src="img.preview"
+            :alt="img.file.name"
+            class="mde-image-thumb"
+          />
         </a>
         <span class="mde-image-name">{{ img.file.name }}</span>
-        <button type="button" class="mde-image-remove" @mousedown.prevent="removeImage(i)">
-          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        <button
+          type="button"
+          class="mde-image-remove"
+          @mousedown.prevent="removeImage(i)"
+        >
+          <svg
+            class="w-3 h-3"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M6 18L18 6M6 6l12 12"
+            />
           </svg>
         </button>
       </div>
@@ -76,22 +157,27 @@
 import { ref, nextTick } from 'vue'
 
 const props = defineProps({
-  modelValue:    { type: String,  default: '' },
-  placeholder:   { type: String,  default: '' },
-  rows:          { type: Number,  default: 4 },
-  maxlength:     { type: Number,  default: 500 },
+  modelValue: { type: String, default: '' },
+  placeholder: { type: String, default: '' },
+  rows: { type: Number, default: 4 },
+  maxlength: { type: Number, default: 500 },
   showWordLimit: { type: Boolean, default: false },
-  showTemplate:  { type: Boolean, default: false },
-  allowImages:   { type: Boolean, default: false },
-  maxImages:     { type: Number,  default: 3 },
-  disabled:      { type: Boolean, default: false },
-  hasError:      { type: Boolean, default: false }
+  showTemplate: { type: Boolean, default: false },
+  allowImages: { type: Boolean, default: false },
+  maxImages: { type: Number, default: 3 },
+  disabled: { type: Boolean, default: false },
+  hasError: { type: Boolean, default: false }
 })
 
-const emit = defineEmits(['update:modelValue', 'update:images', 'template', 'keydown'])
+const emit = defineEmits([
+  'update:modelValue',
+  'update:images',
+  'template',
+  'keydown'
+])
 
 const inputRef = ref(null)
-const localImages = ref([])  // [{ file: File, preview: dataURL }]
+const localImages = ref([]) // [{ file: File, preview: dataURL }]
 
 // ── Toolbar actions ──────────────────────────────────────────
 function wrap(before, after) {
@@ -100,10 +186,16 @@ function wrap(before, after) {
   const { selectionStart: start, selectionEnd: end } = el
   const selected = el.value.slice(start, end) || 'text'
   const replacement = before + selected + after
-  emit('update:modelValue', el.value.slice(0, start) + replacement + el.value.slice(end))
+  emit(
+    'update:modelValue',
+    el.value.slice(0, start) + replacement + el.value.slice(end)
+  )
   nextTick(() => {
     el.focus()
-    el.setSelectionRange(start + before.length, start + before.length + selected.length)
+    el.setSelectionRange(
+      start + before.length,
+      start + before.length + selected.length
+    )
   })
 }
 
@@ -120,12 +212,16 @@ function prefixLine(prefix) {
 
   const lines = text.slice(blockStart, blockEnd).split('\n')
 
-  const newLines = prefix === '1. '
-    ? lines.map((line, i) => `${i + 1}. ${line}`)
-    : lines.map((line) => prefix + line)
+  const newLines =
+    prefix === '1. '
+      ? lines.map((line, i) => `${i + 1}. ${line}`)
+      : lines.map((line) => prefix + line)
 
   const newBlock = newLines.join('\n')
-  emit('update:modelValue', text.slice(0, blockStart) + newBlock + text.slice(blockEnd))
+  emit(
+    'update:modelValue',
+    text.slice(0, blockStart) + newBlock + text.slice(blockEnd)
+  )
   nextTick(() => {
     el.focus()
     el.setSelectionRange(blockStart, blockStart + newBlock.length)
@@ -138,7 +234,10 @@ function insertCodeBlock() {
   const { selectionStart: start, selectionEnd: end } = el
   const selected = el.value.slice(start, end)
   const block = '```\n' + (selected || 'code here') + '\n```'
-  emit('update:modelValue', el.value.slice(0, start) + block + el.value.slice(end))
+  emit(
+    'update:modelValue',
+    el.value.slice(0, start) + block + el.value.slice(end)
+  )
   nextTick(() => {
     el.focus()
     // place cursor inside the block
@@ -165,13 +264,20 @@ function handleKeydown(e) {
           // Empty list item — break out of the list
           const newText = text.slice(0, lineStart) + text.slice(start)
           emit('update:modelValue', newText)
-          nextTick(() => { el.focus(); el.setSelectionRange(lineStart, lineStart) })
+          nextTick(() => {
+            el.focus()
+            el.setSelectionRange(lineStart, lineStart)
+          })
         } else {
           // Continue list with next number
           const nextPrefix = `\n${parseInt(match[1]) + 1}. `
           const newText = text.slice(0, start) + nextPrefix + text.slice(end)
           emit('update:modelValue', newText)
-          nextTick(() => { const p = start + nextPrefix.length; el.focus(); el.setSelectionRange(p, p) })
+          nextTick(() => {
+            const p = start + nextPrefix.length
+            el.focus()
+            el.setSelectionRange(p, p)
+          })
         }
         emit('keydown', e)
         return
@@ -188,7 +294,10 @@ function handleFiles(e) {
   files.slice(0, remaining).forEach((file) => {
     const reader = new FileReader()
     reader.onload = (ev) => {
-      localImages.value = [...localImages.value, { file, preview: ev.target.result }]
+      localImages.value = [
+        ...localImages.value,
+        { file, preview: ev.target.result }
+      ]
       emit('update:images', localImages.value)
     }
     reader.readAsDataURL(file)
@@ -256,9 +365,17 @@ defineExpose({ clearImages, images: localImages })
   color: var(--el-text-color-primary);
 }
 
-.mde-btn--mono    { font-family: monospace; font-size: 11.5px; }
-.mde-btn--template { color: #6366f1; }
-.mde-btn--template:hover { border-color: #6366f1 !important; background: #eef2ff !important; }
+.mde-btn--mono {
+  font-family: monospace;
+  font-size: 11.5px;
+}
+.mde-btn--template {
+  color: #6366f1;
+}
+.mde-btn--template:hover {
+  border-color: #6366f1 !important;
+  background: #eef2ff !important;
+}
 
 .mde-btn--image {
   cursor: pointer;
@@ -322,7 +439,9 @@ defineExpose({ clearImages, images: localImages })
   max-width: 200px;
 }
 
-.mde-image-thumb-link { flex-shrink: 0; }
+.mde-image-thumb-link {
+  flex-shrink: 0;
+}
 
 .mde-image-thumb {
   width: 36px;
@@ -357,17 +476,48 @@ defineExpose({ clearImages, images: localImages })
   cursor: pointer;
   padding: 0;
 }
-.mde-image-remove:hover { background: #fee2e2; color: #ef4444; }
+.mde-image-remove:hover {
+  background: #fee2e2;
+  color: #ef4444;
+}
 
 /* ── Dark theme ─────────────────────────────────────────────── */
-:root.dark-theme .mde-toolbar  { background: #1f2937; border-color: #374151; }
-:root.dark-theme .mde-btn      { color: #d1d5db; }
-:root.dark-theme .mde-btn:hover { background: #374151; border-color: #4b5563; color: #f3f4f6; }
-:root.dark-theme .mde-sep      { background: #374151; }
-:root.dark-theme .mde-textarea :deep(.el-textarea__inner) { background: #1f2937; color: #e5e7eb; }
-:root.dark-theme .mde-image-list  { background: #1f2937; border-color: #374151; }
-:root.dark-theme .mde-image-item  { background: #111827; border-color: #374151; }
-:root.dark-theme .mde-image-name  { color: #9ca3af; }
-:root.dark-theme .mde-image-remove { background: #374151; color: #6b7280; }
-:root.dark-theme .mde-image-remove:hover { background: rgba(239,68,68,0.2); color: #fca5a5; }
+:root.dark-theme .mde-toolbar {
+  background: #1f2937;
+  border-color: #374151;
+}
+:root.dark-theme .mde-btn {
+  color: #d1d5db;
+}
+:root.dark-theme .mde-btn:hover {
+  background: #374151;
+  border-color: #4b5563;
+  color: #f3f4f6;
+}
+:root.dark-theme .mde-sep {
+  background: #374151;
+}
+:root.dark-theme .mde-textarea :deep(.el-textarea__inner) {
+  background: #1f2937;
+  color: #e5e7eb;
+}
+:root.dark-theme .mde-image-list {
+  background: #1f2937;
+  border-color: #374151;
+}
+:root.dark-theme .mde-image-item {
+  background: #111827;
+  border-color: #374151;
+}
+:root.dark-theme .mde-image-name {
+  color: #9ca3af;
+}
+:root.dark-theme .mde-image-remove {
+  background: #374151;
+  color: #6b7280;
+}
+:root.dark-theme .mde-image-remove:hover {
+  background: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+}
 </style>

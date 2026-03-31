@@ -197,7 +197,7 @@
                 required
                 type="textarea"
                 placeholder="Loan details"
-                :maxlength="100"
+                :maxlength="200"
               />
             </el-col>
           </el-row>
@@ -206,6 +206,7 @@
             :selected-files="receiptFiles"
             :existing-urls="existingReceiptUrls"
             :uploading="receiptUploading"
+            :multiple="false"
             @files-selected="setSelectedFiles"
             @remove="removeReceipt"
           />
@@ -215,6 +216,9 @@
             </el-checkbox>
           </div>
           <div v-if="!isEditMode" class="flex justify-end gap-2">
+            <el-button type="default" size="small" @click="handleResetForm">
+              Reset
+            </el-button>
             <el-button type="info" plain size="small" @click="closeForm">
               Cancel
             </el-button>
@@ -264,6 +268,7 @@ const {
   formData,
   openForm,
   closeForm,
+  resetForm,
   validateForm,
   receiptFiles,
   receiptUploading,
@@ -292,6 +297,12 @@ function toggleGiverDropdown() {
 function toggleReceiverDropdown() {
   showReceiverDropdown.value = !showReceiverDropdown.value
   if (!showReceiverDropdown.value) selectedReceiverUser.value = ''
+}
+
+function handleResetForm() {
+  showGiverDropdown.value = false
+  showReceiverDropdown.value = false
+  resetForm()
 }
 
 defineExpose({

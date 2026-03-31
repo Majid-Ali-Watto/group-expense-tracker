@@ -20,7 +20,9 @@
     <p class="bug-success-text">
       Thank you for helping us improve. We'll look into it as soon as possible.
     </p>
-    <GenericButton type="default" size="small" @click="$emit('reset')">Submit another report</GenericButton>
+    <GenericButton type="default" size="small" @click="$emit('reset')"
+      >Submit another report</GenericButton
+    >
   </div>
 </template>
 

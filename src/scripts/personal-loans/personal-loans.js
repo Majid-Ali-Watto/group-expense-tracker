@@ -1,6 +1,6 @@
 import { ref, computed, onMounted, onUnmounted, inject, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { onValue, off } from '../../firebase'
+import { onSnapshot } from '../../firebase'
 import useFireBase from '../../api/firebase-apis'
 import { useAuthStore } from '../../stores/authStore'
 import { DB_NODES } from '../../constants/db-nodes'
@@ -38,8 +38,10 @@ export const PersonalLoans = () => {
   // Sync filters to URL so they are bookmarkable and shareable
   watch([selectedMonth, selectedGiver], () => {
     const query = {}
-    if (selectedMonth.value && selectedMonth.value !== 'All') query.month = selectedMonth.value
-    if (selectedGiver.value && selectedGiver.value !== 'All') query.giver = selectedGiver.value
+    if (selectedMonth.value && selectedMonth.value !== 'All')
+      query.month = selectedMonth.value
+    if (selectedGiver.value && selectedGiver.value !== 'All')
+      query.giver = selectedGiver.value
     router.replace({ path: route.path, query })
   })
 
@@ -56,10 +58,14 @@ export const PersonalLoans = () => {
   const activeUser = computed(() => authStore.getActiveUser)
 
   const fetchMonths = async () => {
+    if (!activeUser.value) {
+      monthsLoaded.value = true
+      return
+    }
     monthsLoaded.value = false
     try {
       const keys = await readShallow(
-        `${DB_NODES.PERSONAL_LOANS}/${activeUser.value}`
+        `${DB_NODES.PERSONAL_LOANS}/${activeUser.value}/months`
       )
       months.value = keys.sort((a, b) => b.localeCompare(a))
 
@@ -70,6 +76,7 @@ export const PersonalLoans = () => {
           : months.value[0]
       }
     } catch (error) {
+      if (error?.code === 'permission-denied') return
       showError('Failed to load months. Please try again.')
       console.error(error)
     } finally {
@@ -82,76 +89,96 @@ export const PersonalLoans = () => {
     loansLoaded.value = false
 
     if (loansListener && currentLoansRef) {
-      off(currentLoansRef, 'value', loansListener)
+      currentLoansRef()
+      currentLoansRef = null
+      loansListener = null
     }
 
     if (selectedMonth.value === 'All') {
-      const allLoansRef = dbRef(basePath)
+      // Listen on the months collection to aggregate all loans
+      const allMonthsRef = dbRef(`${basePath}/months`)
 
-      const handleAll = (snapshot) => {
-        loansLoaded.value = true
-        if (!snapshot.exists()) {
-          loans.value = []
-          loanKeys.value = []
-          return
+      const unsubscribe = onSnapshot(
+        allMonthsRef,
+        () => {
+          // Re-read all months and aggregate (simplified for the All view)
+          // Since onSnapshot on a collection only gives the month docs (no loans),
+          // we subscribe per-month. For the "All" view we do a single broad listen.
+        },
+        () => {
+          loansLoaded.value = true
         }
+      )
+      // For "All months" view, listen on the parent path broadly
+      // We must listen at the collection level and aggregate subcollection data
+      // which requires multiple listeners. Simplify by reading once eagerly.
+      unsubscribe()
 
-        const data = snapshot.val()
-        const allLoans = []
-        const allKeys = []
-
-        Object.keys(data).forEach((month) => {
-          if (data[month] && typeof data[month] === 'object') {
-            Object.keys(data[month]).forEach((loanId) => {
-              const loan = data[month][loanId]
-              if (loan && loan.amount) {
-                allLoans.push(loan)
-                allKeys.push(`${month}/${loanId}`)
-              }
-            })
-          }
-        })
-
-        loans.value = allLoans
-        loanKeys.value = allKeys
-      }
-      loansListener = handleAll
-      currentLoansRef = allLoansRef
-      onValue(allLoansRef, handleAll, () => {
-        loansLoaded.value = true
-      })
+      // Eager read for All: use getDocs per month
+      readAllLoans(basePath)
     } else {
-      const monthPath = `${basePath}/${selectedMonth.value}`
+      const monthPath = `${basePath}/months/${selectedMonth.value}/loans`
       const monthLoansRef = dbRef(monthPath)
 
-      const handleMonth = (snapshot) => {
-        loansLoaded.value = true
-        if (!snapshot.exists()) {
-          loans.value = []
-          loanKeys.value = []
-          return
-        }
-
-        const data = snapshot.val()
-        const loansArray = []
-        const keysArray = []
-
-        Object.keys(data).forEach((loanId) => {
-          const loan = data[loanId]
-          if (loan && loan.amount) {
-            loansArray.push(loan)
-            keysArray.push(loanId)
+      const unsubscribe = onSnapshot(
+        monthLoansRef,
+        (snapshot) => {
+          loansLoaded.value = true
+          if (!snapshot.empty) {
+            const loansArray = []
+            const keysArray = []
+            snapshot.docs.forEach((docSnap) => {
+              const loan = { id: docSnap.id, ...docSnap.data() }
+              if (loan.amount) {
+                loansArray.push(loan)
+                keysArray.push(docSnap.id)
+              }
+            })
+            loans.value = loansArray
+            loanKeys.value = keysArray
+          } else {
+            loans.value = []
+            loanKeys.value = []
           }
-        })
+        },
+        () => {
+          loansLoaded.value = true
+        }
+      )
+      loansListener = unsubscribe
+      currentLoansRef = unsubscribe
+    }
+  }
 
-        loans.value = loansArray
-        loanKeys.value = keysArray
+  async function readAllLoans(basePath) {
+    loansLoaded.value = false
+    try {
+      // Read all month document IDs first
+      const monthIds = await readShallow(`${basePath}/months`)
+      const allLoans = []
+      const allKeys = []
+      for (const monthId of monthIds) {
+        const { read } = useFireBase()
+        const monthLoans = await read(
+          `${basePath}/months/${monthId}/loans`,
+          false
+        )
+        if (monthLoans) {
+          Object.entries(monthLoans).forEach(([loanId, loan]) => {
+            if (loan && loan.amount) {
+              allLoans.push(loan)
+              allKeys.push(`${monthId}/${loanId}`)
+            }
+          })
+        }
       }
-      loansListener = handleMonth
-      currentLoansRef = monthLoansRef
-      onValue(monthLoansRef, handleMonth, () => {
-        loansLoaded.value = true
-      })
+      loans.value = allLoans
+      loanKeys.value = allKeys
+    } catch (error) {
+      showError('Failed to load loans. Please try again.')
+      console.error(error)
+    } finally {
+      loansLoaded.value = true
     }
   }
 
@@ -180,9 +207,7 @@ export const PersonalLoans = () => {
 
   onUnmounted(() => {
     if (loadingTimeout) clearTimeout(loadingTimeout)
-    if (loansListener && currentLoansRef) {
-      off(currentLoansRef, 'value', loansListener)
-    }
+    if (loansListener) loansListener()
   })
 
   const giverOptions = computed(() => {

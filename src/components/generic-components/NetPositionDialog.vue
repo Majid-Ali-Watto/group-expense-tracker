@@ -3,6 +3,7 @@
     v-model="visible"
     title="Your Expenses Summary"
     :width="isMobile ? '95%' : '600px'"
+    append-to-body
     :close-on-click-modal="false"
     :close-on-press-escape="true"
     @close="handleClose"
@@ -202,10 +203,15 @@
     </div>
 
     <template #footer>
-      <el-button type="success" @click="downloadPdf" :disabled="!summary"
-        >Download PDF</el-button
+      <GenericButton
+        type="success"
+        size="small"
+        :disabled="!summary"
+        @click="downloadPdf"
       >
-      <el-button @click="handleClose">Close</el-button>
+        Download PDF
+      </GenericButton>
+      <GenericButton size="small" @click="handleClose">Close</GenericButton>
     </template>
   </el-dialog>
 </template>
@@ -214,6 +220,7 @@
 import { inject } from 'vue'
 import DonutChart from './DonutChart.vue'
 import BarChart from './BarChart.vue'
+import GenericButton from './GenericButton.vue'
 import { NetPositionDialog } from '../../scripts/generic/net-position-dialog'
 
 const props = defineProps({
@@ -240,7 +247,7 @@ const {
 .net-position-content {
   max-height: 70vh;
   overflow-y: auto;
-  padding: 8px;
+  padding: 8px 0px;
 }
 
 .section-card {

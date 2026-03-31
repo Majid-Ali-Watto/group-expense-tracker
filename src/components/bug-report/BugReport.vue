@@ -17,9 +17,8 @@
 
     <BugReportForm
       v-if="activeView === 'form' && !submitted"
+      ref="formRef"
       :form="form"
-      :form-ref="formRef"
-      :file-input-ref="fileInputRef"
       :is-logged-in="isLoggedIn"
       :categories="categories"
       :rules="rules"
@@ -73,24 +72,39 @@
       @toggle-notes="toggleNotes"
       @toggle-picker="(noteId, event) => togglePickerOpen(noteId, event)"
       @toggle-reaction="(r, note, emoji) => toggleReaction(r, note, emoji)"
-      @reply="(reportId, note) => startReply(reportId, note, note.authorType === 'admin' ? 'Admin' : 'You')"
+      @reply="
+        (reportId, note) =>
+          startReply(
+            reportId,
+            note,
+            note.authorType === 'admin' ? 'Admin' : 'You'
+          )
+      "
       @cancel-reply="cancelReply"
       @scroll-to="scrollToNote"
       @start-edit="startNoteEdit"
       @cancel-edit="cancelNoteEdit"
       @save-edit="(r, note, text) => saveNoteEdit(r, note, text)"
       @delete-note="(r, note) => deleteNote(r, note)"
-      @update:compose-text="(reportId, val) => { replyInputs[reportId] = val; replyErrors[reportId] = '' }"
+      @update:compose-text="
+        (reportId, val) => {
+          replyInputs[reportId] = val
+          replyErrors[reportId] = ''
+        }
+      "
       @send="addReporterReply"
-      @editor-mounted="(reportId, el) => { if (el) replyEditorRefs[reportId] = el }"
+      @editor-mounted="
+        (reportId, el) => {
+          if (el) replyEditorRefs[reportId] = el
+        }
+      "
     />
 
     <BugReportEditDialog
+      ref="editFormRef"
       :visible="editDialogVisible"
       :edit-form="editForm"
-      :edit-form-ref="editFormRef"
       :edit-new-screenshots="editNewScreenshots"
-      :edit-file-input-ref="editFileInputRef"
       :edit-saving="editSaving"
       :categories="categories"
       :rules="rules"
@@ -100,6 +114,7 @@
       @update:visible="editDialogVisible = $event"
       @update:edit-form="editForm = $event"
       @save="saveEdit"
+      @reset="resetEdit"
       @close="closeEdit"
       @remove-existing-screenshot="removeExistingScreenshot"
       @file-change="handleEditFileChange"
@@ -116,7 +131,13 @@ import BugReportForm from './BugReportForm.vue'
 import MyReportsView from './MyReportsView.vue'
 import BugReportEditDialog from './BugReportEditDialog.vue'
 import { BugReport } from '../../scripts/bug-reports/bug-report'
-import { markdownToHtml, formatDate, copyText, downloadImage, notesOf } from '../../scripts/bug-reports/markdown'
+import {
+  markdownToHtml,
+  formatDate,
+  copyText,
+  downloadImage,
+  notesOf
+} from '../../scripts/bug-reports/markdown'
 
 const props = defineProps({
   view: { type: String, default: 'form' },
@@ -124,23 +145,71 @@ const props = defineProps({
 })
 
 const {
-  authStore, isLoggedIn,
-  activeView, form, formRef, fileInputRef, submitting, uploadingScreenshots,
-  submitted, lastSubmittedBugNumber, screenshots, uploadProgress,
-  isClean, categories, rules,
-  applyTemplate, formatSize, handleFileChange, removeScreenshot, resetForm, submitReport,
-  myReports, myReportsLoading, expandedIds, actionLoading,
-  toggleExpand, deleteReport, reopenReport,
-  editDialogVisible, editFormRef, editForm, editNewScreenshots, editFileInputRef, editSaving,
-  openEdit, closeEdit, removeExistingScreenshot, handleEditFileChange, removeEditNewScreenshot, saveEdit,
-  replyInputs, replyErrors, replySavingId, notesOpen, replyEditorRefs,
-  toggleNotes, addReporterReply,
-  openReactionPicker, reactionPickerAlign, replyingTo,
-  noteEditingId, noteEditText, noteEditError, noteEditSavingId,
-  togglePickerOpen, startReply, cancelReply, scrollToNote,
-  startNoteEdit, cancelNoteEdit, saveNoteEdit, deleteNote,
-  toggleReaction, reactionsOf,
-  MAX_SCREENSHOTS, SEVERITIES, STATUS_LABEL
+  authStore,
+  isLoggedIn,
+  activeView,
+  form,
+  formRef,
+  submitting,
+  uploadingScreenshots,
+  submitted,
+  lastSubmittedBugNumber,
+  screenshots,
+  uploadProgress,
+  isClean,
+  categories,
+  rules,
+  applyTemplate,
+  formatSize,
+  handleFileChange,
+  removeScreenshot,
+  resetForm,
+  submitReport,
+  myReports,
+  myReportsLoading,
+  expandedIds,
+  actionLoading,
+  toggleExpand,
+  deleteReport,
+  reopenReport,
+  editDialogVisible,
+  editFormRef,
+  editForm,
+  editNewScreenshots,
+  editSaving,
+  openEdit,
+  closeEdit,
+  removeExistingScreenshot,
+  handleEditFileChange,
+  removeEditNewScreenshot,
+  saveEdit,
+  replyInputs,
+  replyErrors,
+  replySavingId,
+  notesOpen,
+  replyEditorRefs,
+  toggleNotes,
+  addReporterReply,
+  openReactionPicker,
+  reactionPickerAlign,
+  replyingTo,
+  noteEditingId,
+  noteEditText,
+  noteEditError,
+  noteEditSavingId,
+  togglePickerOpen,
+  startReply,
+  cancelReply,
+  scrollToNote,
+  startNoteEdit,
+  cancelNoteEdit,
+  saveNoteEdit,
+  deleteNote,
+  toggleReaction,
+  reactionsOf,
+  MAX_SCREENSHOTS,
+  SEVERITIES,
+  STATUS_LABEL
 } = BugReport(props)
 
 const statusLabel = STATUS_LABEL
@@ -152,6 +221,6 @@ const MAX_SIZE_MB = 2
 .bug-page {
   max-width: 720px;
   margin: 0 auto;
-  padding: 8px;
+  /* padding: 8px; */
 }
 </style>

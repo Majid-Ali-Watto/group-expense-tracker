@@ -21,7 +21,8 @@
               plain
               class="sm:hidden"
               @click="clearFilters()"
-            >Clear</el-button>
+              >Clear</el-button
+            >
             <el-button
               circle
               :type="showFilters ? 'danger' : 'primary'"
@@ -67,7 +68,8 @@
           plain
           class="hidden sm:inline-flex mb-2"
           @click="clearFilters()"
-        >Clear All Filters</el-button>
+          >Clear All Filters</el-button
+        >
         <!-- Accordions -->
         <el-collapse v-model="openPanels" class="mt-4">
           <!-- Summary Statistics -->

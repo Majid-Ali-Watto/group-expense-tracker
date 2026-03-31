@@ -1,6 +1,6 @@
 import { computed, inject, ref, onMounted, watch, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { onValue, off, auth, onAuthStateChanged } from '../../firebase'
+import { onSnapshot, auth, onAuthStateChanged } from '../../firebase'
 import { useAuthStore } from '../../stores/authStore'
 import { useDataStore } from '../../stores/dataStore'
 import getCurrentMonth from '../../utils/getCurrentMonth'
@@ -37,12 +37,16 @@ export const SalaryExpenseList = () => {
 
   const fetchMonths = async () => {
     monthsLoaded.value = false
-    if (!activeUser.value) { monthsLoaded.value = true; return }
+    if (!activeUser.value) {
+      monthsLoaded.value = true
+      return
+    }
     try {
       months.value = await readShallow(
-        `${DB_NODES.PERSONAL_EXPENSES}/${activeUser.value}`
+        `${DB_NODES.PERSONAL_EXPENSES}/${activeUser.value}/months`
       )
     } catch (error) {
+      if (error?.code === 'permission-denied') return
       showError('Failed to load months. Please try again.')
       console.error(error)
     } finally {
@@ -52,17 +56,23 @@ export const SalaryExpenseList = () => {
 
   const fetchSalary = () => {
     salaryLoaded.value = false
-    if (!activeUser.value) { salaryLoaded.value = true; return }
+    if (!activeUser.value) {
+      salaryLoaded.value = true
+      return
+    }
     const salaryRef = dbRef(
-      `${DB_NODES.SALARIES}/${activeUser.value}/${selectedMonth.value}`
+      `${DB_NODES.SALARIES}/${activeUser.value}/months/${selectedMonth.value}`
     )
-    if (salaryListener) off(salaryRef, 'value', salaryListener)
+    if (salaryListener) {
+      salaryListener()
+      salaryListener = null
+    }
 
-    salaryListener = onValue(
+    salaryListener = onSnapshot(
       salaryRef,
       (snapshot) => {
         salaryLoaded.value = true
-        salary.value = snapshot.exists() ? snapshot.val().salary || 0 : 0
+        salary.value = snapshot.exists() ? snapshot.data().salary || 0 : 0
         updateRemaining()
       },
       (error) => {
@@ -77,20 +87,25 @@ export const SalaryExpenseList = () => {
 
   const fetchExpenses = () => {
     expensesLoaded.value = false
-    if (!activeUser.value) { expensesLoaded.value = true; return }
+    if (!activeUser.value) {
+      expensesLoaded.value = true
+      return
+    }
     const expensesRef = dbRef(
-      `${DB_NODES.PERSONAL_EXPENSES}/${activeUser.value}/${selectedMonth.value}`
+      `${DB_NODES.PERSONAL_EXPENSES}/${activeUser.value}/months/${selectedMonth.value}/expenses`
     )
-    if (expensesListener) off(expensesRef, 'value', expensesListener)
+    if (expensesListener) {
+      expensesListener()
+      expensesListener = null
+    }
 
-    expensesListener = onValue(
+    expensesListener = onSnapshot(
       expensesRef,
       (snapshot) => {
         expensesLoaded.value = true
-        if (snapshot.exists()) {
-          const monthExpenses = snapshot.val()
-          expenses.value = Object.values(monthExpenses)
-          keys.value = Object.keys(monthExpenses)
+        if (!snapshot.empty) {
+          expenses.value = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }))
+          keys.value = snapshot.docs.map((d) => d.id)
           totalSpent.value = expenses.value.reduce(
             (total, expense) => total + (expense.amount || 0),
             0
@@ -121,29 +136,16 @@ export const SalaryExpenseList = () => {
     fetchExpenses()
     // Sync to URL so the selected month is bookmarkable
     const query = {}
-    if (selectedMonth.value !== getCurrentMonth()) query.month = selectedMonth.value
+    if (selectedMonth.value !== getCurrentMonth())
+      query.month = selectedMonth.value
     router.replace({ path: route.path, query })
   })
 
   onUnmounted(() => {
     if (unsubscribeAuth) unsubscribeAuth()
     if (loadingTimeout) clearTimeout(loadingTimeout)
-    if (salaryListener)
-      off(
-        dbRef(
-          `${DB_NODES.SALARIES}/${activeUser.value}/${selectedMonth.value}`
-        ),
-        'value',
-        salaryListener
-      )
-    if (expensesListener)
-      off(
-        dbRef(
-          `${DB_NODES.PERSONAL_EXPENSES}/${activeUser.value}/${selectedMonth.value}`
-        ),
-        'value',
-        expensesListener
-      )
+    if (salaryListener) salaryListener()
+    if (expensesListener) expensesListener()
   })
 
   let loadingTimeout = null

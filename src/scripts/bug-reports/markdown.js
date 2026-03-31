@@ -29,28 +29,53 @@ export function markdownToHtml(text) {
 
   const lines = s.split('\n')
   const out = []
-  let inUl = false, inOl = false
+  let inUl = false,
+    inOl = false
 
   for (const line of lines) {
     if (/^%%CODEBLOCK_\d+%%$/.test(line.trim())) {
-      if (inUl) { out.push('</ul>'); inUl = false }
-      if (inOl) { out.push('</ol>'); inOl = false }
+      if (inUl) {
+        out.push('</ul>')
+        inUl = false
+      }
+      if (inOl) {
+        out.push('</ol>')
+        inOl = false
+      }
       out.push(line.trim())
       continue
     }
     const ul = line.match(/^[-*]\s+(.+)/)
     const ol = line.match(/^\d+\.\s+(.+)/)
     if (ul) {
-      if (inOl) { out.push('</ol>'); inOl = false }
-      if (!inUl) { out.push('<ul>'); inUl = true }
+      if (inOl) {
+        out.push('</ol>')
+        inOl = false
+      }
+      if (!inUl) {
+        out.push('<ul>')
+        inUl = true
+      }
       out.push(`<li>${ul[1]}</li>`)
     } else if (ol) {
-      if (inUl) { out.push('</ul>'); inUl = false }
-      if (!inOl) { out.push('<ol>'); inOl = true }
+      if (inUl) {
+        out.push('</ul>')
+        inUl = false
+      }
+      if (!inOl) {
+        out.push('<ol>')
+        inOl = true
+      }
       out.push(`<li>${ol[1]}</li>`)
     } else {
-      if (inUl) { out.push('</ul>'); inUl = false }
-      if (inOl) { out.push('</ol>'); inOl = false }
+      if (inUl) {
+        out.push('</ul>')
+        inUl = false
+      }
+      if (inOl) {
+        out.push('</ol>')
+        inOl = false
+      }
       out.push(line.trim() === '' ? '<br>' : `<p>${line}</p>`)
     }
   }
@@ -58,7 +83,9 @@ export function markdownToHtml(text) {
   if (inOl) out.push('</ol>')
 
   let result = out.join('')
-  codeBlocks.forEach((block, i) => { result = result.replace(`%%CODEBLOCK_${i}%%`, block) })
+  codeBlocks.forEach((block, i) => {
+    result = result.replace(`%%CODEBLOCK_${i}%%`, block)
+  })
   return result
 }
 
@@ -72,7 +99,11 @@ export function formatDate(iso) {
   if (!iso) return '—'
   const d = new Date(iso)
   return (
-    d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) +
+    d.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    }) +
     ' ' +
     d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
   )
@@ -84,7 +115,8 @@ export function formatDate(iso) {
  * @param {string} text
  */
 export function copyText(text) {
-  navigator.clipboard?.writeText(text)
+  navigator.clipboard
+    ?.writeText(text)
     .then(() => showSuccess('Copied!'))
     .catch(() => showError('Failed to copy.'))
 }

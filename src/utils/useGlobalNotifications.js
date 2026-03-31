@@ -2,7 +2,7 @@ import { computed, ref, watch } from 'vue'
 import { useAuthStore } from '../stores/authStore'
 import { useGroupStore } from '../stores/groupStore'
 import { useUserStore } from '../stores/userStore'
-import { onValue, off } from '../firebase'
+import { onSnapshot, collection, database } from '../firebase'
 import useFireBase from '../api/firebase-apis'
 import { Tabs } from '../assets/enums'
 import getCurrentMonth from './getCurrentMonth'
@@ -264,6 +264,40 @@ export function useGlobalNotifications() {
       }
       check(u.deleteRequest, 'delete')
       check(u.updateRequest, 'update')
+
+      // Notify the requester themselves about the status of their own delete request
+      if (u.mobile === me && u.deleteRequest) {
+        const approved = u.deleteRequest.approvals?.length || 0
+        const required = u.deleteRequest.requiredApprovals?.length || 0
+        result.push({
+          id: `my-delete-request-${me}`,
+          icon: '⏳',
+          title: 'Users',
+          description: `Your account deletion request is pending approval (${approved}/${required})`,
+          tab: Tabs.USERS,
+          category: 'Users'
+        })
+      }
+
+      // Notify the requester when their request was rejected
+      if (
+        u.mobile === me &&
+        u.rejectionNotification?.type === 'delete-rejected'
+      ) {
+        const n = u.rejectionNotification
+        result.push({
+          id: `my-delete-rejected-${me}`,
+          icon: '❌',
+          title: 'Users',
+          description:
+            n.message || 'Your account deletion request was rejected.',
+          tab: Tabs.USERS,
+          category: 'Users',
+          action: 'dismiss-user-rejection',
+          userMobile: me
+        })
+      }
+
       return result
     })
   })
@@ -271,14 +305,14 @@ export function useGlobalNotifications() {
   // ─── Expense / Loan notifications ────────────────────────────────────────
   const expenseNotifs = ref({})
   const loanNotifs = ref({})
-  const listeners = []       // expense/loan listeners — cleared on group change
-  const bugListeners = []    // bug report listeners — persistent, only cleared on cleanup
+  const listeners = [] // expense/loan unsubscribers — cleared on group change
+  const bugListeners = [] // bug report unsubscribers — persistent, only cleared on cleanup
 
   function subscribeToExpensesAndLoans() {
     const me = activeUser.value
     if (!me) return
 
-    listeners.forEach(({ r, fn }) => off(r, 'value', fn))
+    listeners.forEach((unsub) => unsub())
     listeners.length = 0
 
     const month = getCurrentMonth()
@@ -286,156 +320,156 @@ export function useGlobalNotifications() {
 
     joined.forEach((group) => {
       // Shared expenses
-      const eRef = dbRef(`${DB_NODES.SHARED_EXPENSES}/${group.id}/${month}`)
-      const eFn = (snap) => {
+      const eRef = dbRef(
+        `${DB_NODES.SHARED_EXPENSES}/${group.id}/months/${month}/payments`
+      )
+      const eUnsub = onSnapshot(eRef, (snap) => {
         const notifs = []
-        if (snap.exists()) {
-          Object.entries(snap.val()).forEach(([paymentId, payment]) => {
-            if (!payment.amount) return
+        snap.docs.forEach((docSnap) => {
+          const paymentId = docSnap.id
+          const payment = docSnap.data()
+          if (!payment.amount) return
+          if (
+            payment.deleteRequest &&
+            !payment.deleteRequest.approvals?.some((a) => a.mobile === me)
+          ) {
+            notifs.push({
+              id: `exp-del-${group.id}-${paymentId}`,
+              icon: '🧾',
+              title: group.name,
+              description: `Delete expense: ${payment.description || payment.amount}`,
+              tab: Tabs.SHARED_EXPENSES,
+              groupId: group.id,
+              category: 'Shared Expenses'
+            })
+          }
+          if (
+            payment.updateRequest &&
+            !payment.updateRequest.approvals?.some((a) => a.mobile === me)
+          ) {
+            const ch = payment.updateRequest.changes || {}
+            const diffParts = []
+            if (ch.amount !== undefined && ch.amount !== payment.amount)
+              diffParts.push(`Amount: ${payment.amount}→${ch.amount}`)
             if (
-              payment.deleteRequest &&
-              !payment.deleteRequest.approvals?.some((a) => a.mobile === me)
-            ) {
-              notifs.push({
-                id: `exp-del-${group.id}-${paymentId}`,
-                icon: '🧾',
-                title: group.name,
-                description: `Delete expense: ${payment.description || payment.amount}`,
-                tab: Tabs.SHARED_EXPENSES,
-                groupId: group.id,
-                category: 'Shared Expenses'
-              })
-            }
-            if (
-              payment.updateRequest &&
-              !payment.updateRequest.approvals?.some((a) => a.mobile === me)
-            ) {
-              const ch = payment.updateRequest.changes || {}
-              const diffParts = []
-              if (ch.amount !== undefined && ch.amount !== payment.amount)
-                diffParts.push(`Amount: ${payment.amount}→${ch.amount}`)
-              if (
-                ch.description !== undefined &&
-                ch.description !== payment.description
+              ch.description !== undefined &&
+              ch.description !== payment.description
+            )
+              diffParts.push(
+                `Desc: "${payment.description}"→"${ch.description}"`
               )
-                diffParts.push(
-                  `Desc: "${payment.description}"→"${ch.description}"`
-                )
-              if (ch.payer !== undefined && ch.payer !== payment.payer)
-                diffParts.push(`Payer: ${payment.payer}→${ch.payer}`)
-              const diffStr = diffParts.length
-                ? ` [${diffParts.join(' | ')}]`
-                : ''
-              notifs.push({
-                id: `exp-upd-${group.id}-${paymentId}`,
-                icon: '🧾',
-                title: group.name,
-                description: `Update expense${diffStr || ': ' + (payment.description || payment.amount)}`,
-                tab: Tabs.SHARED_EXPENSES,
-                groupId: group.id,
-                category: 'Shared Expenses'
-              })
-            }
-            // Approval/rejection feedback notifications stored on the expense record
-            ;(payment.notifications?.[me] || []).forEach((notif) => {
-              notifs.push({
-                id: `exp-notif-${group.id}-${paymentId}-${notif.id || notif.timestamp}`,
-                icon:
-                  notif.type === 'approved'
-                    ? '✅'
-                    : notif.type === 'rejected'
-                      ? '❌'
-                      : '🧾',
-                title: group.name,
-                description: notif.message || `Expense notification`,
-                tab: Tabs.SHARED_EXPENSES,
-                groupId: group.id,
-                category: 'Shared Expenses'
-              })
+            if (ch.payer !== undefined && ch.payer !== payment.payer)
+              diffParts.push(`Payer: ${payment.payer}→${ch.payer}`)
+            const diffStr = diffParts.length
+              ? ` [${diffParts.join(' | ')}]`
+              : ''
+            notifs.push({
+              id: `exp-upd-${group.id}-${paymentId}`,
+              icon: '🧾',
+              title: group.name,
+              description: `Update expense${diffStr || ': ' + (payment.description || payment.amount)}`,
+              tab: Tabs.SHARED_EXPENSES,
+              groupId: group.id,
+              category: 'Shared Expenses'
+            })
+          }
+          // Approval/rejection feedback notifications stored on the expense record
+          ;(payment.notifications?.[me] || []).forEach((notif) => {
+            notifs.push({
+              id: `exp-notif-${group.id}-${paymentId}-${notif.id || notif.timestamp}`,
+              icon:
+                notif.type === 'approved'
+                  ? '✅'
+                  : notif.type === 'rejected'
+                    ? '❌'
+                    : '🧾',
+              title: group.name,
+              description: notif.message || `Expense notification`,
+              tab: Tabs.SHARED_EXPENSES,
+              groupId: group.id,
+              category: 'Shared Expenses'
             })
           })
-        }
+        })
         expenseNotifs.value = { ...expenseNotifs.value, [group.id]: notifs }
-      }
-      onValue(eRef, eFn)
-      listeners.push({ r: eRef, fn: eFn })
+      })
+      listeners.push(eUnsub)
 
       // Shared loans
-      const lRef = dbRef(`${DB_NODES.SHARED_LOANS}/${group.id}/${month}`)
-      const lFn = (snap) => {
+      const lRef = dbRef(
+        `${DB_NODES.SHARED_LOANS}/${group.id}/months/${month}/loans`
+      )
+      const lUnsub = onSnapshot(lRef, (snap) => {
         const notifs = []
-        if (snap.exists()) {
-          Object.entries(snap.val()).forEach(([loanId, loan]) => {
-            if (!loan.amount) return
+        snap.docs.forEach((docSnap) => {
+          const loanId = docSnap.id
+          const loan = docSnap.data()
+          if (!loan.amount) return
+          if (
+            loan.deleteRequest &&
+            !loan.deleteRequest.approvals?.some((a) => a.mobile === me)
+          ) {
+            notifs.push({
+              id: `loan-del-${group.id}-${loanId}`,
+              icon: '💰',
+              title: group.name,
+              description: `Delete loan: ${loan.description || loan.amount}`,
+              tab: Tabs.SHARED_LOANS,
+              groupId: group.id,
+              category: 'Shared Loans'
+            })
+          }
+          if (
+            loan.updateRequest &&
+            !loan.updateRequest.approvals?.some((a) => a.mobile === me)
+          ) {
+            const ch = loan.updateRequest.changes || {}
+            const diffParts = []
+            if (ch.amount !== undefined && ch.amount !== loan.amount)
+              diffParts.push(`Amount: ${loan.amount}→${ch.amount}`)
             if (
-              loan.deleteRequest &&
-              !loan.deleteRequest.approvals?.some((a) => a.mobile === me)
-            ) {
-              notifs.push({
-                id: `loan-del-${group.id}-${loanId}`,
-                icon: '💰',
-                title: group.name,
-                description: `Delete loan: ${loan.description || loan.amount}`,
-                tab: Tabs.SHARED_LOANS,
-                groupId: group.id,
-                category: 'Shared Loans'
-              })
-            }
-            if (
-              loan.updateRequest &&
-              !loan.updateRequest.approvals?.some((a) => a.mobile === me)
-            ) {
-              const ch = loan.updateRequest.changes || {}
-              const diffParts = []
-              if (ch.amount !== undefined && ch.amount !== loan.amount)
-                diffParts.push(`Amount: ${loan.amount}→${ch.amount}`)
-              if (
-                ch.description !== undefined &&
-                ch.description !== loan.description
-              )
-                diffParts.push(
-                  `Desc: "${loan.description}"→"${ch.description}"`
-                )
-              if (ch.giver !== undefined && ch.giver !== loan.giver)
-                diffParts.push(`Giver: ${loan.giver}→${ch.giver}`)
-              if (ch.receiver !== undefined && ch.receiver !== loan.receiver)
-                diffParts.push(`Receiver: ${loan.receiver}→${ch.receiver}`)
-              const diffStr = diffParts.length
-                ? ` [${diffParts.join(' | ')}]`
-                : ''
-              notifs.push({
-                id: `loan-upd-${group.id}-${loanId}`,
-                icon: '💰',
-                title: group.name,
-                description: `Update loan${diffStr || ': ' + (loan.description || loan.amount)}`,
-                tab: Tabs.SHARED_LOANS,
-                groupId: group.id,
-                category: 'Shared Loans'
-              })
-            }
-            // Approval/rejection feedback notifications stored on the loan record
-            ;(loan.notifications?.[me] || []).forEach((notif) => {
-              notifs.push({
-                id: `loan-notif-${group.id}-${loanId}-${notif.id || notif.timestamp}`,
-                icon:
-                  notif.type === 'approved'
-                    ? '✅'
-                    : notif.type === 'rejected'
-                      ? '❌'
-                      : '💰',
-                title: group.name,
-                description: notif.message || `Loan notification`,
-                tab: Tabs.SHARED_LOANS,
-                groupId: group.id,
-                category: 'Shared Loans'
-              })
+              ch.description !== undefined &&
+              ch.description !== loan.description
+            )
+              diffParts.push(`Desc: "${loan.description}"→"${ch.description}"`)
+            if (ch.giver !== undefined && ch.giver !== loan.giver)
+              diffParts.push(`Giver: ${loan.giver}→${ch.giver}`)
+            if (ch.receiver !== undefined && ch.receiver !== loan.receiver)
+              diffParts.push(`Receiver: ${loan.receiver}→${ch.receiver}`)
+            const diffStr = diffParts.length
+              ? ` [${diffParts.join(' | ')}]`
+              : ''
+            notifs.push({
+              id: `loan-upd-${group.id}-${loanId}`,
+              icon: '💰',
+              title: group.name,
+              description: `Update loan${diffStr || ': ' + (loan.description || loan.amount)}`,
+              tab: Tabs.SHARED_LOANS,
+              groupId: group.id,
+              category: 'Shared Loans'
+            })
+          }
+          // Approval/rejection feedback notifications stored on the loan record
+          ;(loan.notifications?.[me] || []).forEach((notif) => {
+            notifs.push({
+              id: `loan-notif-${group.id}-${loanId}-${notif.id || notif.timestamp}`,
+              icon:
+                notif.type === 'approved'
+                  ? '✅'
+                  : notif.type === 'rejected'
+                    ? '❌'
+                    : '💰',
+              title: group.name,
+              description: notif.message || `Loan notification`,
+              tab: Tabs.SHARED_LOANS,
+              groupId: group.id,
+              category: 'Shared Loans'
             })
           })
-        }
+        })
         loanNotifs.value = { ...loanNotifs.value, [group.id]: notifs }
-      }
-      onValue(lRef, lFn)
-      listeners.push({ r: lRef, fn: lFn })
+      })
+      listeners.push(lUnsub)
     })
   }
 
@@ -447,44 +481,69 @@ export function useGlobalNotifications() {
 
   // ─── Bug report status notifications (for the reporter) ─────────────────
   const bugReportNotifs = ref([])
-  const brRef = dbRef(`${DB_NODES.BUG_REPORT_NOTIFICATIONS}/${activeUser.value}`)
-  const brFn = (snap) => {
-    if (!snap.exists()) { bugReportNotifs.value = []; return }
-    const statusLabel = { open: 'Open', 'in-progress': 'In Progress', 'needs-info': 'Needs Info', duplicate: 'Duplicate', 'wont-fix': "Won't Fix", resolved: 'Resolved', closed: 'Closed' }
-    const statusIcon  = { open: '🔴', 'in-progress': '🟡', 'needs-info': '🔵', duplicate: '🟣', 'wont-fix': '⚫', resolved: '🟢', closed: '⚫' }
-    bugReportNotifs.value = Object.entries(snap.val()).map(([id, n]) => ({
-      id: `bugreport-notif-${id}`,
-      icon: n.hasNote ? '💬' : (statusIcon[n.status] ?? '🐛'),
-      title: 'Bug Report',
-      description: n.hasNote
-        ? `Admin added a note to your report "${n.title}"`
-        : `Your report "${n.title}" is now ${statusLabel[n.status] ?? n.status}`,
-      tab: null,
-      action: 'open-bug-report',
-      bugId: id,
-      category: 'Bug Reports'
-    }))
-  }
-  onValue(brRef, brFn)
-  bugListeners.push({ r: brRef, fn: brFn })
+  const brRef = dbRef(
+    `${DB_NODES.BUG_REPORT_NOTIFICATIONS}/${activeUser.value}/items`
+  )
+  const brUnsub = onSnapshot(brRef, (snap) => {
+    if (snap.empty) {
+      bugReportNotifs.value = []
+      return
+    }
+    const statusLabel = {
+      open: 'Open',
+      'in-progress': 'In Progress',
+      'needs-info': 'Needs Info',
+      duplicate: 'Duplicate',
+      'wont-fix': "Won't Fix",
+      resolved: 'Resolved',
+      closed: 'Closed'
+    }
+    const statusIcon = {
+      open: '🔴',
+      'in-progress': '🟡',
+      'needs-info': '🔵',
+      duplicate: '🟣',
+      'wont-fix': '⚫',
+      resolved: '🟢',
+      closed: '⚫'
+    }
+    bugReportNotifs.value = snap.docs.map((d) => {
+      const n = d.data()
+      return {
+        id: `bugreport-notif-${d.id}`,
+        icon: n.hasNote ? '💬' : (statusIcon[n.status] ?? '🐛'),
+        title: 'Bug Report',
+        description: n.hasNote
+          ? `Admin added a note to your report "${n.title}"`
+          : `Your report "${n.title}" is now ${statusLabel[n.status] ?? n.status}`,
+        tab: null,
+        action: 'open-bug-report',
+        bugId: d.id,
+        category: 'Bug Reports'
+      }
+    })
+  })
+  bugListeners.push(brUnsub)
 
   // ─── Admin bug report notifications ───────────────────────────────────────
   const rawAdminBugReportNotifs = ref([])
 
-  // Read bugResolver directly from Firebase to avoid user-store timing issues
+  // Read bugResolver directly from Firestore to avoid user-store timing issues
   const isBugResolver = ref(false)
-  const bugResolverDbRef = dbRef(`${DB_NODES.USERS}/${activeUser.value}/bugResolver`)
-  const bugResolverFn = (snap) => { isBugResolver.value = snap.val() === true }
-  onValue(bugResolverDbRef, bugResolverFn)
-  bugListeners.push({ r: bugResolverDbRef, fn: bugResolverFn })
+  const bugResolverDocRef = dbRef(`${DB_NODES.USERS}/${activeUser.value}`)
+  const bugResolverUnsub = onSnapshot(bugResolverDocRef, (snap) => {
+    isBugResolver.value = snap.exists() && snap.data().bugResolver === true
+  })
+  bugListeners.push(bugResolverUnsub)
 
-  const adminBrRef = dbRef(`${DB_NODES.BUG_REPORT_NOTIFICATIONS}/admin`)
-  const adminBrFn = (snap) => {
-    if (!snap.exists()) {
+  const adminBrRef = dbRef(`${DB_NODES.BUG_REPORT_NOTIFICATIONS}/admin/items`)
+  const adminBrUnsub = onSnapshot(adminBrRef, (snap) => {
+    if (snap.empty) {
       rawAdminBugReportNotifs.value = []
       return
     }
-    rawAdminBugReportNotifs.value = Object.entries(snap.val()).map(([id, n]) => {
+    rawAdminBugReportNotifs.value = snap.docs.map((d) => {
+      const n = d.data()
       const reporter = n.reporterName || 'Reporter'
       let icon = '💬'
       let description = `${reporter} replied to "${n.title}"`
@@ -499,29 +558,67 @@ export function useGlobalNotifications() {
         description = `${reporter} re-opened their report "${n.title}"`
       }
       return {
-        id: `bugreport-admin-notif-${id}`,
+        id: `bugreport-admin-notif-${d.id}`,
         icon,
         title: 'Bug Reports',
         description,
         action: 'open-admin-bug-report',
-        bugId: id,
+        bugId: d.id,
         tab: Tabs.BUG_RESOLVER,
         category: 'Bug Reports'
       }
     })
-  }
-  onValue(adminBrRef, adminBrFn)
-  bugListeners.push({ r: adminBrRef, fn: adminBrFn })
+  })
+  bugListeners.push(adminBrUnsub)
 
   const adminBugReportNotifs = computed(() =>
     isBugResolver.value ? rawAdminBugReportNotifs.value : []
   )
 
+  // ─── Real-time groups listener ────────────────────────────────────────────
+  // Keeps groupStore up-to-date from any tab so group notifications (e.g.
+  // member-renamed, join requests, delete requests) appear in the bell
+  // immediately without needing to open the Groups tab.
+  const groupsUnsubscribe = onSnapshot(
+    collection(database, DB_NODES.GROUPS),
+    (snap) => {
+      const groupList = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+      groupStore.setGroups(groupList)
+    }
+  )
+
+  // ─── Real-time users listener ─────────────────────────────────────────────
+  // Keeps userStore up-to-date from any tab so that delete/update request
+  // notifications appear in the bell immediately, without needing to open the Users tab.
+  const usersUnsubscribe = onSnapshot(
+    collection(database, DB_NODES.USERS),
+    (snap) => {
+      snap.docs.forEach((docSnap) => {
+        const mobile = docSnap.id
+        const u = docSnap.data()
+        if (u.emailVerified === true) {
+          userStore.addUser({
+            mobile,
+            name: u.name || '',
+            addedBy: u.addedBy || null,
+            maskedMobile: maskMobile(mobile),
+            deleteRequest: u.deleteRequest || null,
+            updateRequest: u.updateRequest || null,
+            bugResolver: u.bugResolver === true,
+            rejectionNotification: u.rejectionNotification || null
+          })
+        }
+      })
+    }
+  )
+
   const cleanup = () => {
-    listeners.forEach(({ r, fn }) => off(r, 'value', fn))
+    listeners.forEach((unsub) => unsub())
     listeners.length = 0
-    bugListeners.forEach(({ r, fn }) => off(r, 'value', fn))
+    bugListeners.forEach((unsub) => unsub())
     bugListeners.length = 0
+    usersUnsubscribe()
+    groupsUnsubscribe()
     expenseNotifs.value = {}
     loanNotifs.value = {}
     bugReportNotifs.value = []

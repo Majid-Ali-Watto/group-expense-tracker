@@ -1,17 +1,25 @@
 import { initializeApp } from 'firebase/app'
 import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check'
 import {
-  getDatabase,
-  ref,
-  push,
-  onValue,
-  update,
-  remove,
-  get,
-  set,
-  off,
-  runTransaction
-} from 'firebase/database'
+  getFirestore,
+  collection,
+  doc,
+  addDoc,
+  setDoc,
+  updateDoc,
+  deleteDoc,
+  getDoc,
+  getDocs,
+  query,
+  where,
+  onSnapshot,
+  runTransaction,
+  serverTimestamp,
+  increment,
+  collectionGroup,
+  deleteField,
+  writeBatch
+} from 'firebase/firestore'
 import {
   getAuth,
   createUserWithEmailAndPassword,
@@ -30,7 +38,6 @@ import {
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_API_KEY,
   authDomain: import.meta.env.VITE_AUTH_DOMAIN,
-  databaseURL: import.meta.env.VITE_DATABASE_URL,
   projectId: import.meta.env.VITE_PROJECT_ID,
   storageBucket: import.meta.env.VITE_STORAGE_BUCKET,
   messagingSenderId: import.meta.env.VITE_MESSAGE_SENDER_ID,
@@ -38,9 +45,12 @@ const firebaseConfig = {
 }
 const app = initializeApp(firebaseConfig)
 
-// Enable App Check debug token in development (add the printed token to Firebase Console → App Check)
+// App Check — debug token in dev, reCAPTCHA in production.
+// The debug token is printed to the browser console on first load;
+// register it once in Firebase Console → App Check → Manage debug tokens.
 if (import.meta.env.DEV) {
-  self.FIREBASE_APPCHECK_DEBUG_TOKEN = true
+  self.FIREBASE_APPCHECK_DEBUG_TOKEN =
+    import.meta.env.VITE_APP_CHECK_DEBUG_TOKEN || true
 }
 let appCheck = null
 if (import.meta.env.VITE_RECAPTCHA_SITE_KEY) {
@@ -50,21 +60,30 @@ if (import.meta.env.VITE_RECAPTCHA_SITE_KEY) {
   })
 }
 
-const database = getDatabase(app)
+const database = getFirestore(app)
 const auth = getAuth(app)
 
 export {
+  app,
   appCheck,
   database,
-  ref,
-  push,
-  onValue,
-  update,
-  remove,
-  get,
-  set,
-  off,
+  collection,
+  doc,
+  addDoc,
+  setDoc,
+  updateDoc,
+  deleteDoc,
+  getDoc,
+  getDocs,
+  query,
+  where,
+  onSnapshot,
   runTransaction,
+  serverTimestamp,
+  increment,
+  collectionGroup,
+  deleteField,
+  writeBatch,
   auth,
   createUserWithEmailAndPassword,
   sendPasswordResetEmail,

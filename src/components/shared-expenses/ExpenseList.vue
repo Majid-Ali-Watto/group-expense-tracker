@@ -103,7 +103,8 @@
             plain
             class="sm:hidden"
             @click="clearFilters()"
-          >Clear</el-button>
+            >Clear</el-button
+          >
           <el-button
             circle
             :type="showFilters ? 'danger' : 'primary'"
@@ -117,56 +118,63 @@
       <!-- Filters: desktop always visible, with Clear All button -->
       <div class="hidden sm:flex items-center justify-between mb-1">
         <el-row :gutter="5" class="filter-bar flex-1" justify="space-between">
-        <!-- Month Selection -->
-        <el-col :lg="6" :md="6" :sm="12" :xs="12">
-          <GenericDropDown
-            v-model="selectedMonth"
-            label="Month"
-            placeholder="Select Month"
-            :options="months"
-            size="small"
-          />
-        </el-col>
-        <el-col :lg="6" :md="6" :sm="12" :xs="12">
-          <!-- Payer Selection -->
-          <GenericDropDown
-            v-model="selectedFriend"
-            label="Payer"
-            placeholder="Select Payer"
-            :options="[{ label: 'All', value: 'All' }, ...usersOptions]"
-            size="small"
-          />
-        </el-col>
-        <el-col :lg="6" :md="6" :sm="12" :xs="12">
-          <!-- Payer Mode Filter -->
-          <GenericDropDown
-            v-model="selectedPayerMode"
-            label="Payer Mode"
-            :filterable="false"
-            :options="[
-              { label: 'All', value: 'all' },
-              { label: 'Single', value: 'single' },
-              { label: 'Multiple', value: 'multiple' }
-            ]"
-            size="small"
-          />
-        </el-col>
-        <el-col :lg="6" :md="6" :sm="12" :xs="12">
-          <!-- Split Mode Filter -->
-          <GenericDropDown
-            v-model="selectedSplitMode"
-            label="Split Mode"
-            :filterable="false"
-            :options="[
-              { label: 'All', value: 'all' },
-              { label: 'Equal', value: 'equal' },
-              { label: 'Custom', value: 'custom' }
-            ]"
-            size="small"
-          />
-        </el-col>
-      </el-row>
-        <el-button size="small" type="danger" plain class="ml-2 flex-shrink-0" @click="clearFilters()">Clear All</el-button>
+          <!-- Month Selection -->
+          <el-col :lg="6" :md="6" :sm="12" :xs="12">
+            <GenericDropDown
+              v-model="selectedMonth"
+              label="Month"
+              placeholder="Select Month"
+              :options="months"
+              size="small"
+            />
+          </el-col>
+          <el-col :lg="6" :md="6" :sm="12" :xs="12">
+            <!-- Payer Selection -->
+            <GenericDropDown
+              v-model="selectedFriend"
+              label="Payer"
+              placeholder="Select Payer"
+              :options="[{ label: 'All', value: 'All' }, ...usersOptions]"
+              size="small"
+            />
+          </el-col>
+          <el-col :lg="6" :md="6" :sm="12" :xs="12">
+            <!-- Payer Mode Filter -->
+            <GenericDropDown
+              v-model="selectedPayerMode"
+              label="Payer Mode"
+              :filterable="false"
+              :options="[
+                { label: 'All', value: 'all' },
+                { label: 'Single', value: 'single' },
+                { label: 'Multiple', value: 'multiple' }
+              ]"
+              size="small"
+            />
+          </el-col>
+          <el-col :lg="6" :md="6" :sm="12" :xs="12">
+            <!-- Split Mode Filter -->
+            <GenericDropDown
+              v-model="selectedSplitMode"
+              label="Split Mode"
+              :filterable="false"
+              :options="[
+                { label: 'All', value: 'all' },
+                { label: 'Equal', value: 'equal' },
+                { label: 'Custom', value: 'custom' }
+              ]"
+              size="small"
+            />
+          </el-col>
+        </el-row>
+        <el-button
+          size="small"
+          type="danger"
+          plain
+          class="ml-2 flex-shrink-0"
+          @click="clearFilters()"
+          >Clear All</el-button
+        >
       </div>
       <!-- Mobile filters (toggle) -->
       <Transition name="form-slide">

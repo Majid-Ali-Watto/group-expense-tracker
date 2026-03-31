@@ -1,4 +1,4 @@
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessageBox } from 'element-plus'
 import useFireBase from '../../api/firebase-apis'
@@ -8,7 +8,13 @@ import { useGroupStore } from '../../stores/groupStore'
 import { useUserStore } from '../../stores/userStore'
 import { showError } from '../../utils/showAlerts'
 import { maskMobile } from '../../utils/maskMobile'
-import { auth, deleteUser } from '../../firebase'
+import {
+  auth,
+  deleteUser,
+  onSnapshot,
+  collection,
+  database
+} from '../../firebase'
 import { useDebouncedRef } from '../../utils/useDebouncedRef'
 import { appendNotificationForUser } from '../../utils/recordNotifications'
 
@@ -17,10 +23,11 @@ export const Users = () => {
   const authStore = useAuthStore()
   const groupStore = useGroupStore()
   const userStore = useUserStore()
-  const { updateData, read, deleteData, setData } = useFireBase()
+  const { updateData, read, deleteData } = useFireBase()
 
   const editDialogVisible = ref(false)
   const editForm = ref({ name: '', mobile: '' })
+  const initialEditForm = ref({ name: '', mobile: '' })
 
   const users = computed(() => userStore.getUsers || [])
   const groups = computed(() => groupStore.getGroups || [])
@@ -33,16 +40,13 @@ export const Users = () => {
   const sharedGroupsOnly = ref(route.query.shared === '1')
 
   // Sync filters to URL so they are bookmarkable and shareable
-  watch(
-    [searchQuery, sortOrder, sharedGroupsOnly],
-    () => {
-      const query = {}
-      if (searchQuery.value) query.q = searchQuery.value
-      if (sortOrder.value) query.sort = sortOrder.value
-      if (sharedGroupsOnly.value) query.shared = '1'
-      router.replace({ path: route.path, query })
-    }
-  )
+  watch([searchQuery, sortOrder, sharedGroupsOnly], () => {
+    const query = {}
+    if (searchQuery.value) query.q = searchQuery.value
+    if (sortOrder.value) query.sort = sortOrder.value
+    if (sharedGroupsOnly.value) query.shared = '1'
+    router.replace({ path: route.path, query })
+  })
 
   const activeGroupMobiles = computed(() => {
     const groupId = groupStore.getActiveGroup
@@ -101,32 +105,38 @@ export const Users = () => {
     return result
   })
 
-  // Load full user data (app.js only loads minimal fields)
-  // Only show verified users to prevent unverified accounts from being added to groups
-  onMounted(async () => {
-    try {
-      const rawUsers = await read(DB_NODES.USERS)
-      if (!rawUsers) return
+  // Load full user data with real-time updates so delete/approve/reject
+  // actions are reflected instantly on all connected sessions.
+  let usersUnsubscribe = null
+  onMounted(() => {
+    usersUnsubscribe = onSnapshot(
+      collection(database, DB_NODES.USERS),
+      (snap) => {
+        snap.docs.forEach((docSnap) => {
+          const mobile = docSnap.id
+          const u = docSnap.data()
+          if (u.emailVerified === true) {
+            userStore.addUser({
+              mobile,
+              name: u.name || '',
+              addedBy: u.addedBy || null,
+              maskedMobile: maskMobile(mobile),
+              deleteRequest: u.deleteRequest || null,
+              updateRequest: u.updateRequest || null,
+              bugResolver: u.bugResolver === true
+            })
+          }
+        })
+        isPageLoading.value = false
+      },
+      () => {
+        isPageLoading.value = false
+      }
+    )
+  })
 
-      Object.keys(rawUsers).forEach((mobile) => {
-        const u = rawUsers[mobile]
-        // Only include users who have verified their email
-        // emailVerified is set to true on first successful login
-        if (u.emailVerified === true) {
-          userStore.addUser({
-            mobile,
-            name: u.name || '',
-            addedBy: u.addedBy || null,
-            maskedMobile: maskMobile(mobile),
-            deleteRequest: u.deleteRequest || null,
-            updateRequest: u.updateRequest || null,
-            bugResolver: u.bugResolver === true
-          })
-        }
-      })
-    } finally {
-      isPageLoading.value = false
-    }
+  onUnmounted(() => {
+    if (usersUnsubscribe) usersUnsubscribe()
   })
 
   // --- Permission helpers ---
@@ -166,8 +176,14 @@ export const Users = () => {
   // --- Edit User ---
 
   function openEditUser(row) {
-    editForm.value = { name: row.name, mobile: row.mobile }
+    initialEditForm.value = { name: row.name, mobile: row.mobile }
+    editForm.value = { ...initialEditForm.value }
     editDialogVisible.value = true
+  }
+
+  function resetEditUserForm() {
+    editForm.value = { ...initialEditForm.value }
+    editUserFormRef.value?.clearValidate()
   }
 
   async function submitUpdateUser() {
@@ -214,9 +230,9 @@ export const Users = () => {
         })
       }
 
-      await setData(
-        `${DB_NODES.GROUPS}/${group.id}/notifications`,
-        updatedGroup.notifications,
+      await updateData(
+        `${DB_NODES.GROUPS}/${group.id}`,
+        () => ({ notifications: updatedGroup.notifications }),
         ''
       )
     }
@@ -379,12 +395,26 @@ export const Users = () => {
       if (!user) return showError('User not found')
 
       const field = type === 'delete' ? 'deleteRequest' : 'updateRequest'
+      const rejectionData =
+        type === 'delete'
+          ? {
+              rejectionNotification: {
+                type: 'delete-rejected',
+                message: `Your account deletion request was rejected by ${
+                  userStore.getUserByMobile(activeUser.value)?.name ||
+                  activeUser.value
+                }.`,
+                rejectedBy: activeUser.value,
+                timestamp: Date.now()
+              }
+            }
+          : {}
       await updateData(
         `${DB_NODES.USERS}/${userMobile}`,
-        () => ({ [field]: null }),
+        () => ({ [field]: null, ...rejectionData }),
         `${type === 'delete' ? 'Delete' : 'Update'} request rejected`
       )
-      userStore.addUser({ mobile: userMobile, [field]: null })
+      userStore.addUser({ mobile: userMobile, [field]: null, ...rejectionData })
     } catch (e) {
       if (e !== 'cancel') showError(e?.message || 'Failed to reject request')
     }
@@ -442,6 +472,7 @@ export const Users = () => {
     selectedUserGroups,
     selectedUserName,
     openGroupsDialog,
-    handleEditUserSave
+    handleEditUserSave,
+    resetEditUserForm
   }
 }

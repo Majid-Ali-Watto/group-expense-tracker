@@ -3,6 +3,7 @@
     v-model="visible"
     title="How to Use Kharchafy"
     :width="isMobile ? '95%' : '680px'"
+    append-to-body
     :close-on-click-modal="true"
     :close-on-press-escape="true"
     @close="handleClose"
@@ -517,10 +518,23 @@
         <!-- Row 2: Email -->
         <div class="help-footer-row2">
           <span class="help-email-label">Need help?</span>
-          <a href="mailto:majid.teresol@gmail.com" class="help-email-link" title="Email support">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+          <a
+            href="mailto:majid.teresol@gmail.com"
+            class="help-email-link"
+            title="Email support"
+          >
+            <svg
+              class="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+              />
             </svg>
             majid.teresol@gmail.com
           </a>

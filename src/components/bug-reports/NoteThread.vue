@@ -26,16 +26,22 @@
             :rows="2"
             :maxlength="1000"
             :has-error="!!noteEditError"
-            @keydown.enter.ctrl.prevent="$emit('save-edit', note, localEditText)"
+            @keydown.enter.ctrl.prevent="
+              $emit('save-edit', note, localEditText)
+            "
           />
           <p v-if="noteEditError" class="nt-edit-error">{{ noteEditError }}</p>
           <div class="nt-edit-actions">
-            <button class="nt-edit-cancel" @click="$emit('cancel-edit')">Cancel</button>
+            <button class="nt-edit-cancel" @click="$emit('cancel-edit')">
+              Cancel
+            </button>
             <button
               class="nt-edit-save"
               :disabled="noteEditSavingId === note.id"
               @click="$emit('save-edit', note, localEditText)"
-            >{{ noteEditSavingId === note.id ? 'Saving…' : 'Save' }}</button>
+            >
+              {{ noteEditSavingId === note.id ? 'Saving…' : 'Save' }}
+            </button>
           </div>
         </template>
 
@@ -48,8 +54,19 @@
             @click="$emit('scroll-to', note.replyTo.noteId)"
           >
             <span class="nt-quote-author">
-              <svg class="w-2.5 h-2.5" style="display:inline;margin-right:2px" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+              <svg
+                class="w-2.5 h-2.5"
+                style="display: inline; margin-right: 2px"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2.5"
+                  d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"
+                />
               </svg>
               {{ note.replyTo.authorName }}
             </span>
@@ -60,29 +77,76 @@
           <div class="nt-text-row">
             <!-- eslint-disable-next-line vue/no-v-html -->
             <p class="nt-text" v-html="markdownToHtml(note.text)"></p>
-            <button class="nt-copy-btn" title="Copy note" @click.stop="copyText(note.text)">
-              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            <button
+              class="nt-copy-btn"
+              title="Copy note"
+              @click.stop="copyText(note.text)"
+            >
+              <svg
+                class="w-3 h-3"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                />
               </svg>
             </button>
           </div>
 
           <!-- Note images -->
           <div v-if="note.images?.length" class="nt-imgs">
-            <div v-for="(img, ni) in note.images" :key="ni" class="nt-img-thumb">
+            <div
+              v-for="(img, ni) in note.images"
+              :key="ni"
+              class="nt-img-thumb"
+            >
               <img :src="img.url" :alt="`Image ${ni + 1}`" />
               <span class="nt-img-overlay">
-                <a :href="img.url" target="_blank" rel="noopener noreferrer" class="nt-img-action-btn" title="Open">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                <a
+                  :href="img.url"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="nt-img-action-btn"
+                  title="Open"
+                >
+                  <svg
+                    class="w-3.5 h-3.5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                    />
                   </svg>
                 </a>
-                <button class="nt-img-action-btn" title="Download" @click.prevent="downloadImage(img.url, `note-image-${ni + 1}`)">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                <button
+                  class="nt-img-action-btn"
+                  title="Download"
+                  @click.prevent="
+                    downloadImage(img.url, `note-image-${ni + 1}`)
+                  "
+                >
+                  <svg
+                    class="w-3.5 h-3.5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                    />
                   </svg>
                 </button>
               </span>
@@ -98,25 +162,53 @@
               :class="{ 'is-mine': rx.mine }"
               :title="rx.mine ? 'Remove reaction' : 'Add reaction'"
               @click="$emit('toggle-reaction', note, rx.emoji)"
-            >{{ rx.emoji }} {{ rx.count }}</button>
+            >
+              {{ rx.emoji }} {{ rx.count }}
+            </button>
           </div>
 
           <!-- Action bar -->
           <div class="nt-actions">
             <!-- Reply -->
-            <button class="nt-action-btn" title="Reply to this note" @click="$emit('reply', note)">
-              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+            <button
+              class="nt-action-btn"
+              title="Reply to this note"
+              @click="$emit('reply', note)"
+            >
+              <svg
+                class="w-3 h-3"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"
+                />
               </svg>
             </button>
 
             <!-- Emoji picker -->
             <div class="nt-reaction-wrap">
-              <button class="nt-action-btn" title="React" @click.stop="$emit('toggle-picker', note.id, $event)">
-                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <button
+                class="nt-action-btn"
+                title="React"
+                @click.stop="$emit('toggle-picker', note.id, $event)"
+              >
+                <svg
+                  class="w-3 h-3"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
                 </svg>
               </button>
               <div
@@ -130,7 +222,9 @@
                   class="nt-reaction-picker-btn"
                   :class="{ 'is-selected': isReactedByMe(note, emoji) }"
                   @click.stop="$emit('toggle-reaction', note, emoji)"
-                >{{ emoji }}</button>
+                >
+                  {{ emoji }}
+                </button>
               </div>
             </div>
 
@@ -141,9 +235,18 @@
               title="Edit"
               @click="$emit('start-edit', note)"
             >
-              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              <svg
+                class="w-3 h-3"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                />
               </svg>
             </button>
 
@@ -154,9 +257,18 @@
               title="Delete"
               @click="$emit('delete', note)"
             >
-              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              <svg
+                class="w-3 h-3"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                />
               </svg>
             </button>
           </div>
@@ -170,10 +282,19 @@
     <!-- Reply banner -->
     <div v-if="replyingTo" class="nt-reply-banner">
       <span class="nt-reply-banner-label">
-        Replying to <strong>{{ replyingTo.authorName }}</strong>:
-        <span class="nt-reply-banner-preview">{{ replyingTo.text.slice(0, 80) }}</span>
+        Replying to <strong>{{ replyingTo.authorName }}</strong
+        >:
+        <span class="nt-reply-banner-preview">{{
+          replyingTo.text.slice(0, 80)
+        }}</span>
       </span>
-      <button class="nt-reply-banner-dismiss" title="Cancel reply" @click="$emit('cancel-reply')">✕</button>
+      <button
+        class="nt-reply-banner-dismiss"
+        title="Cancel reply"
+        @click="$emit('cancel-reply')"
+      >
+        ✕
+      </button>
     </div>
 
     <MarkdownEditor
@@ -201,7 +322,12 @@
 <script setup>
 import { ref, watch } from 'vue'
 import { REACTION_EMOJIS } from '../../scripts/bug-reports/note-thread'
-import { markdownToHtml, formatDate, copyText, downloadImage } from '../../scripts/bug-reports/markdown'
+import {
+  markdownToHtml,
+  formatDate,
+  copyText,
+  downloadImage
+} from '../../scripts/bug-reports/markdown'
 import MarkdownEditor from '../generic-components/MarkdownEditor.vue'
 
 const props = defineProps({
@@ -209,9 +335,15 @@ const props = defineProps({
   /** DOM id prefix used for scroll-to-note targets, e.g. 'bra-note' */
   idPrefix: { type: String, required: true },
   /** Callback to determine avatar character */
-  avatarCharFn: { type: Function, default: (note) => (note.authorName || '?').charAt(0).toUpperCase() },
+  avatarCharFn: {
+    type: Function,
+    default: (note) => (note.authorName || '?').charAt(0).toUpperCase()
+  },
   /** Callback to determine displayed author label */
-  authorLabelFn: { type: Function, default: (note) => note.authorName ?? note.authorType },
+  authorLabelFn: {
+    type: Function,
+    default: (note) => note.authorName ?? note.authorType
+  },
   /** Callback: should Edit be shown for this note? */
   canEdit: { type: Function, default: () => false },
   /** Callback: should Delete be shown for this note? */
@@ -233,7 +365,10 @@ const props = defineProps({
   // Compose
   composeText: { type: String, default: '' },
   composeError: { type: String, default: '' },
-  composePlaceholder: { type: String, default: 'Write a note… Ctrl+Enter to send' },
+  composePlaceholder: {
+    type: String,
+    default: 'Write a note… Ctrl+Enter to send'
+  },
   sending: { type: Boolean, default: false }
 })
 
@@ -254,7 +389,12 @@ defineEmits([
 
 // Local copy of noteEditText so MarkdownEditor can mutate without prop violation
 const localEditText = ref(props.noteEditText)
-watch(() => props.noteEditText, (v) => { localEditText.value = v })
+watch(
+  () => props.noteEditText,
+  (v) => {
+    localEditText.value = v
+  }
+)
 
 function avatarChar(note) {
   return props.avatarCharFn(note)
@@ -283,7 +423,9 @@ function authorLabel(note) {
   align-items: flex-start;
 }
 
-.nt-item--reporter { flex-direction: row-reverse; }
+.nt-item--reporter {
+  flex-direction: row-reverse;
+}
 
 /* ── Avatar ─────────────────────────────────────────────────────────────── */
 .nt-avatar {
@@ -297,8 +439,14 @@ function authorLabel(note) {
   font-weight: 700;
   flex-shrink: 0;
 }
-.nt-avatar--admin    { background: #dbeafe; color: #1d4ed8; }
-.nt-avatar--reporter { background: #dcfce7; color: #15803d; }
+.nt-avatar--admin {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+.nt-avatar--reporter {
+  background: #dcfce7;
+  color: #15803d;
+}
 
 /* ── Note body ──────────────────────────────────────────────────────────── */
 .nt-body {
@@ -319,11 +467,24 @@ function authorLabel(note) {
   gap: 6px;
   margin-bottom: 3px;
 }
-.nt-item--reporter .nt-meta { flex-direction: row-reverse; }
+.nt-item--reporter .nt-meta {
+  flex-direction: row-reverse;
+}
 
-.nt-author { font-size: 11px; font-weight: 600; color: var(--el-text-color-primary); }
-.nt-time   { font-size: 10px; color: var(--el-text-color-placeholder); }
-.nt-edited { font-size: 9.5px; color: var(--el-text-color-placeholder); font-style: italic; }
+.nt-author {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+}
+.nt-time {
+  font-size: 10px;
+  color: var(--el-text-color-placeholder);
+}
+.nt-edited {
+  font-size: 9.5px;
+  color: var(--el-text-color-placeholder);
+  font-style: italic;
+}
 
 /* ── Note text bubble ───────────────────────────────────────────────────── */
 .nt-text-row {
@@ -345,20 +506,63 @@ function authorLabel(note) {
   display: inline-block;
 }
 
-.nt-item--admin    .nt-text { background: #eff6ff; color: #1e3a5f; border-radius: 2px 8px 8px 8px; }
-.nt-item--reporter .nt-text { background: #f0fdf4; color: #14532d; border-radius: 8px 2px 8px 8px; }
+.nt-item--admin .nt-text {
+  background: #eff6ff;
+  color: #1e3a5f;
+  border-radius: 2px 8px 8px 8px;
+}
+.nt-item--reporter .nt-text {
+  background: #f0fdf4;
+  color: #14532d;
+  border-radius: 8px 2px 8px 8px;
+}
 
 /* markdown inside note text */
-.nt-text :deep(p)           { margin: 0 0 3px; }
-.nt-text :deep(p:last-child){ margin-bottom: 0; }
-.nt-text :deep(strong)      { font-weight: 600; }
-.nt-text :deep(em)          { font-style: italic; }
-.nt-text :deep(code)        { font-family: monospace; font-size: 11.5px; background: rgba(0,0,0,0.08); padding: 1px 4px; border-radius: 3px; }
-.nt-text :deep(pre)         { margin: 4px 0; border-radius: 5px; overflow-x: auto; background: rgba(0,0,0,0.07); padding: 8px 10px; white-space: pre-wrap; }
-.nt-text :deep(pre code)    { background: none; padding: 0; font-size: 11px; }
-.nt-text :deep(ul)          { margin: 2px 0 3px 0; padding-left: 18px; list-style-type: disc; }
-.nt-text :deep(ol)          { margin: 2px 0 3px 0; padding-left: 22px; list-style-type: decimal; }
-.nt-text :deep(li)          { margin: 1px 0; }
+.nt-text :deep(p) {
+  margin: 0 0 3px;
+}
+.nt-text :deep(p:last-child) {
+  margin-bottom: 0;
+}
+.nt-text :deep(strong) {
+  font-weight: 600;
+}
+.nt-text :deep(em) {
+  font-style: italic;
+}
+.nt-text :deep(code) {
+  font-family: monospace;
+  font-size: 11.5px;
+  background: rgba(0, 0, 0, 0.08);
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+.nt-text :deep(pre) {
+  margin: 4px 0;
+  border-radius: 5px;
+  overflow-x: auto;
+  background: rgba(0, 0, 0, 0.07);
+  padding: 8px 10px;
+  white-space: pre-wrap;
+}
+.nt-text :deep(pre code) {
+  background: none;
+  padding: 0;
+  font-size: 11px;
+}
+.nt-text :deep(ul) {
+  margin: 2px 0 3px 0;
+  padding-left: 18px;
+  list-style-type: disc;
+}
+.nt-text :deep(ol) {
+  margin: 2px 0 3px 0;
+  padding-left: 22px;
+  list-style-type: decimal;
+}
+.nt-text :deep(li) {
+  margin: 1px 0;
+}
 
 /* ── Copy button ────────────────────────────────────────────────────────── */
 .nt-copy-btn {
@@ -377,7 +581,11 @@ function authorLabel(note) {
   transition: all 0.12s;
   margin-top: 1px;
 }
-.nt-copy-btn:hover { background: var(--el-fill-color); border-color: var(--el-border-color); color: var(--el-text-color-primary); }
+.nt-copy-btn:hover {
+  background: var(--el-fill-color);
+  border-color: var(--el-border-color);
+  color: var(--el-text-color-primary);
+}
 
 /* ── Note images ────────────────────────────────────────────────────────── */
 .nt-imgs {
@@ -397,12 +605,16 @@ function authorLabel(note) {
   flex-shrink: 0;
 }
 
-.nt-img-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.nt-img-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 
 .nt-img-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(0,0,0,0.45);
+  background: rgba(0, 0, 0, 0.45);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -411,7 +623,9 @@ function authorLabel(note) {
   opacity: 0;
   transition: opacity 0.15s;
 }
-.nt-img-thumb:hover .nt-img-overlay { opacity: 1; }
+.nt-img-thumb:hover .nt-img-overlay {
+  opacity: 1;
+}
 
 .nt-img-action-btn {
   display: flex;
@@ -421,14 +635,16 @@ function authorLabel(note) {
   height: 26px;
   border-radius: 5px;
   border: none;
-  background: rgba(255,255,255,0.18);
+  background: rgba(255, 255, 255, 0.18);
   color: #fff;
   cursor: pointer;
   padding: 0;
   transition: background 0.12s;
   text-decoration: none;
 }
-.nt-img-action-btn:hover { background: rgba(255,255,255,0.35); }
+.nt-img-action-btn:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
 
 /* ── Reactions ──────────────────────────────────────────────────────────── */
 .nt-reactions {
@@ -451,8 +667,15 @@ function authorLabel(note) {
   transition: all 0.12s;
   line-height: 1.6;
 }
-.nt-reaction-chip:hover { border-color: #6366f1; background: #eef2ff; }
-.nt-reaction-chip.is-mine { border-color: #6366f1; background: #e0e7ff; font-weight: 600; }
+.nt-reaction-chip:hover {
+  border-color: #6366f1;
+  background: #eef2ff;
+}
+.nt-reaction-chip.is-mine {
+  border-color: #6366f1;
+  background: #e0e7ff;
+  font-weight: 600;
+}
 
 /* ── Action bar ─────────────────────────────────────────────────────────── */
 .nt-actions {
@@ -463,7 +686,9 @@ function authorLabel(note) {
   opacity: 0;
   transition: opacity 0.15s;
 }
-.nt-item:hover .nt-actions { opacity: 1; }
+.nt-item:hover .nt-actions {
+  opacity: 1;
+}
 
 .nt-action-btn {
   display: flex;
@@ -479,11 +704,21 @@ function authorLabel(note) {
   padding: 0;
   transition: all 0.12s;
 }
-.nt-action-btn:hover { background: var(--el-fill-color); border-color: var(--el-border-color); color: var(--el-text-color-primary); }
-.nt-action-btn--del:hover { background: #fee2e2; border-color: #ef4444; color: #ef4444; }
+.nt-action-btn:hover {
+  background: var(--el-fill-color);
+  border-color: var(--el-border-color);
+  color: var(--el-text-color-primary);
+}
+.nt-action-btn--del:hover {
+  background: #fee2e2;
+  border-color: #ef4444;
+  color: #ef4444;
+}
 
 /* ── Emoji picker ───────────────────────────────────────────────────────── */
-.nt-reaction-wrap { position: relative; }
+.nt-reaction-wrap {
+  position: relative;
+}
 
 .nt-reaction-picker {
   position: absolute;
@@ -495,11 +730,17 @@ function authorLabel(note) {
   background: var(--el-bg-color-overlay);
   border: 1px solid var(--el-border-color);
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
   white-space: nowrap;
 }
-.nt-reaction-picker.align-left  { left: 0;  right: auto; }
-.nt-reaction-picker.align-right { right: 0; left: auto; }
+.nt-reaction-picker.align-left {
+  left: 0;
+  right: auto;
+}
+.nt-reaction-picker.align-right {
+  right: 0;
+  left: auto;
+}
 
 .nt-reaction-picker-btn {
   font-size: 16px;
@@ -511,20 +752,27 @@ function authorLabel(note) {
   cursor: pointer;
   transition: background 0.1s;
 }
-.nt-reaction-picker-btn:hover      { background: var(--el-fill-color); }
-.nt-reaction-picker-btn.is-selected{ background: #e0e7ff; border-color: #6366f1; }
+.nt-reaction-picker-btn:hover {
+  background: var(--el-fill-color);
+}
+.nt-reaction-picker-btn.is-selected {
+  background: #e0e7ff;
+  border-color: #6366f1;
+}
 
 /* ── Reply-to quote block ───────────────────────────────────────────────── */
 .nt-quote {
   margin-bottom: 5px;
   padding: 4px 8px;
   border-left: 2px solid #6366f1;
-  background: rgba(99,102,241,0.07);
+  background: rgba(99, 102, 241, 0.07);
   border-radius: 0 4px 4px 0;
   cursor: pointer;
   transition: background 0.12s;
 }
-.nt-quote:hover { background: rgba(99,102,241,0.14); }
+.nt-quote:hover {
+  background: rgba(99, 102, 241, 0.14);
+}
 
 .nt-quote-author {
   font-size: 10px;
@@ -544,7 +792,11 @@ function authorLabel(note) {
 }
 
 /* ── Note edit controls ─────────────────────────────────────────────────── */
-.nt-edit-error { font-size: 11.5px; color: #ef4444; margin: 3px 0 0; }
+.nt-edit-error {
+  font-size: 11.5px;
+  color: #ef4444;
+  margin: 3px 0 0;
+}
 
 .nt-edit-actions {
   display: flex;
@@ -562,7 +814,9 @@ function authorLabel(note) {
   font-size: 12px;
   cursor: pointer;
 }
-.nt-edit-cancel:hover { background: var(--el-fill-color); }
+.nt-edit-cancel:hover {
+  background: var(--el-fill-color);
+}
 
 .nt-edit-save {
   padding: 3px 10px;
@@ -574,11 +828,20 @@ function authorLabel(note) {
   font-weight: 600;
   cursor: pointer;
 }
-.nt-edit-save:hover:not(:disabled) { background: #4338ca; }
-.nt-edit-save:disabled { opacity: 0.5; cursor: not-allowed; }
+.nt-edit-save:hover:not(:disabled) {
+  background: #4338ca;
+}
+.nt-edit-save:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 
 /* ── Compose area ───────────────────────────────────────────────────────── */
-.nt-compose { display: flex; flex-direction: column; gap: 6px; }
+.nt-compose {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
 
 .nt-reply-banner {
   display: flex;
@@ -601,7 +864,10 @@ function authorLabel(note) {
   text-overflow: ellipsis;
 }
 
-.nt-reply-banner-preview { color: var(--el-text-color-placeholder); font-style: italic; }
+.nt-reply-banner-preview {
+  color: var(--el-text-color-placeholder);
+  font-style: italic;
+}
 
 .nt-reply-banner-dismiss {
   flex-shrink: 0;
@@ -613,9 +879,15 @@ function authorLabel(note) {
   padding: 0 2px;
   line-height: 1;
 }
-.nt-reply-banner-dismiss:hover { color: var(--el-text-color-primary); }
+.nt-reply-banner-dismiss:hover {
+  color: var(--el-text-color-primary);
+}
 
-.nt-compose-error { margin: 2px 0 0; font-size: 11.5px; color: #ef4444; }
+.nt-compose-error {
+  margin: 2px 0 0;
+  font-size: 11.5px;
+  color: #ef4444;
+}
 
 .nt-compose-actions {
   display: flex;
@@ -624,7 +896,11 @@ function authorLabel(note) {
   justify-content: flex-end;
 }
 
-.nt-charcount { font-size: 11px; color: var(--el-text-color-placeholder); margin-right: auto; }
+.nt-charcount {
+  font-size: 11px;
+  color: var(--el-text-color-placeholder);
+  margin-right: auto;
+}
 
 .nt-send-btn {
   padding: 4px 12px;
@@ -637,13 +913,22 @@ function authorLabel(note) {
   cursor: pointer;
   transition: background 0.12s;
 }
-.nt-send-btn:hover:not(:disabled) { background: #4338ca; }
-.nt-send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.nt-send-btn:hover:not(:disabled) {
+  background: #4338ca;
+}
+.nt-send-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 
 /* ── Scroll-flash highlight ─────────────────────────────────────────────── */
 @keyframes nt-flash {
-  0%   { background: rgba(99,102,241,0.22); }
-  100% { background: transparent; }
+  0% {
+    background: rgba(99, 102, 241, 0.22);
+  }
+  100% {
+    background: transparent;
+  }
 }
 
 /* Highlight class is added/removed by scrollToNote() via classList */
@@ -653,21 +938,70 @@ function authorLabel(note) {
 }
 
 /* ── Dark theme ─────────────────────────────────────────────────────────── */
-:root.dark-theme .nt-avatar--admin    { background: rgba(59,130,246,0.2); color: #93c5fd; }
-:root.dark-theme .nt-avatar--reporter { background: rgba(34,197,94,0.2);  color: #86efac; }
-:root.dark-theme .nt-author           { color: #e5e7eb; }
-:root.dark-theme .nt-item--admin    .nt-text { background: rgba(59,130,246,0.12); color: #bfdbfe; }
-:root.dark-theme .nt-item--reporter .nt-text { background: rgba(34,197,94,0.12);  color: #bbf7d0; }
-:root.dark-theme .nt-reaction-picker { background: #1f2937; border-color: #374151; }
-:root.dark-theme .nt-reaction-picker-btn:hover { background: #374151; }
-:root.dark-theme .nt-reaction-picker-btn.is-selected { background: #312e81; border-color: #6366f1; }
-:root.dark-theme .nt-reaction-chip  { background: #1f2937; border-color: #374151; }
-:root.dark-theme .nt-reaction-chip:hover { border-color: #6366f1; background: #312e81; }
-:root.dark-theme .nt-reaction-chip.is-mine { border-color: #6366f1; background: #312e81; }
-:root.dark-theme .nt-img-thumb { border-color: #4b5563; }
-:root.dark-theme .nt-quote { background: rgba(99,102,241,0.12); border-color: #818cf8; }
-:root.dark-theme .nt-quote-author { color: #a5b4fc; }
-:root.dark-theme .nt-reply-banner { background: rgba(99,102,241,0.15); border-color: #818cf8; }
-:root.dark-theme .nt-action-btn:hover { background: #374151; border-color: #4b5563; color: #e5e7eb; }
-:root.dark-theme .nt-action-btn--del:hover { background: rgba(239,68,68,0.15); border-color: #ef4444; color: #fca5a5; }
+:root.dark-theme .nt-avatar--admin {
+  background: rgba(59, 130, 246, 0.2);
+  color: #93c5fd;
+}
+:root.dark-theme .nt-avatar--reporter {
+  background: rgba(34, 197, 94, 0.2);
+  color: #86efac;
+}
+:root.dark-theme .nt-author {
+  color: #e5e7eb;
+}
+:root.dark-theme .nt-item--admin .nt-text {
+  background: rgba(59, 130, 246, 0.12);
+  color: #bfdbfe;
+}
+:root.dark-theme .nt-item--reporter .nt-text {
+  background: rgba(34, 197, 94, 0.12);
+  color: #bbf7d0;
+}
+:root.dark-theme .nt-reaction-picker {
+  background: #1f2937;
+  border-color: #374151;
+}
+:root.dark-theme .nt-reaction-picker-btn:hover {
+  background: #374151;
+}
+:root.dark-theme .nt-reaction-picker-btn.is-selected {
+  background: #312e81;
+  border-color: #6366f1;
+}
+:root.dark-theme .nt-reaction-chip {
+  background: #1f2937;
+  border-color: #374151;
+}
+:root.dark-theme .nt-reaction-chip:hover {
+  border-color: #6366f1;
+  background: #312e81;
+}
+:root.dark-theme .nt-reaction-chip.is-mine {
+  border-color: #6366f1;
+  background: #312e81;
+}
+:root.dark-theme .nt-img-thumb {
+  border-color: #4b5563;
+}
+:root.dark-theme .nt-quote {
+  background: rgba(99, 102, 241, 0.12);
+  border-color: #818cf8;
+}
+:root.dark-theme .nt-quote-author {
+  color: #a5b4fc;
+}
+:root.dark-theme .nt-reply-banner {
+  background: rgba(99, 102, 241, 0.15);
+  border-color: #818cf8;
+}
+:root.dark-theme .nt-action-btn:hover {
+  background: #374151;
+  border-color: #4b5563;
+  color: #e5e7eb;
+}
+:root.dark-theme .nt-action-btn--del:hover {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: #ef4444;
+  color: #fca5a5;
+}
 </style>

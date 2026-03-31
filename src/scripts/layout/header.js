@@ -1,7 +1,14 @@
 import { ref, computed, watch } from 'vue'
 import { ElMessageBox } from 'element-plus'
-import { database, ref as dbRef, remove } from '../../firebase'
+import {
+  database,
+  doc,
+  deleteDoc,
+  updateDoc,
+  deleteField
+} from '../../firebase'
 import { DB_NODES } from '../../constants/db-nodes'
+import { showError, showSuccess } from '../../utils/showAlerts'
 
 export const Header = (props, emit) => {
   const notifVisible = ref(false)
@@ -43,6 +50,58 @@ export const Header = (props, emit) => {
     emit('show-net-position')
   }
 
+  async function copyUrl(url) {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(url)
+      return
+    }
+
+    const textarea = document.createElement('textarea')
+    textarea.value = url
+    textarea.setAttribute('readonly', '')
+    textarea.style.position = 'fixed'
+    textarea.style.opacity = '0'
+    textarea.style.pointerEvents = 'none'
+    document.body.appendChild(textarea)
+    textarea.select()
+    textarea.setSelectionRange(0, textarea.value.length)
+
+    try {
+      const copied = document.execCommand('copy')
+      if (!copied) throw new Error('Copy command failed')
+    } finally {
+      document.body.removeChild(textarea)
+    }
+  }
+
+  async function shareCurrentUrl() {
+    const url = window.location.href
+    const payload = {
+      title: document.title || 'Kharchafy',
+      text: 'Open this page in Kharchafy.',
+      url
+    }
+
+    try {
+      if (navigator.share) {
+        await navigator.share(payload)
+        return
+      }
+    } catch (error) {
+      if (error?.name === 'AbortError') return
+    }
+
+    try {
+      await copyUrl(url)
+      showSuccess('Link copied to clipboard!')
+    } catch {
+      window.prompt('Copy this link:', url)
+      showError(
+        'Native share is unavailable, so the link was opened for manual copy.'
+      )
+    }
+  }
+
   async function handleNavigate(notif) {
     notifVisible.value = false
     if (notif.action === 'open-bug-report') {
@@ -54,9 +113,22 @@ export const Header = (props, emit) => {
 
     if (notif.action === 'open-admin-bug-report' && notif.bugId) {
       props.dismissNotification(notif.id)
-      remove(
-        dbRef(database, `${DB_NODES.BUG_REPORT_NOTIFICATIONS}/admin/${notif.bugId}`)
+      deleteDoc(
+        doc(
+          database,
+          DB_NODES.BUG_REPORT_NOTIFICATIONS,
+          'admin',
+          'items',
+          notif.bugId
+        )
       ).catch(() => {})
+    }
+
+    if (notif.action === 'dismiss-user-rejection' && notif.userMobile) {
+      props.dismissNotification(notif.id)
+      updateDoc(doc(database, DB_NODES.USERS, notif.userMobile), {
+        rejectionNotification: deleteField()
+      }).catch(() => {})
     }
 
     if (!notif.tab) return
@@ -83,6 +155,7 @@ export const Header = (props, emit) => {
     setLoggedInStatus,
     confirmLogout,
     handleNetPosition,
+    shareCurrentUrl,
     handleNavigate,
     notifsByCategory,
     notifCategories

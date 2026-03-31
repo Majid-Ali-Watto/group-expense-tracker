@@ -2,6 +2,7 @@ import { computed } from 'vue'
 import { ElMessageBox } from 'element-plus'
 import { appendNotificationForUser } from './recordNotifications'
 import { maskMobile } from './maskMobile'
+import { deleteField } from '../firebase'
 
 export function useApprovalRequests({
   rawItems,
@@ -137,11 +138,15 @@ export function useApprovalRequests({
       })
 
       if (filtered.length === 0) {
-        await deleteData(`${itemPath}/notifications/${activeUser.value}`, '')
+        await updateData(
+          itemPath,
+          () => ({ [`notifications.${activeUser.value}`]: deleteField() }),
+          ''
+        )
       } else {
         await updateData(
-          `${itemPath}/notifications/${activeUser.value}`,
-          () => filtered,
+          itemPath,
+          () => ({ [`notifications.${activeUser.value}`]: filtered }),
           ''
         )
       }
@@ -160,8 +165,8 @@ export function useApprovalRequests({
     const nextItem = appendNotificationForUser(item, requestedBy, notification)
 
     await updateData(
-      `${itemPath}/notifications`,
-      () => nextItem.notifications,
+      itemPath,
+      () => ({ notifications: nextItem.notifications }),
       ''
     )
   }
@@ -174,7 +179,11 @@ export function useApprovalRequests({
       itemId
     })
 
-    await deleteData(`${itemPath}/${request.type}Request`, '')
+    await updateData(
+      itemPath,
+      () => ({ [`${request.type}Request`]: deleteField() }),
+      ''
+    )
 
     const changesSummary =
       request.type === 'update' ? summarizeChanges(request.changes) : ''
@@ -238,8 +247,9 @@ export function useApprovalRequests({
       itemId: request[itemIdKey]
     })
 
-    await deleteData(
-      `${itemPath}/${request.type}Request`,
+    await updateData(
+      itemPath,
+      () => ({ [`${request.type}Request`]: deleteField() }),
       `${request.type} request has been cancelled.`
     )
   }
@@ -254,8 +264,8 @@ export function useApprovalRequests({
     const updatedApprovals = [...request.approvals, activeUser.value]
 
     await updateData(
-      `${itemPath}/${request.type}Request`,
-      () => ({ approvals: updatedApprovals }),
+      itemPath,
+      () => ({ [`${request.type}Request.approvals`]: updatedApprovals }),
       'Your approval has been recorded.'
     )
 
@@ -299,8 +309,9 @@ export function useApprovalRequests({
       notification
     )
 
-    await deleteData(
-      `${itemPath}/${request.type}Request`,
+    await updateData(
+      itemPath,
+      () => ({ [`${request.type}Request`]: deleteField() }),
       `${request.type} request has been rejected.`
     )
   }

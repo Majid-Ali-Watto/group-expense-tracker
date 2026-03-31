@@ -22,7 +22,8 @@
               plain
               class="sm:hidden"
               @click="clearFilters()"
-            >Clear</el-button>
+              >Clear</el-button
+            >
             <el-button
               circle
               :type="showFilters ? 'danger' : 'primary'"
@@ -50,7 +51,8 @@
             plain
             class="hidden sm:inline-flex flex-shrink-0"
             @click="clearFilters()"
-          >Clear All</el-button>
+            >Clear All</el-button
+          >
         </div>
       </div>
 

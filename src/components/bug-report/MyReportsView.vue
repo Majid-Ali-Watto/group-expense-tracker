@@ -133,10 +133,23 @@
         <p v-if="r.bugNumber" class="bug-mr-number">#{{ r.bugNumber }}</p>
         <div class="bug-mr-title-row">
           <p class="bug-mr-title">{{ r.title }}</p>
-          <button class="bug-mr-copy-btn" title="Copy title" @click.stop="copyText(r.title)">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+          <button
+            class="bug-mr-copy-btn"
+            title="Copy title"
+            @click.stop="copyText(r.title)"
+          >
+            <svg
+              class="w-3.5 h-3.5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+              />
             </svg>
           </button>
         </div>
@@ -145,32 +158,72 @@
         <template v-if="expandedIds.has(r.id)">
           <div class="bug-mr-desc-row">
             <!-- eslint-disable-next-line vue/no-v-html -->
-            <div class="bug-mr-desc" v-html="markdownToHtml(r.description)"></div>
-            <button class="bug-mr-copy-btn bug-mr-copy-btn--desc" title="Copy description" @click.stop="copyText(r.description)">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            <div
+              class="bug-mr-desc"
+              v-html="markdownToHtml(r.description)"
+            ></div>
+            <button
+              class="bug-mr-copy-btn bug-mr-copy-btn--desc"
+              title="Copy description"
+              @click.stop="copyText(r.description)"
+            >
+              <svg
+                class="w-3.5 h-3.5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                />
               </svg>
             </button>
           </div>
           <div v-if="r.screenshots?.length" class="bug-mr-screenshots">
-            <div
-              v-for="(ss, i) in r.screenshots"
-              :key="i"
-              class="bug-mr-thumb"
-            >
+            <div v-for="(ss, i) in r.screenshots" :key="i" class="bug-mr-thumb">
               <img :src="ss.url" :alt="`Screenshot ${i + 1}`" />
               <span class="bug-mr-thumb-overlay">
-                <a :href="ss.url" target="_blank" rel="noopener" class="bug-mr-img-action-btn" title="Open">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                <a
+                  :href="ss.url"
+                  target="_blank"
+                  rel="noopener"
+                  class="bug-mr-img-action-btn"
+                  title="Open"
+                >
+                  <svg
+                    class="w-3.5 h-3.5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                    />
                   </svg>
                 </a>
-                <button class="bug-mr-img-action-btn" title="Download" @click.prevent="downloadImage(ss.url, `screenshot-${i + 1}`)">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                <button
+                  class="bug-mr-img-action-btn"
+                  title="Download"
+                  @click.prevent="downloadImage(ss.url, `screenshot-${i + 1}`)"
+                >
+                  <svg
+                    class="w-3.5 h-3.5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                    />
                   </svg>
                 </button>
               </span>
@@ -179,7 +232,10 @@
 
           <!-- Notes thread -->
           <div class="bug-mr-notes">
-            <button class="bug-mr-notes-toggle" @click="$emit('toggle-notes', r.id)">
+            <button
+              class="bug-mr-notes-toggle"
+              @click="$emit('toggle-notes', r.id)"
+            >
               <span class="bug-mr-notes-toggle-left">
                 <svg
                   class="w-3.5 h-3.5"
@@ -216,11 +272,20 @@
               <NoteThread
                 :notes="notesOf(r)"
                 id-prefix="bug-mr-note"
-                :avatar-char-fn="(note) => (note.authorType === 'admin' ? 'A' : note.authorName || '?').charAt(0).toUpperCase()"
-                :author-label-fn="(note) => note.authorType === 'admin' ? 'Admin' : 'You'"
+                :avatar-char-fn="
+                  (note) =>
+                    (note.authorType === 'admin' ? 'A' : note.authorName || '?')
+                      .charAt(0)
+                      .toUpperCase()
+                "
+                :author-label-fn="
+                  (note) => (note.authorType === 'admin' ? 'Admin' : 'You')
+                "
                 :can-edit="(note) => note.authorType === 'reporter'"
                 :can-delete="(note) => note.authorType === 'reporter'"
-                :is-reacted-by-me="(note, emoji) => !!note.reactions?.[emoji]?.[currentUserId]"
+                :is-reacted-by-me="
+                  (note, emoji) => !!note.reactions?.[emoji]?.[currentUserId]
+                "
                 :reactions-of="reactionsOf"
                 :open-reaction-picker="openReactionPicker"
                 :reaction-picker-align="reactionPickerAlign"
@@ -231,10 +296,18 @@
                 :note-edit-saving-id="noteEditSavingId"
                 :compose-text="replyInputs[r.id] || ''"
                 :compose-error="replyErrors[r.id] || ''"
-                :compose-placeholder="notesOf(r).length ? 'Reply to admin… Ctrl+Enter to send' : 'Add a comment for admin…'"
+                :compose-placeholder="
+                  notesOf(r).length
+                    ? 'Reply to admin… Ctrl+Enter to send'
+                    : 'Add a comment for admin…'
+                "
                 :sending="replySavingId === r.id"
-                @toggle-picker="(noteId, event) => $emit('toggle-picker', noteId, event)"
-                @toggle-reaction="(note, emoji) => $emit('toggle-reaction', r, note, emoji)"
+                @toggle-picker="
+                  (noteId, event) => $emit('toggle-picker', noteId, event)
+                "
+                @toggle-reaction="
+                  (note, emoji) => $emit('toggle-reaction', r, note, emoji)
+                "
                 @reply="(note) => $emit('reply', r.id, note)"
                 @cancel-reply="$emit('cancel-reply')"
                 @scroll-to="$emit('scroll-to', $event)"
@@ -242,7 +315,9 @@
                 @cancel-edit="$emit('cancel-edit')"
                 @save-edit="(note, text) => $emit('save-edit', r, note, text)"
                 @delete="(note) => $emit('delete-note', r, note)"
-                @update:compose-text="(val) => $emit('update:compose-text', r.id, val)"
+                @update:compose-text="
+                  (val) => $emit('update:compose-text', r.id, val)
+                "
                 @send="$emit('send', r)"
                 @editor-mounted="(el) => $emit('editor-mounted', r.id, el)"
               />
@@ -290,10 +365,23 @@ defineProps({
 })
 
 defineEmits([
-  'reopen', 'edit', 'delete', 'toggle-expand', 'toggle-notes',
-  'toggle-picker', 'toggle-reaction', 'reply', 'cancel-reply',
-  'scroll-to', 'start-edit', 'cancel-edit', 'save-edit', 'delete-note',
-  'update:compose-text', 'send', 'editor-mounted'
+  'reopen',
+  'edit',
+  'delete',
+  'toggle-expand',
+  'toggle-notes',
+  'toggle-picker',
+  'toggle-reaction',
+  'reply',
+  'cancel-reply',
+  'scroll-to',
+  'start-edit',
+  'cancel-edit',
+  'save-edit',
+  'delete-note',
+  'update:compose-text',
+  'send',
+  'editor-mounted'
 ])
 </script>
 
@@ -340,10 +428,18 @@ defineEmits([
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
 }
 
-.mr-sev-critical { border-left-color: #ef4444; }
-.mr-sev-high     { border-left-color: #f97316; }
-.mr-sev-medium   { border-left-color: #f59e0b; }
-.mr-sev-low      { border-left-color: #22c55e; }
+.mr-sev-critical {
+  border-left-color: #ef4444;
+}
+.mr-sev-high {
+  border-left-color: #f97316;
+}
+.mr-sev-medium {
+  border-left-color: #f59e0b;
+}
+.mr-sev-low {
+  border-left-color: #22c55e;
+}
 
 .bug-mr-top {
   display: flex;
@@ -369,13 +465,34 @@ defineEmits([
   white-space: nowrap;
   text-transform: capitalize;
 }
-.mr-badge-open         { background: #fee2e2; color: #b91c1c; }
-.mr-badge-in-progress  { background: #fef9c3; color: #92400e; }
-.mr-badge-needs-info   { background: #dbeafe; color: #1e40af; }
-.mr-badge-duplicate    { background: #f3e8ff; color: #6b21a8; }
-.mr-badge-wont-fix     { background: #f1f5f9; color: #475569; }
-.mr-badge-resolved     { background: #dcfce7; color: #166534; }
-.mr-badge-closed       { background: #e2e8f0; color: #334155; }
+.mr-badge-open {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+.mr-badge-in-progress {
+  background: #fef9c3;
+  color: #92400e;
+}
+.mr-badge-needs-info {
+  background: #dbeafe;
+  color: #1e40af;
+}
+.mr-badge-duplicate {
+  background: #f3e8ff;
+  color: #6b21a8;
+}
+.mr-badge-wont-fix {
+  background: #f1f5f9;
+  color: #475569;
+}
+.mr-badge-resolved {
+  background: #dcfce7;
+  color: #166534;
+}
+.mr-badge-closed {
+  background: #e2e8f0;
+  color: #334155;
+}
 
 .bug-mr-sev-badge {
   display: inline-flex;
@@ -387,10 +504,22 @@ defineEmits([
   background: var(--el-fill-color);
   color: var(--el-text-color-regular);
 }
-.mr-sev-badge-critical { background: #fee2e2; color: #b91c1c; }
-.mr-sev-badge-high     { background: #ffedd5; color: #c2410c; }
-.mr-sev-badge-medium   { background: #fef9c3; color: #92400e; }
-.mr-sev-badge-low      { background: #dcfce7; color: #166534; }
+.mr-sev-badge-critical {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+.mr-sev-badge-high {
+  background: #ffedd5;
+  color: #c2410c;
+}
+.mr-sev-badge-medium {
+  background: #fef9c3;
+  color: #92400e;
+}
+.mr-sev-badge-low {
+  background: #dcfce7;
+  color: #166534;
+}
 
 .bug-mr-cat {
   font-size: 11px;
@@ -424,13 +553,32 @@ defineEmits([
   opacity: 0.4;
   cursor: not-allowed;
 }
-.bug-mr-action-btn.reopen:hover { border-color: #6366f1; color: #6366f1; background: #eef2ff; }
-.bug-mr-action-btn.edit:hover   { border-color: #f59e0b; color: #b45309; background: #fffbeb; }
-.bug-mr-action-btn.delete:hover { border-color: #ef4444; color: #b91c1c; background: #fee2e2; }
-.bug-mr-action-btn.expand:hover { border-color: var(--el-color-primary); color: var(--el-color-primary); }
+.bug-mr-action-btn.reopen:hover {
+  border-color: #6366f1;
+  color: #6366f1;
+  background: #eef2ff;
+}
+.bug-mr-action-btn.edit:hover {
+  border-color: #f59e0b;
+  color: #b45309;
+  background: #fffbeb;
+}
+.bug-mr-action-btn.delete:hover {
+  border-color: #ef4444;
+  color: #b91c1c;
+  background: #fee2e2;
+}
+.bug-mr-action-btn.expand:hover {
+  border-color: var(--el-color-primary);
+  color: var(--el-color-primary);
+}
 
-.expand-icon { transition: transform 0.2s; }
-.expand-icon.is-open { transform: rotate(180deg); }
+.expand-icon {
+  transition: transform 0.2s;
+}
+.expand-icon.is-open {
+  transform: rotate(180deg);
+}
 
 /* ── Title / desc copy rows ─────────────────────────────────── */
 .bug-mr-title-row {
@@ -467,7 +615,9 @@ defineEmits([
   border-color: var(--el-border-color);
   color: var(--el-text-color-primary);
 }
-.bug-mr-copy-btn--desc { margin-top: 3px; }
+.bug-mr-copy-btn--desc {
+  margin-top: 3px;
+}
 
 /* Image action buttons on screenshots */
 .bug-mr-img-action-btn {
@@ -485,7 +635,9 @@ defineEmits([
   transition: background 0.12s;
   text-decoration: none;
 }
-.bug-mr-img-action-btn:hover { background: rgba(255, 255, 255, 0.35); }
+.bug-mr-img-action-btn:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
 
 .bug-mr-title {
   font-size: 14px;
@@ -511,15 +663,59 @@ defineEmits([
   white-space: pre-wrap;
 }
 
-.bug-mr-desc :deep(p)      { margin: 0 0 6px; font-size: 13px; line-height: 1.6; color: var(--el-text-color-regular); }
-.bug-mr-desc :deep(strong) { font-weight: 600; }
-.bug-mr-desc :deep(em)     { font-style: italic; }
-.bug-mr-desc :deep(code)   { font-family: monospace; font-size: 12px; background: var(--el-fill-color); padding: 1px 4px; border-radius: 3px; }
-.bug-mr-desc :deep(pre)    { margin: 4px 0 6px; border-radius: 6px; overflow-x: auto; background: var(--el-fill-color); padding: 10px 12px; white-space: pre-wrap; font-family: monospace; font-size: 12px; }
-.bug-mr-desc :deep(ul)     { margin: 4px 0 6px 0; padding-left: 18px; list-style-type: disc; font-size: 13px; line-height: 1.6; color: var(--el-text-color-regular); }
-.bug-mr-desc :deep(ol)     { margin: 4px 0 6px 0; padding-left: 22px; list-style-type: decimal; font-size: 13px; line-height: 1.6; color: var(--el-text-color-regular); }
-.bug-mr-desc :deep(li)     { margin: 2px 0; }
-.bug-mr-desc :deep(br)     { display: block; content: ''; margin-top: 4px; }
+.bug-mr-desc :deep(p) {
+  margin: 0 0 6px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--el-text-color-regular);
+}
+.bug-mr-desc :deep(strong) {
+  font-weight: 600;
+}
+.bug-mr-desc :deep(em) {
+  font-style: italic;
+}
+.bug-mr-desc :deep(code) {
+  font-family: monospace;
+  font-size: 12px;
+  background: var(--el-fill-color);
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+.bug-mr-desc :deep(pre) {
+  margin: 4px 0 6px;
+  border-radius: 6px;
+  overflow-x: auto;
+  background: var(--el-fill-color);
+  padding: 10px 12px;
+  white-space: pre-wrap;
+  font-family: monospace;
+  font-size: 12px;
+}
+.bug-mr-desc :deep(ul) {
+  margin: 4px 0 6px 0;
+  padding-left: 18px;
+  list-style-type: disc;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--el-text-color-regular);
+}
+.bug-mr-desc :deep(ol) {
+  margin: 4px 0 6px 0;
+  padding-left: 22px;
+  list-style-type: decimal;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--el-text-color-regular);
+}
+.bug-mr-desc :deep(li) {
+  margin: 2px 0;
+}
+.bug-mr-desc :deep(br) {
+  display: block;
+  content: '';
+  margin-top: 4px;
+}
 
 .bug-mr-screenshots {
   display: flex;
@@ -537,7 +733,11 @@ defineEmits([
   display: block;
   flex-shrink: 0;
 }
-.bug-mr-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.bug-mr-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 .bug-mr-thumb-overlay {
   position: absolute;
   inset: 0;
@@ -550,7 +750,9 @@ defineEmits([
   opacity: 0;
   transition: opacity 0.15s;
 }
-.bug-mr-thumb:hover .bug-mr-thumb-overlay { opacity: 1; }
+.bug-mr-thumb:hover .bug-mr-thumb-overlay {
+  opacity: 1;
+}
 
 .bug-mr-date {
   font-size: 11.5px;
@@ -595,7 +797,9 @@ defineEmits([
   transition: transform 0.2s;
   flex-shrink: 0;
 }
-.bug-mr-notes-chevron.is-open { transform: rotate(180deg); }
+.bug-mr-notes-chevron.is-open {
+  transform: rotate(180deg);
+}
 
 .bug-mr-notes-body {
   margin-top: 8px;
@@ -605,29 +809,88 @@ defineEmits([
 }
 
 /* Dark theme */
-:root.dark-theme .bug-mr-card { background: #1f2937; border-color: #374151; }
-:root.dark-theme .bug-mr-card:hover { box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3); }
-:root.dark-theme .bug-mr-number { color: #93c5fd; }
-:root.dark-theme .bug-mr-title  { color: #f3f4f6; }
-:root.dark-theme .bug-mr-desc   { color: #d1d5db; }
-:root.dark-theme .bug-mr-cat    { background: #374151; color: #9ca3af; }
+:root.dark-theme .bug-mr-card {
+  background: #1f2937;
+  border-color: #374151;
+}
+:root.dark-theme .bug-mr-card:hover {
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+:root.dark-theme .bug-mr-number {
+  color: #93c5fd;
+}
+:root.dark-theme .bug-mr-title {
+  color: #f3f4f6;
+}
+:root.dark-theme .bug-mr-desc {
+  color: #d1d5db;
+}
+:root.dark-theme .bug-mr-cat {
+  background: #374151;
+  color: #9ca3af;
+}
 
-:root.dark-theme .bug-mr-action-btn              { border-color: #4b5563; color: #9ca3af; }
-:root.dark-theme .bug-mr-action-btn.reopen:hover { background: rgba(99, 102, 241, 0.15); }
-:root.dark-theme .bug-mr-action-btn.edit:hover   { background: rgba(245, 158, 11, 0.15); }
-:root.dark-theme .bug-mr-action-btn.delete:hover { background: rgba(239, 68, 68, 0.15); }
+:root.dark-theme .bug-mr-action-btn {
+  border-color: #4b5563;
+  color: #9ca3af;
+}
+:root.dark-theme .bug-mr-action-btn.reopen:hover {
+  background: rgba(99, 102, 241, 0.15);
+}
+:root.dark-theme .bug-mr-action-btn.edit:hover {
+  background: rgba(245, 158, 11, 0.15);
+}
+:root.dark-theme .bug-mr-action-btn.delete:hover {
+  background: rgba(239, 68, 68, 0.15);
+}
 
-:root.dark-theme .bug-mr-badge.mr-badge-open        { background: rgba(239, 68, 68, 0.2);   color: #fca5a5; }
-:root.dark-theme .bug-mr-badge.mr-badge-in-progress { background: rgba(245, 158, 11, 0.2);  color: #fcd34d; }
-:root.dark-theme .bug-mr-badge.mr-badge-needs-info  { background: rgba(59, 130, 246, 0.2);  color: #93c5fd; }
-:root.dark-theme .bug-mr-badge.mr-badge-duplicate   { background: rgba(168, 85, 247, 0.2);  color: #d8b4fe; }
-:root.dark-theme .bug-mr-badge.mr-badge-wont-fix    { background: rgba(148, 163, 184, 0.15); color: #94a3b8; }
-:root.dark-theme .bug-mr-badge.mr-badge-resolved    { background: rgba(34, 197, 94, 0.2);   color: #86efac; }
-:root.dark-theme .bug-mr-badge.mr-badge-closed      { background: rgba(100, 116, 139, 0.2); color: #94a3b8; }
+:root.dark-theme .bug-mr-badge.mr-badge-open {
+  background: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+}
+:root.dark-theme .bug-mr-badge.mr-badge-in-progress {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fcd34d;
+}
+:root.dark-theme .bug-mr-badge.mr-badge-needs-info {
+  background: rgba(59, 130, 246, 0.2);
+  color: #93c5fd;
+}
+:root.dark-theme .bug-mr-badge.mr-badge-duplicate {
+  background: rgba(168, 85, 247, 0.2);
+  color: #d8b4fe;
+}
+:root.dark-theme .bug-mr-badge.mr-badge-wont-fix {
+  background: rgba(148, 163, 184, 0.15);
+  color: #94a3b8;
+}
+:root.dark-theme .bug-mr-badge.mr-badge-resolved {
+  background: rgba(34, 197, 94, 0.2);
+  color: #86efac;
+}
+:root.dark-theme .bug-mr-badge.mr-badge-closed {
+  background: rgba(100, 116, 139, 0.2);
+  color: #94a3b8;
+}
 
-:root.dark-theme .bug-mr-sev-badge                      { background: #374151; color: #9ca3af; }
-:root.dark-theme .bug-mr-sev-badge.mr-sev-badge-critical { background: rgba(239, 68, 68, 0.2);  color: #fca5a5; }
-:root.dark-theme .bug-mr-sev-badge.mr-sev-badge-high    { background: rgba(249, 115, 22, 0.2);  color: #fdba74; }
-:root.dark-theme .bug-mr-sev-badge.mr-sev-badge-medium  { background: rgba(245, 158, 11, 0.2);  color: #fcd34d; }
-:root.dark-theme .bug-mr-sev-badge.mr-sev-badge-low     { background: rgba(34, 197, 94, 0.2);   color: #86efac; }
+:root.dark-theme .bug-mr-sev-badge {
+  background: #374151;
+  color: #9ca3af;
+}
+:root.dark-theme .bug-mr-sev-badge.mr-sev-badge-critical {
+  background: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+}
+:root.dark-theme .bug-mr-sev-badge.mr-sev-badge-high {
+  background: rgba(249, 115, 22, 0.2);
+  color: #fdba74;
+}
+:root.dark-theme .bug-mr-sev-badge.mr-sev-badge-medium {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fcd34d;
+}
+:root.dark-theme .bug-mr-sev-badge.mr-sev-badge-low {
+  background: rgba(34, 197, 94, 0.2);
+  color: #86efac;
+}
 </style>

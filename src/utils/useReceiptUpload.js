@@ -1,5 +1,5 @@
 import { computed, ref, unref } from 'vue'
-import { deleteFromCloudinary, uploadToCloudinary } from './cloudinaryUpload'
+import { uploadReceipt, deleteReceipt } from './uploadReceipt'
 import { showError } from './showAlerts'
 
 const ALLOWED_TYPES = [
@@ -34,9 +34,7 @@ function resolveMaxFiles(maxFiles) {
 
 function deleteReceiptMetas(metas = []) {
   metas.forEach((meta) => {
-    if (meta?.publicId) {
-      deleteFromCloudinary(meta.publicId, meta.resourceType)
-    }
+    if (meta?.url) deleteReceipt(meta)
   })
 }
 
@@ -47,15 +45,9 @@ export function useReceiptUpload({ existingUrls, existingMeta, maxFiles = 1 }) {
   const existingReceiptUrls = computed(() => normalizeList(unref(existingUrls)))
   const existingReceiptMeta = computed(() => normalizeList(unref(existingMeta)))
   const receiptFile = computed(() => receiptFiles.value[0] || null)
-  const existingReceiptUrl = computed(
-    () => existingReceiptUrls.value[0] || null
-  )
-  const existingReceiptMetaSingle = computed(
-    () => existingReceiptMeta.value[0] || null
-  )
   const allowsMultiple = computed(() => resolveMaxFiles(maxFiles) > 1)
 
-  function setSelectedFiles(files = []) {
+  async function setSelectedFiles(files = []) {
     const normalizedFiles = Array.from(files)
 
     if (!normalizedFiles.length) {
@@ -80,6 +72,7 @@ export function useReceiptUpload({ existingUrls, existingMeta, maxFiles = 1 }) {
     const limit = resolveMaxFiles(maxFiles)
     receiptFiles.value =
       limit === Infinity ? normalizedFiles : normalizedFiles.slice(0, limit)
+
     return true
   }
 
@@ -102,23 +95,17 @@ export function useReceiptUpload({ existingUrls, existingMeta, maxFiles = 1 }) {
     if (!receiptFiles.value.length) {
       return {
         receiptUrls: previousUrls,
-        receiptMeta: previousMeta,
-        receiptUrl: previousUrls[0] || null,
-        receiptMetaSingle: previousMeta[0] || null
+        receiptMeta: previousMeta
       }
     }
 
     try {
       receiptUploading.value = true
       const uploaded = await Promise.all(
-        receiptFiles.value.map((file) => uploadToCloudinary(file))
+        receiptFiles.value.map((file) => uploadReceipt(file))
       )
       const receiptUrls = uploaded.map((item) => item.url)
-      const receiptMeta = uploaded.map((item) => ({
-        url: item.url,
-        publicId: item.publicId,
-        resourceType: item.resourceType
-      }))
+      const receiptMeta = uploaded // already full meta objects with provider field
 
       if (replaceExisting) {
         deleteReceiptMetas(previousMeta)
@@ -126,9 +113,7 @@ export function useReceiptUpload({ existingUrls, existingMeta, maxFiles = 1 }) {
 
       return {
         receiptUrls,
-        receiptMeta,
-        receiptUrl: receiptUrls[0] || null,
-        receiptMetaSingle: receiptMeta[0] || null
+        receiptMeta
       }
     } catch {
       showError('Failed to upload receipt. Please try again.')
@@ -148,9 +133,7 @@ export function useReceiptUpload({ existingUrls, existingMeta, maxFiles = 1 }) {
     receiptUploading,
     allowsMultiple,
     existingReceiptUrls,
-    existingReceiptUrl,
     existingReceiptMeta,
-    existingReceiptMetaSingle,
     setSelectedFiles,
     trimSelectedFiles,
     removeReceipt,

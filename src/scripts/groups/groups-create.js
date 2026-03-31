@@ -17,14 +17,16 @@ export const GroupsCreate = (emit, props) => {
     },
     getUserByMobile: (m) => userStore.getUserByMobile(m)
   }
-  const { updateData, isSubmitting } = useFireBase()
+  const { setData, isSubmitting } = useFireBase()
 
-  const groupForm = ref({
+  const createEmptyGroupForm = () => ({
     name: '',
     description: '',
     members: [],
     category: ''
   })
+
+  const groupForm = ref(createEmptyGroupForm())
   const groupFormRef = ref(null)
 
   const usersOptions = computed(() =>
@@ -117,17 +119,22 @@ export const GroupsCreate = (emit, props) => {
         }))
     }
     try {
-      await updateData(
+      await setData(
         `${DB_NODES.GROUPS}/${id}`,
-        () => payload,
+        payload,
         'Group created — invitations sent to selected members'
       )
       groupStore.addGroup(payload)
-      groupForm.value = { name: '', description: '', members: [], category: '' }
+      resetCreateForm()
       if (emit) emit('groupCreated')
     } catch (err) {
       showError(err)
     }
+  }
+
+  function resetCreateForm() {
+    groupForm.value = createEmptyGroupForm()
+    groupFormRef.value?.clearValidate()
   }
 
   watch(
@@ -145,6 +152,7 @@ export const GroupsCreate = (emit, props) => {
     groupFormRef,
     usersOptions,
     createGroup,
+    resetCreateForm,
     isSubmitting
   }
 }

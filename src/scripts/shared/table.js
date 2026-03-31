@@ -20,8 +20,7 @@ import { formatUserDisplay } from '../../utils/user-display'
 import { buildRequestMeta } from '../../utils/buildRequestMeta'
 import { startLoading, stopLoading } from '../../utils/loading'
 import { showSuccess, showError } from '../../utils/showAlerts'
-import { ref as firebaseRef, update as updateDb } from 'firebase/database'
-import { database } from '../../firebase'
+import { database, writeBatch, doc } from '../../firebase'
 import { DB_NODES } from '../../constants/db-nodes'
 import { useDebouncedRef } from '../../utils/useDebouncedRef'
 import { useRoute, useRouter } from 'vue-router'
@@ -163,10 +162,7 @@ export const Table = (props) => {
 
   const headers = computed(() => {
     if (props.rows.length > 0) {
-      const isSharedExpenses = activeTab.value === Tabs.SHARED_EXPENSES
       const isSharedLoans = activeTab.value === Tabs.SHARED_LOANS
-      const isPersonalExpenses = activeTab.value === Tabs.PERSONAL_EXPENSES
-      const isPersonalLoans = activeTab.value === Tabs.PERSONAL_LOANS
 
       const excludedCols = [
         'whenAdded',
@@ -180,8 +176,7 @@ export const Table = (props) => {
         'splitMode',
         'splitItems',
         'receiptMeta',
-        'receiptUrls',
-        'receiptUrl'
+        'receiptUrls'
       ]
       if (isSharedLoans) excludedCols.push('giverName', 'receiverName')
 
@@ -189,9 +184,7 @@ export const Table = (props) => {
 
       const cols = rowKeys.filter((col) => !excludedCols.includes(col))
 
-      if (isSharedExpenses) cols.push('receiptUrls')
-      if (isPersonalExpenses || isPersonalLoans || isSharedLoans)
-        cols.push('receiptUrl')
+      cols.push('receiptUrls')
 
       return cols.map((key) => ({
         label: key,
@@ -419,17 +412,6 @@ export const Table = (props) => {
                 'color:#2563eb;text-decoration:underline;font-size:12px;'
               td.appendChild(a)
             })
-          } else {
-            td.textContent = '—'
-          }
-        } else if (key === 'receiptUrl') {
-          if (row.receiptUrl) {
-            const a = document.createElement('a')
-            a.href = row.receiptUrl
-            a.textContent = 'View Receipt'
-            a.style.cssText =
-              'color:#2563eb;text-decoration:underline;font-size:12px;'
-            td.appendChild(a)
           } else {
             td.textContent = '—'
           }
@@ -682,33 +664,60 @@ export const Table = (props) => {
       const month = props.reportMonth
       const user = authStore.getActiveUser
       const tab = activeTab.value
-      const updates = {}
       const deleteRequestMeta = isShared ? buildRequestMeta(storeProxy) : null
 
+      const batch = writeBatch(database)
       for (const row of eligible) {
         const key = props.keys[row._origIndex]
 
         if (tab === Tabs.SHARED_EXPENSES) {
-          updates[
-            `${DB_NODES.SHARED_EXPENSES}/${groupId}/${month}/${key}/deleteRequest`
-          ] = deleteRequestMeta
+          const docRef = doc(
+            database,
+            DB_NODES.SHARED_EXPENSES,
+            groupId,
+            'months',
+            month,
+            'payments',
+            key
+          )
+          batch.update(docRef, { deleteRequest: deleteRequestMeta })
         } else if (tab === Tabs.SHARED_LOANS) {
-          updates[
-            `${DB_NODES.SHARED_LOANS}/${groupId}/${month}/${key}/deleteRequest`
-          ] = deleteRequestMeta
+          const docRef = doc(
+            database,
+            DB_NODES.SHARED_LOANS,
+            groupId,
+            'months',
+            month,
+            'loans',
+            key
+          )
+          batch.update(docRef, { deleteRequest: deleteRequestMeta })
         } else if (tab === Tabs.PERSONAL_LOANS) {
-          updates[
-            key.includes('/')
-              ? `${DB_NODES.PERSONAL_LOANS}/${user}/${key}`
-              : `${DB_NODES.PERSONAL_LOANS}/${user}/${month}/${key}`
-          ] = null
+          const docRef = doc(
+            database,
+            DB_NODES.PERSONAL_LOANS,
+            user,
+            'months',
+            month,
+            'loans',
+            key
+          )
+          batch.delete(docRef)
         } else if (tab === Tabs.PERSONAL_EXPENSES) {
-          updates[`${DB_NODES.PERSONAL_EXPENSES}/${user}/${month}/${key}`] =
-            null
+          const docRef = doc(
+            database,
+            DB_NODES.PERSONAL_EXPENSES,
+            user,
+            'months',
+            month,
+            'expenses',
+            key
+          )
+          batch.delete(docRef)
         }
       }
 
-      await updateDb(firebaseRef(database), updates)
+      await batch.commit()
 
       clearSelection()
       if (isShared) {

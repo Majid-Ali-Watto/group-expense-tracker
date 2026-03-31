@@ -1,19 +1,29 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessageBox } from 'element-plus'
-import { database, ref as dbRef, onValue, update, set, remove } from '../../firebase'
+import {
+  auth,
+  database,
+  collectionGroup,
+  doc,
+  setDoc,
+  updateDoc,
+  deleteDoc,
+  onSnapshot,
+  onAuthStateChanged
+} from '../../firebase'
 import { DB_NODES } from '../../constants/db-nodes'
 import { showError, showSuccess } from '../../utils/showAlerts'
 import { NoteThread } from './note-thread'
 
 export const STATUS_OPTIONS = [
-  { label: '🔴 Open',        value: 'open' },
+  { label: '🔴 Open', value: 'open' },
   { label: '🟡 In Progress', value: 'in-progress' },
-  { label: '🔵 Needs Info',  value: 'needs-info' },
-  { label: '🟣 Duplicate',   value: 'duplicate' },
-  { label: "⚪ Won't Fix",   value: 'wont-fix' },
-  { label: '🟢 Resolved',    value: 'resolved' },
-  { label: '⬛ Closed',      value: 'closed' }
+  { label: '🔵 Needs Info', value: 'needs-info' },
+  { label: '🟣 Duplicate', value: 'duplicate' },
+  { label: "⚪ Won't Fix", value: 'wont-fix' },
+  { label: '🟢 Resolved', value: 'resolved' },
+  { label: '⬛ Closed', value: 'closed' }
 ]
 
 export const SEVERITY_OPTIONS = [
@@ -24,7 +34,15 @@ export const SEVERITY_OPTIONS = [
   { label: 'Low', value: 'low' }
 ]
 
-const STATUS_ORDER = { open: 0, 'in-progress': 1, 'needs-info': 2, duplicate: 3, 'wont-fix': 4, resolved: 5, closed: 6 }
+const STATUS_ORDER = {
+  open: 0,
+  'in-progress': 1,
+  'needs-info': 2,
+  duplicate: 3,
+  'wont-fix': 4,
+  resolved: 5,
+  closed: 6
+}
 
 /**
  * Script module for the admin Bug Reports view.
@@ -46,32 +64,81 @@ export const BugReportsAdmin = () => {
   watch([searchQuery, activeStatusFilter, activeSeverityFilter], () => {
     const query = {}
     if (searchQuery.value.trim()) query.q = searchQuery.value.trim()
-    if (activeStatusFilter.value !== 'all') query.status = activeStatusFilter.value
-    if (activeSeverityFilter.value !== 'all') query.severity = activeSeverityFilter.value
+    if (activeStatusFilter.value !== 'all')
+      query.status = activeStatusFilter.value
+    if (activeSeverityFilter.value !== 'all')
+      query.severity = activeSeverityFilter.value
     router.replace({ path: route.path, query })
   })
 
   const statusFilters = computed(() => [
-    { label: 'All',          value: 'all',          count: reports.value.length, selectLabel: `All (${reports.value.length})` },
-    { label: 'Open',         value: 'open',         count: reports.value.filter((r) => r.status === 'open').length, selectLabel: `Open (${reports.value.filter((r) => r.status === 'open').length})` },
-    { label: 'In Progress',  value: 'in-progress',  count: reports.value.filter((r) => r.status === 'in-progress').length, selectLabel: `In Progress (${reports.value.filter((r) => r.status === 'in-progress').length})` },
-    { label: 'Needs Info',   value: 'needs-info',   count: reports.value.filter((r) => r.status === 'needs-info').length, selectLabel: `Needs Info (${reports.value.filter((r) => r.status === 'needs-info').length})` },
-    { label: 'Duplicate',    value: 'duplicate',    count: reports.value.filter((r) => r.status === 'duplicate').length, selectLabel: `Duplicate (${reports.value.filter((r) => r.status === 'duplicate').length})` },
-    { label: "Won't Fix",    value: 'wont-fix',     count: reports.value.filter((r) => r.status === 'wont-fix').length, selectLabel: `Won't Fix (${reports.value.filter((r) => r.status === 'wont-fix').length})` },
-    { label: 'Resolved',     value: 'resolved',     count: reports.value.filter((r) => r.status === 'resolved').length, selectLabel: `Resolved (${reports.value.filter((r) => r.status === 'resolved').length})` },
-    { label: 'Closed',       value: 'closed',       count: reports.value.filter((r) => r.status === 'closed').length, selectLabel: `Closed (${reports.value.filter((r) => r.status === 'closed').length})` }
+    {
+      label: 'All',
+      value: 'all',
+      count: reports.value.length,
+      selectLabel: `All (${reports.value.length})`
+    },
+    {
+      label: 'Open',
+      value: 'open',
+      count: reports.value.filter((r) => r.status === 'open').length,
+      selectLabel: `Open (${reports.value.filter((r) => r.status === 'open').length})`
+    },
+    {
+      label: 'In Progress',
+      value: 'in-progress',
+      count: reports.value.filter((r) => r.status === 'in-progress').length,
+      selectLabel: `In Progress (${reports.value.filter((r) => r.status === 'in-progress').length})`
+    },
+    {
+      label: 'Needs Info',
+      value: 'needs-info',
+      count: reports.value.filter((r) => r.status === 'needs-info').length,
+      selectLabel: `Needs Info (${reports.value.filter((r) => r.status === 'needs-info').length})`
+    },
+    {
+      label: 'Duplicate',
+      value: 'duplicate',
+      count: reports.value.filter((r) => r.status === 'duplicate').length,
+      selectLabel: `Duplicate (${reports.value.filter((r) => r.status === 'duplicate').length})`
+    },
+    {
+      label: "Won't Fix",
+      value: 'wont-fix',
+      count: reports.value.filter((r) => r.status === 'wont-fix').length,
+      selectLabel: `Won't Fix (${reports.value.filter((r) => r.status === 'wont-fix').length})`
+    },
+    {
+      label: 'Resolved',
+      value: 'resolved',
+      count: reports.value.filter((r) => r.status === 'resolved').length,
+      selectLabel: `Resolved (${reports.value.filter((r) => r.status === 'resolved').length})`
+    },
+    {
+      label: 'Closed',
+      value: 'closed',
+      count: reports.value.filter((r) => r.status === 'closed').length,
+      selectLabel: `Closed (${reports.value.filter((r) => r.status === 'closed').length})`
+    }
   ])
 
   const totalCount = computed(() => reports.value.length)
-  const openCount = computed(() => reports.value.filter((r) => r.status === 'open').length)
+  const openCount = computed(
+    () => reports.value.filter((r) => r.status === 'open').length
+  )
 
   const filteredReports = computed(() => {
     const q = searchQuery.value.trim().toLowerCase()
     return reports.value
       .filter((r) => {
-        const statusOk = activeStatusFilter.value === 'all' || r.status === activeStatusFilter.value
-        const sevOk = activeSeverityFilter.value === 'all' || r.severity === activeSeverityFilter.value
-        const searchOk = !q ||
+        const statusOk =
+          activeStatusFilter.value === 'all' ||
+          r.status === activeStatusFilter.value
+        const sevOk =
+          activeSeverityFilter.value === 'all' ||
+          r.severity === activeSeverityFilter.value
+        const searchOk =
+          !q ||
           (r.bugNumber || '').toLowerCase().includes(q) ||
           (r.title || '').toLowerCase().includes(q)
         return statusOk && sevOk && searchOk
@@ -85,24 +152,15 @@ export const BugReportsAdmin = () => {
 
   // ── Firebase real-time listener ───────────────────────────────────────────
   let unsubscribe = null
+  let unsubscribeAuth = null
 
   function fetchReports() {
     loading.value = true
     if (unsubscribe) unsubscribe()
-    unsubscribe = onValue(
-      dbRef(database, DB_NODES.BUG_REPORTS),
+    unsubscribe = onSnapshot(
+      collectionGroup(database, 'reports'),
       (snapshot) => {
-        if (!snapshot.exists()) {
-          reports.value = []
-        } else {
-          const collected = []
-          Object.values(snapshot.val()).forEach((bugsByUser) => {
-            if (bugsByUser && typeof bugsByUser === 'object') {
-              Object.entries(bugsByUser).forEach(([id, val]) => collected.push({ id, ...val }))
-            }
-          })
-          reports.value = collected
-        }
+        reports.value = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }))
         loading.value = false
       },
       (err) => {
@@ -114,7 +172,9 @@ export const BugReportsAdmin = () => {
 
   // ── Helpers ───────────────────────────────────────────────────────────────
   function mobileKeyOf(report) {
-    return report.reporter?.isGuest ? 'guest' : (report.reporter?.mobile || 'guest')
+    return report.reporter?.isGuest
+      ? 'guest'
+      : report.reporter?.mobile || 'guest'
   }
 
   function toggleExpand(id) {
@@ -128,11 +188,24 @@ export const BugReportsAdmin = () => {
     try {
       const report = reports.value.find((r) => r.id === id)
       const mobileKey = mobileKeyOf(report)
-      await update(dbRef(database, `${DB_NODES.BUG_REPORTS}/${mobileKey}/${id}`), { status: newStatus })
+      await updateDoc(
+        doc(database, DB_NODES.BUG_REPORTS, mobileKey, 'reports', id),
+        { status: newStatus }
+      )
       if (report?.reporter?.mobile && !report.reporter.isGuest) {
-        await set(
-          dbRef(database, `${DB_NODES.BUG_REPORT_NOTIFICATIONS}/${report.reporter.mobile}/${id}`),
-          { title: report.title, status: newStatus, updatedAt: new Date().toISOString() }
+        await setDoc(
+          doc(
+            database,
+            DB_NODES.BUG_REPORT_NOTIFICATIONS,
+            report.reporter.mobile,
+            'items',
+            id
+          ),
+          {
+            title: report.title,
+            status: newStatus,
+            updatedAt: new Date().toISOString()
+          }
         )
       }
       showSuccess(`Status updated to "${newStatus}"`)
@@ -147,16 +220,41 @@ export const BugReportsAdmin = () => {
       await ElMessageBox.confirm(
         `Permanently delete report <strong>${report.bugNumber ? '#' + report.bugNumber + ' — ' : ''}"${report.title}"</strong>? This cannot be undone.`,
         'Delete Bug Report',
-        { confirmButtonText: 'Delete', cancelButtonText: 'Cancel', type: 'warning', dangerouslyUseHTMLString: true }
+        {
+          confirmButtonText: 'Delete',
+          cancelButtonText: 'Cancel',
+          type: 'warning',
+          dangerouslyUseHTMLString: true
+        }
       )
-    } catch { return }
+    } catch {
+      return
+    }
     deletingId.value = report.id
     try {
       const mobileKey = mobileKeyOf(report)
-      await remove(dbRef(database, `${DB_NODES.BUG_REPORTS}/${mobileKey}/${report.id}`))
-      await remove(dbRef(database, `${DB_NODES.BUG_REPORT_NOTIFICATIONS}/admin/${report.id}`)).catch(() => {})
+      await deleteDoc(
+        doc(database, DB_NODES.BUG_REPORTS, mobileKey, 'reports', report.id)
+      )
+      await deleteDoc(
+        doc(
+          database,
+          DB_NODES.BUG_REPORT_NOTIFICATIONS,
+          'admin',
+          'items',
+          report.id
+        )
+      ).catch(() => {})
       if (report.reporter?.mobile && !report.reporter.isGuest) {
-        await remove(dbRef(database, `${DB_NODES.BUG_REPORT_NOTIFICATIONS}/${report.reporter.mobile}/${report.id}`)).catch(() => {})
+        await deleteDoc(
+          doc(
+            database,
+            DB_NODES.BUG_REPORT_NOTIFICATIONS,
+            report.reporter.mobile,
+            'items',
+            report.id
+          )
+        ).catch(() => {})
       }
       showSuccess('Report deleted.')
     } catch (err) {
@@ -185,11 +283,16 @@ export const BugReportsAdmin = () => {
       s.delete(id)
     } else {
       s.add(id)
-      remove(dbRef(database, `${DB_NODES.BUG_REPORT_NOTIFICATIONS}/admin/${id}`)).catch(() => {})
+      deleteDoc(
+        doc(database, DB_NODES.BUG_REPORT_NOTIFICATIONS, 'admin', 'items', id)
+      ).catch(() => {})
       const report = reports.value.find((r) => r.id === id)
       if (report?.hasReporterReply) {
         const mobileKey = mobileKeyOf(report)
-        update(dbRef(database, `${DB_NODES.BUG_REPORTS}/${mobileKey}/${id}`), { hasReporterReply: null }).catch(() => {})
+        updateDoc(
+          doc(database, DB_NODES.BUG_REPORTS, mobileKey, 'reports', id),
+          { hasReporterReply: null }
+        ).catch(() => {})
       }
     }
     notesOpen.value = s
@@ -198,7 +301,10 @@ export const BugReportsAdmin = () => {
   async function addAdminNote(report) {
     const text = (noteInputs.value[report.id] || '').trim()
     const editorImages = noteEditorRefs[report.id]?.images || []
-    if (!text && !editorImages.length) { noteErrors.value[report.id] = 'Message cannot be empty.'; return }
+    if (!text && !editorImages.length) {
+      noteErrors.value[report.id] = 'Message cannot be empty.'
+      return
+    }
     noteSavingId.value = report.id
     try {
       const mobileKey = mobileKeyOf(report)
@@ -214,12 +320,26 @@ export const BugReportsAdmin = () => {
       })
 
       if (report.hasReporterReply) {
-        await update(dbRef(database, `${DB_NODES.BUG_REPORTS}/${mobileKey}/${report.id}`), { hasReporterReply: null })
+        await updateDoc(
+          doc(database, DB_NODES.BUG_REPORTS, mobileKey, 'reports', report.id),
+          { hasReporterReply: null }
+        )
       }
       if (report.reporter?.mobile && !report.reporter.isGuest) {
-        await set(
-          dbRef(database, `${DB_NODES.BUG_REPORT_NOTIFICATIONS}/${report.reporter.mobile}/${report.id}`),
-          { title: report.title, status: report.status, hasNote: true, updatedAt: new Date().toISOString() }
+        await setDoc(
+          doc(
+            database,
+            DB_NODES.BUG_REPORT_NOTIFICATIONS,
+            report.reporter.mobile,
+            'items',
+            report.id
+          ),
+          {
+            title: report.title,
+            status: report.status,
+            hasNote: true,
+            updatedAt: new Date().toISOString()
+          }
         )
       }
       noteInputs.value[report.id] = ''
@@ -235,24 +355,55 @@ export const BugReportsAdmin = () => {
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
   onMounted(() => {
-    fetchReports()
+    unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
+      if (!firebaseUser) {
+        loading.value = false
+        if (unsubscribe) {
+          unsubscribe()
+          unsubscribe = null
+        }
+        return
+      }
+
+      unsubscribeAuth?.()
+      unsubscribeAuth = null
+      fetchReports()
+    })
+
     document.addEventListener('mousedown', noteThread.closeReactionPicker)
   })
 
   onUnmounted(() => {
+    if (unsubscribeAuth) unsubscribeAuth()
     if (unsubscribe) unsubscribe()
     document.removeEventListener('mousedown', noteThread.closeReactionPicker)
   })
 
   return {
     // List
-    loading, reports, filteredReports, totalCount, openCount,
-    activeStatusFilter, activeSeverityFilter, searchQuery, statusFilters,
-    expandedIds, deletingId,
-    fetchReports, toggleExpand, updateStatus, deleteReport,
+    loading,
+    reports,
+    filteredReports,
+    totalCount,
+    openCount,
+    activeStatusFilter,
+    activeSeverityFilter,
+    searchQuery,
+    statusFilters,
+    expandedIds,
+    deletingId,
+    fetchReports,
+    toggleExpand,
+    updateStatus,
+    deleteReport,
     // Notes
-    noteInputs, noteErrors, noteSavingId, notesOpen, noteEditorRefs,
-    toggleNotes, addAdminNote,
+    noteInputs,
+    noteErrors,
+    noteSavingId,
+    notesOpen,
+    noteEditorRefs,
+    toggleNotes,
+    addAdminNote,
     // NoteThread (spread all shared state/functions)
     ...noteThread,
     // Named re-exports for template use

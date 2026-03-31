@@ -1,4 +1,4 @@
-import { ref, watch, computed } from 'vue'
+import { ref, watch, computed, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useUsersOptions } from '../../utils/useUsersOptions'
 import getWhoAddedTransaction from '../../utils/whoAdded'
@@ -30,11 +30,6 @@ export const PaymentForm = (props, emit) => {
     showTransactionForm.value = true
   }
 
-  const closeForm = () => {
-    showTransactionForm.value = false
-    isMePayer.value = false
-  }
-
   const { usersOptions } = useUsersOptions()
 
   const activeUser = computed(() => authStore.getActiveUser)
@@ -50,7 +45,7 @@ export const PaymentForm = (props, emit) => {
     }
   })
 
-  const formData = ref({
+  const createInitialFormData = () => ({
     amount: null,
     description: '',
     payerMode: 'single',
@@ -61,6 +56,8 @@ export const PaymentForm = (props, emit) => {
     splitMode: 'equal',
     splitItems: []
   })
+
+  const formData = ref(createInitialFormData())
 
   const {
     receiptFiles,
@@ -73,10 +70,9 @@ export const PaymentForm = (props, emit) => {
     trimSelectedFiles,
     uploadSelectedFiles
   } = useReceiptUpload({
-    existingUrls: computed(() => {
-      if (Array.isArray(props.row?.receiptUrls)) return props.row.receiptUrls
-      return props.row?.receiptUrl ? [props.row.receiptUrl] : []
-    }),
+    existingUrls: computed(() =>
+      Array.isArray(props.row?.receiptUrls) ? props.row.receiptUrls : []
+    ),
     existingMeta: computed(() =>
       Array.isArray(props.row?.receiptMeta) ? props.row.receiptMeta : []
     ),
@@ -128,6 +124,21 @@ export const PaymentForm = (props, emit) => {
   )
 
   const transactionForm = ref(null)
+
+  const resetForm = async ({ close = false } = {}) => {
+    formData.value = createInitialFormData()
+    isMePayer.value = false
+    removeReceipt()
+    await nextTick()
+    transactionForm.value?.clearValidate()
+    if (close) {
+      showTransactionForm.value = false
+    }
+  }
+
+  const closeForm = async () => {
+    await resetForm({ close: true })
+  }
 
   // ========== Custom Split Helpers ==========
   const splitItemsTotal = computed(() =>
@@ -212,40 +223,27 @@ export const PaymentForm = (props, emit) => {
 
         if (whatTask == 'Save') {
           saveData(
-            `${DB_NODES.SHARED_EXPENSES}/${groupId}/${monthYear}`,
+            `${DB_NODES.SHARED_EXPENSES}/${groupId}/months/${monthYear}/payments`,
             () => getPaymentData(receiptUrls, receiptMeta),
             transactionForm,
             'Transaction successfully saved.',
             () => {
-              removeReceipt()
               if (isEditMode.value) {
                 emit('closeModal')
               } else {
-                // Reset all form fields and hide the form
-                formData.value.amount = null
-                formData.value.description = ''
-                formData.value.payerMode = 'single'
-                formData.value.payer = ''
-                formData.value.payers = []
-                formData.value.participants = [
-                  ...usersOptions.value.map((u) => u.value)
-                ]
-                formData.value.date = ''
-                formData.value.splitMode = 'equal'
-                formData.value.splitItems = []
-                showTransactionForm.value = false
+                resetForm({ close: true })
               }
             }
           )
         } else if (whatTask == 'Update') {
           createUpdateRequest(
-            `${DB_NODES.SHARED_EXPENSES}/${groupId}/${monthYear}/${props.row.id}`,
+            `${DB_NODES.SHARED_EXPENSES}/${groupId}/months/${monthYear}/payments/${props.row.id}`,
             receiptUrls,
             receiptMeta
           )
         } else if (whatTask == 'Delete') {
           createDeleteRequest(
-            `${DB_NODES.SHARED_EXPENSES}/${groupId}/${monthYear}/${props.row.id}`
+            `${DB_NODES.SHARED_EXPENSES}/${groupId}/months/${monthYear}/payments/${props.row.id}`
           )
         }
       }
@@ -256,8 +254,8 @@ export const PaymentForm = (props, emit) => {
     const deleteRequest = buildRequestMeta(storeProxy)
 
     updateData(
-      `${paymentPath}/deleteRequest`,
-      () => deleteRequest,
+      paymentPath,
+      () => ({ deleteRequest }),
       'Delete request sent. Waiting for approval from all group members.'
     )
     emit('closeModal')
@@ -274,8 +272,8 @@ export const PaymentForm = (props, emit) => {
     }
 
     updateData(
-      `${paymentPath}/updateRequest`,
-      () => updateRequest,
+      paymentPath,
+      () => ({ updateRequest }),
       'Update request sent. Waiting for approval from all group members.'
     )
     emit('closeModal')
@@ -373,13 +371,7 @@ export const PaymentForm = (props, emit) => {
         ? { splitItems: formData.value.splitItems }
         : {}),
       split,
-      ...(receiptUrls && receiptUrls.length
-        ? {
-            receiptUrl: receiptUrls[0],
-            receiptUrls,
-            receiptMeta
-          }
-        : {})
+      ...(receiptUrls && receiptUrls.length ? { receiptUrls, receiptMeta } : {})
     }
 
     return payment
@@ -392,6 +384,7 @@ export const PaymentForm = (props, emit) => {
     isMePayer,
     openForm,
     closeForm,
+    resetForm,
     usersOptions,
     formData,
     transactionForm,

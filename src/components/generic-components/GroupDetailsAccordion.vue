@@ -93,6 +93,7 @@
           v-model="showMembersDialog"
           :title="`Members (${memberCount})`"
           width="340px"
+          append-to-body
           align-center
         >
           <div class="overflow-y-auto max-h-64 pr-1">

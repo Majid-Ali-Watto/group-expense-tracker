@@ -1,6 +1,6 @@
 import { ref, onMounted, onUnmounted, inject, watch } from 'vue'
 import { ElMessageBox } from 'element-plus'
-import { set, update, onValue, off } from 'firebase/database'
+import { onSnapshot } from '../../firebase'
 import getCurrentMonth from '../../utils/getCurrentMonth'
 import useFireBase from '../../api/firebase-apis'
 import { useAuthStore } from '../../stores/authStore'
@@ -12,7 +12,7 @@ export const SalaryForm = () => {
   const formatAmount = inject('formatAmount')
   const authStore = useAuthStore()
   const dataStore = useDataStore()
-  const { read, dbRef } = useFireBase()
+  const { read, dbRef, setData, updateData } = useFireBase()
   const selectedMonth = ref(dataStore.selectedMonth)
 
   const salaryData = ref({
@@ -52,14 +52,10 @@ export const SalaryForm = () => {
 
     isSubmitting.value = true
     try {
-      const monthRef = dbRef(
-        `${DB_NODES.SALARIES}/${authStore.activeUser}/${selectedMonth.value}`
+      await setData(
+        `${DB_NODES.SALARIES}/${authStore.activeUser}/months/${selectedMonth.value}`,
+        { salary: form.value.salary, month: getCurrentMonth() }
       )
-      await set(monthRef, {
-        salary: form.value.salary,
-        month: getCurrentMonth()
-      })
-
       form.value.salary = null
       showSuccess('Salary added successfully!')
     } catch {
@@ -86,18 +82,17 @@ export const SalaryForm = () => {
       )
 
       isSubmitting.value = true
-      const monthRef = dbRef(
-        `${DB_NODES.SALARIES}/${authStore.activeUser}/${selectedMonth.value}`
-      )
       const data = await read(
-        `${DB_NODES.SALARIES}/${authStore.activeUser}/${selectedMonth.value}`
+        `${DB_NODES.SALARIES}/${authStore.activeUser}/months/${selectedMonth.value}`
       )
 
       if (data) {
-        await update(monthRef, { salary: form.value.salary })
-
+        await updateData(
+          `${DB_NODES.SALARIES}/${authStore.activeUser}/months/${selectedMonth.value}`,
+          () => ({ salary: form.value.salary }),
+          'Salary updated successfully!'
+        )
         form.value.salary = null
-        showSuccess('Salary updated successfully!')
       } else {
         throw new Error('No existing salary to update for this month.')
       }
@@ -111,14 +106,17 @@ export const SalaryForm = () => {
   }
 
   const listenForSalaryChanges = () => {
+    if (salaryListener) {
+      salaryListener()
+      salaryListener = null
+    }
     const monthRef = dbRef(
-      `${DB_NODES.SALARIES}/${authStore.activeUser}/${selectedMonth.value}`
+      `${DB_NODES.SALARIES}/${authStore.activeUser}/months/${selectedMonth.value}`
     )
 
-    salaryListener = onValue(monthRef, (snapshot) => {
+    salaryListener = onSnapshot(monthRef, (snapshot) => {
       if (snapshot.exists()) {
-        const data = snapshot.val()
-
+        const data = snapshot.data()
         salaryData.value.salary = data.salary
         salaryData.value.month = data.month
         form.value.salary = data.salary
@@ -158,12 +156,7 @@ export const SalaryForm = () => {
   })
 
   onUnmounted(() => {
-    if (salaryListener) {
-      const monthRef = dbRef(
-        `${DB_NODES.SALARIES}/${authStore.activeUser}/${getCurrentMonth()}`
-      )
-      off(monthRef, 'value', salaryListener)
-    }
+    if (salaryListener) salaryListener()
   })
 
   return {

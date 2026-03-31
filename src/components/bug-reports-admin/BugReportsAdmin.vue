@@ -25,9 +25,18 @@
 
     <!-- Empty -->
     <div v-else-if="!filteredReports.length" class="bra-empty">
-      <svg class="w-12 h-12 bra-empty-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+      <svg
+        class="w-12 h-12 bra-empty-icon"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.5"
+          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+        />
       </svg>
       <p>No bug reports match the current filter.</p>
     </div>
@@ -64,16 +73,32 @@
         @toggle-notes="toggleNotes"
         @toggle-picker="(noteId, event) => togglePickerOpen(noteId, event)"
         @toggle-reaction="(r, note, emoji) => toggleReaction(r, note, emoji)"
-        @reply="(reportId, note) => startReply(reportId, note, note.authorType === 'admin' ? 'Admin' : note.authorName)"
+        @reply="
+          (reportId, note) =>
+            startReply(
+              reportId,
+              note,
+              note.authorType === 'admin' ? 'Admin' : note.authorName
+            )
+        "
         @cancel-reply="cancelReply"
         @scroll-to="scrollToNote"
         @start-edit="startNoteEdit"
         @cancel-edit="cancelNoteEdit"
         @save-edit="(r, note, text) => saveNoteEdit(r, note, text)"
         @delete-note="(r, note) => deleteNote(r, note)"
-        @update:compose-text="(reportId, val) => { noteInputs[reportId] = val; noteErrors[reportId] = '' }"
+        @update:compose-text="
+          (reportId, val) => {
+            noteInputs[reportId] = val
+            noteErrors[reportId] = ''
+          }
+        "
         @send="addAdminNote"
-        @editor-mounted="(reportId, el) => { if (el) noteEditorRefs[reportId] = el }"
+        @editor-mounted="
+          (reportId, el) => {
+            if (el) noteEditorRefs[reportId] = el
+          }
+        "
       />
     </div>
   </div>
@@ -83,8 +108,18 @@
 import AdminHeader from './AdminHeader.vue'
 import AdminFiltersBar from './AdminFiltersBar.vue'
 import AdminReportCard from './AdminReportCard.vue'
-import { BugReportsAdmin, STATUS_OPTIONS, SEVERITY_OPTIONS } from '../../scripts/bug-reports/bug-reports-admin'
-import { markdownToHtml, formatDate, copyText, downloadImage, notesOf } from '../../scripts/bug-reports/markdown'
+import {
+  BugReportsAdmin,
+  STATUS_OPTIONS,
+  SEVERITY_OPTIONS
+} from '../../scripts/bug-reports/bug-reports-admin'
+import {
+  markdownToHtml,
+  formatDate,
+  copyText,
+  downloadImage,
+  notesOf
+} from '../../scripts/bug-reports/markdown'
 
 const {
   loading,
@@ -133,12 +168,14 @@ const severityOptions = SEVERITY_OPTIONS
 
 <style scoped>
 .bra-page {
-  max-width: 860px;
+  /* max-width: 860px; */
   margin: 0 auto;
-  padding: 20px 8px 48px;
+  /* padding: 20px 8px 48px; */
 }
 
-.bra-loading { padding: 16px; }
+.bra-loading {
+  padding: 16px;
+}
 
 .bra-empty {
   display: flex;
@@ -150,7 +187,10 @@ const severityOptions = SEVERITY_OPTIONS
   font-size: 14px;
 }
 
-.bra-empty-icon { color: #22c55e; opacity: 0.6; }
+.bra-empty-icon {
+  color: #22c55e;
+  opacity: 0.6;
+}
 
 .bra-list {
   display: flex;

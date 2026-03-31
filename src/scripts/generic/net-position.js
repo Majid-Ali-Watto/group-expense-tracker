@@ -36,13 +36,15 @@ export const NetPosition = () => {
 
     try {
       // Get all months for this group's payments
-      const months = await readShallow(`${DB_NODES.SHARED_EXPENSES}/${groupId}`)
+      const months = await readShallow(
+        `${DB_NODES.SHARED_EXPENSES}/${groupId}/months`
+      )
       if (!months || months.length === 0) return result
 
       // Fetch payments for each month
       for (const month of months) {
         const payments = await read(
-          `${DB_NODES.SHARED_EXPENSES}/${groupId}/${month}`,
+          `${DB_NODES.SHARED_EXPENSES}/${groupId}/months/${month}/payments`,
           false
         )
         if (!payments) continue
@@ -113,13 +115,15 @@ export const NetPosition = () => {
 
     try {
       // Get all months for this group's loans
-      const months = await readShallow(`${DB_NODES.SHARED_LOANS}/${groupId}`)
+      const months = await readShallow(
+        `${DB_NODES.SHARED_LOANS}/${groupId}/months`
+      )
       if (!months || months.length === 0) return result
 
       // Fetch loans for each month
       for (const month of months) {
         const loans = await read(
-          `${DB_NODES.SHARED_LOANS}/${groupId}/${month}`,
+          `${DB_NODES.SHARED_LOANS}/${groupId}/months/${month}/loans`,
           false
         )
         if (!loans) continue
@@ -163,14 +167,14 @@ export const NetPosition = () => {
     try {
       // Get all months for personal loans
       const months = await readShallow(
-        `${DB_NODES.PERSONAL_LOANS}/${userMobile}`
+        `${DB_NODES.PERSONAL_LOANS}/${userMobile}/months`
       )
       if (!months || months.length === 0) return result
 
       // Fetch loans for each month
       for (const month of months) {
         const loans = await read(
-          `${DB_NODES.PERSONAL_LOANS}/${userMobile}/${month}`,
+          `${DB_NODES.PERSONAL_LOANS}/${userMobile}/months/${month}/loans`,
           false
         )
         if (!loans) continue

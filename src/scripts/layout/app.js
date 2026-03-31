@@ -20,6 +20,7 @@ import { useGlobalNotifications } from '../../utils/useGlobalNotifications'
 import { generateUUID } from '../../utils/uuid'
 import { auth, onAuthStateChanged, signOut } from '../../firebase'
 import { maskMobile } from '../../utils/maskMobile'
+import { loadAppConfig } from '../../utils/useAppConfig'
 import { NetPosition } from '../generic/net-position'
 
 export const App = () => {
@@ -135,13 +136,18 @@ export const App = () => {
         authStore.setActiveUser(mobile)
         authStore.setSessionToken(encryptedStore)
         authStore.setActiveLoginCode('')
+        loadAppConfig() // fire-and-forget: load remote config flags on auto-login
 
         // Populate userStore immediately so displayName is never "Guest" on any tab.
         // We already have the full users payload — just map it into the store.
         Object.keys(usersData).forEach((m) => {
           const u = usersData[m]
           if (u.emailVerified === true) {
-            userStore.addUser({ mobile: m, name: u.name || '', maskedMobile: maskMobile(m) })
+            userStore.addUser({
+              mobile: m,
+              name: u.name || '',
+              maskedMobile: maskMobile(m)
+            })
           }
         })
 
@@ -155,7 +161,10 @@ export const App = () => {
         try {
           const groupsData = await read(DB_NODES.GROUPS, false)
           if (groupsData) {
-            const groupList = Object.keys(groupsData).map(k => ({ id: k, ...groupsData[k] }))
+            const groupList = Object.keys(groupsData).map((k) => ({
+              id: k,
+              ...groupsData[k]
+            }))
             groupStore.setGroups(groupList)
           }
         } catch {
@@ -163,13 +172,19 @@ export const App = () => {
         }
 
         const savedRoute = sessionStorage.getItem('_lastRoute')
+        const keepCurrentProtectedRoute = route.meta?.requiresAuth
+          ? route.fullPath
+          : null
         // Strip query params from the second path segment before checking validAppRoutes.
         // e.g. '/personal-loans?month=2026-02' → segment[1]='personal-loans?month=...' → strip '?' → '/personal-loans'
         const savedBasePath = savedRoute
           ? '/' + savedRoute.split('/')[1].split('?')[0]
           : null
         const destination =
-          savedBasePath && validAppRoutes.has(savedBasePath) ? savedRoute : '/groups'
+          keepCurrentProtectedRoute ||
+          (savedBasePath && validAppRoutes.has(savedBasePath)
+            ? savedRoute
+            : '/groups')
         router.replace(destination)
       } catch (e) {
         console.error('Auto session restore failed:', e)
@@ -220,7 +235,9 @@ export const App = () => {
   )
 
   // Active tab derived from current route path; synced back to tabStore
-  const activeTab = ref(ROUTE_TABS['/' + route.path.split('/')[1]] || Tabs.GROUPS)
+  const activeTab = ref(
+    ROUTE_TABS['/' + route.path.split('/')[1]] || Tabs.GROUPS
+  )
   const tabTransitionName = ref('tab-page-forward')
 
   // Valid app route paths (used to filter out /login, /register, /)
@@ -327,9 +344,8 @@ export const App = () => {
     activeTab.value = tab
     tabStore.setActiveTab(tab)
     const gid = groupStore.getActiveGroup
-    const path = GROUP_TABS.has(tab) && gid
-      ? `${TAB_ROUTES[tab]}/${gid}`
-      : TAB_ROUTES[tab]
+    const path =
+      GROUP_TABS.has(tab) && gid ? `${TAB_ROUTES[tab]}/${gid}` : TAB_ROUTES[tab]
     router.push(path)
 
     const verified = await verifyUser()
@@ -356,7 +372,11 @@ export const App = () => {
         sessionStorage.removeItem('_lastRoute')
         sessionStorage.removeItem('_lastGroupId')
         const redirectTo = route.query.redirect
-        router.replace(typeof redirectTo === 'string' && redirectTo.startsWith('/') ? redirectTo : '/groups')
+        router.replace(
+          typeof redirectTo === 'string' && redirectTo.startsWith('/')
+            ? redirectTo
+            : '/groups'
+        )
       }
       verifyInterval = setInterval(async () => {
         const verified = await verifyUser(false)
@@ -399,9 +419,8 @@ export const App = () => {
     activeTab.value = tab
     tabStore.setActiveTab(tab)
     const gid = groupId || groupStore.getActiveGroup
-    const path = GROUP_TABS.has(tab) && gid
-      ? `${TAB_ROUTES[tab]}/${gid}`
-      : TAB_ROUTES[tab]
+    const path =
+      GROUP_TABS.has(tab) && gid ? `${TAB_ROUTES[tab]}/${gid}` : TAB_ROUTES[tab]
     router.push(path)
   }
 

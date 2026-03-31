@@ -10,11 +10,16 @@ import { Tabs } from '../assets/enums'
 const Groups = () => import('@/components/groups/Groups.vue')
 const Login = () => import('@/components/auth/Login.vue')
 const PaymentForm = () => import('@/components/shared-expenses/PaymentForm.vue')
-const SharedLoansGuard = () => import('@/components/shared-loans/SharedLoansGuard.vue')
+const SharedLoansGuard = () =>
+  import('@/components/shared-loans/SharedLoansGuard.vue')
 const Users = () => import('@/components/users/Users.vue')
-const SalaryManager = () => import('@/components/monthly-sallary-expense-manager/Manager.vue')
-const PersonalLoans = () => import('@/components/personal-loans/PersonalLoans.vue')
-const BugReportsAdmin = () => import('@/components/bug-reports-admin/BugReportsAdmin.vue')
+const SalaryManager = () =>
+  import('@/components/monthly-sallary-expense-manager/Manager.vue')
+const PersonalLoans = () =>
+  import('@/components/personal-loans/PersonalLoans.vue')
+const BugReportsAdmin = () =>
+  import('@/components/bug-reports-admin/BugReportsAdmin.vue')
+const SharedGroups = () => import('@/components/groups/SharedGroups.vue')
 
 // Tab name → URL path mapping (base paths, without :groupId)
 export const TAB_ROUTES = {
@@ -35,7 +40,7 @@ export const ROUTE_TABS = {
   '/users': Tabs.USERS,
   '/personal-expenses': Tabs.PERSONAL_EXPENSES,
   '/personal-loans': Tabs.PERSONAL_LOANS,
-  '/bug-reports': Tabs.BUG_RESOLVER,
+  '/bug-reports': Tabs.BUG_RESOLVER
 }
 
 // Tabs that embed a groupId in their URL path
@@ -47,12 +52,11 @@ function hasSession() {
   return !!sessionStorage.getItem('_session')
 }
 
-
 const routes = [
-  // '/' → guard redirects to /groups or /login based on session
-  { path: '/', meta: { smartRedirect: true } },
+  // '/' and unknown paths → redirect based on session
+  { path: '/', redirect: () => (hasSession() ? '/groups' : '/login') },
   // Auth routes — Login.vue handles both modes; mode is derived from route path
-  { path: '/login',    component: Login, meta: { requiresGuest: true } },
+  { path: '/login', component: Login, meta: { requiresGuest: true } },
   { path: '/register', component: Login, meta: { requiresGuest: true } },
   // App routes
   {
@@ -89,10 +93,22 @@ const routes = [
   {
     path: '/bug-reports',
     component: BugReportsAdmin,
-    meta: { tab: Tabs.BUG_RESOLVER, requiresAuth: true, requiresBugResolver: true }
+    meta: {
+      tab: Tabs.BUG_RESOLVER,
+      requiresAuth: true,
+      requiresBugResolver: true
+    }
   },
-  // Catch-all → guard will handle it
-  { path: '/:pathMatch(.*)*', meta: { smartRedirect: true } }
+  {
+    path: '/shared-groups',
+    component: SharedGroups,
+    meta: { requiresAuth: true }
+  },
+  // Catch-all → redirect based on session
+  {
+    path: '/:pathMatch(.*)*',
+    redirect: () => (hasSession() ? '/groups' : '/login')
+  }
 ]
 
 const router = createRouter({
@@ -107,11 +123,6 @@ const router = createRouter({
 
 router.beforeEach((to) => {
   const session = hasSession()
-
-  // Unknown paths and '/' → decide based on session
-  if (to.meta.smartRedirect) {
-    return session ? '/groups' : '/login'
-  }
 
   // Logged-in users hitting /login or /register → go to app
   if (to.meta.requiresGuest && session) return '/groups'

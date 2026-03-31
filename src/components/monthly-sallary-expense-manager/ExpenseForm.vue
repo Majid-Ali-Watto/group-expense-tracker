@@ -6,6 +6,7 @@
       :model="form"
       :rules="rules"
       ref="expenseForm"
+      class="px-2"
     >
       <AmountInput v-model.number="form.amount" required />
       <GenericInput
@@ -36,14 +37,18 @@
         :selected-files="receiptFiles"
         :existing-urls="existingReceiptUrls"
         :uploading="receiptUploading"
+        :multiple="false"
         @files-selected="setSelectedFiles"
         @remove="removeReceipt"
       />
       <div class="flex justify-end gap-2" v-if="!isEditMode">
+        <el-button type="default" size="small" @click="resetForm">
+          Reset
+        </el-button>
         <GenericButton
           v-if="showForm"
           type="info"
-          @click="$emit('click')"
+          @click="handleCancel"
           size="small"
           >Cancel</GenericButton
         >
@@ -82,6 +87,7 @@ const {
   form,
   expenseForm,
   validateForm,
+  resetForm,
   receiptFiles,
   receiptUploading,
   existingReceiptUrls,
@@ -89,6 +95,11 @@ const {
   removeReceipt,
   isSubmitting
 } = ExpenseForm(props, emit)
+
+function handleCancel() {
+  resetForm()
+  emit('click')
+}
 
 defineExpose({
   validateForm,

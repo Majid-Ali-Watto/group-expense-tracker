@@ -1,60 +1,92 @@
 import { ref } from 'vue'
-import { get, ref as Ref, remove, update, push, set } from 'firebase/database'
-import { getToken } from 'firebase/app-check'
-import { database, auth, appCheck } from '../firebase'
+import {
+  collection,
+  doc,
+  addDoc,
+  setDoc,
+  updateDoc,
+  deleteDoc,
+  getDoc,
+  getDocs
+} from 'firebase/firestore'
+import { database } from '../firebase'
 import { startLoading, stopLoading, withLoading } from '../utils/loading'
 import { showError, showSuccess } from '../utils/showAlerts'
 import { resetForm } from '../utils/reset-form'
 import getCurrentMonth, { dateToMonthNode } from '../utils/getCurrentMonth'
 import { DB_NODES } from '../constants/db-nodes'
+
 export default function useFireBase() {
   const isSubmitting = ref(false)
 
   /**
-   * The function `dbRef` returns a reference to a specific location in a database based on the provided
-   * URL.
-   * @param url - The `url` parameter in the `dbRef` function is a string that represents the path or
-   * location in the database where you want to create a reference. This path can point to a specific
-   * node or location within the database structure.
-   * @returns The `dbRef` function is returning a reference to a location in the database specified by
-   * the `url` parameter.
+   * Returns a Firestore collection or document reference based on path segment count.
+   * Odd segment count → collection reference; even segment count → document reference.
+   *
+   * @param {string} path - Slash-separated Firestore path, e.g. "groups/groupId" or "groups".
    */
-  function dbRef(url) {
-    return Ref(database, url)
+  function dbRef(path) {
+    const segments = path.split('/')
+    return segments.length % 2 === 0
+      ? doc(database, path)
+      : collection(database, path)
   }
 
   /**
-   * The `read` function asynchronously reads data from a specified URL using Firebase Realtime Database
-   * and returns the value if it exists, otherwise returns null.
-   * @param url - The `url` parameter is a string that represents the URL of the database reference from
-   * which data needs to be read.
-   * @returns The function `read` returns the value of the snapshot if it exists, otherwise it returns
-   * `null`.
+   * Reads a Firestore document or all documents in a collection by path.
+   * Documents return their data object; collections return an id-keyed map.
+   *
+   * @param {string} path - Firestore path string.
+   * @param {boolean} loading - Whether to show global loading indicator.
+   * @returns {Promise<Object|null>}
    */
-  async function read(url, loading = true) {
+  async function read(path, loading = true) {
     return withLoading(async () => {
-      const db_ref = dbRef(url)
-      const snapshot = await get(db_ref)
-      return snapshot.exists() ? snapshot.val() : null
+      const segments = path.split('/')
+      if (segments.length % 2 === 0) {
+        // Even segments → document
+        const snap = await getDoc(doc(database, path))
+        return snap.exists() ? { id: snap.id, ...snap.data() } : null
+      } else {
+        // Odd segments → collection — return id-keyed map
+        const snap = await getDocs(collection(database, path))
+        if (snap.empty) return null
+        const result = {}
+        snap.docs.forEach((d) => {
+          result[d.id] = { id: d.id, ...d.data() }
+        })
+        return result
+      }
     }, loading)
   }
 
   /**
-   * The function `deleteData` sends a request to delete data from a specified URL and displays success
-   * or error messages accordingly.
-   * @param url - The `url` parameter in the `deleteData` function is the URL or path to the location in
-   * the database where the data needs to be deleted.
-   * @param message - The `message` parameter in the `deleteData` function is a message that will be
-   * displayed to the user to indicate the success of the deletion operation. It is typically a string
-   * that provides feedback to the user after the data has been successfully deleted from the specified
-   * URL in the database.
+   * Lists direct child document IDs of a collection path.
+   * Replaces the old ?shallow=true REST hack used with RTDB.
+   *
+   * @param {string} path - Firestore collection path (odd segment count).
+   * @param {boolean} loading - Whether to show global loading indicator.
+   * @returns {Promise<string[]>}
    */
-  async function deleteData(url, message) {
+  async function readShallow(path, loading = true) {
+    return withLoading(async () => {
+      const snap = await getDocs(collection(database, path))
+      return snap.docs.map((d) => d.id)
+    }, loading)
+  }
+
+  /**
+   * Deletes a Firestore document at the given path and shows a success toast.
+   *
+   * @param {string} path - Even-segment Firestore document path.
+   * @param {string} message - Success message shown after deletion.
+   */
+  async function deleteData(path, message) {
     if (isSubmitting.value) return
     isSubmitting.value = true
     const loading = startLoading()
     try {
-      await remove(dbRef(url))
+      await deleteDoc(doc(database, path))
       showSuccess(message)
     } catch (error) {
       showError(error.message)
@@ -63,23 +95,20 @@ export default function useFireBase() {
       stopLoading(loading)
     }
   }
+
   /**
-   * The `updateData` function sends a request to update data at a specified URL, displaying success or
-   * error messages accordingly.
-   * @param url - The `url` parameter is the endpoint or location where the data will be updated. It is
-   * typically a string representing the URL of the API endpoint or database reference.
-   * @param getData - The `getData` parameter in the `updateData` function is a function that is expected
-   * to return the data that will be updated in the database. This function should be defined outside of
-   * the `updateData` function and passed as an argument when calling `updateData`.
-   * @param message - The `message` parameter in the `updateData` function is a message that will be
-   * displayed to indicate a successful operation after updating the data in the database.
+   * Merges (shallow-updates) fields into an existing Firestore document.
+   *
+   * @param {string} path - Even-segment Firestore document path.
+   * @param {() => Object} getData - Factory returning the fields to update.
+   * @param {string} message - Success message shown after update.
    */
-  async function updateData(url, getData, message) {
+  async function updateData(path, getData, message) {
     if (isSubmitting.value) return
     isSubmitting.value = true
     const loading = startLoading()
     try {
-      await update(dbRef(url), getData())
+      await updateDoc(doc(database, path), getData())
       showSuccess(message)
     } catch (error) {
       showError(error.message)
@@ -101,32 +130,49 @@ export default function useFireBase() {
       whenAdded: formData.whenAdded
     }
   }
+
   /**
-   * The `saveData` function saves data to a specified URL in a database, with additional logic for
-   * handling payments and expenses.
-   * @param url - The `url` parameter is the endpoint where the data will be saved in the database.
-   * @param getData - The `getData` parameter in the `saveData` function is a function that is expected
-   * to return the data that needs to be saved. This function is called within the `saveData` function to
-   * retrieve the data before saving it to the database.
-   * @param formRef - The `formRef` parameter in the `saveData` function is a reference to the form
-   * element that you want to reset after saving the data. This reference is used in the `resetForm`
-   * function to clear the form fields once the data has been successfully saved.
-   * @param message - The `message` parameter in the `saveData` function is a message that will be
-   * displayed to the user upon successful completion of saving the data. This message is typically a
-   * success message indicating that the data has been saved successfully.
+   * Adds a new document to a Firestore collection (Firestore auto-generates the ID).
+   * When saving a shared expense also cross-posts a simplified record to personal-expenses.
+   *
+   * @param {string} collectionPath - Odd-segment Firestore collection path.
+   * @param {() => Object} getData - Factory returning the document data.
+   * @param {import('vue').Ref} formRef - Form ref to reset on success.
+   * @param {string} message - Success toast message.
+   * @param {() => void} [onSuccess] - Optional callback after save.
    */
-  function saveData(url, getData, formRef, message, onSuccess) {
+  function saveData(collectionPath, getData, formRef, message, onSuccess) {
     if (isSubmitting.value) return
     isSubmitting.value = true
     const loading = startLoading()
     const data = getData()
-    push(dbRef(url), data)
+    addDoc(collection(database, collectionPath), data)
       .then(async () => {
-        if (url.includes(DB_NODES.SHARED_EXPENSES)) {
-          // payer may be mobile id; write a simplified expenses entry keyed by payer identifier
+        // Ensure the parent "month" document exists so getDocs on the months
+        // collection returns it. Firestore does not surface implicit documents
+        // (those with sub-collections but no own fields) in getDocs results.
+        const parentPath = collectionPath.split('/').slice(0, -1).join('/')
+        if (
+          parentPath.split('/').length % 2 === 0 &&
+          parentPath.split('/').length >= 4
+        ) {
+          await setDoc(doc(database, parentPath), {}, { merge: true })
+        }
+        if (collectionPath.includes(DB_NODES.SHARED_EXPENSES)) {
+          // Cross-post a simplified record to the payer's personal-expenses
           const payerKey = data.payer || 'unknown'
-          const newUrl = `${DB_NODES.PERSONAL_EXPENSES}/${payerKey}/${dateToMonthNode(data.date)}`
-          await push(dbRef(newUrl), getNewData(data))
+          const monthYear = dateToMonthNode(data.date)
+          const personalPath = `${DB_NODES.PERSONAL_EXPENSES}/${payerKey}/months/${monthYear}/expenses`
+          await addDoc(collection(database, personalPath), getNewData(data))
+          // Ensure the personal-expenses month document also exists
+          await setDoc(
+            doc(
+              database,
+              `${DB_NODES.PERSONAL_EXPENSES}/${payerKey}/months/${monthYear}`
+            ),
+            {},
+            { merge: true }
+          )
         }
         showSuccess(message)
         resetForm(formRef)
@@ -142,12 +188,19 @@ export default function useFireBase() {
       })
   }
 
-  async function setData(url, data, message) {
+  /**
+   * Writes (overwrites) a Firestore document at the given path.
+   *
+   * @param {string} path - Even-segment Firestore document path.
+   * @param {Object} data - Data to write.
+   * @param {string} [message] - Optional success toast message.
+   */
+  async function setData(path, data, message) {
     if (isSubmitting.value) return
     isSubmitting.value = true
     const loading = startLoading()
     try {
-      await set(dbRef(url), data)
+      await setDoc(doc(database, path), data)
       if (message) showSuccess(message)
     } catch (error) {
       showError(error.message)
@@ -157,40 +210,13 @@ export default function useFireBase() {
     }
   }
 
+  /**
+   * Deletes a Firestore document (no toast — used internally).
+   *
+   * @param {string} path - Even-segment Firestore document path.
+   */
   async function removeData(path) {
-    await remove(dbRef(path))
-  }
-
-  async function readShallow(path, loading = true) {
-    return withLoading(async () => {
-      const baseUrl = import.meta.env.VITE_DATABASE_URL
-      let tokenParam = ''
-      const headers = {}
-      try {
-        const currentUser = auth.currentUser
-        if (currentUser) {
-          const token = await currentUser.getIdToken()
-          tokenParam = `&auth=${token}`
-        }
-      } catch {
-        /* proceed without token */
-      }
-      try {
-        if (appCheck) {
-          const { token } = await getToken(appCheck)
-          headers['X-Firebase-AppCheck'] = token
-        }
-      } catch {
-        /* proceed without App Check token */
-      }
-      const res = await fetch(
-        `${baseUrl}/${path}.json?shallow=true${tokenParam}`,
-        { headers }
-      )
-      if (!res.ok) return []
-      const data = await res.json()
-      return data ? Object.keys(data) : []
-    }, loading)
+    await deleteDoc(doc(database, path))
   }
 
   return {

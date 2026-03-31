@@ -208,6 +208,7 @@
         v-model="groupsDialogVisible"
         :title="`${selectedUserName}'s Groups (${selectedUserGroups.length})`"
         width="300px"
+        append-to-body
         align-center
       >
         <div class="overflow-y-auto max-h-64 pr-1">
@@ -231,6 +232,7 @@
         v-model="createGroupDialogVisible"
         title="Create Group"
         width="90%"
+        append-to-body
         style="max-width: 500px"
         destroy-on-close
       >
@@ -251,6 +253,7 @@
         v-model="editDialogVisible"
         title="Edit User"
         width="90%"
+        append-to-body
         style="max-width: 400px"
       >
         <el-form
@@ -277,6 +280,7 @@
         </el-form>
         <template #footer>
           <div class="flex gap-2 justify-end">
+            <el-button size="small" @click="resetEditUserForm">Reset</el-button>
             <el-button size="small" @click="editDialogVisible = false"
               >Cancel</el-button
             >
@@ -327,7 +331,8 @@ const {
   selectedUserName,
   isPageLoading,
   openGroupsDialog,
-  handleEditUserSave
+  handleEditUserSave,
+  resetEditUserForm
 } = Users()
 </script>
 

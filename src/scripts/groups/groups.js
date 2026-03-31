@@ -7,7 +7,17 @@ import { useUserStore } from '../../stores/userStore'
 import useFireBase from '../../api/firebase-apis'
 import { showError, showSuccess } from '../../utils/showAlerts'
 import { ElMessageBox } from 'element-plus'
-import { onValue, off, auth, onAuthStateChanged } from '../../firebase'
+import {
+  onSnapshot,
+  auth,
+  onAuthStateChanged,
+  deleteField,
+  collectionGroup,
+  query,
+  where,
+  getDocs,
+  database
+} from '../../firebase'
 import { maskMobile } from '../../utils/maskMobile'
 import {
   appendNotificationForUser,
@@ -19,6 +29,7 @@ import {
 } from '../../utils/user-display'
 import { DB_NODES } from '../../constants/db-nodes'
 import { useDebouncedRef } from '../../utils/useDebouncedRef'
+import { buildSharedGroupsLocation } from '../../utils/shared-groups'
 import {
   isMemberOfGroup,
   allMembersApproved,
@@ -58,22 +69,20 @@ export const Groups = () => {
   }
 
   // Sync all filters to URL so they are bookmarkable and shareable
-  watch(
-    [searchQuery, sortOrder, filterByUser, filterByCategory],
-    () => {
-      const query = {}
-      if (searchQuery.value) query.q = searchQuery.value
-      if (sortOrder.value) query.sort = sortOrder.value
-      if (filterByUser.value) query.user = filterByUser.value
-      if (filterByCategory.value) query.category = filterByCategory.value
-      router.replace({ path: route.path, query })
-    }
-  )
+  watch([searchQuery, sortOrder, filterByUser, filterByCategory], () => {
+    const query = {}
+    if (searchQuery.value) query.q = searchQuery.value
+    if (sortOrder.value) query.sort = sortOrder.value
+    if (filterByUser.value) query.user = filterByUser.value
+    if (filterByCategory.value) query.category = filterByCategory.value
+    router.replace({ path: route.path, query })
+  })
 
   // When create-group dialog closes via any path, remove ?new from URL
   watch(showCreateGroup, (open) => {
     if (!open && route.query.new) {
-      const { new: _, ...rest } = route.query
+      const rest = { ...route.query }
+      delete rest.new
       router.replace({ path: route.path, query: rest })
     }
   })
@@ -184,6 +193,16 @@ export const Groups = () => {
     return [...pinned, ...unpinned]
   })
 
+  const joinedGroupsForShare = computed(() =>
+    groups.value.filter((group) => isMemberOfGroup(group))
+  )
+
+  const pinnedGroupsForShare = computed(() =>
+    joinedGroupsForShare.value.filter((group) =>
+      pinnedGroupIds.value.includes(group.id)
+    )
+  )
+
   // Groups where the current user has a pending invitation (was added but hasn't accepted yet)
   const pendingInvitations = computed(() => {
     const me = authStore.getActiveUser
@@ -286,6 +305,11 @@ export const Groups = () => {
   const editDialogVisible = ref(false)
   const editingGroupId = ref(null)
   const originalMembers = ref([])
+  const initialEditForm = ref({
+    name: '',
+    description: '',
+    members: []
+  })
 
   const editForm = ref({
     name: '',
@@ -324,6 +348,87 @@ export const Groups = () => {
     savePins()
   }
 
+  function buildShareLink(groupIds) {
+    const location = buildSharedGroupsLocation(groupIds)
+    const resolved = router.resolve(location)
+    return `${window.location.origin}${resolved.href}`
+  }
+
+  async function copyShareLink(url) {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(url)
+      return true
+    }
+
+    const textarea = document.createElement('textarea')
+    textarea.value = url
+    textarea.setAttribute('readonly', '')
+    textarea.style.position = 'fixed'
+    textarea.style.opacity = '0'
+    textarea.style.pointerEvents = 'none'
+    document.body.appendChild(textarea)
+    textarea.select()
+    textarea.setSelectionRange(0, textarea.value.length)
+
+    try {
+      const copied = document.execCommand('copy')
+      if (!copied) throw new Error('Copy command failed')
+      return true
+    } finally {
+      document.body.removeChild(textarea)
+    }
+  }
+
+  async function shareGroups(groupList, label = 'groups') {
+    if (!groupList.length) {
+      showError(`No ${label} available to share`)
+      return
+    }
+
+    const names = groupList.map((group) => group.name).join(', ')
+    const url = buildShareLink(groupList.map((group) => group.id))
+    const sharePayload = {
+      title:
+        groupList.length === 1
+          ? `Shared group: ${groupList[0].name}`
+          : `Shared ${label}`,
+      text:
+        groupList.length === 1
+          ? `Open "${groupList[0].name}" in Kharchafy.`
+          : `Open these ${label} in Kharchafy: ${names}`,
+      url
+    }
+
+    try {
+      if (navigator.share) {
+        await navigator.share(sharePayload)
+        return
+      }
+    } catch (error) {
+      if (error?.name === 'AbortError') return
+    }
+
+    try {
+      await copyShareLink(url)
+      showSuccess('Share link copied to clipboard!')
+    } catch {
+      window.prompt('Copy this share link:', url)
+      showError('Failed to share group link.')
+    }
+  }
+
+  function shareJoinedGroups() {
+    return shareGroups(joinedGroupsForShare.value, 'joined groups')
+  }
+
+  function sharePinnedGroups() {
+    return shareGroups(pinnedGroupsForShare.value, 'pinned groups')
+  }
+
+  function shareSingleGroup(group) {
+    return shareGroups([group], 'group')
+  }
+
   // Get join requests for a group
   function getJoinRequests(groupId) {
     const group = groups.value.find((g) => g.id === groupId)
@@ -350,75 +455,71 @@ export const Groups = () => {
         return
       }
 
-    // Fetch users — needed for group creation and member display
-    // Only include verified users to prevent unverified accounts from being added to groups
-    try {
-      const users = await read(DB_NODES.USERS)
-      if (users) {
-        const list = Object.keys(users)
-          .filter((k) => users[k].emailVerified === true) // Only verified users
-          .map((k) => ({
-            mobile: k,
-            name: users[k].name || '',
-            maskedMobile: maskMobile(k),
-            bugResolver: users[k].bugResolver === true
-          }))
-        userStore.setUsers(list)
+      // Fetch users — needed for group creation and member display
+      // Only include verified users to prevent unverified accounts from being added to groups
+      try {
+        const users = await read(DB_NODES.USERS)
+        if (users) {
+          const list = Object.keys(users)
+            .filter((k) => users[k].emailVerified === true) // Only verified users
+            .map((k) => ({
+              mobile: k,
+              name: users[k].name || '',
+              maskedMobile: maskMobile(k),
+              bugResolver: users[k].bugResolver === true
+            }))
+          userStore.setUsers(list)
+        }
+      } catch (error) {
+        console.error('Error fetching users:', error)
       }
-    } catch (error) {
-      console.error('Error fetching users:', error)
-    }
 
-    // Set up real-time listener for groups
-    const groupsRef = dbRef(DB_NODES.GROUPS)
+      // Set up real-time listener for groups
+      const groupsRef = dbRef(DB_NODES.GROUPS)
 
-    const loadingTimeout = setTimeout(() => {
-      isPageLoading.value = false
-    }, 8000)
-
-    groupsListener = onValue(
-      groupsRef,
-      (snapshot) => {
-        clearTimeout(loadingTimeout)
+      const loadingTimeout = setTimeout(() => {
         isPageLoading.value = false
-        if (snapshot.exists()) {
-          const data = snapshot.val()
-          const groupList = Object.keys(data).map((k) => ({
-            id: k,
-            ...data[k]
-          }))
-          groupStore.setGroups(groupList)
+      }, 8000)
 
-          // Auto-select the user's group on first load if none is already active
-          if (!groupStore.getActiveGroup) {
-            const mobile = authStore.getActiveUser
-            const myGroup = groups.value.find((g) =>
-              (g.members || []).some((m) => m.mobile === mobile)
-            )
-            if (myGroup) groupStore.setActiveGroup(myGroup.id)
+      groupsListener = onSnapshot(
+        groupsRef,
+        (snapshot) => {
+          clearTimeout(loadingTimeout)
+          isPageLoading.value = false
+          if (!snapshot.empty) {
+            const groupList = snapshot.docs.map((d) => ({
+              id: d.id,
+              ...d.data()
+            }))
+            groupStore.setGroups(groupList)
+
+            // Auto-select the user's group on first load if none is already active
+            if (!groupStore.getActiveGroup) {
+              const mobile = authStore.getActiveUser
+              const myGroup = groups.value.find((g) =>
+                (g.members || []).some((m) => m.mobile === mobile)
+              )
+              if (myGroup) groupStore.setActiveGroup(myGroup.id)
+            }
+          } else {
+            groupStore.setGroups([])
           }
-        } else {
-          groupStore.setGroups([])
+        },
+        (error) => {
+          isPageLoading.value = false
+          // Ignore permission errors that fire after logout — Firebase revokes the
+          // auth token before this listener is detached (on component unmount).
+          if (authStore.getActiveUser) {
+            console.error('Error loading groups:', error)
+          }
         }
-      },
-      (error) => {
-        isPageLoading.value = false
-        // Ignore permission errors that fire after logout — Firebase revokes the
-        // auth token before this listener is detached (on component unmount).
-        if (authStore.getActiveUser) {
-          console.error('Error loading groups:', error)
-        }
-      }
-    )
+      )
     }) // end onAuthStateChanged
   })
 
   onUnmounted(() => {
     // Clean up the listener when component is unmounted
-    if (groupsListener) {
-      const groupsRef = dbRef(DB_NODES.GROUPS)
-      off(groupsRef, 'value', groupsListener)
-    }
+    if (groupsListener) groupsListener()
   })
 
   // ========== Per-user financial position (expenses + loans) ==========
@@ -441,7 +542,7 @@ export const Groups = () => {
       const monthNode = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}`
       const paymentsByMonth =
         (await read(
-          `${DB_NODES.SHARED_EXPENSES}/${groupId}/${monthNode}`,
+          `${DB_NODES.SHARED_EXPENSES}/${groupId}/months/${monthNode}/payments`,
           false
         )) || {}
 
@@ -483,7 +584,7 @@ export const Groups = () => {
       // Shared loans
       const loansMonthNode =
         (await read(
-          `${DB_NODES.SHARED_LOANS}/${groupId}/${monthNode}`,
+          `${DB_NODES.SHARED_LOANS}/${groupId}/months/${monthNode}/loans`,
           false
         )) || null
       const loansSource =
@@ -543,12 +644,19 @@ export const Groups = () => {
       if (!changed) return
 
       const remaining = record.notifications?.[mobile]
-      const notifPath = `${DB_NODES.GROUPS}/${groupId}/notifications/${mobile}`
 
       if (remaining && remaining.length) {
-        await setData(notifPath, remaining, '')
+        await updateData(
+          `${DB_NODES.GROUPS}/${groupId}`,
+          () => ({ [`notifications.${mobile}`]: remaining }),
+          ''
+        )
       } else {
-        await removeData(notifPath)
+        await updateData(
+          `${DB_NODES.GROUPS}/${groupId}`,
+          () => ({ [`notifications.${mobile}`]: deleteField() }),
+          ''
+        )
       }
 
       groupStore.updateGroup(record)
@@ -627,6 +735,10 @@ export const Groups = () => {
     addMemberGroupId.value = groupId
     selectedMemberToAdd.value = ''
     addMemberDialogVisible.value = true
+  }
+
+  function resetAddMemberForm() {
+    selectedMemberToAdd.value = ''
   }
 
   async function submitAddMemberRequest() {
@@ -967,8 +1079,8 @@ export const Groups = () => {
       }
 
       await updateData(
-        `${DB_NODES.GROUPS}/${groupId}/deleteRequest`,
-        () => group.deleteRequest,
+        `${DB_NODES.GROUPS}/${groupId}`,
+        () => ({ deleteRequest: group.deleteRequest }),
         ''
       )
 
@@ -1010,13 +1122,17 @@ export const Groups = () => {
 
       // Update notifications in database
       await updateData(
-        `${DB_NODES.GROUPS}/${groupId}/notifications`,
-        () => group.notifications,
+        `${DB_NODES.GROUPS}/${groupId}`,
+        () => ({ notifications: group.notifications }),
         ''
       )
 
       // Explicitly remove the deleteRequest from Firebase
-      await removeData(`${DB_NODES.GROUPS}/${groupId}/deleteRequest`)
+      await updateData(
+        `${DB_NODES.GROUPS}/${groupId}`,
+        () => ({ deleteRequest: deleteField() }),
+        ''
+      )
 
       groupStore.updateGroup({ ...group })
 
@@ -1072,14 +1188,19 @@ export const Groups = () => {
     editingGroupId.value = groupId
     originalMembers.value = [...group.members.map((m) => m.mobile)]
 
-    editForm.value = {
+    initialEditForm.value = {
       name: group.name,
       description: group.description || '',
       members: group.members.map((m) => m.mobile)
     }
+    editForm.value = {
+      ...initialEditForm.value,
+      members: [...initialEditForm.value.members]
+    }
 
     editDialogVisible.value = true
   }
+
   async function updateGroup() {
     try {
       if (!editForm.value.name) {
@@ -1283,9 +1404,9 @@ export const Groups = () => {
         showSuccess('Edit changes applied successfully')
       } else {
         // Just save the approval
-        await setData(
-          `${DB_NODES.GROUPS}/${groupId}/editRequest`,
-          updatedEditRequest,
+        await updateData(
+          `${DB_NODES.GROUPS}/${groupId}`,
+          () => ({ editRequest: updatedEditRequest }),
           ''
         )
         showSuccess('Your approval has been recorded')
@@ -1336,13 +1457,17 @@ export const Groups = () => {
 
       // Update notifications in database first
       await updateData(
-        `${DB_NODES.GROUPS}/${groupId}/notifications`,
-        () => group.notifications,
+        `${DB_NODES.GROUPS}/${groupId}`,
+        () => ({ notifications: group.notifications }),
         ''
       )
 
       // Explicitly remove the editRequest from Firebase
-      await removeData(`${DB_NODES.GROUPS}/${groupId}/editRequest`)
+      await updateData(
+        `${DB_NODES.GROUPS}/${groupId}`,
+        () => ({ editRequest: deleteField() }),
+        ''
+      )
 
       groupStore.updateGroup({ ...group })
 
@@ -1374,9 +1499,9 @@ export const Groups = () => {
         approvals: [{ mobile }]
       }
 
-      await setData(
-        `${DB_NODES.GROUPS}/${groupId}/addMemberRequest`,
-        addMemberRequest,
+      await updateData(
+        `${DB_NODES.GROUPS}/${groupId}`,
+        () => ({ addMemberRequest }),
         'Add member request sent to all members'
       )
     } catch (err) {
@@ -1402,9 +1527,9 @@ export const Groups = () => {
         approvals: [...currentApprovals, { mobile }]
       }
 
-      await setData(
-        `${DB_NODES.GROUPS}/${groupId}/addMemberRequest`,
-        updatedRequest,
+      await updateData(
+        `${DB_NODES.GROUPS}/${groupId}`,
+        () => ({ addMemberRequest: updatedRequest }),
         ''
       )
 
@@ -1454,7 +1579,11 @@ export const Groups = () => {
         }
       )
 
-      await removeData(`${DB_NODES.GROUPS}/${groupId}/addMemberRequest`)
+      await updateData(
+        `${DB_NODES.GROUPS}/${groupId}`,
+        () => ({ addMemberRequest: deleteField() }),
+        ''
+      )
       showSuccess('Add member request rejected')
     } catch (err) {
       if (err !== 'cancel') {
@@ -1467,12 +1596,39 @@ export const Groups = () => {
 
   // Returns a human-readable block reason, or null if leave is allowed.
   async function getLeaveBlockReason(group, mobile) {
-    // Block if any group-level request is pending — leaving mid-flow would break those workflows
+    const paymentIncludesUser = (payment) => {
+      if (!payment) return false
+      if (payment.payer === mobile) return true
+      if (
+        payment.payerMode === 'multiple' &&
+        Array.isArray(payment.payers) &&
+        payment.payers.some((payer) => payer.mobile === mobile)
+      )
+        return true
+      if (
+        Array.isArray(payment.split) &&
+        payment.split.some((split) => split.mobile === mobile)
+      )
+        return true
+      if (
+        Array.isArray(payment.participants) &&
+        payment.participants.some((p) =>
+          typeof p === 'string'
+            ? p === mobile
+            : p?.mobile === mobile || p?.userId === mobile
+        )
+      )
+        return true
+      return false
+    }
+
+    // Block if any group-level request is pending
     const openRequests = [
       group.editRequest && 'a membership edit is pending',
       group.deleteRequest && 'a group deletion request is pending',
       group.addMemberRequest && 'an add-member request is pending',
       group.transferOwnershipRequest && 'an ownership transfer is pending',
+      group.settlementRequest && 'a settlement request is pending',
       (group.joinRequests || []).length > 0 && 'a join request is pending'
     ].filter(Boolean)
 
@@ -1480,63 +1636,97 @@ export const Groups = () => {
       return `Cannot leave while ${openRequests[0]}. Resolve it first.`
     }
 
-    // Block if the user has a non-zero net balance across all recorded months
     try {
-      const expenseMonths = await readShallow(
-        `${DB_NODES.SHARED_EXPENSES}/${group.id}`
-      )
-      const loanMonths = await readShallow(
-        `${DB_NODES.SHARED_LOANS}/${group.id}`
-      )
-      const allMonths = [...new Set([...expenseMonths, ...loanMonths])]
-
       let net = 0
+      let hasActiveUserTransactions = false
 
-      for (const month of allMonths) {
-        // Expenses
-        const payments =
+      // ── Payments — query via collectionGroup using the 'group' field
+      // (all payments saved via the app carry a 'group' field set to the groupId)
+      const paymentsSnap = await getDocs(
+        query(
+          collectionGroup(database, 'payments'),
+          where('group', '==', group.id)
+        )
+      )
+      for (const paymentDoc of paymentsSnap.docs) {
+        const payment = { id: paymentDoc.id, ...paymentDoc.data() }
+
+        if (payment?.deleteRequest || payment?.updateRequest) {
+          return 'Cannot leave while a shared expense change request is pending. Resolve it first.'
+        }
+
+        if (paymentIncludesUser(payment)) hasActiveUserTransactions = true
+
+        const amount = parseFloat(payment.amount) || 0
+        if (!amount) continue
+
+        let share = 0
+        if (Array.isArray(payment.split)) {
+          const selfSplit = payment.split.find((s) => s.mobile === mobile)
+          share = parseFloat(selfSplit?.amount) || 0
+        } else if (Array.isArray(payment.participants)) {
+          const isParticipant = payment.participants.some((p) =>
+            typeof p === 'string'
+              ? p === mobile
+              : p?.mobile === mobile || p?.userId === mobile
+          )
+          if (isParticipant) share = amount / payment.participants.length
+        }
+
+        let credit = 0
+        if (payment.payerMode === 'multiple' && Array.isArray(payment.payers)) {
+          const selfPayer = payment.payers.find((p) => p.mobile === mobile)
+          credit = parseFloat(selfPayer?.amount) || 0
+        } else if (payment.payer === mobile) {
+          credit = amount
+        }
+
+        net += credit - share
+      }
+
+      // ── Loans — query via collectionGroup (new loans have 'group' field)
+      const loansSnap = await getDocs(
+        query(
+          collectionGroup(database, 'loans'),
+          where('group', '==', group.id)
+        )
+      )
+      for (const loanDoc of loansSnap.docs) {
+        const loan = { id: loanDoc.id, ...loanDoc.data() }
+
+        if (loan?.deleteRequest || loan?.updateRequest) {
+          return 'Cannot leave while a shared loan change request is pending. Resolve it first.'
+        }
+
+        if (loan?.giver === mobile || loan?.receiver === mobile)
+          hasActiveUserTransactions = true
+
+        const amt = parseFloat(loan.amount) || 0
+        if (!amt) continue
+        if (loan.giver === mobile) net += amt
+        if (loan.receiver === mobile) net -= amt
+      }
+
+      // ── Fallback: check old loans via month enumeration (loans without 'group' field)
+      const loanMonths = await readShallow(
+        `${DB_NODES.SHARED_LOANS}/${group.id}/months`,
+        false
+      )
+      for (const month of loanMonths || []) {
+        const loansByMonth =
           (await read(
-            `${DB_NODES.SHARED_EXPENSES}/${group.id}/${month}`,
+            `${DB_NODES.SHARED_LOANS}/${group.id}/months/${month}/loans`,
             false
           )) || {}
-        Object.values(payments).forEach((payment) => {
-          const amount = parseFloat(payment.amount) || 0
-          if (!amount) return
-
-          let share = 0
-          if (Array.isArray(payment.split)) {
-            const selfSplit = payment.split.find((s) => s.mobile === mobile)
-            share = parseFloat(selfSplit?.amount) || 0
-          } else if (Array.isArray(payment.participants)) {
-            const isParticipant = payment.participants.some((p) =>
-              typeof p === 'string'
-                ? p === mobile
-                : p?.mobile === mobile || p?.userId === mobile
+        Object.values(loansByMonth).forEach((loan) => {
+          if (loan?.group) return // already counted via collectionGroup above
+          if (loan?.deleteRequest || loan?.updateRequest) {
+            throw new Error(
+              'Cannot leave while a shared loan change request is pending. Resolve it first.'
             )
-            if (isParticipant) share = amount / payment.participants.length
           }
-
-          let credit = 0
-          if (
-            payment.payerMode === 'multiple' &&
-            Array.isArray(payment.payers)
-          ) {
-            const selfPayer = payment.payers.find((p) => p.mobile === mobile)
-            credit = parseFloat(selfPayer?.amount) || 0
-          } else if (payment.payer === mobile) {
-            credit = amount
-          }
-
-          net += credit - share
-        })
-
-        // Loans
-        const loans =
-          (await read(
-            `${DB_NODES.SHARED_LOANS}/${group.id}/${month}`,
-            false
-          )) || {}
-        Object.values(loans).forEach((loan) => {
+          if (loan?.giver === mobile || loan?.receiver === mobile)
+            hasActiveUserTransactions = true
           const amt = parseFloat(loan.amount) || 0
           if (!amt) return
           if (loan.giver === mobile) net += amt
@@ -1545,10 +1735,14 @@ export const Groups = () => {
       }
 
       const roundedNet = parseFloat(net.toFixed(2))
+      if (hasActiveUserTransactions) {
+        return 'Cannot leave while you still have active shared expenses or loans in this group. Finalize settlement first.'
+      }
       if (roundedNet !== 0) {
         return `Cannot leave while you have an unsettled balance (${roundedNet > 0 ? '+' : ''}${roundedNet}). Settle up first.`
       }
     } catch (err) {
+      if (err instanceof Error && err.message) return err.message
       console.error('Balance check failed during leave', err)
       return 'Could not verify your balance. Please try again.'
     }
@@ -1707,13 +1901,14 @@ export const Groups = () => {
       group.ownerMobile = group.transferOwnershipRequest.newOwner
       delete group.transferOwnershipRequest
 
-      await setData(
-        `${DB_NODES.GROUPS}/${groupId}/ownerMobile`,
-        group.ownerMobile,
+      await updateData(
+        `${DB_NODES.GROUPS}/${groupId}`,
+        () => ({
+          ownerMobile: group.ownerMobile,
+          transferOwnershipRequest: deleteField()
+        }),
         ''
       )
-
-      await removeData(`${DB_NODES.GROUPS}/${groupId}/transferOwnershipRequest`)
 
       groupStore.updateGroup({ ...group })
       showSuccess('Ownership has been transferred successfully')
@@ -1750,15 +1945,15 @@ export const Groups = () => {
       // Remove transfer request from local object
       delete group.transferOwnershipRequest
 
-      // Update notifications in database
-      await setData(
-        `${DB_NODES.GROUPS}/${groupId}/notifications`,
-        group.notifications || null,
+      // Update notifications and remove transfer request in database
+      await updateData(
+        `${DB_NODES.GROUPS}/${groupId}`,
+        () => ({
+          notifications: group.notifications || null,
+          transferOwnershipRequest: deleteField()
+        }),
         ''
       )
-
-      // Explicitly remove the transferOwnershipRequest from Firebase
-      await removeData(`${DB_NODES.GROUPS}/${groupId}/transferOwnershipRequest`)
 
       groupStore.updateGroup({ ...group })
 
@@ -1976,6 +2171,7 @@ export const Groups = () => {
     rejectAddMemberRequest,
     showAddMemberDialog,
     submitAddMemberRequest,
+    resetAddMemberForm,
 
     // Notifications
     hideNotification,
@@ -1984,6 +2180,11 @@ export const Groups = () => {
     // Pin
     isPinned,
     togglePin,
+    joinedGroupsForShare,
+    pinnedGroupsForShare,
+    shareJoinedGroups,
+    sharePinnedGroups,
+    shareSingleGroup,
 
     // Per-user financial snapshot
     loadGroupBalances,
@@ -2021,6 +2222,12 @@ export const Groups = () => {
         show: isMember,
         type: 'primary',
         onClick: () => selectGroup(group.id)
+      },
+      {
+        label: 'Share',
+        show: true,
+        type: 'success',
+        onClick: () => shareSingleGroup(group)
       },
       {
         label: 'Leave',

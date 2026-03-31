@@ -6,7 +6,7 @@
         v-bind="componentProps"
         v-on="listenersToPass"
         ref="componentRef"
-        class="px-2 mb-4"
+        class="px-0 sm:px-2 mb-4"
       />
     </template>
     <template #fallback>

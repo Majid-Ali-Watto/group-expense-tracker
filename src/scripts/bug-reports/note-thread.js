@@ -1,9 +1,10 @@
 import { ref } from 'vue'
 import { ElMessageBox } from 'element-plus'
-import { database, ref as dbRef, update, push, remove } from '../../firebase'
+import { database, doc, updateDoc, deleteField } from '../../firebase'
 import { DB_NODES } from '../../constants/db-nodes'
 import { uploadToCloudinary } from '../../utils/cloudinaryUpload'
 import { showError, showSuccess } from '../../utils/showAlerts'
+import { generateUUID } from '../../utils/uuid'
 
 export const REACTION_EMOJIS = ['👍', '❤️', '😄', '😮', '😢', '👎']
 
@@ -31,12 +32,14 @@ export const NoteThread = ({ actorKeyFn, idPrefix, pickerWrapClass }) => {
     }
     const btn = event.currentTarget
     const rect = btn.getBoundingClientRect()
-    reactionPickerAlign.value = rect.left > window.innerWidth / 2 ? 'right' : 'left'
+    reactionPickerAlign.value =
+      rect.left > window.innerWidth / 2 ? 'right' : 'left'
     openReactionPicker.value = noteId
   }
 
   function closeReactionPicker(e) {
-    if (!e.target.closest(`.${pickerWrapClass}`)) openReactionPicker.value = null
+    if (!e.target.closest(`.${pickerWrapClass}`))
+      openReactionPicker.value = null
   }
 
   // ── Reply-to state ────────────────────────────────────────────────────────
@@ -86,19 +89,37 @@ export const NoteThread = ({ actorKeyFn, idPrefix, pickerWrapClass }) => {
 
   // ── Firebase helpers shared by both sides ─────────────────────────────────
   function mobileKeyOf(report) {
-    return report.reporter?.isGuest ? 'guest' : (report.reporter?.mobile || 'guest')
+    return report.reporter?.isGuest
+      ? 'guest'
+      : report.reporter?.mobile || 'guest'
   }
 
-  function noteRef(report, note) {
-    return dbRef(database, `${DB_NODES.BUG_REPORTS}/${mobileKeyOf(report)}/${report.id}/notes/${note.id}`)
+  function reportDocRef(report) {
+    return doc(
+      database,
+      DB_NODES.BUG_REPORTS,
+      mobileKeyOf(report),
+      'reports',
+      report.id
+    )
   }
+
+  // function noteDocRef(report, note) {
+  //   return { reportRef: reportDocRef(report), noteId: note.id }
+  // }
 
   async function saveNoteEdit(report, note, textOverride) {
     const text = (textOverride ?? noteEditText.value).trim()
-    if (!text) { noteEditError.value = 'Note cannot be empty.'; return }
+    if (!text) {
+      noteEditError.value = 'Note cannot be empty.'
+      return
+    }
     noteEditSavingId.value = note.id
     try {
-      await update(noteRef(report, note), { text, editedAt: new Date().toISOString() })
+      await updateDoc(reportDocRef(report), {
+        [`notes.${note.id}.text`]: text,
+        [`notes.${note.id}.editedAt`]: new Date().toISOString()
+      })
       cancelNoteEdit()
       showSuccess('Note updated.')
     } catch (err) {
@@ -110,12 +131,22 @@ export const NoteThread = ({ actorKeyFn, idPrefix, pickerWrapClass }) => {
 
   async function deleteNote(report, note) {
     try {
-      await ElMessageBox.confirm('Delete this note permanently?', 'Delete Note', {
-        confirmButtonText: 'Delete', cancelButtonText: 'Cancel', type: 'warning'
-      })
-    } catch { return }
+      await ElMessageBox.confirm(
+        'Delete this note permanently?',
+        'Delete Note',
+        {
+          confirmButtonText: 'Delete',
+          cancelButtonText: 'Cancel',
+          type: 'warning'
+        }
+      )
+    } catch {
+      return
+    }
     try {
-      await remove(noteRef(report, note))
+      await updateDoc(reportDocRef(report), {
+        [`notes.${note.id}`]: deleteField()
+      })
       showSuccess('Note deleted.')
     } catch (err) {
       showError('Failed to delete note: ' + err.message)
@@ -128,10 +159,11 @@ export const NoteThread = ({ actorKeyFn, idPrefix, pickerWrapClass }) => {
     if (!actorKey) return
     const alreadyReacted = note.reactions?.[emoji]?.[actorKey]
     try {
-      await update(
-        dbRef(database, `${DB_NODES.BUG_REPORTS}/${mobileKeyOf(report)}/${report.id}/notes/${note.id}/reactions/${emoji}`),
-        { [actorKey]: alreadyReacted ? null : true }
-      )
+      await updateDoc(reportDocRef(report), {
+        [`notes.${note.id}.reactions.${emoji}.${actorKey}`]: alreadyReacted
+          ? deleteField()
+          : true
+      })
     } catch (err) {
       showError('Failed to update reaction: ' + err.message)
     }
@@ -174,10 +206,8 @@ export const NoteThread = ({ actorKeyFn, idPrefix, pickerWrapClass }) => {
 
   // ── Push a note to Firebase ───────────────────────────────────────────────
   async function pushNote(report, payload) {
-    return push(
-      dbRef(database, `${DB_NODES.BUG_REPORTS}/${mobileKeyOf(report)}/${report.id}/notes`),
-      payload
-    )
+    const noteId = generateUUID()
+    return updateDoc(reportDocRef(report), { [`notes.${noteId}`]: payload })
   }
 
   return {

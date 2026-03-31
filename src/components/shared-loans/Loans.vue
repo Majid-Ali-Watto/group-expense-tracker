@@ -217,7 +217,8 @@
               plain
               class="sm:hidden"
               @click="clearFilters()"
-            >Clear</el-button>
+              >Clear</el-button
+            >
             <el-button
               circle
               :type="showFilters ? 'danger' : 'primary'"
@@ -229,7 +230,9 @@
           </div>
         </div>
         <!-- Filters: desktop always visible, with Clear All button -->
-        <div class="hidden sm:flex items-center justify-between mb-3 mt-4 gap-2">
+        <div
+          class="hidden sm:flex items-center justify-between mb-3 mt-4 gap-2"
+        >
           <el-row :gutter="5" class="filter-bar flex-1" justify="space-between">
             <!-- Month Selection -->
             <el-col :lg="6" :md="6" :sm="12" :xs="12">
@@ -255,7 +258,14 @@
               />
             </el-col>
           </el-row>
-          <el-button size="small" type="danger" plain class="flex-shrink-0" @click="clearFilters()">Clear All</el-button>
+          <el-button
+            size="small"
+            type="danger"
+            plain
+            class="flex-shrink-0"
+            @click="clearFilters()"
+            >Clear All</el-button
+          >
         </div>
         <!-- Mobile filters (toggle) -->
         <Transition name="form-slide">

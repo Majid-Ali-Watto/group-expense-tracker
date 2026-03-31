@@ -15,7 +15,8 @@
 .bug-tips {
   padding: 16px 20px;
   border: 1px dashed var(--el-border-color);
-  border-radius: 10px;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
 }
 
 .bug-tips-title {
