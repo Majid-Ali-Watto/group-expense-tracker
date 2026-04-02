@@ -53,6 +53,22 @@
         <span class="font-medium">{{ request.changes.description }}</span
         ><br />
       </template>
+      <template v-if="request.changes.category !== undefined">
+        Category:
+        <span
+          v-if="
+            request.current?.category !== undefined &&
+            request.current.category !== request.changes.category
+          "
+        >
+          <span class="line-through text-gray-400">{{
+            request.current.category || 'None'
+          }}</span>
+          &nbsp;→&nbsp;
+        </span>
+        <span class="font-medium">{{ request.changes.category || 'None' }}</span
+        ><br />
+      </template>
       <template v-if="request.changes.date !== undefined">
         Date:
         <span
@@ -73,6 +89,7 @@
       <strong>Payment to be deleted:</strong><br />
       Amount: {{ formatAmount(request.payment.amount) }}<br />
       Payer: {{ getUserName(request.payment.payer) }}<br />
+      Category: {{ request.payment.category || 'None' }}<br />
       Description: {{ request.payment.description }}
     </p>
   </div>

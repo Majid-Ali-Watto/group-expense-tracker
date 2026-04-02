@@ -127,6 +127,7 @@ export default function useFireBase() {
   function getNewData(formData) {
     return {
       amount: formData.amount,
+      category: formData.category || 'Other',
       description: formData.description,
       location: 'Islamabad',
       recipient: 'Expenses-Auto-Add, Paid by ' + formData.payer,

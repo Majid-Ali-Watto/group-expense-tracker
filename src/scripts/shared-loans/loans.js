@@ -16,7 +16,8 @@ import {
   getCurrentMonth,
   showError,
   getCache,
-  setCache
+  setCache,
+  buildCategoryFilterOptions
 } from '@/utils'
 import { DB_NODES } from '@/constants'
 
@@ -43,13 +44,15 @@ export const Loans = () => {
 
   const selectedMonth = ref(route.query.month || getCurrentMonth())
   const selectedGiver = ref(route.query.giver || 'All')
+  const selectedCategory = ref(route.query.category || '')
 
   // Keep URL query params in sync with filter state so the URL is shareable
-  watch([selectedMonth, selectedGiver], () => {
+  watch([selectedMonth, selectedGiver, selectedCategory], () => {
     const query = {}
     if (selectedMonth.value) query.month = selectedMonth.value
     if (selectedGiver.value && selectedGiver.value !== 'All')
       query.giver = selectedGiver.value
+    if (selectedCategory.value) query.category = selectedCategory.value
     router.replace({ path: route.path, query })
   })
   const months = ref([])
@@ -191,6 +194,7 @@ export const Loans = () => {
   watch(activeGroup, () => {
     selectedMonth.value = getCurrentMonth()
     selectedGiver.value = 'All'
+    selectedCategory.value = ''
     fetchMonths()
     fetchLoans()
   })
@@ -198,6 +202,7 @@ export const Loans = () => {
   // Watch for changes in selectedMonth
   watch(selectedMonth, () => {
     selectedGiver.value = 'All'
+    selectedCategory.value = ''
     fetchLoans()
   })
 
@@ -229,9 +234,18 @@ export const Loans = () => {
         return false
       }
 
+      if (selectedCategory.value && loan.category !== selectedCategory.value) {
+        return false
+      }
+
       return true
     })
   })
+  const categoryOptions = computed(() =>
+    buildCategoryFilterOptions(
+      loans.value.map((loan) => loan.category).concat(groupObj.value?.category || '')
+    )
+  )
 
   const balances = computed(() => {
     const balanceMap = {}
@@ -327,7 +341,9 @@ export const Loans = () => {
     closeLoanForm,
     selectedMonth,
     selectedGiver,
+    selectedCategory,
     months,
+    categoryOptions,
     isContentLoading,
     activeUser,
     usersOptions,
@@ -351,6 +367,7 @@ export const Loans = () => {
     clearFilters: () => {
       selectedMonth.value = getCurrentMonth()
       selectedGiver.value = 'All'
+      selectedCategory.value = ''
     }
   }
 }

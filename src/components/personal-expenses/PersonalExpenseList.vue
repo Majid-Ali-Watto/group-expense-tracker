@@ -13,7 +13,7 @@
       <!-- Filter -->
       <div class="sel-filter no-print-pdf">
         <div class="sel-filter-toggle">
-          <span class="sel-filter-label">Filter by month</span>
+          <span class="sel-filter-label">Filters</span>
           <div class="flex items-center gap-2">
             <button
               v-if="showFilters"
@@ -43,10 +43,19 @@
             <GenericDropDown
               size="small"
               v-model="selectedMonth"
-              label="Select Month"
+              label="Month"
               placeholder="Select month"
               :options="months"
               @update:modelValue="fetchExpenses"
+            />
+          </div>
+          <div :class="showFilters ? 'block flex-1' : 'hidden sm:block flex-1'">
+            <GenericDropDown
+              size="small"
+              v-model="selectedCategory"
+              label="Category"
+              placeholder="All Categories"
+              :options="categoryOptions"
             />
           </div>
         </div>
@@ -54,7 +63,7 @@
 
       <Table
         downloadTitle="Personal_Expenses"
-        :rows="expenses"
+        :rows="filteredExpenses"
         :keys="keys"
         :dataRef="content"
         :reportMonth="selectedMonth"
@@ -74,11 +83,14 @@ import { PersonalExpenseList } from '@/scripts/personal-expenses'
 const {
   formatAmount,
   selectedMonth,
+  selectedCategory,
   expenses,
+  filteredExpenses,
   keys,
   totalSpent,
   remaining,
   months,
+  categoryOptions,
   content,
   isContentLoading,
   fetchExpenses,

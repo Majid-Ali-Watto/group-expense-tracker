@@ -9,7 +9,8 @@ import {
   showError,
   formatUserDisplay,
   getCache,
-  setCache
+  setCache,
+  buildCategoryFilterOptions
 } from '@/utils'
 
 export const PersonalLoans = () => {
@@ -32,18 +33,20 @@ export const PersonalLoans = () => {
   const loanContent = ref(null)
   const selectedMonth = ref(route.query.month || 'All')
   const selectedGiver = ref(route.query.giver || 'All')
+  const selectedCategory = ref(route.query.category || '')
   const months = ref([])
   const showLoanForm = ref(false)
   const monthsLoaded = ref(false)
   const loansLoaded = ref(false)
 
   // Sync filters to URL so they are bookmarkable and shareable
-  watch([selectedMonth, selectedGiver], () => {
+  watch([selectedMonth, selectedGiver, selectedCategory], () => {
     const query = {}
     if (selectedMonth.value && selectedMonth.value !== 'All')
       query.month = selectedMonth.value
     if (selectedGiver.value && selectedGiver.value !== 'All')
       query.giver = selectedGiver.value
+    if (selectedCategory.value) query.category = selectedCategory.value
     router.replace({ path: route.path, query })
   })
 
@@ -274,9 +277,22 @@ export const PersonalLoans = () => {
   })
 
   const filteredLoans = computed(() => {
-    if (selectedGiver.value === 'All') return loans.value
-    return loans.value.filter((loan) => loan.loanGiver === selectedGiver.value)
+    return loans.value.filter((loan) => {
+      if (
+        selectedGiver.value !== 'All' &&
+        loan.loanGiver !== selectedGiver.value
+      ) {
+        return false
+      }
+      if (selectedCategory.value && loan.category !== selectedCategory.value) {
+        return false
+      }
+      return true
+    })
   })
+  const categoryOptions = computed(() =>
+    buildCategoryFilterOptions(loans.value.map((loan) => loan.category))
+  )
 
   const totalLending = computed(() => {
     return filteredLoans.value.reduce((total, loan) => {
@@ -369,9 +385,11 @@ export const PersonalLoans = () => {
     loanContent,
     selectedMonth,
     selectedGiver,
+    selectedCategory,
     giverOptions,
     filteredLoans,
     months,
+    categoryOptions,
     isContentLoading,
     showLoanForm,
     closeLoanForm,
@@ -383,6 +401,7 @@ export const PersonalLoans = () => {
     clearFilters: () => {
       selectedMonth.value = 'All'
       selectedGiver.value = 'All'
+      selectedCategory.value = ''
     }
   }
 }

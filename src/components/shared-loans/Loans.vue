@@ -144,13 +144,32 @@
                   <span class="font-medium">{{
                     request.changes.description
                   }}</span>
+                  <br />
+                </template>
+                <template v-if="request.changes.category !== undefined">
+                  Category:
+                  <span
+                    v-if="
+                      request.current?.category !== undefined &&
+                      request.current.category !== request.changes.category
+                    "
+                  >
+                    <span class="line-through text-gray-400">{{
+                      request.current.category || 'None'
+                    }}</span>
+                    &nbsp;→&nbsp;
+                  </span>
+                  <span class="font-medium">{{
+                    request.changes.category || 'None'
+                  }}</span>
                 </template>
               </p>
               <p v-else>
                 <strong>Loan to be deleted:</strong><br />
                 Amount: {{ formatAmount(request.loan.amount) }}<br />
                 Giver: {{ getUserName(request.loan.giver) }}<br />
-                Receiver: {{ getUserName(request.loan.receiver) }}
+                Receiver: {{ getUserName(request.loan.receiver) }}<br />
+                Category: {{ request.loan.category || 'None' }}
               </p>
             </div>
 
@@ -259,6 +278,15 @@
                 size="small"
               />
             </el-col>
+            <el-col :lg="6" :md="6" :sm="12" :xs="12">
+              <GenericDropDown
+                v-model="selectedCategory"
+                label="Category"
+                placeholder="All Categories"
+                :options="categoryOptions"
+                size="small"
+              />
+            </el-col>
           </el-row>
         </div>
         <!-- Mobile filters (toggle) -->
@@ -288,6 +316,15 @@
                   { label: 'All Givers', value: 'All' },
                   ...usersOptions
                 ]"
+                size="small"
+              />
+            </el-col>
+            <el-col :lg="6" :md="6" :sm="12" :xs="12">
+              <GenericDropDown
+                v-model="selectedCategory"
+                label="Category"
+                placeholder="All Categories"
+                :options="categoryOptions"
                 size="small"
               />
             </el-col>
@@ -331,7 +368,9 @@ const {
   closeLoanForm,
   selectedMonth,
   selectedGiver,
+  selectedCategory,
   months,
+  categoryOptions,
   isContentLoading,
   activeUser,
   usersOptions,

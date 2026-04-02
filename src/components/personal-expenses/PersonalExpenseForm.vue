@@ -9,13 +9,25 @@
       class="px-2"
     >
       <AmountInput v-model.number="form.amount" required />
+      <GenericDropDown
+        v-model="form.category"
+        label="Category"
+        prop="category"
+        placeholder="Add or select category"
+        :options="categoryOptions"
+        :allow-create="true"
+        required
+      />
       <GenericInput
+        :rows="1"
         v-model="form.description"
         label="Description"
         prop="description"
         placeholder="Enter description"
         required
+        type="textarea"
         :maxlength="200"
+        :autosize="{ minRows: 1, maxRows: 3 }"
       />
       <GenericInput
         v-model="form.location"
@@ -32,6 +44,14 @@
         placeholder="To Whom"
         required
         :maxlength="50"
+      />
+      <DataTimePicker
+        v-model="form.date"
+        required
+        type="date"
+        placeholder="Select date"
+        format="YYYY-MM-DD"
+        value-format="YYYY-MM-DD"
       />
       <ReceiptUploadField
         :selected-files="receiptFiles"
@@ -71,6 +91,8 @@ import { rules } from '@/assets'
 import {
   GenericButton,
   AmountInput,
+  DataTimePicker,
+  GenericDropDown,
   GenericInput,
   ReceiptUploadField
 } from '@/components/generic-components'
@@ -85,6 +107,7 @@ const props = defineProps({
 const {
   isEditMode,
   form,
+  categoryOptions,
   expenseForm,
   validateForm,
   resetForm,

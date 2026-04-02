@@ -2,7 +2,13 @@ import { computed, inject, ref, onMounted, watch, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { onSnapshot, auth, onAuthStateChanged } from '@/firebase'
 import { useAuthStore, useDataStore } from '@/stores'
-import { getCurrentMonth, showError, getCache, setCache } from '@/utils'
+import {
+  getCurrentMonth,
+  showError,
+  getCache,
+  setCache,
+  buildCategoryFilterOptions
+} from '@/utils'
 import { useFireBase } from '@/composables'
 import { DB_NODES } from '@/constants'
 
@@ -16,6 +22,7 @@ export const PersonalExpenseList = () => {
   const route = useRoute()
   const router = useRouter()
   const selectedMonth = ref(route.query.month || getCurrentMonth())
+  const selectedCategory = ref(route.query.category || '')
   const expenses = ref([])
   const keys = ref([])
   const totalSpent = ref(0)
@@ -162,15 +169,28 @@ export const PersonalExpenseList = () => {
   const updateRemaining = () => {
     remaining.value = salary.value - totalSpent.value
   }
+  const filteredExpenses = computed(() => {
+    if (!selectedCategory.value) return expenses.value
+    return expenses.value.filter(
+      (expense) => expense.category === selectedCategory.value
+    )
+  })
+  const categoryOptions = computed(() =>
+    buildCategoryFilterOptions(expenses.value.map((expense) => expense.category))
+  )
 
   watch(selectedMonth, () => {
     dataStore.setCurrentMonth(selectedMonth.value)
     fetchSalary()
     fetchExpenses()
+  })
+
+  watch([selectedMonth, selectedCategory], () => {
     // Sync to URL so the selected month is bookmarkable
     const query = {}
     if (selectedMonth.value !== getCurrentMonth())
       query.month = selectedMonth.value
+    if (selectedCategory.value) query.category = selectedCategory.value
     router.replace({ path: route.path, query })
   })
 
@@ -207,16 +227,20 @@ export const PersonalExpenseList = () => {
   return {
     formatAmount,
     selectedMonth,
+    selectedCategory,
     expenses,
+    filteredExpenses,
     keys,
     totalSpent,
     remaining,
     months,
+    categoryOptions,
     content,
     isContentLoading,
     fetchExpenses,
     clearFilters: () => {
       selectedMonth.value = getCurrentMonth()
+      selectedCategory.value = ''
     }
   }
 }

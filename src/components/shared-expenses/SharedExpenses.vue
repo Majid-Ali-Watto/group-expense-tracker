@@ -159,7 +159,14 @@
                   required
                 />
 
-                <DataTimePicker v-model="formData.date" required />
+                <DataTimePicker
+                  v-model="formData.date"
+                  required
+                  type="date"
+                  placeholder="Select date"
+                  format="YYYY-MM-DD"
+                  value-format="YYYY-MM-DD"
+                />
 
                 <ReceiptUploadField
                   :selected-files="receiptFiles"
@@ -183,9 +190,17 @@
                   placeholder="Enter location"
                   :maxlength="100"
                 />
+                <GenericDropDown
+                  v-model="formData.category"
+                  label="Category"
+                  prop="category"
+                  :options="categoryOptions"
+                  placeholder="Select category"
+                  required
+                />
 
                 <GenericInput
-                  :rows="7"
+                  :rows="1"
                   v-model="formData.description"
                   label="Description"
                   prop="description"
@@ -193,6 +208,7 @@
                   type="textarea"
                   placeholder="Enter description"
                   :maxlength="200"
+                  :autosize="{ minRows: 1, maxRows: 3 }"
                 />
               </el-col>
             </el-row>
@@ -356,6 +372,7 @@ const {
   closeForm,
   resetForm,
   usersOptions,
+  categoryOptions,
   formData,
   transactionForm,
   validateForm,

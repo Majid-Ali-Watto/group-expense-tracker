@@ -175,22 +175,31 @@
                   :disabled="isMeReceiver || !!selectedReceiverUser"
                   @blur="onReceiverMobileBlur"
                 />
-                <GenericInput
-                  :rows="1"
-                  v-model="formData.loanReceiver"
+              <GenericInput
+                :rows="1"
+                v-model="formData.loanReceiver"
                   label="Loan Receiver"
                   prop="loanReceiver"
                   required
                   type="textarea"
                   placeholder="Loan Receiver Name"
-                  :maxlength="50"
-                  :disabled="isMeReceiver || !!selectedReceiverUser"
-                />
-              </div>
+                :maxlength="50"
+                :disabled="isMeReceiver || !!selectedReceiverUser"
+              />
+            </div>
             </el-col>
             <el-col :lg="12" :md="12" :sm="24">
+              <GenericDropDown
+                v-model="formData.category"
+                label="Category"
+                :options="categoryOptions"
+                :allow-create="isPersonal"
+                :placeholder="
+                  isPersonal ? 'Add or select category' : 'Select category'
+                "
+              />
               <GenericInput
-                :rows="9"
+                :rows="1"
                 v-model="formData.description"
                 label="Description"
                 prop="description"
@@ -198,6 +207,15 @@
                 type="textarea"
                 placeholder="Loan details"
                 :maxlength="200"
+                :autosize="{ minRows: 1, maxRows: 3 }"
+              />
+              <DataTimePicker
+                v-model="formData.date"
+                required
+                type="date"
+                placeholder="Select date"
+                format="YYYY-MM-DD"
+                value-format="YYYY-MM-DD"
               />
             </el-col>
           </el-row>
@@ -244,6 +262,7 @@ import { ref } from 'vue'
 import { rules } from '@/assets'
 import {
   AmountInput,
+  DataTimePicker,
   GenericDropDown,
   GenericInput,
   ReceiptUploadField
@@ -272,6 +291,7 @@ const {
   validateForm,
   receiptFiles,
   receiptUploading,
+  categoryOptions,
   existingReceiptUrls,
   setSelectedFiles,
   removeReceipt,

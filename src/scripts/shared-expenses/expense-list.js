@@ -16,7 +16,8 @@ import {
   deleteReceipt,
   cleanupOldReceipts,
   getCache,
-  setCache
+  setCache,
+  buildCategoryFilterOptions
 } from '@/utils'
 
 export const ExpenseList = (props) => {
@@ -48,6 +49,7 @@ export const ExpenseList = (props) => {
   const selectedFriend = ref(route.query.payer || 'All')
   const selectedPayerMode = ref(route.query.payerMode || 'all')
   const selectedSplitMode = ref(route.query.splitMode || 'all')
+  const selectedCategory = ref(route.query.category || '')
   const selectedParticipants = ref(
     route.query.participants ? route.query.participants.split(',') : []
   )
@@ -59,6 +61,7 @@ export const ExpenseList = (props) => {
       selectedFriend,
       selectedPayerMode,
       selectedSplitMode,
+      selectedCategory,
       selectedParticipants
     ],
     () => {
@@ -70,6 +73,7 @@ export const ExpenseList = (props) => {
         query.payerMode = selectedPayerMode.value
       if (selectedSplitMode.value && selectedSplitMode.value !== 'all')
         query.splitMode = selectedSplitMode.value
+      if (selectedCategory.value) query.category = selectedCategory.value
       if (selectedParticipants.value?.length)
         query.participants = selectedParticipants.value.join(',')
       router.replace({ path: route.path, query })
@@ -94,6 +98,7 @@ export const ExpenseList = (props) => {
     () => {
       selectedMonth.value = getCurrentMonth()
       selectedFriend.value = 'All'
+      selectedCategory.value = ''
       selectedParticipants.value = []
       fetchMonths()
       fetchExpenses()
@@ -212,6 +217,7 @@ export const ExpenseList = (props) => {
   // Watch for changes in selectedMonth
   watch(selectedMonth, () => {
     selectedFriend.value = 'All'
+    selectedCategory.value = ''
     fetchExpenses()
   })
 
@@ -245,9 +251,20 @@ export const ExpenseList = (props) => {
           return false
       }
 
+      if (selectedCategory.value && payment.category !== selectedCategory.value) {
+        return false
+      }
+
       return true
     })
   })
+  const categoryOptions = computed(() =>
+    buildCategoryFilterOptions(
+      payments.value
+        .map((payment) => payment.category)
+        .concat(groupObj.value?.category || '')
+    )
+  )
 
   const getTotalMembers = () => {
     return groupObj.value?.members?.length || 0
@@ -327,6 +344,8 @@ export const ExpenseList = (props) => {
     selectedFriend,
     selectedPayerMode,
     selectedSplitMode,
+    selectedCategory,
+    categoryOptions,
     filteredPayments,
     activeUser,
     userNotifications,
@@ -345,6 +364,7 @@ export const ExpenseList = (props) => {
       selectedFriend.value = 'All'
       selectedPayerMode.value = 'all'
       selectedSplitMode.value = 'all'
+      selectedCategory.value = ''
     }
   }
 }

@@ -1,6 +1,7 @@
 export * from './active-tab'
 export * from './async-component'
 export * from './buildRequestMeta'
+export * from './category-options'
 export {
   uploadToCloudinary,
   deleteFromCloudinary,
@@ -8,7 +9,13 @@ export {
 } from './cloudinaryUpload'
 export * from './downloadDataProcedures'
 export * from './firebaseStorageUpload'
-export { default as getCurrentMonth, dateToMonthNode } from './getCurrentMonth'
+export {
+  default as getCurrentMonth,
+  dateToMonthNode,
+  getCurrentDateInputValue,
+  normalizeDateInputValue,
+  formatDateForStorage
+} from './getCurrentMonth'
 export * from './loading'
 export * from './maskMobile'
 export * from './notifications'

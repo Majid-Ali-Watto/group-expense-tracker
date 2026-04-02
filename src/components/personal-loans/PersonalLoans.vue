@@ -37,34 +37,81 @@
             />
           </div>
         </div>
-        <div
-          :gutter="5"
-          class="filter-bar mb-3 mt-4 no-print-pdf"
-          :class="showFilters ? 'flex sm:flex' : 'hidden sm:flex'"
-        >
-          <el-col :lg="6" :md="6" :sm="12" :xs="12">
-            <GenericDropDown
-              v-model="selectedMonth"
-              label="Month"
-              placeholder="Select Month"
-              :options="[{ label: 'All Months', value: 'All' }, ...months]"
-              size="small"
-              @update:modelValue="fetchLoans"
-            />
-          </el-col>
-          <el-col :lg="6" :md="6" :sm="12" :xs="12">
-            <GenericDropDown
-              v-model="selectedGiver"
-              label="Giver"
-              placeholder="All Givers"
-              :options="[
-                { label: 'All Givers', value: 'All' },
-                ...giverOptions.map((o) => ({ label: o.name, value: o.mobile }))
-              ]"
-              size="small"
-            />
-          </el-col>
+        <div class="hidden sm:block mb-3 mt-4 no-print-pdf">
+          <el-row :gutter="5" class="filter-bar" justify="start">
+            <el-col :lg="6" :md="6" :sm="12" :xs="12">
+              <GenericDropDown
+                v-model="selectedMonth"
+                label="Month"
+                placeholder="Select Month"
+                :options="[{ label: 'All Months', value: 'All' }, ...months]"
+                size="small"
+                @update:modelValue="fetchLoans"
+              />
+            </el-col>
+            <el-col :lg="6" :md="6" :sm="12" :xs="12">
+              <GenericDropDown
+                v-model="selectedGiver"
+                label="Giver"
+                placeholder="All Givers"
+                :options="[
+                  { label: 'All Givers', value: 'All' },
+                  ...giverOptions.map((o) => ({ label: o.name, value: o.mobile }))
+                ]"
+                size="small"
+              />
+            </el-col>
+            <el-col :lg="6" :md="6" :sm="12" :xs="12">
+              <GenericDropDown
+                v-model="selectedCategory"
+                label="Category"
+                placeholder="All Categories"
+                :options="categoryOptions"
+                size="small"
+              />
+            </el-col>
+          </el-row>
         </div>
+        <Transition name="form-slide">
+          <el-row
+            v-if="showFilters"
+            :gutter="5"
+            class="filter-bar mb-3 mt-4 no-print-pdf sm:hidden"
+            justify="space-between"
+          >
+            <el-col :lg="6" :md="6" :sm="12" :xs="12">
+              <GenericDropDown
+                v-model="selectedMonth"
+                label="Month"
+                placeholder="Select Month"
+                :options="[{ label: 'All Months', value: 'All' }, ...months]"
+                size="small"
+                @update:modelValue="fetchLoans"
+              />
+            </el-col>
+            <el-col :lg="6" :md="6" :sm="12" :xs="12">
+              <GenericDropDown
+                v-model="selectedGiver"
+                label="Giver"
+                placeholder="All Givers"
+                :options="[
+                  { label: 'All Givers', value: 'All' },
+                  ...giverOptions.map((o) => ({ label: o.name, value: o.mobile }))
+                ]"
+                size="small"
+              />
+            </el-col>
+            <el-col :lg="6" :md="6" :sm="12" :xs="12">
+              <GenericDropDown
+                v-model="selectedCategory"
+                label="Category"
+                placeholder="All Categories"
+                :options="categoryOptions"
+                size="small"
+              />
+            </el-col>
+          </el-row>
+        </Transition>
         <!-- Accordions -->
         <el-collapse v-model="openPanels" class="mt-4">
           <!-- Summary Statistics -->
@@ -180,10 +227,12 @@ const {
   loanContent,
   selectedMonth,
   selectedGiver,
+  selectedCategory,
   isContentLoading,
   giverOptions,
   filteredLoans,
   months,
+  categoryOptions,
   showLoanForm,
   closeLoanForm,
   fetchLoans,

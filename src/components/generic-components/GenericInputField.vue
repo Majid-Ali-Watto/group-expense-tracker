@@ -4,6 +4,7 @@
       resize="none"
       :clearable="clearable"
       :rows="rows"
+      :autosize="type === 'textarea' ? autosize : false"
       v-model="internalValue"
       :placeholder="placeholder"
       :type="type"
@@ -42,7 +43,8 @@ const props = defineProps({
   wrapFormItem: { type: Boolean, default: true },
   inputClass: { type: String, default: 'w-full' },
   formItemClass: { type: String, default: 'w-full' },
-  labelPosition: { type: String, default: undefined }
+  labelPosition: { type: String, default: undefined },
+  autosize: { type: [Boolean, Object], default: false }
 })
 
 const emit = defineEmits(['update:modelValue', 'blur', 'input'])

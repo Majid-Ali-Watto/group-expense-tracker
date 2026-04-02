@@ -90,6 +90,9 @@ export const rules = {
     }
   ],
   date: [{ required: true, message: 'Date is required', trigger: 'change' }],
+  category: [
+    { required: true, message: 'Category is required', trigger: 'change' }
+  ],
   description: [
     { required: true, message: 'Description is required', trigger: 'blur' },
     {

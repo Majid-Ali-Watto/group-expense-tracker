@@ -170,6 +170,15 @@
               size="small"
             />
           </el-col>
+          <el-col :lg="4" :md="4" :sm="12" :xs="12">
+            <GenericDropDown
+              v-model="selectedCategory"
+              label="Category"
+              placeholder="All Categories"
+              :options="categoryOptions"
+              size="small"
+            />
+          </el-col>
         </el-row>
       </div>
       <!-- Mobile filters (toggle) -->
@@ -225,6 +234,15 @@
                 { label: 'Equal', value: 'equal' },
                 { label: 'Custom', value: 'custom' }
               ]"
+              size="small"
+            />
+          </el-col>
+          <el-col :lg="6" :md="6" :sm="12" :xs="12">
+            <GenericDropDown
+              v-model="selectedCategory"
+              label="Category"
+              placeholder="All Categories"
+              :options="categoryOptions"
               size="small"
             />
           </el-col>
@@ -293,6 +311,8 @@ const {
   selectedFriend,
   selectedPayerMode,
   selectedSplitMode,
+  selectedCategory,
+  categoryOptions,
   filteredPayments,
   activeUser,
   userNotifications,

@@ -46,19 +46,18 @@ export const App = () => {
   const isDarkTheme = ref(savedTheme === 'dark')
   const THEME_PAGE_TURN_MS = 760
   let themeAnimationTimeout = null
-
+  const applyClasses = (docAddCls, docRemoveCls, bodyAddCls, bodyRemoveCls) => {
+    document.documentElement.classList.add(docAddCls)
+    document.documentElement.classList.remove(docRemoveCls)
+    document.body.classList.add(bodyAddCls)
+    document.body.classList.remove(bodyRemoveCls)
+  }
   // Apply theme immediately on load
   const applyTheme = () => {
     if (isDarkTheme.value) {
-      document.documentElement.classList.add('dark-theme')
-      document.documentElement.classList.remove('light-theme')
-      document.body.classList.add('dark-theme')
-      document.body.classList.remove('light-theme')
+      applyClasses('dark-theme', 'light-theme', 'dark-theme', 'light-theme')
     } else {
-      document.documentElement.classList.add('light-theme')
-      document.documentElement.classList.remove('dark-theme')
-      document.body.classList.add('light-theme')
-      document.body.classList.remove('dark-theme')
+      applyClasses('light-theme', 'dark-theme', 'light-theme', 'dark-theme')
     }
   }
 

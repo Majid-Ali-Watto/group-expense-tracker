@@ -1,6 +1,13 @@
 import { ref, watch, computed } from 'vue'
 import { useAuthStore, useDataStore } from '@/stores'
-import { getCurrentMonth, getWhoAddedTransaction } from '@/utils'
+import {
+  getWhoAddedTransaction,
+  dateToMonthNode,
+  getCurrentDateInputValue,
+  normalizeDateInputValue,
+  formatDateForStorage,
+  mergeCategoryOptions
+} from '@/utils'
 import { useFireBase, useReceiptUpload } from '@/composables'
 import { DB_NODES } from '@/constants'
 
@@ -11,11 +18,17 @@ export const PersonalExpenseForm = (props, emit) => {
 
   const createInitialForm = () => ({
     amount: null,
+    category: '',
     description: '',
     location: '',
-    recipient: ''
+    recipient: '',
+    date: getCurrentDateInputValue()
   })
   const form = ref(createInitialForm())
+  const existingMonth = ref(dateToMonthNode(form.value.date))
+  const categoryOptions = computed(() =>
+    mergeCategoryOptions([form.value?.category])
+  )
 
   const {
     receiptFiles,
@@ -50,10 +63,13 @@ export const PersonalExpenseForm = (props, emit) => {
       isVisible.value = !newRow?.amount
       form.value = {
         amount: newRow?.amount ?? null,
+        category: newRow?.category ?? '',
         description: newRow?.description ?? '',
         location: newRow?.location ?? '',
-        recipient: newRow?.recipient ?? ''
+        recipient: newRow?.recipient ?? '',
+        date: normalizeDateInputValue(newRow?.date)
       }
+      existingMonth.value = dateToMonthNode(newRow?.date || form.value.date)
       removeReceipt()
     },
     { immediate: true, deep: true }
@@ -90,7 +106,7 @@ export const PersonalExpenseForm = (props, emit) => {
 
         if (whatTask == 'Save') {
           saveData(
-            `${DB_NODES.PERSONAL_EXPENSES}/${activeUser.value}/months/${getCurrentMonth()}/expenses`,
+            `${DB_NODES.PERSONAL_EXPENSES}/${activeUser.value}/months/${dateToMonthNode(form.value.date)}/expenses`,
             () => getExpenseData(receiptUrls, receiptMeta),
             expenseForm,
             'Expense added successfully!',
@@ -105,7 +121,7 @@ export const PersonalExpenseForm = (props, emit) => {
           )
         } else if (whatTask == 'Update') {
           updateData(
-            `${DB_NODES.PERSONAL_EXPENSES}/${activeUser.value}/months/${selectedMonth.value}/expenses/${props.row.id}`,
+            `${DB_NODES.PERSONAL_EXPENSES}/${activeUser.value}/months/${existingMonth.value || selectedMonth.value}/expenses/${props.row.id}`,
             () => getExpenseData(receiptUrls, receiptMeta),
             'Expense updated successfully'
           )
@@ -113,7 +129,7 @@ export const PersonalExpenseForm = (props, emit) => {
         } else if (whatTask == 'Delete') {
           deleteExistingReceipts()
           deleteData(
-            `${DB_NODES.PERSONAL_EXPENSES}/${activeUser.value}/months/${selectedMonth.value}/expenses/${props.row.id}`,
+            `${DB_NODES.PERSONAL_EXPENSES}/${activeUser.value}/months/${existingMonth.value || selectedMonth.value}/expenses/${props.row.id}`,
             'Expense deleted successfully'
           )
           emit('closeModal')
@@ -125,12 +141,13 @@ export const PersonalExpenseForm = (props, emit) => {
   function getExpenseData(receiptUrls = [], receiptMeta = []) {
     return {
       amount: form.value?.amount,
+      category: form.value?.category,
       description: form.value?.description,
       location: form.value?.location,
       recipient: form.value?.recipient,
-      month: getCurrentMonth(),
+      month: dateToMonthNode(form.value?.date),
       whoAdded: getWhoAddedTransaction(),
-      date: new Date().toLocaleString('en-PK'),
+      date: formatDateForStorage(form.value?.date),
       whenAdded: new Date().toLocaleString('en-PK'),
       ...(receiptUrls?.length ? { receiptUrls, receiptMeta } : {})
     }
@@ -140,6 +157,7 @@ export const PersonalExpenseForm = (props, emit) => {
     isVisible,
     isEditMode,
     form,
+    categoryOptions,
     expenseForm,
     validateForm,
     resetForm,

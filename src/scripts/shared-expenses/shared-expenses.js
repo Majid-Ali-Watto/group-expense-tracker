@@ -1,7 +1,15 @@
 import { ref, watch, computed, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useUsersOptions, useFireBase, useReceiptUpload } from '@/composables'
-import { getWhoAddedTransaction, buildRequestMeta } from '@/utils'
+import {
+  getWhoAddedTransaction,
+  buildRequestMeta,
+  dateToMonthNode,
+  getCurrentDateInputValue,
+  normalizeDateInputValue,
+  formatDateForStorage,
+  mergeCategoryOptions
+} from '@/utils'
 import { useAuthStore, useGroupStore, useUserStore } from '@/stores'
 import { DB_NODES } from '@/constants'
 
@@ -26,6 +34,12 @@ export const SharedExpenses = (props, emit) => {
   }
 
   const { usersOptions } = useUsersOptions()
+  const activeGroupCategory = computed(
+    () => groupStore.getGroupById(groupStore.getActiveGroup)?.category || ''
+  )
+  const categoryOptions = computed(() =>
+    mergeCategoryOptions([activeGroupCategory.value, formData.value?.category])
+  )
 
   const activeUser = computed(() => authStore.getActiveUser)
 
@@ -48,12 +62,14 @@ export const SharedExpenses = (props, emit) => {
     payer: '',
     payers: [],
     participants: [...usersOptions.value.map((u) => u.value)],
-    date: '',
+    date: getCurrentDateInputValue(),
+    category: activeGroupCategory.value || '',
     splitMode: 'equal',
     splitItems: []
   })
 
   const formData = ref(createInitialFormData())
+  const existingMonth = ref(dateToMonthNode(formData.value.date))
 
   const {
     receiptFiles,
@@ -92,12 +108,14 @@ export const SharedExpenses = (props, emit) => {
       formData.value.payerMode = newRow?.payerMode ?? 'single'
       formData.value.payer = newRow?.payer ?? ''
       formData.value.payers = newRow?.payers ?? []
-      formData.value.date = newRow?.date ?? ''
+      formData.value.date = normalizeDateInputValue(newRow?.date)
+      formData.value.category = newRow?.category ?? activeGroupCategory.value ?? ''
       formData.value.participants = newRow?.participants ?? [
         ...usersOptions.value.map((u) => u.value)
       ]
       formData.value.splitMode = newRow?.splitMode ?? 'equal'
       formData.value.splitItems = newRow?.splitItems ?? []
+      existingMonth.value = dateToMonthNode(newRow?.date || formData.value.date)
       isVisible.value = !newRow?.amount
       removeReceipt()
       // Auto-tick ME? checkbox in edit mode (single payer only)
@@ -119,6 +137,12 @@ export const SharedExpenses = (props, emit) => {
       }
     }
   )
+
+  watch(activeGroupCategory, (category) => {
+    if (!isEditMode.value && !formData.value.category) {
+      formData.value.category = category || ''
+    }
+  })
 
   const transactionForm = ref(null)
 
@@ -208,8 +232,9 @@ export const SharedExpenses = (props, emit) => {
 
     transactionForm.value.validate(async (valid) => {
       if (valid) {
-        let monthYear = formData.value.date.split('-')
-        monthYear = monthYear[0] + '-' + monthYear[1].toString().padStart(2, 0)
+        const monthYear = isEditMode.value
+          ? existingMonth.value
+          : dateToMonthNode(formData.value.date)
         const groupId = groupStore.getActiveGroup || 'global'
 
         const uploadedReceipts = await uploadSelectedFiles()
@@ -356,12 +381,13 @@ export const SharedExpenses = (props, emit) => {
     const payment = {
       amount,
       description: formData.value.description,
+      category: formData.value.category,
       ...(location ? { location } : isEditMode.value ? { location: null } : {}),
       payerMode: formData.value.payerMode,
       payer: isMultiPayer ? null : formData.value.payer,
       ...(payersField ? { payers: payersField } : {}),
       group: groupStore.getActiveGroup || null,
-      date: new Date(formData.value.date).toLocaleString('en-PK'),
+      date: formatDateForStorage(formData.value.date),
       whenAdded: new Date().toLocaleString('en-PK'),
       whoAdded: getWhoAddedTransaction(),
       participants: participantsList,
@@ -385,6 +411,7 @@ export const SharedExpenses = (props, emit) => {
     closeForm,
     resetForm,
     usersOptions,
+    categoryOptions,
     formData,
     transactionForm,
     validateForm,

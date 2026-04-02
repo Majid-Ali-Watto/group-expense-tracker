@@ -5,7 +5,11 @@ import {
   showError,
   maskMobile,
   buildRequestMeta,
-  getCurrentMonth
+  dateToMonthNode,
+  getCurrentDateInputValue,
+  normalizeDateInputValue,
+  formatDateForStorage,
+  mergeCategoryOptions
 } from '@/utils'
 import { useAuthStore, useGroupStore, useUserStore } from '@/stores'
 import { DB_NODES } from '@/constants'
@@ -31,7 +35,9 @@ export const LoanForm = (props, emit) => {
     loanReceiver: '',
     loanGiverMobile: '',
     loanReceiverMobile: '',
-    description: ''
+    description: '',
+    category: props.isPersonal ? '' : groupCategory.value || '',
+    date: getCurrentDateInputValue()
   })
 
   const resetForm = async () => {
@@ -54,6 +60,15 @@ export const LoanForm = (props, emit) => {
   }
 
   const { usersOptions: options } = useUsersOptions()
+  const groupCategory = computed(
+    () => groupStore.getGroupById(groupStore.getActiveGroup)?.category || ''
+  )
+  const categoryOptions = computed(() =>
+    mergeCategoryOptions([
+      !props.isPersonal ? groupCategory.value : '',
+      formData.value?.category
+    ])
+  )
 
   const { deleteData, updateData, saveData, isSubmitting } = useFireBase()
 
@@ -62,6 +77,7 @@ export const LoanForm = (props, emit) => {
   const isEditMode = computed(() => !!props.row?.amount)
 
   const formData = ref(createInitialFormData())
+  const existingMonth = ref(dateToMonthNode(formData.value.date))
 
   const activeUser = computed(() => authStore.getActiveUser)
   const activeUserName = computed(
@@ -223,6 +239,11 @@ export const LoanForm = (props, emit) => {
         newRow?.loanReceiverMobile ??
         ''
       formData.value.description = newRow?.description ?? ''
+      formData.value.category =
+        newRow?.category ?? (props.isPersonal ? '' : groupCategory.value || '')
+      formData.value.date = normalizeDateInputValue(newRow?.date)
+      existingMonth.value =
+        props.row?._month || dateToMonthNode(newRow?.date || formData.value.date)
       isVisible.value = !newRow?.amount
       removeReceipt()
       // Auto-tick ME? checkbox in edit mode
@@ -242,6 +263,12 @@ export const LoanForm = (props, emit) => {
     },
     { immediate: true }
   )
+
+  watch(groupCategory, (category) => {
+    if (!props.isPersonal && !isEditMode.value && !formData.value.category) {
+      formData.value.category = category || ''
+    }
+  })
 
   const onGiverMobileBlur = () => {
     if (formData.value.loanGiverMobile == activeUser.value) {
@@ -306,8 +333,9 @@ export const LoanForm = (props, emit) => {
         }
 
         let loanPath
-        const date = new Date()
-        const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+        const monthYear = isEditMode.value
+          ? existingMonth.value
+          : dateToMonthNode(formData.value.date)
         if (props.isPersonal) {
           loanPath = `${props.dbRef}/${authStore.getActiveUser}/months/${monthYear}/loans`
         } else {
@@ -328,12 +356,13 @@ export const LoanForm = (props, emit) => {
           const expenseCopy = copyToExpenses.value
             ? {
                 amount: formData.value.amount,
+                category: formData.value.category || 'Finance',
                 description: formData.value.description,
                 location: 'Loan',
                 recipient: getOtherPartyName(),
-                month: getCurrentMonth(),
+                month: dateToMonthNode(formData.value.date),
                 whoAdded: getWhoAddedTransaction(),
-                date: new Date().toLocaleString('en-PK'),
+                date: formatDateForStorage(formData.value.date),
                 whenAdded: new Date().toLocaleString('en-PK')
               }
             : null
@@ -347,7 +376,7 @@ export const LoanForm = (props, emit) => {
               if (expenseCopy) {
                 const mockFormRef = { value: { resetFields: () => {} } }
                 saveData(
-                  `${DB_NODES.PERSONAL_EXPENSES}/${activeUser.value}/${getCurrentMonth()}`,
+                  `${DB_NODES.PERSONAL_EXPENSES}/${activeUser.value}/months/${dateToMonthNode(expenseCopy.date)}/expenses`,
                   () => expenseCopy,
                   mockFormRef,
                   'Expense copy added to Personal Expenses.',
@@ -365,7 +394,6 @@ export const LoanForm = (props, emit) => {
         } else if (whatTask == 'Update') {
           if (!props.isPersonal) {
             const groupId = groupStore.getActiveGroup || 'global'
-            const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
             createUpdateRequest(
               `${props.dbRef}/${groupId}/months/${monthYear}/loans/${props.row.id}`,
               receiptUrls,
@@ -384,7 +412,6 @@ export const LoanForm = (props, emit) => {
         } else if (whatTask == 'Delete') {
           if (!props.isPersonal) {
             const groupId = groupStore.getActiveGroup || 'global'
-            const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
             createDeleteRequest(
               `${props.dbRef}/${groupId}/months/${monthYear}/loans/${props.row.id}`
             )
@@ -448,6 +475,11 @@ export const LoanForm = (props, emit) => {
     const loan = {
       amount: formData.value.amount,
       description: formData.value.description,
+      ...(formData.value.category
+        ? { category: formData.value.category }
+        : isEditMode.value
+          ? { category: null }
+          : {}),
       [!props.isPersonal ? 'giver' : 'loanGiver']: giverMobile,
       [!props.isPersonal ? 'receiver' : 'loanReceiver']: receiverMobile,
       giverName: formData.value.loanGiver,
@@ -455,10 +487,7 @@ export const LoanForm = (props, emit) => {
       ...(!props.isPersonal
         ? { group: groupStore.getActiveGroup || null }
         : {}),
-      date:
-        new Date().toLocaleDateString('en-PK') +
-        ' ' +
-        new Date().toLocaleTimeString(),
+      date: formatDateForStorage(formData.value.date),
       whoAdded: getWhoAddedTransaction(),
       whenAdded: new Date().toLocaleString('en-PK'),
       ...(receiptUrls?.length ? { receiptUrls, receiptMeta } : {})
@@ -478,6 +507,7 @@ export const LoanForm = (props, emit) => {
     validateForm,
     receiptFiles,
     receiptUploading,
+    categoryOptions,
     existingReceiptUrls,
     setSelectedFiles,
     removeReceipt,
