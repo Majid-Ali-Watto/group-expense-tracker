@@ -483,11 +483,11 @@
 
   <!-- Download buttons -->
   <div v-if="isDownloadAvailable" class="mt-2 flex justify-between">
-    <GenericButton size="small" type="success" @click="downloadPdfData"
-      >Download PDF</GenericButton
-    >
     <GenericButton size="small" type="" @click="downloadExcelData"
       >Download Excel</GenericButton
+    >
+    <GenericButton size="small" type="success" @click="downloadPdfData"
+      >Download PDF</GenericButton
     >
   </div>
 

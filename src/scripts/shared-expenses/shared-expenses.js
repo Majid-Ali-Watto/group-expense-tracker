@@ -43,6 +43,7 @@ export const SharedExpenses = (props, emit) => {
   const createInitialFormData = () => ({
     amount: null,
     description: '',
+    location: '',
     payerMode: 'single',
     payer: '',
     payers: [],
@@ -87,6 +88,7 @@ export const SharedExpenses = (props, emit) => {
     (newRow) => {
       formData.value.amount = newRow?.amount ?? null
       formData.value.description = newRow?.description ?? ''
+      formData.value.location = newRow?.location ?? ''
       formData.value.payerMode = newRow?.payerMode ?? 'single'
       formData.value.payer = newRow?.payer ?? ''
       formData.value.payers = newRow?.payers ?? []
@@ -276,6 +278,7 @@ export const SharedExpenses = (props, emit) => {
 
   function getPaymentData(receiptUrls = [], receiptMeta = []) {
     const amount = parseFloat(formData.value.amount)
+    const location = formData.value.location?.trim() ?? ''
     const participantsList =
       formData.value.participants && formData.value.participants.length
         ? formData.value.participants
@@ -353,6 +356,7 @@ export const SharedExpenses = (props, emit) => {
     const payment = {
       amount,
       description: formData.value.description,
+      ...(location ? { location } : isEditMode.value ? { location: null } : {}),
       payerMode: formData.value.payerMode,
       payer: isMultiPayer ? null : formData.value.payer,
       ...(payersField ? { payers: payersField } : {}),

@@ -178,7 +178,14 @@
 
               <el-col :lg="12" :md="12" :sm="24">
                 <GenericInput
-                  :rows="9"
+                  v-model="formData.location"
+                  label="Location"
+                  placeholder="Enter location"
+                  :maxlength="100"
+                />
+
+                <GenericInput
+                  :rows="7"
                   v-model="formData.description"
                   label="Description"
                   prop="description"

@@ -100,8 +100,8 @@
           </el-popover>
         </div>
 
-        <!-- Desktop buttons - visible on screens >= 640px -->
-        <div class="hidden sm:flex items-center gap-2">
+        <!-- Desktop buttons - visible on screens >= 768px -->
+        <div class="hidden md:flex items-center gap-2">
           <!-- Bug Report — only when logged in -->
           <button
             v-if="loggedIn"
@@ -229,8 +229,8 @@
           </el-button>
         </div>
 
-        <!-- Mobile hamburger menu - visible on screens < 640px -->
-        <el-dropdown trigger="click" class="sm:hidden mobile-menu-dropdown">
+        <!-- Mobile hamburger menu - visible on screens < 768px -->
+        <el-dropdown trigger="click" class="md:hidden mobile-menu-dropdown">
           <button class="hamburger-btn">
             <svg
               class="w-6 h-6"

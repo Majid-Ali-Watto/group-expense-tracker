@@ -1027,7 +1027,7 @@ export const Groups = () => {
           {
             confirmButtonText: 'Delete Group',
             cancelButtonText: 'Cancel',
-            type: 'warning'
+            type: 'error'
           }
         )
 
@@ -1043,7 +1043,7 @@ export const Groups = () => {
         {
           confirmButtonText: 'Send Request',
           cancelButtonText: 'Cancel',
-          type: 'warning'
+          type: 'error'
         }
       )
 
@@ -1787,7 +1787,7 @@ export const Groups = () => {
           {
             confirmButtonText: 'Leave and Delete Group',
             cancelButtonText: 'Cancel',
-            type: 'warning'
+            type: 'error'
           }
         )
         await removeData(`${DB_NODES.GROUPS}/${groupId}`)
@@ -1804,7 +1804,7 @@ export const Groups = () => {
           {
             confirmButtonText: 'Transfer Ownership',
             cancelButtonText: 'Cancel',
-            type: 'warning'
+            type: 'info'
           }
         )
         showTransferOwnershipDialog(groupId)
@@ -1826,7 +1826,7 @@ export const Groups = () => {
       await ElMessageBox.confirm(confirmMessage, 'Leave Group', {
         confirmButtonText: 'Leave',
         cancelButtonText: 'Cancel',
-        type: 'warning'
+        type: 'info'
       })
 
       // Transfer ownership if leaving owner with 2 members

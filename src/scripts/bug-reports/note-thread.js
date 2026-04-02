@@ -134,7 +134,7 @@ export const NoteThread = ({ actorKeyFn, idPrefix, pickerWrapClass }) => {
         {
           confirmButtonText: 'Delete',
           cancelButtonText: 'Cancel',
-          type: 'warning'
+          type: 'error'
         }
       )
     } catch {

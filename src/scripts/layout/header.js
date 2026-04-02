@@ -31,7 +31,7 @@ export const Header = (props, emit) => {
         {
           confirmButtonText: 'Logout',
           cancelButtonText: 'Stay Logged In',
-          type: 'warning'
+          type: 'info'
         }
       )
       setLoggedInStatus()

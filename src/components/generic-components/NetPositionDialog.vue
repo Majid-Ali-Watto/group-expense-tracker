@@ -203,6 +203,9 @@
     </div>
 
     <template #footer>
+      <GenericButton type="default" size="small" @click="handleClose"
+        >Close</GenericButton
+      >
       <GenericButton
         type="success"
         size="small"
@@ -211,7 +214,6 @@
       >
         Download PDF
       </GenericButton>
-      <GenericButton size="small" @click="handleClose">Close</GenericButton>
     </template>
   </el-dialog>
 </template>

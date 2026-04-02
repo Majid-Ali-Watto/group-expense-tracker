@@ -244,7 +244,7 @@ export const Users = () => {
         {
           confirmButtonText: 'Proceed',
           cancelButtonText: 'Cancel',
-          type: 'warning',
+          type: 'error',
           dangerouslyUseHTMLString: true
         }
       )

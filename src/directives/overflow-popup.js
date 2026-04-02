@@ -69,7 +69,9 @@ function openOverflowPopup(el) {
 
   ElMessageBox.alert(resolvedText, title, {
     confirmButtonText: 'Close',
+    confirmButtonClass: 'el-button--default',
     autofocus: false,
+    type: 'info',
     customClass: 'overflow-popup-box'
   })
 }

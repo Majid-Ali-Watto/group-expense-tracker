@@ -666,7 +666,7 @@ export const Table = (props) => {
         {
           confirmButtonText: 'Confirm',
           cancelButtonText: 'Cancel',
-          type: 'warning'
+          type: 'error'
         }
       )
     } catch {

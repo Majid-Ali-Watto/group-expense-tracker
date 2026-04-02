@@ -52,7 +52,7 @@
             <component
               :is="Component"
               :key="$route.path"
-              class="tab-stage__panel px-2 mb-4"
+              class="tab-stage__panel max-[980px]:px-2 mb-4"
             />
           </Transition>
         </RouterView>

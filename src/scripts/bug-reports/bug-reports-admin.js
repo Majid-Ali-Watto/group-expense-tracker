@@ -221,7 +221,7 @@ export const BugReportsAdmin = () => {
         {
           confirmButtonText: 'Delete',
           cancelButtonText: 'Cancel',
-          type: 'warning',
+          type: 'error',
           dangerouslyUseHTMLString: true
         }
       )
