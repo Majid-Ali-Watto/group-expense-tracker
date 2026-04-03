@@ -128,28 +128,40 @@ export const App = () => {
         )
         if (!entry) return
 
-        const [mobile, userData] = entry
+        const [uid, userData] = entry
         const token = generateUUID()
         const [encryptedSession, encryptedStore] = await Promise.all([
-          encryptForSession({ name: userData.name, mobile, token }),
-          encryptForStore({ name: userData.name, mobile, token })
+          encryptForSession({
+            name: userData.name,
+            uid,
+            mobile: userData.mobile,
+            token
+          }),
+          encryptForStore({
+            name: userData.name,
+            uid,
+            mobile: userData.mobile,
+            token
+          })
         ])
 
         sessionStorage.setItem('_session', encryptedSession)
-        authStore.setActiveUser(mobile)
+        authStore.setActiveUser(uid)
         authStore.setSessionToken(encryptedStore)
         authStore.setActiveLoginCode('')
         loadAppConfig() // fire-and-forget: load remote config flags on auto-login
 
         // Populate userStore immediately so displayName is never "Guest" on any tab.
         // We already have the full users payload — just map it into the store.
-        Object.keys(usersData).forEach((m) => {
-          const u = usersData[m]
+        Object.keys(usersData).forEach((uid) => {
+          const u = usersData[uid]
           if (u.emailVerified === true) {
             userStore.addUser({
-              mobile: m,
+              uid,
+              mobile: u.mobile || '',
               name: u.name || '',
-              maskedMobile: maskMobile(m)
+              email: u.email || '',
+              maskedMobile: maskMobile(u.mobile || '')
             })
           }
         })
@@ -212,8 +224,8 @@ export const App = () => {
   // Computed tabs based on active group + bugResolver privilege
   const tabs = computed(() => {
     const activeGroup = groupStore.getActiveGroup
-    const mobile = authStore.getActiveUser
-    const user = mobile ? userStore.getUserByMobile(mobile) : null
+    const uid = authStore.getActiveUser
+    const user = uid ? userStore.getUserByUid(uid) : null
     const isBugResolver = user?.bugResolver === true
 
     let base = activeGroup
@@ -231,7 +243,7 @@ export const App = () => {
 
   const { read } = useFireBase()
   const displayName = computed(
-    () => userStore.getUserByMobile(authStore.getActiveUser)?.name || 'Guest'
+    () => userStore.getUserByUid(authStore.getActiveUser)?.name || 'Guest'
   )
   const activeGroup = computed(
     () => groupStore.getGroupById(groupStore.getActiveGroup)?.name
@@ -329,13 +341,13 @@ export const App = () => {
     )
       return false
 
-    const mobile = authStore.getActiveUser
-    if (!mobile) return false
+    const uid = authStore.getActiveUser
+    if (!uid) return false
 
     // Verify user exists in database
     // Note: loginCode is only in Firebase Auth, not in database
     try {
-      const user = await read(`${DB_NODES.USERS}/${mobile}`, loading)
+      const user = await read(`${DB_NODES.USERS}/${uid}`, loading)
       return !!user
     } catch {
       return false

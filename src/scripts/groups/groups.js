@@ -104,10 +104,10 @@ export const Groups = () => {
   function computeMemberMobiles(group) {
     const set = new Set()
     ;(group.members || []).forEach((m) => {
-      if (m.mobile) set.add(m.mobile)
+      if (m.uid || m.mobile) set.add(m.uid || m.mobile)
     })
     ;(group.pendingMembers || []).forEach((m) => {
-      if (m.mobile) set.add(m.mobile)
+      if (m.uid || m.mobile) set.add(m.uid || m.mobile)
     })
     return [...set]
   }
@@ -123,12 +123,13 @@ export const Groups = () => {
     const members = []
     for (const g of groups.value) {
       for (const m of g.members || []) {
-        if (m.mobile !== me && !seen.has(m.mobile)) {
-          seen.add(m.mobile)
+        const memberId = m.uid || m.mobile
+        if (memberId !== me && !seen.has(memberId)) {
+          seen.add(memberId)
           members.push({
-            mobile: m.mobile,
+            mobile: memberId,
             name:
-              m.name || userStore.getUserByMobile(m.mobile)?.name || m.mobile
+              m.name || userStore.getUserByMobile(memberId)?.name || memberId
           })
         }
       }
@@ -138,7 +139,9 @@ export const Groups = () => {
 
   const allGroupMemberOptions = computed(() =>
     allGroupMembers.value.map((member) => ({
-      label: `${member.name} (${member.mobile})`,
+      label: formatUserDisplay(storeProxy, member.mobile, {
+        name: member.name
+      }),
       value: member.mobile
     }))
   )
@@ -480,9 +483,11 @@ export const Groups = () => {
           const list = Object.keys(users)
             .filter((k) => users[k].emailVerified === true) // Only verified users
             .map((k) => ({
-              mobile: k,
+              uid: k,
+              mobile: users[k].mobile || '',
               name: users[k].name || '',
-              maskedMobile: maskMobile(k),
+              email: users[k].email || '',
+              maskedMobile: maskMobile(users[k].mobile || ''),
               bugResolver: users[k].bugResolver === true
             }))
           userStore.setUsers(list)
@@ -718,7 +723,7 @@ export const Groups = () => {
       label: formatMemberDisplay(storeProxy, member, {
         group: groups.value.find((g) => g.id === transferOwnershipGroupId.value)
       }),
-      value: member.mobile
+      value: member.uid || member.mobile
     }))
   )
 
@@ -732,19 +737,19 @@ export const Groups = () => {
     const group = groups.value.find((g) => g.id === addMemberGroupId.value)
     if (!group) return []
 
-    const currentMemberMobiles = group.members.map((m) => m.mobile)
+    const currentMemberMobiles = group.members.map((m) => m.uid || m.mobile)
     return userStore.getUsers.filter(
-      (u) => !currentMemberMobiles.includes(u.mobile)
+      (u) => !currentMemberMobiles.includes(u.uid || u.mobile)
     )
   })
 
   const availableUsersToAddOptions = computed(() =>
     availableUsersToAdd.value.map((user) => ({
-      label: formatUserDisplay(storeProxy, user.mobile, {
+      label: formatUserDisplay(storeProxy, user.uid || user.mobile, {
         name: user.name,
         preferMasked: true
       }),
-      value: user.mobile
+      value: user.uid || user.mobile
     }))
   )
 
@@ -769,7 +774,10 @@ export const Groups = () => {
     }
 
     const newMember = {
-      mobile: user.mobile
+      uid: user.uid || selectedMemberToAdd.value,
+      mobile: user.uid || selectedMemberToAdd.value,
+      phone: user.mobile || '',
+      name: user.name || ''
     }
 
     await requestAddMember(addMemberGroupId.value, newMember)
@@ -793,6 +801,7 @@ export const Groups = () => {
 
       // Add request with empty approvals array
       group.joinRequests.push({
+        uid: mobile,
         mobile,
         approvals: [] // Initialize approvals for all members to vote
       })
@@ -856,12 +865,12 @@ export const Groups = () => {
       }
 
       // Add approval
-      request.approvals.push({ mobile })
+      request.approvals.push({ uid: mobile, mobile })
 
       // Auto-add member if all existing members have now approved
       if (allMembersApprovedJoinRequest(group, requestMobile)) {
         if (!group.members.find((m) => m.mobile === requestMobile)) {
-          group.members.push({ mobile: requestMobile })
+          group.members.push({ uid: requestMobile, mobile: requestMobile })
         }
 
         const ownerExists = group.members.some(
@@ -918,7 +927,10 @@ export const Groups = () => {
 
       // Add user to members
       if (!group.members.find((m) => m.mobile === request.mobile)) {
-        group.members.push({ mobile: request.mobile })
+        group.members.push({
+          uid: request.uid || request.mobile,
+          mobile: request.uid || request.mobile
+        })
       }
 
       // If group has no owner or owner is not a member, set the new member as owner
@@ -1085,6 +1097,7 @@ export const Groups = () => {
       }
 
       group.deleteRequest.approvals.push({
+        uid: mobile,
         mobile,
         approvedAt: new Date().toISOString()
       })
@@ -1205,12 +1218,12 @@ export const Groups = () => {
     }
 
     editingGroupId.value = groupId
-    originalMembers.value = [...group.members.map((m) => m.mobile)]
+    originalMembers.value = [...group.members.map((m) => m.uid || m.mobile)]
 
     initialEditForm.value = {
       name: group.name,
       description: group.description || '',
-      members: group.members.map((m) => m.mobile)
+      members: group.members.map((m) => m.uid || m.mobile)
     }
     editForm.value = {
       ...initialEditForm.value,
@@ -1318,9 +1331,9 @@ export const Groups = () => {
         const editRequest = {
           requestedBy: authStore.getActiveUser,
           name: editForm.value.name,
-          newMembers: editForm.value.members.map((m) => ({ mobile: m })),
-          addedMembers: addedMembers.map((m) => ({ mobile: m })),
-          removedMembers: removedMembers.map((m) => ({ mobile: m })),
+          newMembers: editForm.value.members.map((m) => ({ uid: m, mobile: m })),
+          addedMembers: addedMembers.map((m) => ({ uid: m, mobile: m })),
+          removedMembers: removedMembers.map((m) => ({ uid: m, mobile: m })),
           approvals: []
         }
 
@@ -1392,6 +1405,7 @@ export const Groups = () => {
       }
 
       const newApprovals = [...currentApprovals, { mobile }]
+      newApprovals[newApprovals.length - 1] = { uid: mobile, mobile }
 
       const updatedEditRequest = {
         ...group.editRequest,
@@ -1516,7 +1530,7 @@ export const Groups = () => {
         requestedBy: mobile,
         requestedAt: new Date().toISOString(),
         newMember: newMember,
-        approvals: [{ mobile }]
+        approvals: [{ uid: mobile, mobile }]
       }
 
       await updateData(
@@ -1544,7 +1558,7 @@ export const Groups = () => {
 
       const updatedRequest = {
         ...group.addMemberRequest,
-        approvals: [...currentApprovals, { mobile }]
+        approvals: [...currentApprovals, { uid: mobile, mobile }]
       }
 
       await updateData(
@@ -1990,18 +2004,17 @@ export const Groups = () => {
   // ========== Mobile Display Helpers ==========
   function displayMobileForGroup(targetMobile, group) {
     if (!targetMobile) return ''
-    if (targetMobile === authStore.getActiveUser) return targetMobile
+    const user = userStore.getUserByMobile(targetMobile)
+    const resolvedMobile = user?.mobile || targetMobile
+    if (targetMobile === authStore.getActiveUser) return resolvedMobile
     const isActiveUserInGroup = (group?.members || []).some(
       (m) => m.mobile === authStore.getActiveUser
     )
     const isTargetInGroup = (group?.members || []).some(
       (m) => m.mobile === targetMobile
     )
-    if (isActiveUserInGroup && isTargetInGroup) return targetMobile
-    return (
-      userStore.getUserByMobile(targetMobile)?.maskedMobile ||
-      maskMobile(targetMobile)
-    )
+    if (isActiveUserInGroup && isTargetInGroup) return resolvedMobile
+    return user?.maskedMobile || maskMobile(resolvedMobile)
   }
 
   function displayMobileInEditDialog(targetMobile) {
@@ -2011,14 +2024,16 @@ export const Groups = () => {
 
   const editMemberOptions = computed(() =>
     (userStore.getUsers || []).map((user) => ({
-      label: formatUserDisplay(storeProxy, user.mobile, {
+      label: formatUserDisplay(storeProxy, user.uid || user.mobile, {
         name: user.name,
         group: groups.value.find((g) => g.id === editingGroupId.value),
         preferMasked: !groups.value
           .find((g) => g.id === editingGroupId.value)
-          ?.members?.some((member) => member.mobile === user.mobile)
+          ?.members?.some(
+            (member) => (member.uid || member.mobile) === (user.uid || user.mobile)
+          )
       }),
-      value: user.mobile
+      value: user.uid || user.mobile
     }))
   )
 

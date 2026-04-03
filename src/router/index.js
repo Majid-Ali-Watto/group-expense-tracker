@@ -145,7 +145,7 @@ router.beforeEach((to) => {
   if (to.meta.requiresBugResolver) {
     const authStore = useAuthStore()
     const userStore = useUserStore()
-    const user = userStore.getUserByMobile(authStore.getActiveUser)
+    const user = userStore.getUserByUid(authStore.getActiveUser)
     if (!user?.bugResolver) return '/groups'
   }
 })

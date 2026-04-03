@@ -15,8 +15,8 @@ export const Users = () => {
   const { updateData, read, deleteData } = useFireBase()
 
   const editDialogVisible = ref(false)
-  const editForm = ref({ name: '', mobile: '' })
-  const initialEditForm = ref({ name: '', mobile: '' })
+  const editForm = ref({ uid: '', name: '', mobile: '' })
+  const initialEditForm = ref({ uid: '', name: '', mobile: '' })
 
   const users = computed(() => userStore.getUsers || [])
   const groups = computed(() => groupStore.getGroups || [])
@@ -37,25 +37,32 @@ export const Users = () => {
     router.replace({ path: route.path, query })
   })
 
-  const activeGroupMobiles = computed(() => {
+  const activeGroupMemberIds = computed(() => {
     const groupId = groupStore.getActiveGroup
     const group = groupId ? groupStore.getGroupById(groupId) : null
-    return (group?.members || []).map((m) => m.mobile)
+    return (group?.members || []).map((m) => m.uid || m.mobile)
   })
 
-  function displayMobile(targetMobile) {
-    if (!targetMobile) return ''
-    if (targetMobile === activeUser.value) return targetMobile
-    if (activeGroupMobiles.value.includes(targetMobile)) return targetMobile
+  function getUserId(user) {
+    return user?.uid || user?.mobile || ''
+  }
+
+  function displayMobile(targetUserId) {
+    if (!targetUserId) return ''
+    const user = userStore.getUserByMobile(targetUserId)
+    const mobile = user?.mobile || targetUserId
+    if (targetUserId === activeUser.value) return mobile
+    if (activeGroupMemberIds.value.includes(targetUserId)) return mobile
     return (
-      userStore.getUserByMobile(targetMobile)?.maskedMobile ||
-      maskMobile(targetMobile)
+      user?.maskedMobile || maskMobile(mobile)
     )
   }
 
-  function getUserGroups(mobile) {
+  function getUserGroups(userId) {
     return groups.value
-      .filter((g) => g.members?.some((m) => m.mobile === mobile))
+      .filter((g) =>
+        g.members?.some((member) => (member.uid || member.mobile) === userId)
+      )
       .map((g) => g.name)
   }
 
@@ -67,21 +74,25 @@ export const Users = () => {
       result = result.filter((u) => {
         return (
           u.name.toLowerCase().includes(query) ||
-          displayMobile(u.mobile).toLowerCase().includes(query) ||
-          getUserGroups(u.mobile).some((g) => g.toLowerCase().includes(query))
+          displayMobile(getUserId(u)).toLowerCase().includes(query) ||
+          getUserGroups(getUserId(u)).some((g) => g.toLowerCase().includes(query))
         )
       })
     }
 
     if (sharedGroupsOnly.value) {
       const me = activeUser.value
-      const sharedMobiles = new Set(
+      const sharedUserIds = new Set(
         groups.value
-          .filter((g) => g.members?.some((m) => m.mobile === me))
-          .flatMap((g) => g.members?.map((m) => m.mobile) || [])
+          .filter((g) =>
+            g.members?.some((member) => (member.uid || member.mobile) === me)
+          )
+          .flatMap(
+            (g) => g.members?.map((member) => member.uid || member.mobile) || []
+          )
       )
       result = result.filter(
-        (u) => u.mobile !== me && sharedMobiles.has(u.mobile)
+        (u) => getUserId(u) !== me && sharedUserIds.has(getUserId(u))
       )
     }
 
@@ -102,14 +113,16 @@ export const Users = () => {
       collection(database, DB_NODES.USERS),
       (snap) => {
         snap.docs.forEach((docSnap) => {
-          const mobile = docSnap.id
+          const uid = docSnap.id
           const u = docSnap.data()
           if (u.emailVerified === true) {
             userStore.addUser({
-              mobile,
+              uid,
+              mobile: u.mobile || '',
               name: u.name || '',
+              email: u.email || '',
               addedBy: u.addedBy || null,
-              maskedMobile: maskMobile(mobile),
+              maskedMobile: maskMobile(u.mobile || ''),
               deleteRequest: u.deleteRequest || null,
               updateRequest: u.updateRequest || null,
               bugResolver: u.bugResolver === true
@@ -133,13 +146,13 @@ export const Users = () => {
   function canManage(row) {
     const me = activeUser.value
     if (!me) return false
-    return row.mobile === me || row.addedBy === me
+    return row.uid === me || row.addedBy === me
   }
 
   // Unique group owner mobiles of all groups the user is a member of
-  function getGroupOwnerMobiles(mobile) {
+  function getGroupOwnerMobiles(userId) {
     const memberGroups = groups.value.filter((g) =>
-      g.members?.some((m) => m.mobile === mobile)
+      g.members?.some((member) => (member.uid || member.mobile) === userId)
     )
     return [...new Set(memberGroups.map((g) => g.ownerMobile).filter(Boolean))]
   }
@@ -154,7 +167,7 @@ export const Users = () => {
       if (
         req &&
         req.requiredApprovals?.includes(me) &&
-        !req.approvals?.some((a) => a.mobile === me)
+        !req.approvals?.some((a) => (a.uid || a.mobile) === me)
       ) {
         result.push({ user: u, type: 'delete', request: req })
       }
@@ -165,7 +178,11 @@ export const Users = () => {
   // --- Edit User ---
 
   function openEditUser(row) {
-    initialEditForm.value = { name: row.name, mobile: row.mobile }
+    initialEditForm.value = {
+      uid: row.uid,
+      name: row.name,
+      mobile: row.mobile || ''
+    }
     editForm.value = { ...initialEditForm.value }
     editDialogVisible.value = true
   }
@@ -176,7 +193,7 @@ export const Users = () => {
   }
 
   async function submitUpdateUser() {
-    const { mobile, name } = editForm.value
+    const { uid, name } = editForm.value
     const newName = name.trim().replace(/\s+/g, ' ')
 
     if (!newName) return showError('Name is required')
@@ -184,7 +201,7 @@ export const Users = () => {
       return showError('Name can only contain alphabets and single spaces')
     }
 
-    const user = await read(`${DB_NODES.USERS}/${mobile}`)
+    const user = await read(`${DB_NODES.USERS}/${uid}`)
     if (!user) return showError('User not found')
     if (user.deleteRequest)
       return showError('A delete request is pending for this user')
@@ -194,29 +211,35 @@ export const Users = () => {
     // Apply the name change directly — it is profile metadata and does not affect balances or membership
     const updated = { ...user, name: newName }
     await updateData(
-      `${DB_NODES.USERS}/${mobile}`,
+      `${DB_NODES.USERS}/${uid}`,
       () => updated,
       'User updated successfully'
     )
-    userStore.addUser({ mobile, name: newName })
+    userStore.addUser({ uid, name: newName })
 
     // Notify each group the user belongs to so co-members are informed
     const memberGroups = groups.value.filter((g) =>
-      g.members?.some((m) => m.mobile === mobile)
+      g.members?.some((member) => (member.uid || member.mobile) === uid)
     )
     for (const group of memberGroups) {
-      const coMembers = (group.members || []).filter((m) => m.mobile !== mobile)
+      const coMembers = (group.members || []).filter(
+        (member) => (member.uid || member.mobile) !== uid
+      )
       if (!coMembers.length) continue
 
       let updatedGroup = { ...group }
       for (const member of coMembers) {
-        updatedGroup = appendNotificationForUser(updatedGroup, member.mobile, {
-          id: Date.now().toString() + Math.random(),
-          type: 'member-renamed',
-          message: `${oldName} has changed their name to "${newName}" in group "${group.name}".`,
-          updatedBy: mobile,
-          timestamp: Date.now()
-        })
+        updatedGroup = appendNotificationForUser(
+          updatedGroup,
+          member.uid || member.mobile,
+          {
+            id: Date.now().toString() + Math.random(),
+            type: 'member-renamed',
+            message: `${oldName} has changed their name to "${newName}" in group "${group.name}".`,
+            updatedBy: uid,
+            timestamp: Date.now()
+          }
+        )
       }
 
       await updateData(
@@ -231,9 +254,9 @@ export const Users = () => {
 
   // --- Delete User ---
 
-  async function requestDeleteUser(mobile, name) {
+  async function requestDeleteUser(uid, name) {
     try {
-      const ownerMobiles = getGroupOwnerMobiles(mobile)
+      const ownerMobiles = getGroupOwnerMobiles(uid)
       await ElMessageBox.confirm(
         `Are you sure you want to delete <strong>${name}</strong>?${
           ownerMobiles.length > 0
@@ -249,7 +272,7 @@ export const Users = () => {
         }
       )
 
-      const user = await read(`${DB_NODES.USERS}/${mobile}`)
+      const user = await read(`${DB_NODES.USERS}/${uid}`)
       if (!user) return showError('User not found')
       if (user.deleteRequest)
         return showError('A delete request is already pending for this user')
@@ -262,13 +285,11 @@ export const Users = () => {
 
       if (ownerMobiles.length === 0) {
         // Delete from Realtime Database
-        await deleteData(`${DB_NODES.USERS}/${mobile}`, `User ${name} deleted`)
-        userStore.setUsers(
-          [...userStore.getUsers].filter((u) => u.mobile !== mobile)
-        )
+        await deleteData(`${DB_NODES.USERS}/${uid}`, `User ${name} deleted`)
+        userStore.setUsers([...userStore.getUsers].filter((u) => u.uid !== uid))
 
         // If user is deleting themselves, also delete from Firebase Auth
-        if (mobile === me) {
+        if (uid === me) {
           try {
             const currentUser = auth.currentUser
             if (currentUser) {
@@ -293,11 +314,11 @@ export const Users = () => {
           approvals: []
         }
         await updateData(
-          `${DB_NODES.USERS}/${mobile}`,
+          `${DB_NODES.USERS}/${uid}`,
           () => ({ deleteRequest }),
           'Delete request sent to group owners for approval'
         )
-        userStore.addUser({ mobile, deleteRequest })
+        userStore.addUser({ uid, deleteRequest })
       }
     } catch (error) {
       if (error !== 'cancel') {
@@ -308,32 +329,32 @@ export const Users = () => {
 
   // --- Approve Request ---
 
-  async function approveRequest(userMobile, type) {
+  async function approveRequest(userUid, type) {
     const me = activeUser.value
-    const user = await read(`${DB_NODES.USERS}/${userMobile}`)
+    const user = await read(`${DB_NODES.USERS}/${userUid}`)
     if (!user) return showError('User not found')
 
     const request = type === 'delete' ? user.deleteRequest : user.updateRequest
     if (!request) return showError('Request not found or already resolved')
 
-    const newApprovals = [...(request.approvals || []), { mobile: me }]
+    const newApprovals = [...(request.approvals || []), { uid: me, mobile: me }]
     const allApproved = request.requiredApprovals.every((r) =>
-      newApprovals.some((a) => a.mobile === r)
+      newApprovals.some((a) => (a.uid || a.mobile) === r)
     )
 
     // Only delete requests go through approval; update requests are applied directly
     if (type === 'delete' && allApproved) {
       // Delete from Realtime Database
       await deleteData(
-        `${DB_NODES.USERS}/${userMobile}`,
+        `${DB_NODES.USERS}/${userUid}`,
         `User ${user.name} deleted`
       )
       userStore.setUsers(
-        [...userStore.getUsers].filter((u) => u.mobile !== userMobile)
+        [...userStore.getUsers].filter((u) => u.uid !== userUid)
       )
 
       // If user is deleting themselves, also delete from Firebase Auth
-      if (userMobile === me) {
+      if (userUid === me) {
         try {
           const currentUser = auth.currentUser
           if (currentUser) {
@@ -355,17 +376,17 @@ export const Users = () => {
       const field = type === 'delete' ? 'deleteRequest' : 'updateRequest'
       const updatedRequest = { ...request, approvals: newApprovals }
       await updateData(
-        `${DB_NODES.USERS}/${userMobile}`,
+        `${DB_NODES.USERS}/${userUid}`,
         () => ({ [field]: updatedRequest }),
         'Approval recorded'
       )
-      userStore.addUser({ mobile: userMobile, [field]: updatedRequest })
+      userStore.addUser({ uid: userUid, [field]: updatedRequest })
     }
   }
 
   // --- Reject Request ---
 
-  async function rejectRequest(userMobile, type, userName) {
+  async function rejectRequest(userUid, type, userName) {
     try {
       await ElMessageBox.confirm(
         `Reject the ${type} request for <strong>${userName}</strong>?`,
@@ -378,7 +399,7 @@ export const Users = () => {
         }
       )
 
-      const user = await read(`${DB_NODES.USERS}/${userMobile}`)
+      const user = await read(`${DB_NODES.USERS}/${userUid}`)
       if (!user) return showError('User not found')
 
       const field = type === 'delete' ? 'deleteRequest' : 'updateRequest'
@@ -397,11 +418,11 @@ export const Users = () => {
             }
           : {}
       await updateData(
-        `${DB_NODES.USERS}/${userMobile}`,
+        `${DB_NODES.USERS}/${userUid}`,
         () => ({ [field]: null, ...rejectionData }),
         `${type === 'delete' ? 'Delete' : 'Update'} request rejected`
       )
-      userStore.addUser({ mobile: userMobile, [field]: null, ...rejectionData })
+      userStore.addUser({ uid: userUid, [field]: null, ...rejectionData })
     } catch (e) {
       if (e !== 'cancel') showError(e?.message || 'Failed to reject request')
     }
@@ -411,8 +432,8 @@ export const Users = () => {
   const createGroupDialogVisible = ref(false)
   const createGroupForMobile = ref(null)
 
-  function openCreateGroup(mobile) {
-    createGroupForMobile.value = mobile
+  function openCreateGroup(uid) {
+    createGroupForMobile.value = uid
     createGroupDialogVisible.value = true
   }
 
@@ -421,7 +442,7 @@ export const Users = () => {
   const selectedUserName = ref('')
 
   function openGroupsDialog(row) {
-    selectedUserGroups.value = getUserGroups(row.mobile)
+    selectedUserGroups.value = getUserGroups(row.uid)
     selectedUserName.value = row.name
     groupsDialogVisible.value = true
   }

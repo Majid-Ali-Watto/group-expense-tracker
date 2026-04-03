@@ -159,7 +159,10 @@ async function accept() {
   actioning.value = true
   try {
     const myName = userStore.getUserByMobile(me.value)?.name || me.value
-    const newMembers = [...(group.value.members || []), { mobile: me.value }]
+    const newMembers = [
+      ...(group.value.members || []),
+      { uid: me.value, mobile: me.value }
+    ]
     const newPending = (group.value.pendingMembers || []).filter(
       (m) => m.mobile !== me.value
     )
@@ -248,7 +251,10 @@ async function sendJoinRequest() {
       return
     }
 
-    const newRequests = [...existing, { mobile: me.value, approvals: [] }]
+    const newRequests = [
+      ...existing,
+      { uid: me.value, mobile: me.value, approvals: [] }
+    ]
     let payload = { joinRequests: newRequests }
 
     // Notify all existing members

@@ -36,17 +36,16 @@ export const SharedGroups = () => {
 
   function displayMobileForGroup(targetMobile, group) {
     if (!targetMobile) return ''
+    const user = userStore.getUserByMobile(targetMobile)
+    const resolvedMobile = user?.mobile || targetMobile
     const isSelf = targetMobile === activeUser.value
     const isMember = (group?.members || []).some(
       (m) => m.mobile === activeUser.value
     )
 
-    if (isSelf || isMember) return targetMobile
+    if (isSelf || isMember) return resolvedMobile
 
-    return (
-      userStore.getUserByMobile(targetMobile)?.maskedMobile ||
-      maskMobile(targetMobile)
-    )
+    return user?.maskedMobile || maskMobile(resolvedMobile)
   }
 
   function isMember(group) {
@@ -77,12 +76,14 @@ export const SharedGroups = () => {
 
       if (usersData) {
         const users = Object.keys(usersData)
-          .filter((mobile) => usersData[mobile].emailVerified === true)
-          .map((mobile) => ({
-            mobile,
-            name: usersData[mobile].name || '',
-            maskedMobile: maskMobile(mobile),
-            bugResolver: usersData[mobile].bugResolver === true
+          .filter((uid) => usersData[uid].emailVerified === true)
+          .map((uid) => ({
+            uid,
+            mobile: usersData[uid].mobile || '',
+            name: usersData[uid].name || '',
+            email: usersData[uid].email || '',
+            maskedMobile: maskMobile(usersData[uid].mobile || ''),
+            bugResolver: usersData[uid].bugResolver === true
           }))
         userStore.setUsers(users)
       }
@@ -126,7 +127,7 @@ export const SharedGroups = () => {
         userStore.getUserByMobile(activeUser.value)?.name || activeUser.value
       const newRequests = [
         ...(group.joinRequests || []),
-        { mobile: activeUser.value, approvals: [] }
+        { uid: activeUser.value, mobile: activeUser.value, approvals: [] }
       ]
 
       let payload = { joinRequests: newRequests }
@@ -168,7 +169,7 @@ export const SharedGroups = () => {
         userStore.getUserByMobile(activeUser.value)?.name || activeUser.value
       const newMembers = [
         ...(group.members || []),
-        { mobile: activeUser.value }
+        { uid: activeUser.value, mobile: activeUser.value }
       ]
       const newPending = (group.pendingMembers || []).filter(
         (member) => member.mobile !== activeUser.value

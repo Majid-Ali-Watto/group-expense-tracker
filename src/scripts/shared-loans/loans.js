@@ -77,13 +77,19 @@ export const Loans = () => {
       }))
     }
     return userStore.getUsers && userStore.getUsers.length
-      ? userStore.getUsers
+      ? userStore.getUsers.map((u) => ({
+          mobile: u.uid || u.mobile,
+          name: u.name || u.mobile || u.uid
+        }))
       : []
   })
 
   const usersOptions = computed(() => {
     return usersList.value.map((u) => ({
-      label: `${u.name} (${u.mobile})`,
+      label: formatUserDisplay(storeProxy, u.mobile, {
+        name: u.name,
+        group: groupObj.value
+      }),
       value: u.mobile
     }))
   })

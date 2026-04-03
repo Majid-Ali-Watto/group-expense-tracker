@@ -118,9 +118,9 @@ export const Header = (props, emit) => {
       ).catch(() => {})
     }
 
-    if (notif.action === 'dismiss-user-rejection' && notif.userMobile) {
+    if (notif.action === 'dismiss-user-rejection' && notif.userUid) {
       props.dismissNotification(notif.id)
-      updateDoc(doc(database, DB_NODES.USERS, notif.userMobile), {
+      updateDoc(doc(database, DB_NODES.USERS, notif.userUid), {
         rejectionNotification: deleteField()
       }).catch(() => {})
     }

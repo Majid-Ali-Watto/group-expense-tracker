@@ -8,13 +8,13 @@
         <h4 class="pending-title mb-2">Pending Approvals</h4>
         <div
           v-for="item in myPendingApprovals"
-          :key="`${item.user.mobile}-${item.type}`"
+          :key="`${item.user.uid}-${item.type}`"
           class="pending-card rounded-lg p-3 mb-2"
         >
           <div class="flex items-start justify-between gap-2">
             <div class="flex-1 min-w-0">
               <div class="font-medium text-sm">
-                {{ item.user.name }} ({{ displayMobile(item.user.mobile) }})
+                {{ item.user.name }} ({{ displayMobile(item.user.uid) }})
               </div>
               <div class="text-xs text-gray-600 mt-1">
                 <span>
@@ -37,7 +37,7 @@
               <el-button
                 size="small"
                 type="success"
-                @click="approveRequest(item.user.mobile, item.type)"
+                @click="approveRequest(item.user.uid, item.type)"
               >
                 Approve
               </el-button>
@@ -45,7 +45,7 @@
                 size="small"
                 type="danger"
                 @click="
-                  rejectRequest(item.user.mobile, item.type, item.user.name)
+                  rejectRequest(item.user.uid, item.type, item.user.name)
                 "
               >
                 Reject
@@ -101,7 +101,7 @@
       <div v-if="filteredUsers.length > 0" class="space-y-3 mt-1">
         <div
           v-for="row in filteredUsers"
-          :key="row.mobile"
+          :key="row.uid"
           class="user-card border border-gray-200 rounded-lg p-3 hover:shadow-sm transition-shadow"
         >
           <div class="flex flex-col sm:flex-row sm:items-center gap-3">
@@ -114,7 +114,7 @@
               </div>
               <div class="font-semibold text-gray-800">{{ row.name }}</div>
               <div class="text-sm text-gray-500">
-                {{ displayMobile(row.mobile) }}
+                {{ displayMobile(row.uid) }}
               </div>
             </div>
 
@@ -125,9 +125,9 @@
               >
                 Groups
               </div>
-              <template v-if="getUserGroups(row.mobile).length > 0">
+              <template v-if="getUserGroups(row.uid).length > 0">
                 <el-tag
-                  v-for="group in getUserGroups(row.mobile).slice(0, 3)"
+                  v-for="group in getUserGroups(row.uid).slice(0, 3)"
                   :key="group"
                   size="small"
                   type="success"
@@ -135,13 +135,13 @@
                   {{ group }}
                 </el-tag>
                 <el-tag
-                  v-if="getUserGroups(row.mobile).length > 3"
+                  v-if="getUserGroups(row.uid).length > 3"
                   size="small"
                   type="success"
                   class="cursor-pointer"
                   @click="openGroupsDialog(row)"
                 >
-                  +{{ getUserGroups(row.mobile).length - 3 }} more
+                  +{{ getUserGroups(row.uid).length - 3 }} more
                 </el-tag>
               </template>
               <span v-else class="text-gray-400 text-xs">No groups</span>
@@ -156,11 +156,11 @@
               </div>
 
               <el-button
-                v-if="row.mobile !== activeUser"
+                v-if="row.uid !== activeUser"
                 size="small"
                 type="success"
                 plain
-                @click="openCreateGroup(row.mobile)"
+                @click="openCreateGroup(row.uid)"
               >
                 Create Group
               </el-button>
@@ -178,7 +178,7 @@
                   <el-button
                     size="small"
                     type="danger"
-                    @click="requestDeleteUser(row.mobile, row.name)"
+                    @click="requestDeleteUser(row.uid, row.name)"
                   >
                     Delete
                   </el-button>

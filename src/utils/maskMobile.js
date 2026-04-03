@@ -5,5 +5,6 @@
  */
 export function maskMobile(mobile) {
   if (!mobile || mobile.length < 4) return mobile
+  if (!/^\+?\d+$/.test(String(mobile))) return mobile
   return mobile.slice(0, 2) + '*'.repeat(mobile.length - 4) + mobile.slice(-2)
 }

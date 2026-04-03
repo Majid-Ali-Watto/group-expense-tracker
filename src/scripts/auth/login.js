@@ -169,9 +169,9 @@ export const Login = () => {
 
       // Find user with matching email
       const userEntries = Object.entries(usersSnapshot)
-      for (const [mobile, userData] of userEntries) {
+      for (const [uid, userData] of userEntries) {
         if (userData.email?.toLowerCase() === email.toLowerCase()) {
-          return { ...userData, mobile }
+          return { ...userData, uid }
         }
       }
       return null
@@ -181,10 +181,10 @@ export const Login = () => {
     }
   }
 
-  function activateUserGroup(mobileKey) {
+  function activateUserGroup(userId) {
     const groups = groupStore.getGroups || []
     const myGroup = groups.find((g) =>
-      (g.members || []).some((m) => m.mobile === mobileKey)
+      (g.members || []).some((m) => (m.uid || m.mobile) === userId)
     )
     if (myGroup) groupStore.setActiveGroup(myGroup.id)
   }
@@ -198,10 +198,10 @@ export const Login = () => {
     ])
 
     sessionStorage.setItem('_session', encryptedSession)
-    authStore.setActiveUser(payload.mobile)
+    authStore.setActiveUser(payload.uid)
     authStore.setSessionToken(encryptedStore)
     authStore.setActiveLoginCode(payload.loginCode)
-    activateUserGroup(payload.mobile)
+    activateUserGroup(payload.uid)
     loadAppConfig() // fire-and-forget: load remote config flags after login
     showSuccess(message || 'Login successful!')
   }
@@ -267,8 +267,9 @@ export const Login = () => {
       )
 
       // Now authenticated — check if mobile is already taken in Firestore
-      const existingUserByMobile = await read(
-        `${DB_NODES.USERS}/${mobileValue}`
+      const allUsers = (await read(DB_NODES.USERS)) || {}
+      const existingUserByMobile = Object.values(allUsers).find(
+        (user) => user.mobile === mobileValue
       )
       if (existingUserByMobile) {
         // Mobile taken — roll back the Auth user we just created
@@ -291,14 +292,14 @@ export const Login = () => {
 
       // Save user data to Firestore
       const userData = {
+        uid: userCredential.user.uid,
         name: normalizedName,
         mobile: mobileValue,
         email: emailValue,
-        uid: userCredential.user.uid,
         emailVerified: false // Will be set to true on first successful login
       }
 
-      await setData(`${DB_NODES.USERS}/${mobileValue}`, userData, '')
+      await setData(`${DB_NODES.USERS}/${userCredential.user.uid}`, userData, '')
 
       // Handle remember me
       if (rememberMe) {
@@ -328,7 +329,14 @@ export const Login = () => {
       form.value.loginCode = ''
       showResendVerification.value = true
     } catch (error) {
-      console.error('Registration error:', error)
+      const knownCodes = [
+        'auth/email-already-in-use',
+        'auth/weak-password',
+        'auth/invalid-email'
+      ]
+      if (!knownCodes.includes(error.code)) {
+        console.error('Registration error:', error)
+      }
 
       if (error.code === 'auth/email-already-in-use') {
         showError(
@@ -405,7 +413,7 @@ export const Login = () => {
           ...(user.addedBy ? { addedBy: user.addedBy } : {})
         }
         await updateData(
-          `${DB_NODES.USERS}/${user.mobile}`,
+          `${DB_NODES.USERS}/${user.uid}`,
           () => verifiedUserData,
           ''
         )
@@ -423,7 +431,7 @@ export const Login = () => {
 
       // Complete login
       await completeLogin(
-        { name: user.name, mobile: user.mobile, loginCode },
+        { name: user.name, mobile: user.mobile, uid: user.uid, loginCode },
         'Login successful!'
       )
     } catch (error) {

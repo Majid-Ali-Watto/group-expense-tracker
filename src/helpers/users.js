@@ -2,17 +2,28 @@ import { useAuthStore, useUserStore } from '@/stores'
 import { maskMobile } from '@/utils'
 // Check if current user is a member of the group
 
+function getIdentity(value) {
+  if (!value) return ''
+  if (typeof value === 'string') return value
+  return value.uid || value.mobile || value.userId || ''
+}
+
+function hasApproval(approvals, identity) {
+  return (approvals || []).some((approval) => getIdentity(approval) === identity)
+}
+
 export function isMemberOfGroup(group) {
   const authStore = useAuthStore()
   const mobile = authStore.getActiveUser
-  return group.members && group.members.some((m) => m.mobile === mobile)
+  return group.members && group.members.some((m) => getIdentity(m) === mobile)
 }
 // Check if current user has a pending join request
 export function hasPendingRequest(group) {
   const authStore = useAuthStore()
   const mobile = authStore.getActiveUser
   return (
-    group.joinRequests && group.joinRequests.some((r) => r.mobile === mobile)
+    group.joinRequests &&
+    group.joinRequests.some((r) => getIdentity(r) === mobile)
   )
 }
 
@@ -31,7 +42,7 @@ export function allMembersApproved(group) {
   if (!hasDeleteRequest(group)) return false
   const approvals = getDeleteApprovals(group)
   return group.members.every((member) =>
-    approvals.some((approval) => approval.mobile === member.mobile)
+    hasApproval(approvals, getIdentity(member))
   )
 }
 
@@ -40,7 +51,7 @@ export function getPendingApprovals(group) {
   if (!hasDeleteRequest(group)) return []
   const approvals = getDeleteApprovals(group)
   return group.members.filter(
-    (member) => !approvals.some((approval) => approval.mobile === member.mobile)
+    (member) => !hasApproval(approvals, getIdentity(member))
   )
 }
 
@@ -49,19 +60,19 @@ export function hasUserApprovedDeletion(group) {
   const authStore = useAuthStore()
   const mobile = authStore.getActiveUser
   const approvals = getDeleteApprovals(group)
-  return approvals.some((approval) => approval.mobile === mobile)
+  return hasApproval(approvals, mobile)
 }
 
 // ========== Join Request Helpers with Member Approval ==========
 export function getJoinRequestApprovals(group, requestMobile) {
-  const request = group.joinRequests?.find((r) => r.mobile === requestMobile)
+  const request = group.joinRequests?.find((r) => getIdentity(r) === requestMobile)
   return request?.approvals || []
 }
 
 export function getPendingJoinApprovals(group, requestMobile) {
   const approvals = getJoinRequestApprovals(group, requestMobile)
   return group.members.filter(
-    (member) => !approvals.some((approval) => approval.mobile === member.mobile)
+    (member) => !hasApproval(approvals, getIdentity(member))
   )
 }
 
@@ -69,13 +80,13 @@ export function hasUserApprovedJoinRequest(group, requestMobile) {
   const authStore = useAuthStore()
   const mobile = authStore.getActiveUser
   const approvals = getJoinRequestApprovals(group, requestMobile)
-  return approvals.some((approval) => approval.mobile === mobile)
+  return hasApproval(approvals, mobile)
 }
 
 export function allMembersApprovedJoinRequest(group, requestMobile) {
   const approvals = getJoinRequestApprovals(group, requestMobile)
   return group.members.every((member) =>
-    approvals.some((approval) => approval.mobile === member.mobile)
+    hasApproval(approvals, getIdentity(member))
   )
 }
 
@@ -99,7 +110,7 @@ export function getAllAffectedMembers(group) {
   // Remove duplicates based on mobile
   const uniqueMembers = allMembers.filter(
     (member, index, self) =>
-      index === self.findIndex((m) => m.mobile === member.mobile)
+      index === self.findIndex((m) => getIdentity(m) === getIdentity(member))
   )
 
   return uniqueMembers
@@ -111,20 +122,20 @@ export function allAffectedMembersApprovedEdit(group) {
   const allAffected = getAllAffectedMembers(group)
 
   return allAffected.every((member) =>
-    approvals.some((approval) => approval.mobile === member.mobile)
+    hasApproval(approvals, getIdentity(member))
   )
 }
 
 export function hasUserApprovedEditRequest(group) {
   const authStore = useAuthStore()
   const mobile = authStore.getActiveUser
-  return group.editRequest?.approvals?.some((a) => a.mobile === mobile) || false
+  return hasApproval(group.editRequest?.approvals, mobile)
 }
 
 export function isUserAffectedByEdit(group) {
   const authStore = useAuthStore()
   const mobile = authStore.getActiveUser
-  return getAllAffectedMembers(group).some((m) => m.mobile === mobile)
+  return getAllAffectedMembers(group).some((m) => getIdentity(m) === mobile)
 }
 
 // ========== Add Member Request Helpers ==========
@@ -142,14 +153,14 @@ export function allMembersApprovedAddMember(group) {
   if (!hasAddMemberRequest(group)) return false
   const approvals = getAddMemberRequestApprovals(group)
   return group.members.every((member) =>
-    approvals.some((approval) => approval.mobile === member.mobile)
+    hasApproval(approvals, getIdentity(member))
   )
 }
 
 export function hasUserApprovedAddMemberRequest(group) {
   const authStore = useAuthStore()
   const mobile = authStore.getActiveUser
-  return getAddMemberRequestApprovals(group).some((a) => a.mobile === mobile)
+  return hasApproval(getAddMemberRequestApprovals(group), mobile)
 }
 
 // ========== Ownership Transfer Helpers ==========

@@ -250,14 +250,14 @@ export const Settlement = (props) => {
     const map = {}
     const users =
       userStore.getUsers && userStore.getUsers.length ? userStore.getUsers : []
-    if (users.length) users.forEach((u) => (map[u.mobile] = 0))
+    if (users.length) users.forEach((u) => (map[u.uid || u.mobile] = 0))
 
     props.payments.forEach((payment) => {
       const amount = payment.amount || 0
       const participants =
         payment.participants && payment.participants.length
           ? payment.participants
-          : users.map((u) => u.mobile)
+          : users.map((u) => u.uid || u.mobile)
 
       let shares = []
       if (

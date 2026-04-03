@@ -32,7 +32,7 @@
                 displayName
               }}</span>
               <span class="ml-1 text-xs font-medium text-gray-500"
-                >({{ authStore.getActiveUser }})</span
+                >({{ currentUserMobile }})</span
               >
             </p>
           </div>
@@ -88,7 +88,7 @@
 <script setup>
 import { ref, computed, watch, nextTick } from 'vue'
 import GenericDropDown from './GenericDropDown.vue'
-import { useGroupStore, useAuthStore } from '@/stores'
+import { useGroupStore, useAuthStore, useUserStore } from '@/stores'
 import { showSuccess } from '@/utils'
 import { isMemberOfGroup } from '@/helpers'
 
@@ -98,6 +98,11 @@ defineProps({
 
 const groupStore = useGroupStore()
 const authStore = useAuthStore()
+const userStore = useUserStore()
+
+const currentUserMobile = computed(
+  () => userStore.getUserByUid(authStore.getActiveUser)?.mobile ?? authStore.getActiveUser
+)
 
 const joinedGroups = computed(() =>
   groupStore.getGroups.filter((g) => isMemberOfGroup(g))

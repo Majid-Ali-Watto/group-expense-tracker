@@ -244,16 +244,16 @@ export function useGlobalNotifications() {
       const check = (req, type) => {
         if (
           req?.requiredApprovals?.includes(me) &&
-          !req.approvals?.some((a) => a.mobile === me)
+          !req.approvals?.some((a) => (a.uid || a.mobile) === me)
         ) {
           result.push({
-            id: `user-${type}-${u.mobile}`,
+            id: `user-${type}-${u.uid}`,
             icon: type === 'delete' ? '🗑️' : '✏️',
             title: 'Users',
             description:
               type === 'delete'
-                ? `Delete request for ${u.name} (${maskMobile(u.mobile)})`
-                : `Update request for ${u.name} (${maskMobile(u.mobile)}): Name → "${req.newName}"`,
+                ? `Delete request for ${u.name} (${maskMobile(u.mobile || u.uid)})`
+                : `Update request for ${u.name} (${maskMobile(u.mobile || u.uid)}): Name → "${req.newName}"`,
             tab: Tabs.USERS,
             category: 'Users'
           })
@@ -263,7 +263,7 @@ export function useGlobalNotifications() {
       check(u.updateRequest, 'update')
 
       // Notify the requester themselves about the status of their own delete request
-      if (u.mobile === me && u.deleteRequest) {
+      if (u.uid === me && u.deleteRequest) {
         const approved = u.deleteRequest.approvals?.length || 0
         const required = u.deleteRequest.requiredApprovals?.length || 0
         result.push({
@@ -278,7 +278,7 @@ export function useGlobalNotifications() {
 
       // Notify the requester when their request was rejected
       if (
-        u.mobile === me &&
+        u.uid === me &&
         u.rejectionNotification?.type === 'delete-rejected'
       ) {
         const n = u.rejectionNotification
@@ -291,7 +291,7 @@ export function useGlobalNotifications() {
           tab: Tabs.USERS,
           category: 'Users',
           action: 'dismiss-user-rejection',
-          userMobile: me
+          userUid: me
         })
       }
 
@@ -591,14 +591,16 @@ export function useGlobalNotifications() {
     collection(database, DB_NODES.USERS),
     (snap) => {
       snap.docs.forEach((docSnap) => {
-        const mobile = docSnap.id
+        const uid = docSnap.id
         const u = docSnap.data()
         if (u.emailVerified === true) {
           userStore.addUser({
-            mobile,
+            uid,
+            mobile: u.mobile || '',
             name: u.name || '',
+            email: u.email || '',
             addedBy: u.addedBy || null,
-            maskedMobile: maskMobile(mobile),
+            maskedMobile: maskMobile(u.mobile || ''),
             deleteRequest: u.deleteRequest || null,
             updateRequest: u.updateRequest || null,
             bugResolver: u.bugResolver === true,

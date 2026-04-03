@@ -29,17 +29,27 @@ export const GroupsCreate = (emit, props) => {
   const usersOptions = computed(() =>
     (userStore.getUsers || []).map((user) => ({
       label: getUserLabel(user),
-      value: user.mobile
+      value: user.uid
     }))
   )
 
   const activeUser = computed(() => authStore.getActiveUser)
 
   function getUserLabel(u) {
-    return formatUserDisplay(storeProxy, u.mobile, {
+    return formatUserDisplay(storeProxy, u.uid, {
       name: u.name,
-      preferMasked: u.mobile !== activeUser.value
+      preferMasked: u.uid !== activeUser.value
     })
+  }
+
+  function buildMemberSnapshot(userId) {
+    const user = userStore.getUserByMobile(userId)
+    return {
+      uid: userId,
+      mobile: userId,
+      name: user?.name || '',
+      phone: user?.mobile || ''
+    }
   }
 
   async function createGroup() {
@@ -50,11 +60,11 @@ export const GroupsCreate = (emit, props) => {
   }
 
   async function doCreateGroup() {
-    const creatorMobile = authStore.getActiveUser
+    const creatorId = authStore.getActiveUser
 
     // Auto-include creator if not already selected
-    if (!groupForm.value.members.includes(creatorMobile)) {
-      groupForm.value.members = [creatorMobile, ...groupForm.value.members]
+    if (!groupForm.value.members.includes(creatorId)) {
+      groupForm.value.members = [creatorId, ...groupForm.value.members]
     }
 
     if (groupForm.value.members.length < 2) {
@@ -67,7 +77,7 @@ export const GroupsCreate = (emit, props) => {
     // Rule 1: owner can never create two groups with the same name
     const ownerDuplicate = allGroups.some(
       (g) =>
-        g.ownerMobile === creatorMobile &&
+        g.ownerMobile === creatorId &&
         g.name.trim().toLowerCase() === newName
     )
     if (ownerDuplicate) {
@@ -77,7 +87,7 @@ export const GroupsCreate = (emit, props) => {
     // Rule 2: none of the other members (excluding creator) can already be
     // in an existing group with the same name
     const otherMembers = (groupForm.value.members || []).filter(
-      (m) => m !== creatorMobile
+      (m) => m !== creatorId
     )
     const sameNameGroups = allGroups.filter(
       (g) => g.name.trim().toLowerCase() === newName
@@ -98,8 +108,8 @@ export const GroupsCreate = (emit, props) => {
     const id = Date.now().toString()
     const allSelected = groupForm.value.members || []
     const pendingMembers = allSelected
-      .filter((m) => m !== creatorMobile)
-      .map((m) => ({ mobile: m }))
+      .filter((m) => m !== creatorId)
+      .map((m) => buildMemberSnapshot(m))
     const payload = {
       id,
       name: groupForm.value.name,
@@ -107,12 +117,12 @@ export const GroupsCreate = (emit, props) => {
       category: groupForm.value.category || '',
       ownerMobile: authStore.getActiveUser,
       // Only the creator joins immediately; all others receive an invitation
-      members: [{ mobile: creatorMobile }],
+      members: [buildMemberSnapshot(creatorId)],
       pendingMembers,
       // Flat array of all mobile numbers (members + pending) used for
       // efficient per-user Firestore queries via array-contains.
       memberMobiles: [
-        ...new Set([creatorMobile, ...pendingMembers.map((m) => m.mobile)])
+        ...new Set([creatorId, ...pendingMembers.map((m) => m.mobile)])
       ]
     }
     try {

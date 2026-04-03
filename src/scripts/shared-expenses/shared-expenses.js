@@ -308,7 +308,7 @@ export const SharedExpenses = (props, emit) => {
       formData.value.participants && formData.value.participants.length
         ? formData.value.participants
         : userStore.getUsers && userStore.getUsers.length
-          ? userStore.getUsers.map((u) => u.mobile)
+          ? userStore.getUsers.map((u) => u.uid || u.mobile)
           : []
 
     // ---- compute split ----

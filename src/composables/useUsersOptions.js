@@ -19,16 +19,16 @@ export function useUsersOptions() {
     if (group && group.members && group.members.length) {
       return group.members.map((m) => ({
         label: formatMemberDisplay(storeProxy, m, { group }),
-        value: m.mobile
+        value: m.uid || m.mobile
       }))
     }
     const users = userStore.getUsers?.length ? userStore.getUsers : []
     return users.map((u) => ({
-      label: formatUserDisplay(storeProxy, u.mobile, {
+      label: formatUserDisplay(storeProxy, u.uid, {
         name: u.name,
         preferMasked: true
       }),
-      value: u.mobile
+      value: u.uid
     }))
   })
 
