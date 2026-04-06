@@ -9,19 +9,7 @@
     @keydown.enter.stop="$emit('close')"
   >
     <div class="ant-icon-wrap ant-icon-wrap--close">
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2.5"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        class="ant-icon"
-      >
-        <line x1="18" y1="6" x2="6" y2="18" />
-        <line x1="6" y1="6" x2="18" y2="18" />
-      </svg>
+      <XIcon class="ant-icon" />
     </div>
     <div class="ant-body">
       <span class="ant-label">Close Form</span>
@@ -40,19 +28,7 @@
     @keydown.enter.stop="$emit('click')"
   >
     <div class="ant-icon-wrap">
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2.5"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        class="ant-icon"
-      >
-        <line x1="12" y1="5" x2="12" y2="19" />
-        <line x1="5" y1="12" x2="19" y2="12" />
-      </svg>
+      <PlusIcon class="ant-icon" />
     </div>
     <div class="ant-body">
       <span v-overflow-popup="{ title: 'Action' }" class="ant-label">{{
@@ -65,6 +41,8 @@
 </template>
 
 <script setup lang="ts">
+import { PlusIcon, XIcon } from '@/components/icons'
+
 defineProps({
   text: { type: String, required: true },
   formOpen: { type: Boolean, default: false }

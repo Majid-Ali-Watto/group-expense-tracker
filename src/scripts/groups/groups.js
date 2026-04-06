@@ -2125,8 +2125,6 @@ export const Groups = () => {
     return result
   })
 
-  const editFormRef = ref(null)
-
   // Watch for scroll trigger from notifications
   watch(
     () => groupStore.getScrollToGroupTrigger,
@@ -2149,13 +2147,6 @@ export const Groups = () => {
     setTimeout(() => {
       el.style.boxShadow = ''
     }, 2000)
-  }
-
-  function handleEditSave() {
-    editFormRef.value.validate((valid) => {
-      if (!valid) return
-      updateGroup()
-    })
   }
 
   return {
@@ -2253,9 +2244,7 @@ export const Groups = () => {
     getGroupActions,
 
     // Edit form
-    editMemberOptions,
-    editFormRef,
-    handleEditSave
+    editMemberOptions
   }
 
   // Helper function to compute actions for a group

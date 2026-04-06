@@ -25,19 +25,7 @@
 
     <!-- Empty -->
     <div v-else-if="!filteredReports.length" class="bra-empty">
-      <svg
-        class="w-12 h-12 bra-empty-icon"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="1.5"
-          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-        />
-      </svg>
+      <CheckCircleIcon class="w-12 h-12 bra-empty-icon" />
       <p>No bug reports match the current filter.</p>
     </div>
 
@@ -108,6 +96,7 @@
 import AdminHeader from './AdminHeader.vue'
 import AdminFiltersBar from './AdminFiltersBar.vue'
 import AdminReportCard from './AdminReportCard.vue'
+import { CheckCircleIcon } from '@/components/icons'
 import {
   BugReportsAdmin,
   STATUS_OPTIONS,

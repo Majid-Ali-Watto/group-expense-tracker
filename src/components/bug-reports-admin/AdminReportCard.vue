@@ -34,19 +34,7 @@
           :disabled="deletingId === report.id"
           @click="$emit('delete', report)"
         >
-          <svg
-            class="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-            />
-          </svg>
+          <TrashIcon class="w-4 h-4" />
         </button>
       </div>
     </div>
@@ -59,19 +47,7 @@
         title="Copy title"
         @click.stop="copyText(report.title)"
       >
-        <svg
-          class="w-3.5 h-3.5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-          />
-        </svg>
+        <CopyIcon class="w-3.5 h-3.5" />
       </button>
     </div>
     <div class="bra-card-desc-row">
@@ -86,19 +62,7 @@
         title="Copy description"
         @click.stop="copyText(report.description)"
       >
-        <svg
-          class="w-3.5 h-3.5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-          />
-        </svg>
+        <CopyIcon class="w-3.5 h-3.5" />
       </button>
     </div>
     <GenericButton
@@ -127,38 +91,14 @@
             class="bra-img-action-btn"
             title="Open"
           >
-            <svg
-              class="w-3.5 h-3.5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-              />
-            </svg>
+            <ExternalLinkIcon class="w-3.5 h-3.5" />
           </a>
           <button
             class="bra-img-action-btn"
             title="Download"
             @click.prevent="downloadImage(ss.url, `screenshot-${i + 1}`)"
           >
-            <svg
-              class="w-3.5 h-3.5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-              />
-            </svg>
+            <DownloadIcon class="w-3.5 h-3.5" />
           </button>
         </span>
       </div>
@@ -167,19 +107,7 @@
     <!-- Footer -->
     <div class="bra-card-footer">
       <span class="bra-reporter">
-        <svg
-          class="w-3.5 h-3.5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-          />
-        </svg>
+        <UserIcon class="w-3.5 h-3.5" />
         {{ report.reporter?.name || 'Anonymous' }}
         <template v-if="report.reporter?.email">
           ·
@@ -203,19 +131,7 @@
         @click="$emit('toggle-notes', report.id)"
       >
         <span class="bra-notes-toggle-left">
-          <svg
-            class="w-3.5 h-3.5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-            />
-          </svg>
+          <ChatBubbleIcon class="w-3.5 h-3.5" />
           Notes{{
             notesOf(report).length ? ` (${notesOf(report).length})` : ''
           }}
@@ -223,20 +139,10 @@
             >&#128276; New reply</span
           >
         </span>
-        <svg
+        <ChevronDownIcon
           class="bra-notes-chevron"
           :class="{ 'is-open': notesOpen.has(report.id) }"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M19 9l-7 7-7-7"
-          />
-        </svg>
+        />
       </button>
 
       <div v-if="notesOpen.has(report.id)" class="bra-notes-body">
@@ -293,6 +199,15 @@
 <script setup>
 import { NoteThread } from '@/components/bug-reports'
 import { GenericButton } from '@/components/generic-components'
+import {
+  ChatBubbleIcon,
+  ChevronDownIcon,
+  CopyIcon,
+  DownloadIcon,
+  ExternalLinkIcon,
+  TrashIcon,
+  UserIcon
+} from '@/components/icons'
 
 defineProps({
   report: { type: Object, required: true },

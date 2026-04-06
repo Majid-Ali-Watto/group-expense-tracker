@@ -6,19 +6,7 @@
     <el-collapse-item>
       <template #title>
         <span class="px-2 text-sm font-medium text-gray-600">
-          <svg
-            class="inline-block w-4 h-4 mr-1"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
+          <InfoCircleIcon class="inline-block w-4 h-4 mr-1" />
           View Details
         </span>
       </template>
@@ -132,6 +120,7 @@
 </template>
 <script setup>
 import { computed, ref } from 'vue'
+import { InfoCircleIcon } from '@/components/icons'
 import { useUserStore } from '@/stores'
 
 const showMembersDialog = ref(false)

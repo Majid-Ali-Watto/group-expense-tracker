@@ -32,19 +32,7 @@
                 class="bell-btn"
                 :title="`${notificationCount} pending actions`"
               >
-                <svg
-                  class="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-                  />
-                </svg>
+                <BellIcon class="w-5 h-5" />
                 <span v-if="notificationCount > 0" class="notif-badge">
                   {{ notificationCount > 99 ? '99+' : notificationCount }}
                 </span>
@@ -109,36 +97,12 @@
             @click="showBugReport = true"
             title="Report a Bug"
           >
-            <svg
-              class="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-              />
-            </svg>
+            <AlertTriangleIcon class="w-5 h-5" />
           </button>
 
           <!-- Help — always visible -->
           <button class="theme-btn" @click="showHelp = true" title="Help">
-            <svg
-              class="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
+            <QuestionCircleIcon class="w-5 h-5" />
           </button>
 
           <!-- Share current URL — always visible -->
@@ -147,19 +111,7 @@
             @click="shareCurrentUrl"
             title="Share current page"
           >
-            <svg
-              class="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M8.684 13.342C9.433 12.402 10.59 11.8 11.889 11.8h1.422m-4.627 1.542a3 3 0 100-4.242m6.632 8.484a3 3 0 104.242 0m-4.242 0l-2.005-2.005m-2.622-6.479L8.684 6.658m6.632 4a3 3 0 104.242-4.242 3 3 0 00-4.242 4.242z"
-              />
-            </svg>
+            <ShareIcon class="w-5 h-5" />
           </button>
 
           <!-- Theme toggle — always visible -->
@@ -171,35 +123,9 @@
             "
           >
             <!-- Moon: shown in light mode -->
-            <svg
-              v-if="!isDarkTheme"
-              class="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
-              />
-            </svg>
+            <MoonIcon v-if="!isDarkTheme" class="w-5 h-5" />
             <!-- Sun: shown in dark mode -->
-            <svg
-              v-else
-              class="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
-              />
-            </svg>
+            <SunIcon v-else class="w-5 h-5" />
           </button>
 
           <!-- Expenses Summary — only when logged in -->
@@ -232,19 +158,7 @@
         <!-- Mobile hamburger menu - visible on screens < 768px -->
         <el-dropdown trigger="click" class="md:hidden mobile-menu-dropdown">
           <button class="hamburger-btn">
-            <svg
-              class="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M4 6h16M4 12h16M4 18h16"
-              />
-            </svg>
+            <MenuIcon class="w-6 h-6" />
           </button>
           <template #dropdown>
             <el-dropdown-menu class="mobile-dropdown-menu">
@@ -260,19 +174,7 @@
                     class="flex items-center gap-3"
                     :class="{ 'is-active-tab': tab === activeTab }"
                   >
-                    <svg
-                      class="w-5 h-5 menu-icon"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M9 5l7 7-7 7"
-                      />
-                    </svg>
+                    <ChevronRightIcon class="w-5 h-5 menu-icon" />
                     <span>{{ tab }}</span>
                   </div>
                 </el-dropdown-item>
@@ -281,19 +183,7 @@
               <!-- Help — always visible -->
               <el-dropdown-item @click="showHelp = true">
                 <div class="flex items-center gap-3">
-                  <svg
-                    class="w-5 h-5 menu-icon"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
+                  <QuestionCircleIcon class="w-5 h-5 menu-icon" />
                   <span>Help</span>
                 </div>
               </el-dropdown-item>
@@ -301,37 +191,13 @@
               <!-- Bug Report — only when logged in -->
               <el-dropdown-item v-if="loggedIn" @click="showBugReport = true">
                 <div class="flex items-center gap-3">
-                  <svg
-                    class="w-5 h-5 menu-icon"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                    />
-                  </svg>
+                  <AlertTriangleIcon class="w-5 h-5 menu-icon" />
                   <span>Report a Bug</span>
                 </div>
               </el-dropdown-item>
               <el-dropdown-item @click="shareCurrentUrl">
                 <div class="flex items-center gap-3">
-                  <svg
-                    class="w-5 h-5 menu-icon"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M8.684 13.342C9.433 12.402 10.59 11.8 11.889 11.8h1.422m-4.627 1.542a3 3 0 100-4.242m6.632 8.484a3 3 0 104.242 0m-4.242 0l-2.005-2.005m-2.622-6.479L8.684 6.658m6.632 4a3 3 0 104.242-4.242 3 3 0 00-4.242 4.242z"
-                    />
-                  </svg>
+                  <ShareIcon class="w-5 h-5 menu-icon" />
                   <span>Share This Page</span>
                 </div>
               </el-dropdown-item>
@@ -351,34 +217,8 @@
               <!-- Theme Toggle -->
               <el-dropdown-item @click="toggleTheme" divided>
                 <div class="flex items-center gap-3">
-                  <svg
-                    v-if="!isDarkTheme"
-                    class="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
-                    />
-                  </svg>
-                  <svg
-                    v-else
-                    class="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
-                    />
-                  </svg>
+                  <MoonIcon v-if="!isDarkTheme" class="w-5 h-5" />
+                  <SunIcon v-else class="w-5 h-5" />
                   <span>{{ isDarkTheme ? 'Light Mode' : 'Dark Mode' }}</span>
                 </div>
               </el-dropdown-item>
@@ -428,6 +268,16 @@
 
 <script setup>
 import { SwitchButton, DataAnalysis } from '@element-plus/icons-vue'
+import {
+  AlertTriangleIcon,
+  BellIcon,
+  ChevronRightIcon,
+  MenuIcon,
+  MoonIcon,
+  QuestionCircleIcon,
+  ShareIcon,
+  SunIcon
+} from '@/components/icons'
 import { Header } from '@/scripts/layout'
 import { loadAsyncComponent } from '@/utils'
 
