@@ -158,13 +158,15 @@ async function accept() {
   if (!group.value) return
   actioning.value = true
   try {
-    const myName = userStore.getUserByMobile(me.value)?.name || me.value
+    const myUser = userStore.getUserByUid(me.value)
+    const myName = myUser?.name || me.value
+    const myMobile = myUser?.mobile || me.value
     const newMembers = [
       ...(group.value.members || []),
-      { uid: me.value, mobile: me.value }
+      { uid: me.value, mobile: myMobile }
     ]
     const newPending = (group.value.pendingMembers || []).filter(
-      (m) => m.mobile !== me.value
+      (m) => m.mobile !== myMobile && m.uid !== me.value
     )
 
     let payload = {
@@ -179,7 +181,7 @@ async function accept() {
         {
           id: `${Date.now()}-${Math.random()}`,
           type: 'invitation-accepted',
-          message: `${myName} (${maskMobile(me.value)}) accepted your invitation to join "${group.value.name}"`,
+          message: `${myName} (${maskMobile(myMobile)}) accepted your invitation to join "${group.value.name}"`,
           updatedBy: me.value,
           timestamp: Date.now()
         }
@@ -205,9 +207,11 @@ async function decline() {
   if (!group.value) return
   actioning.value = true
   try {
-    const myName = userStore.getUserByMobile(me.value)?.name || me.value
+    const myUser = userStore.getUserByUid(me.value)
+    const myName = myUser?.name || me.value
+    const myMobile = myUser?.mobile || me.value
     const newPending = (group.value.pendingMembers || []).filter(
-      (m) => m.mobile !== me.value
+      (m) => m.mobile !== myMobile && m.uid !== me.value
     )
     let payload = { pendingMembers: newPending.length ? newPending : null }
 
@@ -218,7 +222,7 @@ async function decline() {
         {
           id: `${Date.now()}-${Math.random()}`,
           type: 'invitation-declined',
-          message: `${myName} (${maskMobile(me.value)}) declined your invitation to join "${group.value.name}"`,
+          message: `${myName} (${maskMobile(myMobile)}) declined your invitation to join "${group.value.name}"`,
           updatedBy: me.value,
           timestamp: Date.now()
         }
@@ -244,27 +248,29 @@ async function sendJoinRequest() {
   if (!group.value) return
   actioning.value = true
   try {
-    const myName = userStore.getUserByMobile(me.value)?.name || me.value
+    const myUser = userStore.getUserByUid(me.value)
+    const myName = myUser?.name || me.value
+    const myMobile = myUser?.mobile || me.value
     const existing = group.value.joinRequests || []
-    if (existing.some((r) => r.mobile === me.value)) {
+    if (existing.some((r) => r.mobile === myMobile || r.uid === me.value)) {
       showError('You already have a pending join request.')
       return
     }
 
     const newRequests = [
       ...existing,
-      { uid: me.value, mobile: me.value, approvals: [] }
+      { uid: me.value, mobile: myMobile, approvals: [] }
     ]
     let payload = { joinRequests: newRequests }
 
     // Notify all existing members
     let updatedGroup = { ...group.value }
     for (const member of group.value.members || []) {
-      if (member.mobile !== me.value) {
+      if (member.uid !== me.value) {
         updatedGroup = appendNotificationForUser(updatedGroup, member.mobile, {
           id: `${Date.now()}-${Math.random()}`,
           type: 'join-request',
-          message: `${myName} (${maskMobile(me.value)}) wants to join "${group.value.name}"`,
+          message: `${myName} (${maskMobile(myMobile)}) wants to join "${group.value.name}"`,
           updatedBy: me.value,
           timestamp: Date.now()
         })

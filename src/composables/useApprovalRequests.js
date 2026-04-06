@@ -293,11 +293,12 @@ export function useApprovalRequests({
     })
     const changesSummary =
       request.type === 'update' ? summarizeChanges(request.changes) : ''
+    const rejector = userStore.getUserByUid(activeUser.value)
     const notification = {
       id: Date.now().toString() + Math.random(),
       type: 'rejected',
       message: `Your ${request.type} request for ${itemLabel} was rejected${changesSummary}`,
-      byMobile: activeUser.value,
+      byMobile: rejector?.mobile || activeUser.value,
       timestamp: Date.now()
     }
 

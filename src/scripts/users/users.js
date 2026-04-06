@@ -47,15 +47,91 @@ export const Users = () => {
     return user?.uid || user?.mobile || ''
   }
 
+  function normalizeName(value = '') {
+    return value.trim().replace(/\s+/g, ' ')
+  }
+
+  function normalizeMobile(value = '') {
+    return value.trim().replace(/\s+/g, '')
+  }
+
+  function isValidName(name) {
+    return /^[a-zA-Z]+(\s[a-zA-Z]+)*$/.test(name)
+  }
+
+  function isValidMobile(mobile) {
+    return /^03\d{9}$/.test(mobile)
+  }
+
+  function pinActiveUserFirst(rows) {
+    const activeUserId = activeUser.value
+    if (!activeUserId) return rows
+
+    const result = [...rows]
+    const activeUserIndex = result.findIndex(
+      (user) => getUserId(user) === activeUserId
+    )
+    if (activeUserIndex <= 0) return result
+
+    const [activeUserRow] = result.splice(activeUserIndex, 1)
+    result.unshift(activeUserRow)
+    return result
+  }
+
+  const editUserRules = {
+    name: [
+      { required: true, message: 'Full name is required', trigger: 'blur' },
+      {
+        validator: (_rule, value, callback) => {
+          const normalizedName = normalizeName(value || '')
+          if (!normalizedName) {
+            callback(new Error('Full name is required'))
+            return
+          }
+          if (normalizedName.length < 3) {
+            callback(new Error('Name should be at least 3 characters'))
+            return
+          }
+          if (!isValidName(normalizedName)) {
+            callback(
+              new Error('Name can only contain alphabets and single spaces')
+            )
+            return
+          }
+          callback()
+        },
+        trigger: ['blur', 'change']
+      }
+    ],
+    mobile: [
+      { required: true, message: 'Mobile number is required', trigger: 'blur' },
+      {
+        validator: (_rule, value, callback) => {
+          const normalizedMobile = normalizeMobile(value || '')
+          if (!normalizedMobile) {
+            callback(new Error('Mobile number is required'))
+            return
+          }
+          if (!isValidMobile(normalizedMobile)) {
+            callback(
+              new Error('Mobile number must be 11 digits starting with 03')
+            )
+            return
+          }
+          callback()
+        },
+        trigger: ['blur', 'change']
+      }
+    ]
+  }
+
   function displayMobile(targetUserId) {
     if (!targetUserId) return ''
     const user = userStore.getUserByMobile(targetUserId)
     const mobile = user?.mobile || targetUserId
     if (targetUserId === activeUser.value) return mobile
     if (activeGroupMemberIds.value.includes(targetUserId)) return mobile
-    return (
-      user?.maskedMobile || maskMobile(mobile)
-    )
+    return user?.maskedMobile || maskMobile(mobile)
   }
 
   function getUserGroups(userId) {
@@ -68,14 +144,16 @@ export const Users = () => {
 
   const filteredUsers = computed(() => {
     const query = searchQuery.value.toLowerCase().trim()
-    let result = users.value
+    let result = [...users.value]
 
     if (query) {
       result = result.filter((u) => {
         return (
           u.name.toLowerCase().includes(query) ||
           displayMobile(getUserId(u)).toLowerCase().includes(query) ||
-          getUserGroups(getUserId(u)).some((g) => g.toLowerCase().includes(query))
+          getUserGroups(getUserId(u)).some((g) =>
+            g.toLowerCase().includes(query)
+          )
         )
       })
     }
@@ -92,17 +170,17 @@ export const Users = () => {
           )
       )
       result = result.filter(
-        (u) => getUserId(u) !== me && sharedUserIds.has(getUserId(u))
+        (u) => getUserId(u) === me || sharedUserIds.has(getUserId(u))
       )
     }
 
     if (sortOrder.value === 'asc') {
-      result = [...result].sort((a, b) => a.name.localeCompare(b.name))
+      result = result.sort((a, b) => a.name.localeCompare(b.name))
     } else if (sortOrder.value === 'desc') {
-      result = [...result].sort((a, b) => b.name.localeCompare(a.name))
+      result = result.sort((a, b) => b.name.localeCompare(a.name))
     }
 
-    return result
+    return pinActiveUserFirst(result)
   })
 
   // Load full user data with real-time updates so delete/approve/reject
@@ -189,33 +267,104 @@ export const Users = () => {
 
   function resetEditUserForm() {
     editForm.value = { ...initialEditForm.value }
-    editUserFormRef.value?.clearValidate()
+  }
+
+  async function syncUserProfileInGroups(userId, profile) {
+    const relatedGroups = groups.value.filter((group) =>
+      [...(group.members || []), ...(group.pendingMembers || [])].some(
+        (member) => (member.uid || member.mobile) === userId
+      )
+    )
+
+    for (const group of relatedGroups) {
+      const members = (group.members || []).map((member) =>
+        (member.uid || member.mobile) === userId
+          ? { ...member, name: profile.name, phone: profile.mobile }
+          : member
+      )
+      const pendingMembers = (group.pendingMembers || []).map((member) =>
+        (member.uid || member.mobile) === userId
+          ? { ...member, name: profile.name, phone: profile.mobile }
+          : member
+      )
+
+      await updateData(
+        `${DB_NODES.GROUPS}/${group.id}`,
+        () => ({
+          members,
+          pendingMembers: pendingMembers.length ? pendingMembers : null
+        }),
+        ''
+      )
+
+      groupStore.addGroup({
+        id: group.id,
+        members,
+        pendingMembers: pendingMembers.length ? pendingMembers : null
+      })
+    }
   }
 
   async function submitUpdateUser() {
-    const { uid, name } = editForm.value
-    const newName = name.trim().replace(/\s+/g, ' ')
+    const { uid } = editForm.value
+    const newName = normalizeName(editForm.value.name)
+    const newMobile = normalizeMobile(editForm.value.mobile)
 
     if (!newName) return showError('Name is required')
-    if (!/^[a-zA-Z]+(\s[a-zA-Z]+)*$/.test(newName)) {
+    if (newName.length < 3) {
+      return showError('Name should be at least 3 characters')
+    }
+    if (!isValidName(newName)) {
       return showError('Name can only contain alphabets and single spaces')
+    }
+    if (!newMobile) return showError('Mobile number is required')
+    if (!isValidMobile(newMobile)) {
+      return showError('Mobile number must be 11 digits starting with 03')
     }
 
     const user = await read(`${DB_NODES.USERS}/${uid}`)
     if (!user) return showError('User not found')
     if (user.deleteRequest)
       return showError('A delete request is pending for this user')
+    if (user.updateRequest)
+      return showError('An update request is pending for this user')
+
+    const existingUsers = (await read(DB_NODES.USERS, false)) || {}
+    const mobileTaken = Object.entries(existingUsers).some(
+      ([otherUid, otherUser]) =>
+        otherUid !== uid &&
+        normalizeMobile(otherUser?.mobile || '') === newMobile
+    )
+    if (mobileTaken) {
+      return showError('An account with this mobile number already exists')
+    }
 
     const oldName = user.name
+    const previousMobile = normalizeMobile(user.mobile || '')
+    const nameChanged = oldName !== newName
+    const mobileChanged = previousMobile !== newMobile
 
-    // Apply the name change directly — it is profile metadata and does not affect balances or membership
-    const updated = { ...user, name: newName }
+    if (!nameChanged && !mobileChanged) {
+      editDialogVisible.value = false
+      return
+    }
+
+    // `read()` injects Firestore's document id as `id`; never persist that duplicate field back.
+    const updated = { ...user, name: newName, mobile: newMobile }
+    delete updated.id
     await updateData(
       `${DB_NODES.USERS}/${uid}`,
       () => updated,
       'User updated successfully'
     )
-    userStore.addUser({ uid, name: newName })
+    userStore.addUser({
+      uid,
+      name: newName,
+      mobile: newMobile,
+      maskedMobile: maskMobile(newMobile)
+    })
+
+    await syncUserProfileInGroups(uid, { name: newName, mobile: newMobile })
 
     // Notify each group the user belongs to so co-members are informed
     const memberGroups = groups.value.filter((g) =>
@@ -227,6 +376,14 @@ export const Users = () => {
       )
       if (!coMembers.length) continue
 
+      const changeParts = []
+      if (nameChanged) {
+        changeParts.push(`changed their name from "${oldName}" to "${newName}"`)
+      }
+      if (mobileChanged) {
+        changeParts.push('updated their mobile number')
+      }
+
       let updatedGroup = { ...group }
       for (const member of coMembers) {
         updatedGroup = appendNotificationForUser(
@@ -235,7 +392,9 @@ export const Users = () => {
           {
             id: Date.now().toString() + Math.random(),
             type: 'member-renamed',
-            message: `${oldName} has changed their name to "${newName}" in group "${group.name}".`,
+            message: `${newName} has ${changeParts.join(
+              ' and '
+            )} in group "${group.name}".`,
             updatedBy: uid,
             timestamp: Date.now()
           }
@@ -409,7 +568,7 @@ export const Users = () => {
               rejectionNotification: {
                 type: 'delete-rejected',
                 message: `Your account deletion request was rejected by ${
-                  userStore.getUserByMobile(activeUser.value)?.name ||
+                  userStore.getUserByUid(activeUser.value)?.name ||
                   activeUser.value
                 }.`,
                 rejectedBy: activeUser.value,
@@ -428,7 +587,6 @@ export const Users = () => {
     }
   }
 
-  const editUserFormRef = ref(null)
   const createGroupDialogVisible = ref(false)
   const createGroupForMobile = ref(null)
 
@@ -445,13 +603,6 @@ export const Users = () => {
     selectedUserGroups.value = getUserGroups(row.uid)
     selectedUserName.value = row.name
     groupsDialogVisible.value = true
-  }
-
-  function handleEditUserSave() {
-    editUserFormRef.value.validate((valid) => {
-      if (!valid) return
-      submitUpdateUser()
-    })
   }
 
   return {
@@ -472,7 +623,7 @@ export const Users = () => {
     requestDeleteUser,
     approveRequest,
     rejectRequest,
-    editUserFormRef,
+    editUserRules,
     createGroupDialogVisible,
     createGroupForMobile,
     openCreateGroup,
@@ -480,7 +631,6 @@ export const Users = () => {
     selectedUserGroups,
     selectedUserName,
     openGroupsDialog,
-    handleEditUserSave,
     resetEditUserForm
   }
 }

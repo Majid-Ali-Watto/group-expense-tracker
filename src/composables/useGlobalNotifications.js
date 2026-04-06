@@ -29,6 +29,52 @@ export function useGlobalNotifications() {
   const groups = computed(() => groupStore.getGroups || [])
   const users = computed(() => userStore.getUsers || [])
 
+  function resolveUser(identity) {
+    if (!identity) return null
+    return (
+      userStore.getUserByUid(identity) || userStore.getUserByMobile(identity)
+    )
+  }
+
+  function getUserMetaByIdentity(identity, fallbackName = '') {
+    const storedUser = resolveUser(identity)
+    const mobile = storedUser?.mobile || ''
+    const name =
+      fallbackName || storedUser?.name || mobile || identity || 'User'
+
+    return {
+      name,
+      mobile,
+      maskedMobile: mobile ? maskMobile(mobile) : ''
+    }
+  }
+
+  function formatUserWithMobile(identity, fallbackName = '') {
+    const { name, maskedMobile } = getUserMetaByIdentity(identity, fallbackName)
+    return maskedMobile ? `${name} (${maskedMobile})` : name
+  }
+
+  function getUserNotificationMeta(user) {
+    const storedUser =
+      (user?.uid && resolveUser(user.uid)) ||
+      (user?.mobile && resolveUser(user.mobile)) ||
+      null
+
+    const name =
+      user?.name ||
+      storedUser?.name ||
+      user?.mobile ||
+      storedUser?.mobile ||
+      'User'
+    const mobile = user?.mobile || storedUser?.mobile || ''
+
+    return {
+      name,
+      mobile,
+      maskedMobile: mobile ? maskMobile(mobile) : ''
+    }
+  }
+
   // Early return if no active user - avoid expensive computations
   if (!activeUser.value) {
     return {
@@ -52,7 +98,7 @@ export function useGlobalNotifications() {
           id: `invite-${group.id}`,
           icon: '📨',
           title: group.name,
-          description: `Invited by ${userStore.getUserByMobile(group.ownerMobile)?.name || group.ownerMobile} (${maskMobile(group.ownerMobile)})`,
+          description: `Invited by ${formatUserWithMobile(group.ownerMobile)}`,
           tab: Tabs.GROUPS,
           groupId: group.id,
           category: 'Groups'
@@ -68,7 +114,7 @@ export function useGlobalNotifications() {
             id: `pending-invite-${group.id}-${member.mobile}`,
             icon: '⏳',
             title: group.name,
-            description: `${userStore.getUserByMobile(member.mobile)?.name || member.mobile} (${maskMobile(member.mobile)}) hasn't responded to your invitation`,
+            description: `${formatUserWithMobile(member.mobile)} hasn't responded to your invitation`,
             tab: Tabs.GROUPS,
             groupId: group.id,
             category: 'Groups'
@@ -123,7 +169,7 @@ export function useGlobalNotifications() {
               id: `join-${group.id}-${req.mobile}`,
               icon: '👋',
               title: group.name,
-              description: `${userStore.getUserByMobile(req.mobile)?.name || req.mobile} (${maskMobile(req.mobile)}) wants to join`,
+              description: `${formatUserWithMobile(req.mobile)} wants to join`,
               tab: Tabs.GROUPS,
               groupId: group.id,
               category: 'Groups'
@@ -132,12 +178,11 @@ export function useGlobalNotifications() {
 
         if (hasDeleteRequest(group) && !hasUserApprovedDeletion(group)) {
           const delBy = group.deleteRequest?.requestedBy
-          const delByName = userStore.getUserByMobile(delBy)?.name || delBy
           result.push({
             id: `del-${group.id}`,
             icon: '⚠️',
             title: group.name,
-            description: `Delete group requested by ${delByName} (${maskMobile(delBy)})`,
+            description: `Delete group requested by ${formatUserWithMobile(delBy)}`,
             tab: Tabs.GROUPS,
             groupId: group.id,
             category: 'Groups'
@@ -150,8 +195,6 @@ export function useGlobalNotifications() {
           !hasUserApprovedEditRequest(group)
         ) {
           const er = group.editRequest
-          const erByName =
-            userStore.getUserByMobile(er.requestedBy)?.name || er.requestedBy
           const erParts = []
           if (er.name && er.name !== group.name)
             erParts.push(`name → "${er.name}"`)
@@ -168,7 +211,7 @@ export function useGlobalNotifications() {
             id: `edit-${group.id}`,
             icon: '📝',
             title: group.name,
-            description: `Edit by ${erByName} (${maskMobile(er.requestedBy)})${erDetail}`,
+            description: `Edit by ${formatUserWithMobile(er.requestedBy)}${erDetail}`,
             tab: Tabs.GROUPS,
             groupId: group.id,
             category: 'Groups'
@@ -180,12 +223,11 @@ export function useGlobalNotifications() {
           !hasUserApprovedAddMemberRequest(group)
         ) {
           const nm = group.addMemberRequest.newMember.mobile
-          const nmName = userStore.getUserByMobile(nm)?.name || nm
           result.push({
             id: `addmem-${group.id}`,
             icon: '➕',
             title: group.name,
-            description: `Add member: ${nmName} (${maskMobile(nm)})`,
+            description: `Add member: ${formatUserWithMobile(nm)}`,
             tab: Tabs.GROUPS,
             groupId: group.id,
             category: 'Groups'
@@ -197,15 +239,11 @@ export function useGlobalNotifications() {
           isCurrentUserPendingOwner(group)
         ) {
           const tor = group.transferOwnershipRequest
-          const torFrom =
-            userStore.getUserByMobile(tor.requestedBy)?.name || tor.requestedBy
-          const torTo =
-            userStore.getUserByMobile(tor.newOwner)?.name || tor.newOwner
           result.push({
             id: `transfer-${group.id}`,
             icon: '👑',
             title: group.name,
-            description: `Transfer ownership: ${torFrom} (${maskMobile(tor.requestedBy)}) → ${torTo} (${maskMobile(tor.newOwner)})`,
+            description: `Transfer ownership: ${formatUserWithMobile(tor.requestedBy)} → ${formatUserWithMobile(tor.newOwner)}`,
             tab: Tabs.GROUPS,
             groupId: group.id,
             category: 'Groups'
@@ -246,14 +284,16 @@ export function useGlobalNotifications() {
           req?.requiredApprovals?.includes(me) &&
           !req.approvals?.some((a) => (a.uid || a.mobile) === me)
         ) {
+          const { name, maskedMobile } = getUserNotificationMeta(u)
+          const userLabel = maskedMobile ? `${name} (${maskedMobile})` : name
           result.push({
             id: `user-${type}-${u.uid}`,
             icon: type === 'delete' ? '🗑️' : '✏️',
             title: 'Users',
             description:
               type === 'delete'
-                ? `Delete request for ${u.name} (${maskMobile(u.mobile || u.uid)})`
-                : `Update request for ${u.name} (${maskMobile(u.mobile || u.uid)}): Name → "${req.newName}"`,
+                ? `Delete request for ${userLabel}`
+                : `Update request for ${userLabel}: Name → "${req.newName}"`,
             tab: Tabs.USERS,
             category: 'Users'
           })
@@ -277,10 +317,7 @@ export function useGlobalNotifications() {
       }
 
       // Notify the requester when their request was rejected
-      if (
-        u.uid === me &&
-        u.rejectionNotification?.type === 'delete-rejected'
-      ) {
+      if (u.uid === me && u.rejectionNotification?.type === 'delete-rejected') {
         const n = u.rejectionNotification
         result.push({
           id: `my-delete-rejected-${me}`,

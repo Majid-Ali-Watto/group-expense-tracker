@@ -1,14 +1,19 @@
 import { ref, watch, computed } from 'vue'
-import { useAuthStore, useDataStore } from '@/stores'
+import { useAuthStore, useDataStore, useUserStore } from '@/stores'
 import {
   getWhoAddedTransaction,
   dateToMonthNode,
   getCurrentDateInputValue,
   normalizeDateInputValue,
   formatDateForStorage,
-  mergeCategoryOptions
+  mergeCategoryOptions,
+  formatUserDisplay
 } from '@/utils'
-import { useFireBase, useReceiptUpload } from '@/composables'
+import {
+  useFireBase,
+  useReceiptUpload,
+  useUnsavedChangesGuard
+} from '@/composables'
 import { DB_NODES } from '@/constants'
 
 export const PersonalExpenseForm = (props, emit) => {
@@ -25,6 +30,7 @@ export const PersonalExpenseForm = (props, emit) => {
     date: getCurrentDateInputValue()
   })
   const form = ref(createInitialForm())
+  const initialFormSnapshot = ref(JSON.stringify(createInitialForm()))
   const existingMonth = ref(dateToMonthNode(form.value.date))
   const categoryOptions = computed(() =>
     mergeCategoryOptions([form.value?.category])
@@ -47,7 +53,25 @@ export const PersonalExpenseForm = (props, emit) => {
   const expenseForm = ref(null)
   const authStore = useAuthStore()
   const dataStore = useDataStore()
+  const userStore = useUserStore()
   const selectedMonth = ref(dataStore.selectedMonth)
+  const storeProxy = {
+    get getActiveUser() {
+      return authStore.getActiveUser
+    },
+    getUserByMobile: (value) => userStore.getUserByMobile(value),
+    getUserByUid: (uid) => userStore.getUserByUid(uid)
+  }
+
+  const recipientOptions = computed(() =>
+    (userStore.getUsers || []).map((user) => ({
+      label: formatUserDisplay(storeProxy, user.uid, {
+        name: user.name,
+        preferMasked: true
+      }),
+      value: user.uid
+    }))
+  )
 
   const activeUser = ref(authStore.activeUser)
   watch(
@@ -69,6 +93,7 @@ export const PersonalExpenseForm = (props, emit) => {
         recipient: newRow?.recipient ?? '',
         date: normalizeDateInputValue(newRow?.date)
       }
+      initialFormSnapshot.value = JSON.stringify(form.value)
       existingMonth.value = dateToMonthNode(newRow?.date || form.value.date)
       removeReceipt()
     },
@@ -77,8 +102,28 @@ export const PersonalExpenseForm = (props, emit) => {
 
   function resetForm() {
     form.value = createInitialForm()
+    initialFormSnapshot.value = JSON.stringify(form.value)
     removeReceipt()
     expenseForm.value?.clearValidate()
+  }
+
+  const isFormDirty = computed(
+    () =>
+      (props.showForm || isEditMode.value) &&
+      (JSON.stringify(form.value) !== initialFormSnapshot.value ||
+        receiptFiles.value.length > 0)
+  )
+
+  const { confirmDiscardChanges } = useUnsavedChangesGuard(isFormDirty)
+
+  async function requestClose() {
+    const canClose = await confirmDiscardChanges()
+    if (!canClose) return false
+
+    resetForm()
+    if (isEditMode.value) emit('closeModal')
+    else emit('click')
+    return true
   }
 
   const validateForm = async (whatTask = 'Save') => {
@@ -144,7 +189,7 @@ export const PersonalExpenseForm = (props, emit) => {
       category: form.value?.category,
       description: form.value?.description,
       location: form.value?.location,
-      recipient: form.value?.recipient,
+      recipient: String(form.value?.recipient || '').trim(),
       month: dateToMonthNode(form.value?.date),
       whoAdded: getWhoAddedTransaction(),
       date: formatDateForStorage(form.value?.date),
@@ -158,9 +203,11 @@ export const PersonalExpenseForm = (props, emit) => {
     isEditMode,
     form,
     categoryOptions,
+    recipientOptions,
     expenseForm,
     validateForm,
     resetForm,
+    requestClose,
     receiptFiles,
     receiptUploading,
     existingReceiptUrls,

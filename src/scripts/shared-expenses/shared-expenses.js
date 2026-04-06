@@ -1,6 +1,11 @@
 import { ref, watch, computed, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
-import { useUsersOptions, useFireBase, useReceiptUpload } from '@/composables'
+import {
+  useUsersOptions,
+  useFireBase,
+  useReceiptUpload,
+  useUnsavedChangesGuard
+} from '@/composables'
 import {
   getWhoAddedTransaction,
   buildRequestMeta,
@@ -69,6 +74,7 @@ export const SharedExpenses = (props, emit) => {
   })
 
   const formData = ref(createInitialFormData())
+  const initialFormSnapshot = ref(JSON.stringify(createInitialFormData()))
   const existingMonth = ref(dateToMonthNode(formData.value.date))
 
   const {
@@ -109,12 +115,14 @@ export const SharedExpenses = (props, emit) => {
       formData.value.payer = newRow?.payer ?? ''
       formData.value.payers = newRow?.payers ?? []
       formData.value.date = normalizeDateInputValue(newRow?.date)
-      formData.value.category = newRow?.category ?? activeGroupCategory.value ?? ''
+      formData.value.category =
+        newRow?.category ?? activeGroupCategory.value ?? ''
       formData.value.participants = newRow?.participants ?? [
         ...usersOptions.value.map((u) => u.value)
       ]
       formData.value.splitMode = newRow?.splitMode ?? 'equal'
       formData.value.splitItems = newRow?.splitItems ?? []
+      initialFormSnapshot.value = JSON.stringify(formData.value)
       existingMonth.value = dateToMonthNode(newRow?.date || formData.value.date)
       isVisible.value = !newRow?.amount
       removeReceipt()
@@ -148,6 +156,7 @@ export const SharedExpenses = (props, emit) => {
 
   const resetForm = async ({ close = false } = {}) => {
     formData.value = createInitialFormData()
+    initialFormSnapshot.value = JSON.stringify(formData.value)
     isMePayer.value = false
     removeReceipt()
     await nextTick()
@@ -157,8 +166,29 @@ export const SharedExpenses = (props, emit) => {
     }
   }
 
+  const isFormDirty = computed(
+    () =>
+      (showTransactionForm.value || isEditMode.value) &&
+      (JSON.stringify(formData.value) !== initialFormSnapshot.value ||
+        receiptFiles.value.length > 0)
+  )
+
+  const { confirmDiscardChanges } = useUnsavedChangesGuard(isFormDirty)
+
+  async function requestClose() {
+    const canClose = await confirmDiscardChanges()
+    if (!canClose) return false
+
+    if (isEditMode.value) {
+      emit('closeModal')
+    } else {
+      await resetForm({ close: true })
+    }
+    return true
+  }
+
   const closeForm = async () => {
-    await resetForm({ close: true })
+    await requestClose()
   }
 
   // ========== Custom Split Helpers ==========
@@ -409,6 +439,7 @@ export const SharedExpenses = (props, emit) => {
     isMePayer,
     openForm,
     closeForm,
+    requestClose,
     resetForm,
     usersOptions,
     categoryOptions,

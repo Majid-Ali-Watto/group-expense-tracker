@@ -10,6 +10,7 @@
       :format="format"
       :value-format="valueFormat"
       style="width: 100%"
+      size="small"
     />
   </el-form-item>
 </template>

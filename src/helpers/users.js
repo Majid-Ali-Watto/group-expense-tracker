@@ -9,7 +9,9 @@ function getIdentity(value) {
 }
 
 function hasApproval(approvals, identity) {
-  return (approvals || []).some((approval) => getIdentity(approval) === identity)
+  return (approvals || []).some(
+    (approval) => getIdentity(approval) === identity
+  )
 }
 
 export function isMemberOfGroup(group) {
@@ -65,7 +67,9 @@ export function hasUserApprovedDeletion(group) {
 
 // ========== Join Request Helpers with Member Approval ==========
 export function getJoinRequestApprovals(group, requestMobile) {
-  const request = group.joinRequests?.find((r) => getIdentity(r) === requestMobile)
+  const request = group.joinRequests?.find(
+    (r) => getIdentity(r) === requestMobile
+  )
   return request?.approvals || []
 }
 

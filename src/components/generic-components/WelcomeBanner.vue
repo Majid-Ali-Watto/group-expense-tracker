@@ -101,7 +101,9 @@ const authStore = useAuthStore()
 const userStore = useUserStore()
 
 const currentUserMobile = computed(
-  () => userStore.getUserByUid(authStore.getActiveUser)?.mobile ?? authStore.getActiveUser
+  () =>
+    userStore.getUserByUid(authStore.getActiveUser)?.mobile ??
+    authStore.getActiveUser
 )
 
 const joinedGroups = computed(() =>

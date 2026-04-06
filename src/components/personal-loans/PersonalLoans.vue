@@ -56,7 +56,10 @@
                 placeholder="All Givers"
                 :options="[
                   { label: 'All Givers', value: 'All' },
-                  ...giverOptions.map((o) => ({ label: o.name, value: o.mobile }))
+                  ...giverOptions.map((o) => ({
+                    label: o.name,
+                    value: o.mobile
+                  }))
                 ]"
                 size="small"
               />
@@ -96,7 +99,10 @@
                 placeholder="All Givers"
                 :options="[
                   { label: 'All Givers', value: 'All' },
-                  ...giverOptions.map((o) => ({ label: o.name, value: o.mobile }))
+                  ...giverOptions.map((o) => ({
+                    label: o.name,
+                    value: o.mobile
+                  }))
                 ]"
                 size="small"
               />

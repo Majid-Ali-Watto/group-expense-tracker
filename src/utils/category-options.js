@@ -1,7 +1,11 @@
 import { GROUP_CATEGORIES } from '@/assets'
 
 function normalizeCategoryValues(values = []) {
-  return [...new Set(values.map((value) => String(value || '').trim()).filter(Boolean))]
+  return [
+    ...new Set(
+      values.map((value) => String(value || '').trim()).filter(Boolean)
+    )
+  ]
 }
 
 export function mergeCategoryOptions(values = []) {
@@ -21,10 +25,7 @@ export function mergeCategoryOptions(values = []) {
 
 export function buildCategoryFilterOptions(
   values = [],
-  {
-    allLabel = 'All Categories',
-    allValue = ''
-  } = {}
+  { allLabel = 'All Categories', allValue = '' } = {}
 ) {
   return [{ label: allLabel, value: allValue }, ...mergeCategoryOptions(values)]
 }

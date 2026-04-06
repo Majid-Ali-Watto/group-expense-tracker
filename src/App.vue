@@ -23,7 +23,8 @@
     >
       <WelcomeBanner :displayName="displayName" />
       <el-tabs
-        v-model="activeTab"
+        :key="tabBarKey"
+        :model-value="activeTab"
         @tab-change="handleActiveTab"
         class="demo-tabs"
         type="card"
@@ -85,6 +86,7 @@ const {
   tabs,
   displayName,
   activeTab,
+  tabBarKey,
   tabTransitionName,
   setLoggedInStatus,
   handleActiveTab,

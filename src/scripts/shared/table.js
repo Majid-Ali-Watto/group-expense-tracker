@@ -66,6 +66,17 @@ export const Table = (props) => {
       group: activeGroupObj.value,
       preferMasked: !activeGroupObj.value
     })
+  const formatRecipient = (recipient) =>
+    userStore.getUserByUid(recipient)?.name || recipient || '—'
+
+  function getSearchableValue(key, value) {
+    if (key === 'recipient') return formatRecipient(value)
+    if (key === 'giver' || key === 'receiver') return formatUser(value)
+    if (key === 'payer') {
+      return value ? formatUser(value) : ''
+    }
+    return value
+  }
 
   const dialogComponentProps = computed(() => {
     const base = {
@@ -148,6 +159,29 @@ export const Table = (props) => {
     } catch (e) {
       ElMessage.error(e.message)
     }
+  }
+
+  async function requestChildClose() {
+    try {
+      const ref = await waitForComponentRef()
+      if (typeof ref.requestClose === 'function') {
+        return await ref.requestClose()
+      }
+    } catch {
+      return true
+    }
+    return true
+  }
+
+  async function closeDialog() {
+    const canClose = await requestChildClose()
+    if (!canClose) return
+    dialogFormVisible.value = false
+  }
+
+  async function handleDialogBeforeClose(done) {
+    const canClose = await requestChildClose()
+    if (canClose) done()
   }
 
   function updateScreenWidth() {
@@ -416,6 +450,8 @@ export const Table = (props) => {
           }
         } else if (key === 'giver' || key === 'receiver') {
           td.textContent = row[key] ? formatUser(row[key]) : '—'
+        } else if (key === 'recipient') {
+          td.textContent = formatRecipient(row[key])
         } else if (key === 'receiptUrls') {
           if (Array.isArray(row.receiptUrls) && row.receiptUrls.length) {
             row.receiptUrls.forEach((url, i) => {
@@ -912,11 +948,12 @@ export const Table = (props) => {
             k === 'updateRequest'
           )
             return false
-          if (Array.isArray(val))
-            return JSON.stringify(val).toLowerCase().includes(q)
-          if (typeof val === 'object' && val !== null)
-            return JSON.stringify(val).toLowerCase().includes(q)
-          return String(val ?? '')
+          const searchableValue = getSearchableValue(k, val)
+          if (Array.isArray(searchableValue))
+            return JSON.stringify(searchableValue).toLowerCase().includes(q)
+          if (typeof searchableValue === 'object' && searchableValue !== null)
+            return JSON.stringify(searchableValue).toLowerCase().includes(q)
+          return String(searchableValue ?? '')
             .toLowerCase()
             .includes(q)
         })
@@ -926,8 +963,8 @@ export const Table = (props) => {
       const key = sortKey.value
       const order = sortOrder.value
       data = [...data].sort((a, b) => {
-        const av = a[key] ?? ''
-        const bv = b[key] ?? ''
+        const av = getSearchableValue(key, a[key]) ?? ''
+        const bv = getSearchableValue(key, b[key]) ?? ''
         const an = parseFloat(av)
         const bn = parseFloat(bv)
         if (!isNaN(an) && !isNaN(bn)) return order === 'asc' ? an - bn : bn - an
@@ -1089,6 +1126,8 @@ export const Table = (props) => {
     isDownloadAvailable,
     formatAmount,
     dialogWidth,
+    closeDialog,
+    handleDialogBeforeClose,
     headers,
     update,
     remove,
@@ -1142,6 +1181,7 @@ export const Table = (props) => {
     showMoreItems,
     // Formatters
     formatUser,
+    formatRecipient,
     formatPayer,
     formatSplit,
     formatReceipt,

@@ -2,7 +2,7 @@ import { ref, computed, onMounted, onUnmounted, inject, watch } from 'vue'
 import { ElMessageBox } from 'element-plus'
 import { onSnapshot } from '@/firebase'
 import { getCurrentMonth, showError, showSuccess } from '@/utils'
-import { useFireBase } from '@/composables'
+import { useFireBase, useUnsavedChangesGuard } from '@/composables'
 import { useAuthStore, useDataStore } from '@/stores'
 import { DB_NODES } from '@/constants'
 
@@ -28,6 +28,13 @@ export const SalaryForm = () => {
   let salaryListener = null
 
   const activeUser = computed(() => authStore.getActiveUser)
+  const isFormDirty = computed(
+    () =>
+      form.value.salary !== null &&
+      form.value.salary !== salaryData.value.salary
+  )
+
+  useUnsavedChangesGuard(isFormDirty)
 
   watch(
     () => dataStore.selectedMonth,

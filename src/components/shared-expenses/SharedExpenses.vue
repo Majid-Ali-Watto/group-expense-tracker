@@ -41,8 +41,8 @@
             label-position="top"
             class="space-y-4"
           >
-            <el-row :gutter="5">
-              <el-col :lg="12" :md="12" :sm="24">
+            <el-row :gutter="12">
+              <el-col :xs="24" :sm="12" :md="12" :lg="12">
                 <AmountInput v-model="formData.amount" required />
 
                 <!-- Payer Mode Toggle -->
@@ -158,32 +158,9 @@
                   disabled
                   required
                 />
-
-                <DataTimePicker
-                  v-model="formData.date"
-                  required
-                  type="date"
-                  placeholder="Select date"
-                  format="YYYY-MM-DD"
-                  value-format="YYYY-MM-DD"
-                />
-
-                <ReceiptUploadField
-                  :selected-files="receiptFiles"
-                  :existing-urls="existingReceiptUrls"
-                  :uploading="receiptUploading"
-                  :multiple="allowsMultiple"
-                  :helper-text="
-                    allowsMultiple
-                      ? 'Only image files (JPG, PNG, GIF, BMP, WEBP) are allowed. Max size: 1MB per file. You can upload multiple files.'
-                      : 'Only image files (JPG, PNG, GIF, BMP, WEBP) are allowed. Max size: 1MB per file. Single file only.'
-                  "
-                  @files-selected="setSelectedFiles"
-                  @remove="removeReceipt"
-                />
               </el-col>
 
-              <el-col :lg="12" :md="12" :sm="24">
+              <el-col :xs="24" :sm="12" :md="12" :lg="12">
                 <GenericInput
                   v-model="formData.location"
                   label="Location"
@@ -210,8 +187,31 @@
                   :maxlength="200"
                   :autosize="{ minRows: 1, maxRows: 3 }"
                 />
+
+                <DataTimePicker
+                  v-model="formData.date"
+                  required
+                  type="date"
+                  placeholder="Select date"
+                  format="YYYY-MM-DD"
+                  value-format="YYYY-MM-DD"
+                />
               </el-col>
             </el-row>
+
+            <ReceiptUploadField
+              :selected-files="receiptFiles"
+              :existing-urls="existingReceiptUrls"
+              :uploading="receiptUploading"
+              :multiple="allowsMultiple"
+              :helper-text="
+                allowsMultiple
+                  ? 'Only image files (JPG, PNG, GIF, BMP, WEBP) are allowed. Max size: 1MB per file. You can upload multiple files.'
+                  : 'Only image files (JPG, PNG, GIF, BMP, WEBP) are allowed. Max size: 1MB per file. Single file only.'
+              "
+              @files-selected="setSelectedFiles"
+              @remove="removeReceipt"
+            />
             <!-- Split Mode -->
             <div class="flex items-center justify-between mb-4">
               <span class="text-sm font-medium text-gray-700">Split Mode</span>
@@ -370,6 +370,7 @@ const {
   showTransactionForm,
   openForm,
   closeForm,
+  requestClose,
   resetForm,
   usersOptions,
   categoryOptions,
@@ -393,6 +394,7 @@ const {
 } = SharedExpenses(props, emit)
 
 defineExpose({
-  validateForm
+  validateForm,
+  requestClose
 })
 </script>

@@ -289,6 +289,16 @@
             {{ formatUser(rowData[column.key]) }}
           </span>
 
+          <!-- recipient -->
+          <span
+            v-else-if="column.key === 'recipient'"
+            v-overflow-popup="{ title: column.title }"
+            class="et-cell-text px-2 text-sm"
+            :data-cell-title="column.title"
+          >
+            {{ formatRecipient(rowData[column.key]) }}
+          </span>
+
           <!-- receiptUrls (array) -->
           <span
             v-else-if="column.key === 'receiptUrls'"
@@ -400,6 +410,7 @@
       append-to-body
       v-model="dialogFormVisible"
       :width="dialogWidth + 'px'"
+      :before-close="handleDialogBeforeClose"
       @close="deleteMode = false"
     >
       <template #header>
@@ -457,9 +468,7 @@
             <el-button type="danger" size="small" @click="remove"
               >Yes, Delete</el-button
             >
-            <el-button size="small" @click="dialogFormVisible = false"
-              >Cancel</el-button
-            >
+            <el-button size="small" @click="closeDialog">Cancel</el-button>
           </template>
           <!-- Edit mode footer -->
           <template v-else>
@@ -469,10 +478,7 @@
             <el-button type="primary" size="small" @click="duplicate"
               >Duplicate</el-button
             >
-            <el-button
-              type="success"
-              size="small"
-              @click="dialogFormVisible = false"
+            <el-button type="success" size="small" @click="closeDialog"
               >Cancel</el-button
             >
           </template>
@@ -572,6 +578,8 @@ const {
   isDownloadAvailable,
   formatAmount,
   dialogWidth,
+  closeDialog,
+  handleDialogBeforeClose,
   update,
   remove,
   duplicate,
@@ -601,6 +609,7 @@ const {
   showMoreTitle,
   showMoreItems,
   formatUser,
+  formatRecipient,
   formatPayer,
   formatSplit,
   formatReceipt,

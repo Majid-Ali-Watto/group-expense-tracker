@@ -8,51 +8,65 @@
       ref="expenseForm"
       class="px-2"
     >
-      <AmountInput v-model.number="form.amount" required />
-      <GenericDropDown
-        v-model="form.category"
-        label="Category"
-        prop="category"
-        placeholder="Add or select category"
-        :options="categoryOptions"
-        :allow-create="true"
-        required
-      />
-      <GenericInput
-        :rows="1"
-        v-model="form.description"
-        label="Description"
-        prop="description"
-        placeholder="Enter description"
-        required
-        type="textarea"
-        :maxlength="200"
-        :autosize="{ minRows: 1, maxRows: 3 }"
-      />
-      <GenericInput
-        v-model="form.location"
-        label="Location"
-        prop="location"
-        placeholder="Enter location"
-        required
-        :maxlength="100"
-      />
-      <GenericInput
-        v-model="form.recipient"
-        label="Recipient"
-        prop="recipient"
-        placeholder="To Whom"
-        required
-        :maxlength="50"
-      />
-      <DataTimePicker
-        v-model="form.date"
-        required
-        type="date"
-        placeholder="Select date"
-        format="YYYY-MM-DD"
-        value-format="YYYY-MM-DD"
-      />
+      <el-row :gutter="12">
+        <el-col :xs="24" :sm="12" :md="12" :lg="12">
+          <AmountInput v-model.number="form.amount" required />
+        </el-col>
+        <el-col :xs="24" :sm="12" :md="12" :lg="12">
+          <GenericDropDown
+            v-model="form.category"
+            label="Category"
+            prop="category"
+            placeholder="Add or select category"
+            :options="categoryOptions"
+            :allow-create="true"
+            required
+          />
+        </el-col>
+        <el-col :xs="24" :sm="12" :md="12" :lg="12">
+          <GenericInput
+            :rows="1"
+            v-model="form.description"
+            label="Description"
+            prop="description"
+            placeholder="Enter description"
+            required
+            type="textarea"
+            :maxlength="200"
+            :autosize="{ minRows: 1, maxRows: 3 }"
+          />
+        </el-col>
+        <el-col :xs="24" :sm="12" :md="12" :lg="12">
+          <GenericInput
+            v-model="form.location"
+            label="Location"
+            prop="location"
+            placeholder="Enter location"
+            :maxlength="100"
+          />
+        </el-col>
+        <el-col :xs="24" :sm="12" :md="12" :lg="12">
+          <GenericDropDown
+            v-model="form.recipient"
+            label="Recipient"
+            prop="recipient"
+            placeholder="Select a user or enter recipient"
+            :options="recipientOptions"
+            :allow-create="true"
+            :filterable="true"
+          />
+        </el-col>
+        <el-col :xs="24" :sm="12" :md="12" :lg="12">
+          <DataTimePicker
+            v-model="form.date"
+            required
+            type="date"
+            placeholder="Select date"
+            format="YYYY-MM-DD"
+            value-format="YYYY-MM-DD"
+          />
+        </el-col>
+      </el-row>
       <ReceiptUploadField
         :selected-files="receiptFiles"
         :existing-urls="existingReceiptUrls"
@@ -68,7 +82,7 @@
         <GenericButton
           v-if="showForm"
           type="info"
-          @click="handleCancel"
+          @click="requestClose"
           size="small"
           >Cancel</GenericButton
         >
@@ -108,9 +122,11 @@ const {
   isEditMode,
   form,
   categoryOptions,
+  recipientOptions,
   expenseForm,
   validateForm,
   resetForm,
+  requestClose,
   receiptFiles,
   receiptUploading,
   existingReceiptUrls,
@@ -119,13 +135,9 @@ const {
   isSubmitting
 } = PersonalExpenseForm(props, emit)
 
-function handleCancel() {
-  resetForm()
-  emit('click')
-}
-
 defineExpose({
   validateForm,
-  expenseForm
+  expenseForm,
+  requestClose
 })
 </script>

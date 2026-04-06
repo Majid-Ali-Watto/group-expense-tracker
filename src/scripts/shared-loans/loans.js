@@ -249,7 +249,9 @@ export const Loans = () => {
   })
   const categoryOptions = computed(() =>
     buildCategoryFilterOptions(
-      loans.value.map((loan) => loan.category).concat(groupObj.value?.category || '')
+      loans.value
+        .map((loan) => loan.category)
+        .concat(groupObj.value?.category || '')
     )
   )
 
@@ -341,6 +343,36 @@ export const Loans = () => {
     }
   })
 
+  const showFilters = ref(false)
+
+  const loanBalanceColumns = computed(() => [
+    {
+      key: 'name',
+      label: 'Member'
+    },
+    {
+      key: 'status',
+      label: 'Status',
+      class: (row) =>
+        row.amount < 0
+          ? 'text-red-500 font-semibold'
+          : row.amount > 0
+            ? 'text-green-500 font-semibold'
+            : 'text-gray-400',
+      format: (row) =>
+        row.amount < 0
+          ? 'Will Pay'
+          : row.amount > 0
+            ? 'Will Receive'
+            : 'Settled'
+    },
+    {
+      key: 'amount',
+      label: 'Amount',
+      format: (row) => formatAmount(Math.abs(row.amount))
+    }
+  ])
+
   return {
     formatAmount,
     showLoanForm,
@@ -370,6 +402,8 @@ export const Loans = () => {
     cancelRequest,
     approveRequest,
     rejectRequest,
+    showFilters,
+    loanBalanceColumns,
     clearFilters: () => {
       selectedMonth.value = getCurrentMonth()
       selectedGiver.value = 'All'

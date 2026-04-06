@@ -354,7 +354,6 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
 import { Filter, Close } from '@element-plus/icons-vue'
 import { Table, BalanceSummaryCard, LoadingSkeleton } from '@/components/shared'
 import { GenericDropDown } from '@/components/generic-components'
@@ -365,7 +364,6 @@ const LoanForm = loadAsyncComponent(() => import('./LoanForm.vue'))
 const {
   formatAmount,
   showLoanForm,
-  closeLoanForm,
   selectedMonth,
   selectedGiver,
   selectedCategory,
@@ -379,8 +377,11 @@ const {
   filteredLoans,
   balances,
   userNotifications,
-  dismissNotification,
   pendingRequests,
+  loanBalanceColumns,
+  showFilters,
+  closeLoanForm,
+  dismissNotification,
   getTotalMembers,
   getUserName,
   hasUserApproved,
@@ -391,32 +392,6 @@ const {
   rejectRequest,
   clearFilters
 } = Loans()
-
-const showFilters = ref(false)
-
-const loanBalanceColumns = computed(() => [
-  {
-    key: 'name',
-    label: 'Member'
-  },
-  {
-    key: 'status',
-    label: 'Status',
-    class: (row) =>
-      row.amount < 0
-        ? 'text-red-500 font-semibold'
-        : row.amount > 0
-          ? 'text-green-500 font-semibold'
-          : 'text-gray-400',
-    format: (row) =>
-      row.amount < 0 ? 'Will Pay' : row.amount > 0 ? 'Will Receive' : 'Settled'
-  },
-  {
-    key: 'amount',
-    label: 'Amount',
-    format: (row) => formatAmount(Math.abs(row.amount))
-  }
-])
 </script>
 
 <style scoped></style>

@@ -123,11 +123,12 @@ export const SharedGroups = () => {
   async function requestJoin(group) {
     actioningGroupId.value = group.id
     try {
-      const myName =
-        userStore.getUserByMobile(activeUser.value)?.name || activeUser.value
+      const me = userStore.getUserByUid(activeUser.value)
+      const myName = me?.name || activeUser.value
+      const myMobile = me?.mobile || activeUser.value
       const newRequests = [
         ...(group.joinRequests || []),
-        { uid: activeUser.value, mobile: activeUser.value, approvals: [] }
+        { uid: activeUser.value, mobile: myMobile, approvals: [] }
       ]
 
       let payload = { joinRequests: newRequests }
@@ -138,7 +139,7 @@ export const SharedGroups = () => {
         updatedGroup = appendNotificationForUser(updatedGroup, member.mobile, {
           id: `${Date.now()}-${Math.random()}`,
           type: 'join-request',
-          message: `${myName} (${maskMobile(activeUser.value)}) wants to join "${group.name}"`,
+          message: `${myName} (${maskMobile(myMobile)}) wants to join "${group.name}"`,
           updatedBy: activeUser.value,
           timestamp: Date.now()
         })
@@ -165,14 +166,15 @@ export const SharedGroups = () => {
   async function acceptInvitation(group) {
     actioningGroupId.value = group.id
     try {
-      const myName =
-        userStore.getUserByMobile(activeUser.value)?.name || activeUser.value
+      const me = userStore.getUserByUid(activeUser.value)
+      const myName = me?.name || activeUser.value
+      const myMobile = me?.mobile || activeUser.value
       const newMembers = [
         ...(group.members || []),
-        { uid: activeUser.value, mobile: activeUser.value }
+        { uid: activeUser.value, mobile: myMobile }
       ]
       const newPending = (group.pendingMembers || []).filter(
-        (member) => member.mobile !== activeUser.value
+        (member) => member.mobile !== myMobile
       )
 
       let payload = {
@@ -193,7 +195,7 @@ export const SharedGroups = () => {
           {
             id: `${Date.now()}-${Math.random()}`,
             type: 'invitation-accepted',
-            message: `${myName} (${maskMobile(activeUser.value)}) accepted your invitation to join "${group.name}"`,
+            message: `${myName} (${maskMobile(myMobile)}) accepted your invitation to join "${group.name}"`,
             updatedBy: activeUser.value,
             timestamp: Date.now()
           }

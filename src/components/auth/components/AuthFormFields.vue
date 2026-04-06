@@ -6,7 +6,7 @@
     prop="name"
     placeholder="Enter your full name"
     :maxlength="50"
-    @update:modelValue="updateField('name', $event)"
+    @update:modelValue="updateField('name', $event.toCapitalize())"
   />
 
   <GenericInputField
@@ -29,14 +29,14 @@
   />
 
   <GenericInputField
-    :model-value="modelValue.loginCode"
+    :model-value="modelValue.password"
     label="Password"
-    prop="loginCode"
+    prop="password"
     type="password"
     placeholder="Enter your password (6-15 characters)"
     :show-password="true"
     :maxlength="15"
-    @update:modelValue="updateField('loginCode', $event)"
+    @update:modelValue="updateField('password', $event)"
   />
 </template>
 

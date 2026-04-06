@@ -2,13 +2,7 @@
   <div class="your-position-card">
     <div class="flex items-center justify-between mb-2">
       <span class="text-xs font-semibold position-title">Your Position</span>
-      <el-tag size="small" type="info">{{
-        (userStore.getUserByMobile(authStore.getActiveUser)?.name ||
-          authStore.getActiveUser) +
-        ' (' +
-        authStore.getActiveUser +
-        ')'
-      }}</el-tag>
+      <el-tag size="small" type="info">{{ currentUserLabel }}</el-tag>
     </div>
     <div v-if="balance.loading" class="text-xs position-text">
       Calculating...
@@ -73,6 +67,11 @@ import { useAuthStore, useUserStore } from '@/stores'
 
 const authStore = useAuthStore()
 const userStore = useUserStore()
+
+const currentUserLabel = computed(() => {
+  const u = userStore.getUserByMobile(authStore.getActiveUser)
+  return u ? `${u.name} (${u.maskedMobile})` : authStore.getActiveUser
+})
 
 const props = defineProps({
   group: {

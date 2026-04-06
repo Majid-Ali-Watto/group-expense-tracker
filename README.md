@@ -48,7 +48,7 @@ npx -y gsutil cors set cors.json gs://<your-storage-bucket>
 ---
 
 ## Data Model (paths in Realtime DB)
-- `users/{mobile}` — `{ name, loginCode, recoveryCodes[], addedBy, deleteRequest?, updateRequest? }`
+- `users/{mobile}` — `{ name, password, recoveryCodes[], addedBy, deleteRequest?, updateRequest? }`
 - `groups/{groupId}` — `{ name, description, ownerMobile, members[], joinRequests[], leaveRequests[], editRequest?, addMemberRequest?, deleteRequest?, transferOwnershipRequest?, settlementRequest?, notifications? }`
 - `payments/{groupId|global}/{YYYY-MM}/{paymentId}` — shared expenses with splits, payer mode, receipts, update/delete requests, per-user notifications.
 - `payments-backup/{groupId|global}/{YYYY-MM}` — archived after settlement.
@@ -62,8 +62,8 @@ npx -y gsutil cors set cors.json gs://<your-storage-bucket>
 ## Authentication & Session Flow
 - **Login / Register:** Users enter name, mobile (PK), and a password. New users set the code and receive printable recovery passcodes (see `src/scripts/login.js`).
 - **Recovery:** "Forgot password" consumes one recovery passcode; on last code, fresh codes are generated and shown.
-- **Session hardening:** A random token is encrypted twice (AES-GCM in sessionStorage, AES-CBC in Pinia). Every tab change and a 5‑minute timer re-verify token + loginCode on Firebase; failures force logout.
-- **Remember Me:** Stores name/mobile/loginCode in `localStorage` for prefill only (session still crypto-based).
+- **Session hardening:** A random token is encrypted twice (AES-GCM in sessionStorage, AES-CBC in Pinia). Every tab change and a 5‑minute timer re-verify token + password on Firebase; failures force logout.
+- **Remember Me:** Stores name/mobile/password in `localStorage` for prefill only (session still crypto-based).
 
 ---
 
@@ -175,7 +175,7 @@ Component stack: `PaymentForm.vue` → `ExpenseList.vue` → `Table.vue`
 - **Sort:** alphabetical A–Z or Z–A buttons.
 - **Shared Groups Only:** checkbox to filter to users who share at least one group with you.
 - Each user card shows which groups they belong to.
-- **Admin actions:** add users, reset password (sets loginCode=null so the user recreates it), rename/delete with group-owner approvals.
+- **Admin actions:** add users, reset password (sets password=null so the user recreates it), rename/delete with group-owner approvals.
 
 ---
 

@@ -77,8 +77,7 @@ export const GroupsCreate = (emit, props) => {
     // Rule 1: owner can never create two groups with the same name
     const ownerDuplicate = allGroups.some(
       (g) =>
-        g.ownerMobile === creatorId &&
-        g.name.trim().toLowerCase() === newName
+        g.ownerMobile === creatorId && g.name.trim().toLowerCase() === newName
     )
     if (ownerDuplicate) {
       return showError('You already have a group with this name')

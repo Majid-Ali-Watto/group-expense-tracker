@@ -40,9 +40,51 @@
           label-position="top"
           class="space-y-4"
         >
-          <el-row :gutter="5">
-            <el-col :lg="12" :md="12" :sm="24">
+          <el-row :gutter="12">
+            <el-col :xs="24" :sm="12" :md="12" :lg="12">
               <AmountInput v-model="formData.amount" required />
+            </el-col>
+            <el-col :xs="24" :sm="12" :md="12" :lg="12">
+              <GenericDropDown
+                v-model="formData.category"
+                label="Category"
+                :options="categoryOptions"
+                :allow-create="isPersonal"
+                :placeholder="
+                  isPersonal ? 'Add or select category' : 'Select category'
+                "
+              />
+            </el-col>
+          </el-row>
+
+          <el-row :gutter="12">
+            <el-col :xs="24" :sm="12" :md="12" :lg="12">
+              <GenericInput
+                :rows="1"
+                v-model="formData.description"
+                label="Description"
+                prop="description"
+                required
+                type="textarea"
+                placeholder="Loan details"
+                :maxlength="200"
+                :autosize="{ minRows: 1, maxRows: 3 }"
+              />
+            </el-col>
+            <el-col :xs="24" :sm="12" :md="12" :lg="12">
+              <DataTimePicker
+                v-model="formData.date"
+                required
+                type="date"
+                placeholder="Select date"
+                format="YYYY-MM-DD"
+                value-format="YYYY-MM-DD"
+              />
+            </el-col>
+          </el-row>
+
+          <el-row :gutter="12">
+            <el-col :xs="24" :sm="12" :md="12" :lg="12">
               <div v-if="!isPersonal" class="relative">
                 <el-checkbox
                   v-model="isMeGiver"
@@ -58,24 +100,6 @@
                   :options="options"
                   placeholder="Select loan giver"
                   :disabled="isMeGiver"
-                  required
-                />
-              </div>
-              <div v-if="!isPersonal" class="relative">
-                <el-checkbox
-                  v-model="isMeReceiver"
-                  :disabled="isMeGiver"
-                  size="small"
-                  class="absolute top-0 right-0 z-10 text-xs"
-                  >ME?</el-checkbox
-                >
-                <GenericDropDown
-                  v-model="formData.loanReceiver"
-                  label="Loan Receiver"
-                  prop="loanReceiver"
-                  :options="options"
-                  placeholder="Select loan receiver"
-                  :disabled="isMeReceiver"
                   required
                 />
               </div>
@@ -122,7 +146,7 @@
                 />
                 <GenericInput
                   :rows="1"
-                  v-model="formData.loanGiver"
+                  :model-value="formData.loanGiver"
                   label="Loan Giver"
                   prop="loanGiver"
                   required
@@ -130,10 +154,31 @@
                   placeholder="Loan Giver Name"
                   :maxlength="50"
                   :disabled="isMeGiver || !!selectedGiverUser"
+                  @update:modelValue="
+                    formData.loanGiver = $event.toCapitalize()
+                  "
                 />
               </div>
-
-              <!-- Personal loans: Receiver -->
+            </el-col>
+            <el-col :xs="24" :sm="12" :md="12" :lg="12">
+              <div v-if="!isPersonal" class="relative">
+                <el-checkbox
+                  v-model="isMeReceiver"
+                  :disabled="isMeGiver"
+                  size="small"
+                  class="absolute top-0 right-0 z-10 text-xs"
+                  >ME?</el-checkbox
+                >
+                <GenericDropDown
+                  v-model="formData.loanReceiver"
+                  label="Loan Receiver"
+                  prop="loanReceiver"
+                  :options="options"
+                  placeholder="Select loan receiver"
+                  :disabled="isMeReceiver"
+                  required
+                />
+              </div>
               <div v-if="isPersonal" class="relative">
                 <el-checkbox
                   v-model="isMeReceiver"
@@ -175,48 +220,21 @@
                   :disabled="isMeReceiver || !!selectedReceiverUser"
                   @blur="onReceiverMobileBlur"
                 />
-              <GenericInput
-                :rows="1"
-                v-model="formData.loanReceiver"
+                <GenericInput
+                  :rows="1"
+                  :model-value="formData.loanReceiver"
                   label="Loan Receiver"
                   prop="loanReceiver"
                   required
                   type="textarea"
                   placeholder="Loan Receiver Name"
-                :maxlength="50"
-                :disabled="isMeReceiver || !!selectedReceiverUser"
-              />
-            </div>
-            </el-col>
-            <el-col :lg="12" :md="12" :sm="24">
-              <GenericDropDown
-                v-model="formData.category"
-                label="Category"
-                :options="categoryOptions"
-                :allow-create="isPersonal"
-                :placeholder="
-                  isPersonal ? 'Add or select category' : 'Select category'
-                "
-              />
-              <GenericInput
-                :rows="1"
-                v-model="formData.description"
-                label="Description"
-                prop="description"
-                required
-                type="textarea"
-                placeholder="Loan details"
-                :maxlength="200"
-                :autosize="{ minRows: 1, maxRows: 3 }"
-              />
-              <DataTimePicker
-                v-model="formData.date"
-                required
-                type="date"
-                placeholder="Select date"
-                format="YYYY-MM-DD"
-                value-format="YYYY-MM-DD"
-              />
+                  :maxlength="50"
+                  :disabled="isMeReceiver || !!selectedReceiverUser"
+                  @update:modelValue="
+                    formData.loanReceiver = $event.toCapitalize()
+                  "
+                />
+              </div>
             </el-col>
           </el-row>
 
@@ -288,6 +306,7 @@ const {
   openForm,
   closeForm,
   resetForm,
+  requestClose,
   validateForm,
   receiptFiles,
   receiptUploading,
@@ -326,6 +345,7 @@ function handleResetForm() {
 }
 
 defineExpose({
-  validateForm
+  validateForm,
+  requestClose
 })
 </script>

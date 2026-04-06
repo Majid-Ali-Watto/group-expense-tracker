@@ -148,7 +148,7 @@ export const App = () => {
         sessionStorage.setItem('_session', encryptedSession)
         authStore.setActiveUser(uid)
         authStore.setSessionToken(encryptedStore)
-        authStore.setActiveLoginCode('')
+        authStore.setActivePassword('')
         loadAppConfig() // fire-and-forget: load remote config flags on auto-login
 
         // Populate userStore immediately so displayName is never "Guest" on any tab.
@@ -253,6 +253,7 @@ export const App = () => {
   const activeTab = ref(
     ROUTE_TABS['/' + route.path.split('/')[1]] || Tabs.GROUPS
   )
+  const tabBarKey = ref(0)
   const tabTransitionName = ref('tab-page-forward')
 
   // Valid app route paths (used to filter out /login, /register, /)
@@ -308,7 +309,7 @@ export const App = () => {
     authStore.setActiveUser(null)
     groupStore.setActiveGroup(null)
     authStore.setSessionToken(null)
-    authStore.setActiveLoginCode(null)
+    authStore.setActivePassword(null)
     sessionStorage.removeItem('_session')
     sessionStorage.removeItem('_lastRoute')
     sessionStorage.removeItem('_lastGroupId')
@@ -345,7 +346,7 @@ export const App = () => {
     if (!uid) return false
 
     // Verify user exists in database
-    // Note: loginCode is only in Firebase Auth, not in database
+    // Note: password is only in Firebase Auth, not in database
     try {
       const user = await read(`${DB_NODES.USERS}/${uid}`, loading)
       return !!user
@@ -356,13 +357,21 @@ export const App = () => {
 
   // Function to handle tab changes — verifies user on every tab switch
   async function handleActiveTab(tab) {
-    updateTabTransition(tab)
-    activeTab.value = tab
-    tabStore.setActiveTab(tab)
+    const previousTab =
+      ROUTE_TABS['/' + route.path.split('/')[1]] || Tabs.GROUPS
     const gid = groupStore.getActiveGroup
     const path =
       GROUP_TABS.has(tab) && gid ? `${TAB_ROUTES[tab]}/${gid}` : TAB_ROUTES[tab]
-    router.push(path)
+    const previousRoute = route.fullPath
+    await router.push(path)
+
+    if (route.fullPath === previousRoute) {
+      activeTab.value = previousTab
+      tabStore.setActiveTab(previousTab)
+      await nextTick()
+      tabBarKey.value += 1
+      return
+    }
 
     const verified = await verifyUser()
     if (!verified) {
@@ -426,18 +435,22 @@ export const App = () => {
   }
 
   function navigateToTab(tab, groupId) {
-    if (groupId) {
-      groupStore.setActiveGroup(groupId)
-      // Trigger scroll to group with timestamp to ensure reactivity
-      groupStore.setScrollToGroupTrigger({ groupId, timestamp: Date.now() })
-    }
-    updateTabTransition(tab)
-    activeTab.value = tab
-    tabStore.setActiveTab(tab)
     const gid = groupId || groupStore.getActiveGroup
     const path =
       GROUP_TABS.has(tab) && gid ? `${TAB_ROUTES[tab]}/${gid}` : TAB_ROUTES[tab]
-    router.push(path)
+    const previousRoute = route.fullPath
+
+    router.push(path).then(() => {
+      if (route.fullPath === previousRoute) {
+        return
+      }
+
+      if (groupId) {
+        groupStore.setActiveGroup(groupId)
+        // Trigger scroll to group with timestamp to ensure reactivity
+        groupStore.setScrollToGroupTrigger({ groupId, timestamp: Date.now() })
+      }
+    })
   }
 
   // Initialize notification system only after successful login
@@ -494,6 +507,7 @@ export const App = () => {
     displayName,
     activeGroup,
     activeTab,
+    tabBarKey,
     tabTransitionName,
     allNotifications,
     notificationCount,

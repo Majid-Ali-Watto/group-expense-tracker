@@ -54,7 +54,7 @@ export const loginRules = {
       trigger: 'blur'
     }
   ],
-  loginCode: [
+  password: [
     { required: true, message: 'Password is required', trigger: 'blur' },
     {
       min: 6,

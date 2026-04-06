@@ -6,12 +6,13 @@
         <AddNewTransactionButton
           text="Want to add a new expense?"
           :form-open="showForm"
-          @click="setShowForm"
-          @close="setShowForm"
+          @click="openExpenseForm"
+          @close="handleExpenseFormClose"
         />
         <Transition name="form-slide">
           <div v-if="showForm">
             <HOC
+              ref="expenseFormHostRef"
               :componentToBeRendered="AddExpense"
               :componentProps="{ showForm }"
               :listenersToPass="{ click: setShowForm }"
@@ -40,7 +41,23 @@ const ExpenseList = loadAsyncComponent(
 )
 
 const showForm = ref(false)
+const expenseFormHostRef = ref(null)
+
 const setShowForm = () => {
   showForm.value = !showForm.value
+}
+
+function openExpenseForm() {
+  showForm.value = true
+}
+
+async function handleExpenseFormClose() {
+  const requestClose =
+    expenseFormHostRef.value?.componentRef?.requestClose || null
+  if (typeof requestClose === 'function') {
+    await requestClose()
+    return
+  }
+  showForm.value = false
 }
 </script>

@@ -176,7 +176,9 @@ export const PersonalExpenseList = () => {
     )
   })
   const categoryOptions = computed(() =>
-    buildCategoryFilterOptions(expenses.value.map((expense) => expense.category))
+    buildCategoryFilterOptions(
+      expenses.value.map((expense) => expense.category)
+    )
   )
 
   watch(selectedMonth, () => {

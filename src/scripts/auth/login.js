@@ -1,7 +1,13 @@
 import { onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessageBox } from 'element-plus'
-import { useFireBase, checkForAppUpdate, loadAppConfig } from '@/composables'
+import {
+  useFireBase,
+  checkForAppUpdate,
+  loadAppConfig,
+  useRateLimit
+} from '@/composables'
+import { validateEmail } from '@/helpers'
 import { useAuthStore, useGroupStore } from '@/stores'
 import { DB_NODES } from '@/constants'
 import {
@@ -23,63 +29,26 @@ import {
   browserSessionPersistence
 } from '@/firebase'
 
-// ── Login rate limiting ────────────────────────────────────────────────────
-const RATE_LIMIT_KEY = '_login_rl'
-const MAX_ATTEMPTS = 5
-const LOCK_DURATION = 15 * 60 * 1000 // 15 minutes
-
-function getRateLimitData() {
-  try {
-    return JSON.parse(
-      localStorage.getItem(RATE_LIMIT_KEY) || '{"count":0,"lockedAt":null}'
-    )
-  } catch {
-    return { count: 0, lockedAt: null }
-  }
-}
-
-function isLoginLocked() {
-  const { count, lockedAt } = getRateLimitData()
-  if (count >= MAX_ATTEMPTS && lockedAt) {
-    const remaining = LOCK_DURATION - (Date.now() - lockedAt)
-    if (remaining > 0) return Math.ceil(remaining / 60000) // minutes remaining
-    localStorage.removeItem(RATE_LIMIT_KEY) // lock expired, clear it
-  }
-  return false
-}
-
-function recordFailedAttempt() {
-  const data = getRateLimitData()
-  const count = data.count + 1
-  localStorage.setItem(
-    RATE_LIMIT_KEY,
-    JSON.stringify({
-      count,
-      lockedAt: count >= MAX_ATTEMPTS ? Date.now() : data.lockedAt
-    })
-  )
-}
-
-function clearLoginAttempts() {
-  localStorage.removeItem(RATE_LIMIT_KEY)
-}
-
-// ── Composable ────────────────────────────────────────────────────────────
-
 export const Login = () => {
   const route = useRoute()
   const router = useRouter()
   const authStore = useAuthStore()
   const groupStore = useGroupStore()
   const { read, setData, updateData } = useFireBase()
-
+  const {
+    clearLoginAttempts,
+    isLoginLocked,
+    recordFailedAttempt,
+    getRateLimitData,
+    MAX_ATTEMPTS
+  } = useRateLimit()
   const isSubmitting = ref(false)
 
   const createInitialForm = () => ({
     name: '',
     mobile: '',
     email: '',
-    loginCode: '',
+    password: '',
     rememberMe: false
   })
 
@@ -153,15 +122,6 @@ export const Login = () => {
 
   // ── helpers ──────────────────────────────────────────────────────────────
 
-  function validateEmail(email) {
-    // More strict email validation:
-    // - At least 3 characters before @
-    // - Domain must have at least 2 characters
-    // - TLD must have at least 2 characters
-    const emailPattern = /^[a-zA-Z0-9._-]{3,}@[a-zA-Z0-9.-]{2,}\.[a-zA-Z]{2,}$/
-    return emailPattern.test(email)
-  }
-
   async function findUserByEmail(email) {
     try {
       const usersSnapshot = await read(DB_NODES.USERS)
@@ -200,7 +160,7 @@ export const Login = () => {
     sessionStorage.setItem('_session', encryptedSession)
     authStore.setActiveUser(payload.uid)
     authStore.setSessionToken(encryptedStore)
-    authStore.setActiveLoginCode(payload.loginCode)
+    authStore.setActivePassword(payload.password)
     activateUserGroup(payload.uid)
     loadAppConfig() // fire-and-forget: load remote config flags after login
     showSuccess(message || 'Login successful!')
@@ -239,13 +199,13 @@ export const Login = () => {
   // ── Registration ──────────────────────────────────────────────────────────
 
   async function handleRegistration() {
-    const { name, mobile, email, loginCode, rememberMe } = form.value
+    const { name, mobile, email, password, rememberMe } = form.value
 
     const normalizedName = name.trim().replace(/\s+/g, ' ')
     const emailValue = email.trim().toLowerCase()
     const mobileValue = mobile.trim()
 
-    if (!normalizedName || !mobileValue || !emailValue || !loginCode) {
+    if (!normalizedName || !mobileValue || !emailValue || !password) {
       return showError('All fields are required for registration')
     }
 
@@ -253,7 +213,7 @@ export const Login = () => {
       return showError('Please enter a valid email address')
     }
 
-    if (loginCode.length < 6 || loginCode.length > 15) {
+    if (password.length < 6 || password.length > 15) {
       return showError('Password must be between 6 and 15 characters')
     }
 
@@ -263,7 +223,7 @@ export const Login = () => {
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         emailValue,
-        loginCode
+        password
       )
 
       // Now authenticated — check if mobile is already taken in Firestore
@@ -299,7 +259,11 @@ export const Login = () => {
         emailVerified: false // Will be set to true on first successful login
       }
 
-      await setData(`${DB_NODES.USERS}/${userCredential.user.uid}`, userData, '')
+      await setData(
+        `${DB_NODES.USERS}/${userCredential.user.uid}`,
+        userData,
+        ''
+      )
 
       // Handle remember me
       if (rememberMe) {
@@ -326,7 +290,7 @@ export const Login = () => {
       form.value.email = emailValue
       form.value.name = ''
       form.value.mobile = ''
-      form.value.loginCode = ''
+      form.value.password = ''
       showResendVerification.value = true
     } catch (error) {
       const knownCodes = [
@@ -355,11 +319,11 @@ export const Login = () => {
   // ── Login ─────────────────────────────────────────────────────────────────
 
   async function handleLogin() {
-    const { email, loginCode, rememberMe } = form.value
+    const { email, password, rememberMe } = form.value
 
     const emailValue = email.trim().toLowerCase()
 
-    if (!emailValue || !loginCode) {
+    if (!emailValue || !password) {
       return showError('Email and password are required')
     }
 
@@ -378,7 +342,7 @@ export const Login = () => {
       const userCredential = await signInWithEmailAndPassword(
         auth,
         emailValue,
-        loginCode
+        password
       )
 
       // Check if email is verified
@@ -431,7 +395,7 @@ export const Login = () => {
 
       // Complete login
       await completeLogin(
-        { name: user.name, mobile: user.mobile, uid: user.uid, loginCode },
+        { name: user.name, mobile: user.mobile, uid: user.uid, password },
         'Login successful!'
       )
     } catch (error) {
@@ -474,7 +438,7 @@ export const Login = () => {
       const userCredential = await signInWithEmailAndPassword(
         auth,
         email,
-        form.value.loginCode
+        form.value.password
       )
 
       const actionCodeSettings = {

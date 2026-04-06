@@ -243,7 +243,9 @@ export const Groups = () => {
     const group = groups.value.find((g) => g.id === groupId)
     if (!group) return
     const me = authStore.getActiveUser
-    const myName = userStore.getUserByMobile(me)?.name || me
+    const myUser = userStore.getUserByMobile(me)
+    const myName = myUser?.name || me
+    const myMobile = myUser?.mobile || me
     const newMembers = [...(group.members || []), { mobile: me }]
     const newPending = (group.pendingMembers || []).filter(
       (m) => m.mobile !== me
@@ -261,7 +263,7 @@ export const Groups = () => {
         {
           id: Date.now().toString() + Math.random(),
           type: 'invitation-accepted',
-          message: `${myName} (${maskMobile(me)}) accepted your invitation to join "${group.name}"`,
+          message: `${myName} (${maskMobile(myMobile)}) accepted your invitation to join "${group.name}"`,
           updatedBy: me,
           timestamp: Date.now()
         }
@@ -286,7 +288,9 @@ export const Groups = () => {
     const group = groups.value.find((g) => g.id === groupId)
     if (!group) return
     const me = authStore.getActiveUser
-    const myName = userStore.getUserByMobile(me)?.name || me
+    const myUser = userStore.getUserByMobile(me)
+    const myName = myUser?.name || me
+    const myMobile = myUser?.mobile || me
     const newPending = (group.pendingMembers || []).filter(
       (m) => m.mobile !== me
     )
@@ -302,7 +306,7 @@ export const Groups = () => {
         {
           id: Date.now().toString() + Math.random(),
           type: 'invitation-declined',
-          message: `${myName} (${maskMobile(me)}) declined your invitation to join "${group.name}"`,
+          message: `${myName} (${maskMobile(myMobile)}) declined your invitation to join "${group.name}"`,
           updatedBy: me,
           timestamp: Date.now()
         }
@@ -1141,12 +1145,14 @@ export const Groups = () => {
       if (!group) return
 
       const me = authStore.getActiveUser
-      const myName = userStore.getUserByMobile(me)?.name || me
+      const myUser = userStore.getUserByUid(me)
+      const myName = myUser?.name || me
+      const myMobile = myUser?.mobile || me
 
       // Create notification for members
       createNotification(
         group,
-        `Group deletion request cancelled by ${myName} (${maskMobile(me)})`
+        `Group deletion request cancelled by ${myName} (${maskMobile(myMobile)})`
       )
 
       // Remove deletion request from local object
@@ -1331,7 +1337,10 @@ export const Groups = () => {
         const editRequest = {
           requestedBy: authStore.getActiveUser,
           name: editForm.value.name,
-          newMembers: editForm.value.members.map((m) => ({ uid: m, mobile: m })),
+          newMembers: editForm.value.members.map((m) => ({
+            uid: m,
+            mobile: m
+          })),
           addedMembers: addedMembers.map((m) => ({ uid: m, mobile: m })),
           removedMembers: removedMembers.map((m) => ({ uid: m, mobile: m })),
           approvals: []
@@ -1466,7 +1475,9 @@ export const Groups = () => {
       if (!group || !hasEditRequest(group)) return
 
       const me = authStore.getActiveUser
-      const myName = userStore.getUserByMobile(me)?.name || me
+      const myUser = userStore.getUserByUid(me)
+      const myName = myUser?.name || me
+      const myMobile = myUser?.mobile || me
       const er = group.editRequest
       const erParts = []
       if (er.name && er.name !== group.name) erParts.push(`name → "${er.name}"`)
@@ -1483,7 +1494,7 @@ export const Groups = () => {
       // Create notification for members
       createNotification(
         group,
-        `Group edit request cancelled by ${myName} (${maskMobile(me)})${erDetail}`
+        `Group edit request cancelled by ${myName} (${maskMobile(myMobile)})${erDetail}`
       )
 
       // Remove the edit request from local object
@@ -2030,7 +2041,8 @@ export const Groups = () => {
         preferMasked: !groups.value
           .find((g) => g.id === editingGroupId.value)
           ?.members?.some(
-            (member) => (member.uid || member.mobile) === (user.uid || user.mobile)
+            (member) =>
+              (member.uid || member.mobile) === (user.uid || user.mobile)
           )
       }),
       value: user.uid || user.mobile

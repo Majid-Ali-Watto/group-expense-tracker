@@ -1,5 +1,10 @@
 import { ref, watch, computed, nextTick } from 'vue'
-import { useUsersOptions, useFireBase, useReceiptUpload } from '@/composables'
+import {
+  useUsersOptions,
+  useFireBase,
+  useReceiptUpload,
+  useUnsavedChangesGuard
+} from '@/composables'
 import {
   getWhoAddedTransaction,
   showError,
@@ -40,25 +45,6 @@ export const LoanForm = (props, emit) => {
     date: getCurrentDateInputValue()
   })
 
-  const resetForm = async () => {
-    formData.value = createInitialFormData()
-    isMeGiver.value = false
-    isMeReceiver.value = false
-    selectedGiverUser.value = ''
-    selectedReceiverUser.value = ''
-    giverRealMobile.value = ''
-    receiverRealMobile.value = ''
-    copyToExpenses.value = false
-    removeReceipt()
-    await nextTick()
-    loanForm.value?.clearValidate()
-  }
-
-  const closeForm = async () => {
-    await resetForm()
-    emit('closeForm')
-  }
-
   const { usersOptions: options } = useUsersOptions()
   const groupCategory = computed(
     () => groupStore.getGroupById(groupStore.getActiveGroup)?.category || ''
@@ -77,6 +63,7 @@ export const LoanForm = (props, emit) => {
   const isEditMode = computed(() => !!props.row?.amount)
 
   const formData = ref(createInitialFormData())
+  const initialFormSnapshot = ref(JSON.stringify(createInitialFormData()))
   const existingMonth = ref(dateToMonthNode(formData.value.date))
 
   const activeUser = computed(() => authStore.getActiveUser)
@@ -125,6 +112,21 @@ export const LoanForm = (props, emit) => {
   // ========== Copy to Personal Expenses ==========
   const copyToExpenses = ref(false)
 
+  const resetForm = async () => {
+    formData.value = createInitialFormData()
+    initialFormSnapshot.value = JSON.stringify(formData.value)
+    isMeGiver.value = false
+    isMeReceiver.value = false
+    selectedGiverUser.value = ''
+    selectedReceiverUser.value = ''
+    giverRealMobile.value = ''
+    receiverRealMobile.value = ''
+    copyToExpenses.value = false
+    removeReceipt()
+    await nextTick()
+    loanForm.value?.clearValidate()
+  }
+
   const getOtherPartyName = () => {
     if (isMeGiver.value) {
       return props.isPersonal
@@ -137,6 +139,20 @@ export const LoanForm = (props, emit) => {
       : userStore.getUserByMobile(formData.value.loanGiver)?.name ||
           formData.value.loanGiver
   }
+
+  const isCurrentUserIdentity = (value) =>
+    value === activeUser.value ||
+    (activeUserMobile.value && value === activeUserMobile.value)
+
+  const getCurrentGiverIdentity = () =>
+    giverRealMobile.value ||
+    formData.value.loanGiverMobile ||
+    formData.value.loanGiver
+
+  const getCurrentReceiverIdentity = () =>
+    receiverRealMobile.value ||
+    formData.value.loanReceiverMobile ||
+    formData.value.loanReceiver
 
   // ========== ME? Checkboxes ==========
   const isMeGiver = ref(false)
@@ -167,6 +183,7 @@ export const LoanForm = (props, emit) => {
 
   watch(isMeReceiver, (val) => {
     if (val) {
+      isMeGiver.value = false
       selectedReceiverUser.value = ''
       receiverRealMobile.value = ''
       if (props.isPersonal) {
@@ -192,9 +209,19 @@ export const LoanForm = (props, emit) => {
       giverRealMobile.value = ''
       return
     }
+    if (props.isPersonal && mobile === getCurrentReceiverIdentity()) {
+      selectedGiverUser.value = ''
+      showError('Giver and Receiver cannot be the same person.')
+      return
+    }
     const user = userStore.getUserByMobile(mobile)
     if (!user) return
     if (mobile === activeUser.value) {
+      if (props.isPersonal && isMeReceiver.value) {
+        selectedGiverUser.value = ''
+        showError('If you are the receiver, you cannot also be the giver.')
+        return
+      }
       // Let isMeGiver watcher handle field setting
       isMeGiver.value = true
       return
@@ -214,9 +241,19 @@ export const LoanForm = (props, emit) => {
       receiverRealMobile.value = ''
       return
     }
+    if (props.isPersonal && mobile === getCurrentGiverIdentity()) {
+      selectedReceiverUser.value = ''
+      showError('Giver and Receiver cannot be the same person.')
+      return
+    }
     const user = userStore.getUserByMobile(mobile)
     if (!user) return
-    if (mobile === activeUser.value) {
+    if (isCurrentUserIdentity(mobile)) {
+      if (props.isPersonal && isMeGiver.value) {
+        selectedReceiverUser.value = ''
+        showError('If you are the giver, you cannot also be the receiver.')
+        return
+      }
       isMeReceiver.value = true
       return
     }
@@ -247,8 +284,10 @@ export const LoanForm = (props, emit) => {
       formData.value.category =
         newRow?.category ?? (props.isPersonal ? '' : groupCategory.value || '')
       formData.value.date = normalizeDateInputValue(newRow?.date)
+      initialFormSnapshot.value = JSON.stringify(formData.value)
       existingMonth.value =
-        props.row?._month || dateToMonthNode(newRow?.date || formData.value.date)
+        props.row?._month ||
+        dateToMonthNode(newRow?.date || formData.value.date)
       isVisible.value = !newRow?.amount
       removeReceipt()
       // Auto-tick ME? checkbox in edit mode
@@ -259,8 +298,12 @@ export const LoanForm = (props, emit) => {
         const receiverMobile = props.isPersonal
           ? formData.value.loanReceiverMobile || formData.value.loanReceiver
           : formData.value.loanReceiver
-        isMeGiver.value = giverMobile === activeUser.value || (activeUserMobile.value && giverMobile === activeUserMobile.value)
-        isMeReceiver.value = receiverMobile === activeUser.value || (activeUserMobile.value && receiverMobile === activeUserMobile.value)
+        isMeGiver.value =
+          giverMobile === activeUser.value ||
+          (activeUserMobile.value && giverMobile === activeUserMobile.value)
+        isMeReceiver.value =
+          receiverMobile === activeUser.value ||
+          (activeUserMobile.value && receiverMobile === activeUserMobile.value)
       } else {
         isMeGiver.value = false
         isMeReceiver.value = false
@@ -276,17 +319,46 @@ export const LoanForm = (props, emit) => {
   })
 
   const onGiverMobileBlur = () => {
-    if (formData.value.loanGiverMobile == activeUserMobile.value || formData.value.loanGiverMobile == activeUser.value) {
+    if (
+      formData.value.loanGiverMobile == activeUserMobile.value ||
+      formData.value.loanGiverMobile == activeUser.value
+    ) {
       formData.value.loanGiver =
         activeUserName.value || formData.value.loanGiver
     }
   }
 
   const onReceiverMobileBlur = () => {
-    if (formData.value.loanReceiverMobile == activeUserMobile.value || formData.value.loanReceiverMobile == activeUser.value) {
+    if (
+      formData.value.loanReceiverMobile == activeUserMobile.value ||
+      formData.value.loanReceiverMobile == activeUser.value
+    ) {
       formData.value.loanReceiver =
         activeUserName.value || formData.value.loanReceiver
     }
+  }
+
+  const isFormDirty = computed(
+    () =>
+      (props.showForm || isEditMode.value) &&
+      (JSON.stringify(formData.value) !== initialFormSnapshot.value ||
+        receiptFiles.value.length > 0)
+  )
+
+  const { confirmDiscardChanges } = useUnsavedChangesGuard(isFormDirty)
+
+  async function requestClose() {
+    const canClose = await confirmDiscardChanges()
+    if (!canClose) return false
+
+    await resetForm()
+    if (isEditMode.value) emit('closeModal')
+    else emit('closeForm')
+    return true
+  }
+
+  const closeForm = async () => {
+    await requestClose()
   }
 
   const validateForm = (whatTask = 'Save') => {
@@ -307,7 +379,8 @@ export const LoanForm = (props, emit) => {
             return
           }
           const isMe = (val) =>
-            val === activeUser.value || (activeUserMobile.value && val === activeUserMobile.value)
+            val === activeUser.value ||
+            (activeUserMobile.value && val === activeUserMobile.value)
 
           if (!isMe(giverMobile) && !isMe(receiverMobile)) {
             showError(
@@ -505,6 +578,7 @@ export const LoanForm = (props, emit) => {
     formData,
     openForm,
     closeForm,
+    requestClose,
     resetForm,
     validateForm,
     receiptFiles,

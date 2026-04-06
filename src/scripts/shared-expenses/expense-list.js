@@ -251,7 +251,10 @@ export const ExpenseList = (props) => {
           return false
       }
 
-      if (selectedCategory.value && payment.category !== selectedCategory.value) {
+      if (
+        selectedCategory.value &&
+        payment.category !== selectedCategory.value
+      ) {
         return false
       }
 

@@ -4,7 +4,7 @@ export const useAuthStore = defineStore('auth', {
   state: () => ({
     activeUser: null,
     sessionToken: null,
-    activeLoginCode: null
+    activePassword: null
   }),
   actions: {
     setActiveUser(user) {
@@ -13,13 +13,13 @@ export const useAuthStore = defineStore('auth', {
     setSessionToken(token) {
       this.sessionToken = token
     },
-    setActiveLoginCode(code) {
-      this.activeLoginCode = code
+    setActivePassword(code) {
+      this.activePassword = code
     }
   },
   getters: {
     getActiveUser: (state) => state.activeUser,
     getSessionToken: (state) => state.sessionToken,
-    getActiveLoginCode: (state) => state.activeLoginCode
+    getActivePassword: (state) => state.activePassword
   }
 })
