@@ -5,6 +5,9 @@ import {
   auth,
   database,
   collectionGroup,
+  query,
+  where,
+  orderBy,
   doc,
   setDoc,
   updateDoc,
@@ -131,17 +134,11 @@ export const BugReportsAdmin = () => {
     const q = searchQuery.value.trim().toLowerCase()
     return reports.value
       .filter((r) => {
-        const statusOk =
-          activeStatusFilter.value === 'all' ||
-          r.status === activeStatusFilter.value
-        const sevOk =
-          activeSeverityFilter.value === 'all' ||
-          r.severity === activeSeverityFilter.value
         const searchOk =
           !q ||
           (r.bugNumber || '').toLowerCase().includes(q) ||
           (r.title || '').toLowerCase().includes(q)
-        return statusOk && sevOk && searchOk
+        return searchOk
       })
       .sort((a, b) => {
         const so = (STATUS_ORDER[a.status] ?? 3) - (STATUS_ORDER[b.status] ?? 3)
@@ -157,13 +154,24 @@ export const BugReportsAdmin = () => {
   function fetchReports() {
     loading.value = true
     if (unsubscribe) unsubscribe()
+
+    const constraints = []
+    if (activeStatusFilter.value !== 'all') {
+      constraints.push(where('status', '==', activeStatusFilter.value))
+    }
+    if (activeSeverityFilter.value !== 'all') {
+      constraints.push(where('severity', '==', activeSeverityFilter.value))
+    }
+    constraints.push(orderBy('submittedAt', 'desc'))
+
     unsubscribe = onSnapshot(
-      collectionGroup(database, 'reports'),
+      query(collectionGroup(database, 'reports'), ...constraints),
       (snapshot) => {
         reports.value = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }))
         loading.value = false
       },
       (err) => {
+        reports.value = []
         showError('Failed to load bug reports: ' + err.message)
         loading.value = false
       }
@@ -352,6 +360,10 @@ export const BugReportsAdmin = () => {
   }
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
+  watch([activeStatusFilter, activeSeverityFilter], () => {
+    if (auth.currentUser) fetchReports()
+  })
+
   onMounted(() => {
     unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
       if (!firebaseUser) {

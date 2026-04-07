@@ -1,4 +1,6 @@
 import { useAuthStore, useUserStore } from '@/stores'
+import { collection, database, getDocs, query, where } from '@/firebase'
+import { DB_NODES } from '@/constants'
 import { maskMobile } from '@/utils'
 // Check if current user is a member of the group
 
@@ -189,4 +191,36 @@ export function displayMasked(targetMobile) {
     userStore.getUserByMobile(targetMobile)?.maskedMobile ||
     maskMobile(targetMobile)
   )
+}
+
+export async function findUserByEmail(email) {
+  const normalizedEmail = email?.trim().toLowerCase()
+  if (!normalizedEmail) return null
+
+  const snapshot = await getDocs(
+    query(
+      collection(database, DB_NODES.USERS),
+      where('email', '==', normalizedEmail)
+    )
+  )
+  if (snapshot.empty) return null
+
+  const userDoc = snapshot.docs[0]
+  return { ...userDoc.data(), uid: userDoc.id }
+}
+
+export async function findUserByMobile(mobile) {
+  const normalizedMobile = mobile?.trim()
+  if (!normalizedMobile) return null
+
+  const snapshot = await getDocs(
+    query(
+      collection(database, DB_NODES.USERS),
+      where('mobile', '==', normalizedMobile)
+    )
+  )
+  if (snapshot.empty) return null
+
+  const userDoc = snapshot.docs[0]
+  return { ...userDoc.data(), uid: userDoc.id }
 }

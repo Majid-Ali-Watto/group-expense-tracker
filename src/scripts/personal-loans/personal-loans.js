@@ -378,6 +378,42 @@ export const PersonalLoans = () => {
     return result
   })
 
+  const clearFilters = () => {
+    selectedMonth.value = 'All'
+    selectedGiver.value = 'All'
+    selectedCategory.value = ''
+  }
+
+  const filterFields = computed(() => [
+    {
+      key: 'month',
+      label: 'Month',
+      placeholder: 'Select Month',
+      modelValue: selectedMonth.value,
+      options: [{ label: 'All Months', value: 'All' }, ...months.value],
+      onChange: (v) => { selectedMonth.value = v; fetchLoans() }
+    },
+    {
+      key: 'giver',
+      label: 'Giver',
+      placeholder: 'All Givers',
+      modelValue: selectedGiver.value,
+      options: [
+        { label: 'All Givers', value: 'All' },
+        ...giverOptions.value.map((o) => ({ label: o.name, value: o.mobile }))
+      ],
+      onChange: (v) => { selectedGiver.value = v }
+    },
+    {
+      key: 'category',
+      label: 'Category',
+      placeholder: 'All Categories',
+      modelValue: selectedCategory.value,
+      options: categoryOptions.value,
+      onChange: (v) => { selectedCategory.value = v }
+    }
+  ])
+
   return {
     formatAmount,
     loans,
@@ -398,10 +434,7 @@ export const PersonalLoans = () => {
     totalDebting,
     netPosition,
     pairwiseSettlements,
-    clearFilters: () => {
-      selectedMonth.value = 'All'
-      selectedGiver.value = 'All'
-      selectedCategory.value = ''
-    }
+    filterFields,
+    clearFilters
   }
 }

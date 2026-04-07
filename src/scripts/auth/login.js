@@ -7,7 +7,7 @@ import {
   loadAppConfig,
   useRateLimit
 } from '@/composables'
-import { validateEmail } from '@/helpers'
+import { validateEmail, findUserByEmail, findUserByMobile } from '@/helpers'
 import { useAuthStore, useGroupStore } from '@/stores'
 import { DB_NODES } from '@/constants'
 import {
@@ -34,7 +34,7 @@ export const Login = () => {
   const router = useRouter()
   const authStore = useAuthStore()
   const groupStore = useGroupStore()
-  const { read, setData, updateData } = useFireBase()
+  const { setData, updateData } = useFireBase()
   const {
     clearLoginAttempts,
     isLoginLocked,
@@ -122,25 +122,6 @@ export const Login = () => {
 
   // ── helpers ──────────────────────────────────────────────────────────────
 
-  async function findUserByEmail(email) {
-    try {
-      const usersSnapshot = await read(DB_NODES.USERS)
-      if (!usersSnapshot) return null
-
-      // Find user with matching email
-      const userEntries = Object.entries(usersSnapshot)
-      for (const [uid, userData] of userEntries) {
-        if (userData.email?.toLowerCase() === email.toLowerCase()) {
-          return { ...userData, uid }
-        }
-      }
-      return null
-    } catch (error) {
-      console.error('Error finding user by email:', error)
-      return null
-    }
-  }
-
   function activateUserGroup(userId) {
     const groups = groupStore.getGroups || []
     const myGroup = groups.find((g) =>
@@ -227,10 +208,7 @@ export const Login = () => {
       )
 
       // Now authenticated — check if mobile is already taken in Firestore
-      const allUsers = (await read(DB_NODES.USERS)) || {}
-      const existingUserByMobile = Object.values(allUsers).find(
-        (user) => user.mobile === mobileValue
-      )
+      const existingUserByMobile = await findUserByMobile(mobileValue)
       if (existingUserByMobile) {
         // Mobile taken — roll back the Auth user we just created
         await userCredential.user.delete()

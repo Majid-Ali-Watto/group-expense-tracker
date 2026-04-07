@@ -76,6 +76,12 @@
           </div>
         </div>
 
+        <!-- Pending Invitations -->
+        <GroupPendingMembersList
+          :group="group"
+          :display-mobile-for-group="displayMobileForGroup"
+        />
+
         <!-- Members Dialog -->
         <el-dialog
           v-model="showMembersDialog"
@@ -122,6 +128,7 @@
 import { computed, ref } from 'vue'
 import { InfoCircleIcon } from '@/components/icons'
 import { useUserStore } from '@/stores'
+import GroupPendingMembersList from './GroupPendingMembersList.vue'
 
 const showMembersDialog = ref(false)
 

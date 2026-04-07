@@ -226,6 +226,30 @@ export const PersonalExpenseList = () => {
     }, 1000)
   })
 
+  const clearFilters = () => {
+    selectedMonth.value = getCurrentMonth()
+    selectedCategory.value = ''
+  }
+
+  const filterFields = computed(() => [
+    {
+      key: 'month',
+      label: 'Month',
+      placeholder: 'Select month',
+      modelValue: selectedMonth.value,
+      options: months.value,
+      onChange: (v) => { selectedMonth.value = v; fetchExpenses() }
+    },
+    {
+      key: 'category',
+      label: 'Category',
+      placeholder: 'All Categories',
+      modelValue: selectedCategory.value,
+      options: categoryOptions.value,
+      onChange: (v) => { selectedCategory.value = v }
+    }
+  ])
+
   return {
     formatAmount,
     selectedMonth,
@@ -240,9 +264,7 @@ export const PersonalExpenseList = () => {
     content,
     isContentLoading,
     fetchExpenses,
-    clearFilters: () => {
-      selectedMonth.value = getCurrentMonth()
-      selectedCategory.value = ''
-    }
+    filterFields,
+    clearFilters
   }
 }

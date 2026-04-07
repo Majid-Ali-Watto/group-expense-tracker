@@ -14,6 +14,7 @@ import {
 import { DB_NODES } from '@/constants'
 import { tabs as allTabs, Tabs } from '@/assets'
 import { TAB_ROUTES, ROUTE_TABS, GROUP_TABS } from '@/router'
+import { findUserByEmail } from '@/helpers'
 import {
   showError,
   generateUUID,
@@ -24,7 +25,16 @@ import {
   encryptForSession,
   encryptForStore
 } from '@/utils'
-import { auth, onAuthStateChanged, signOut } from '@/firebase'
+import {
+  auth,
+  onAuthStateChanged,
+  signOut,
+  collection,
+  database,
+  getDocs,
+  query,
+  where
+} from '@/firebase'
 import { NetPosition } from '@/scripts/generic'
 
 export const App = () => {
@@ -119,30 +129,20 @@ export const App = () => {
       if (!firebaseUser || !firebaseUser.emailVerified || loggedIn.value) return
 
       try {
-        const usersData = await read(DB_NODES.USERS, false)
-        if (!usersData) return
+        const userData = await findUserByEmail(firebaseUser.email)
+        if (!userData?.emailVerified) return
 
-        const entry = Object.entries(usersData).find(
-          ([, data]) =>
-            data.email?.toLowerCase() === firebaseUser.email.toLowerCase()
-        )
-        if (!entry) return
-
-        const [uid, userData] = entry
+        const uid = userData.uid
         const token = generateUUID()
+        const dataForEncryption = {
+          name: userData.name,
+          uid,
+          mobile: userData.mobile,
+          token
+        }
         const [encryptedSession, encryptedStore] = await Promise.all([
-          encryptForSession({
-            name: userData.name,
-            uid,
-            mobile: userData.mobile,
-            token
-          }),
-          encryptForStore({
-            name: userData.name,
-            uid,
-            mobile: userData.mobile,
-            token
-          })
+          encryptForSession(dataForEncryption),
+          encryptForStore(dataForEncryption)
         ])
 
         sessionStorage.setItem('_session', encryptedSession)
@@ -151,19 +151,13 @@ export const App = () => {
         authStore.setActivePassword('')
         loadAppConfig() // fire-and-forget: load remote config flags on auto-login
 
-        // Populate userStore immediately so displayName is never "Guest" on any tab.
-        // We already have the full users payload — just map it into the store.
-        Object.keys(usersData).forEach((uid) => {
-          const u = usersData[uid]
-          if (u.emailVerified === true) {
-            userStore.addUser({
-              uid,
-              mobile: u.mobile || '',
-              name: u.name || '',
-              email: u.email || '',
-              maskedMobile: maskMobile(u.mobile || '')
-            })
-          }
+        // Populate the active user immediately so displayName is never "Guest".
+        userStore.addUser({
+          uid,
+          mobile: userData.mobile || '',
+          name: userData.name || '',
+          email: userData.email || '',
+          maskedMobile: maskMobile(userData.mobile || '')
         })
 
         // Restore last route — this is a page-refresh, not a fresh login.
@@ -174,13 +168,20 @@ export const App = () => {
         // Also fetch groups so getGroupById works on any tab (not just Groups tab).
         // This is a one-time read — same cost as GroupAccessGuard.vue does on demand.
         try {
-          const groupsData = await read(DB_NODES.GROUPS, false)
-          if (groupsData) {
-            const groupList = Object.keys(groupsData).map((k) => ({
-              id: k,
-              ...groupsData[k]
+          const groupsSnapshot = await getDocs(
+            query(
+              collection(database, DB_NODES.GROUPS),
+              where('memberMobiles', 'array-contains', uid)
+            )
+          )
+          if (!groupsSnapshot.empty) {
+            const groupList = groupsSnapshot.docs.map((docSnap) => ({
+              id: docSnap.id,
+              ...docSnap.data()
             }))
             groupStore.setGroups(groupList)
+          } else {
+            groupStore.setGroups([])
           }
         } catch {
           // Non-fatal — Groups tab will load them when visited

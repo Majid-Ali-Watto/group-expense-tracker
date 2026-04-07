@@ -19,9 +19,13 @@ import {
   auth,
   onAuthStateChanged,
   deleteField,
+  collection,
   collectionGroup,
   query,
   where,
+  orderBy,
+  limit,
+  startAfter,
   getDocs,
   database
 } from '@/firebase'
@@ -46,6 +50,8 @@ import {
 } from '@/helpers'
 
 export const Groups = () => {
+  const AVAILABLE_GROUP_BATCH_SIZE = 5
+  const AVAILABLE_GROUP_QUERY_SIZE = 15
   const isPageLoading = ref(true)
   const showCreateGroup = ref(false)
   const route = useRoute()
@@ -92,8 +98,7 @@ export const Groups = () => {
     },
     getUserByMobile: (m) => userStore.getUserByMobile(m)
   }
-  const { read, readShallow, updateData, removeData, dbRef, setData } =
-    useFireBase()
+  const { read, readShallow, updateData, removeData, setData } = useFireBase()
 
   /**
    * Returns a flat, deduplicated array of mobile numbers for all members
@@ -112,7 +117,21 @@ export const Groups = () => {
     return [...set]
   }
 
-  const groups = computed(() => groupStore.getGroups || [])
+  const availableGroups = ref([])
+  const availableGroupsLoading = ref(false)
+  const hasMoreAvailableGroups = ref(true)
+  const availableGroupsCursor = ref(null)
+  const availableGroupsInitialized = ref(false)
+  const groups = computed(() => {
+    const merged = new Map()
+    ;(groupStore.getGroups || []).forEach((group) =>
+      merged.set(group.id, group)
+    )
+    availableGroups.value.forEach((group) => {
+      if (!merged.has(group.id)) merged.set(group.id, group)
+    })
+    return [...merged.values()]
+  })
   const groupBalances = ref({})
   let groupsListener = null
 
@@ -239,8 +258,100 @@ export const Groups = () => {
     )
   )
 
+  function findGroupById(groupId) {
+    return groups.value.find((group) => group.id === groupId)
+  }
+
+  function upsertAvailableGroup(group) {
+    const idx = availableGroups.value.findIndex((item) => item.id === group.id)
+    if (idx === -1) {
+      availableGroups.value = [...availableGroups.value, group]
+      return
+    }
+    const next = [...availableGroups.value]
+    next[idx] = group
+    availableGroups.value = next
+  }
+
+  async function loadMoreAvailableGroups(reset = false) {
+    if (!authStore.getActiveUser) return
+    if (availableGroupsLoading.value) return
+    if (!reset && !hasMoreAvailableGroups.value) return
+
+    availableGroupsLoading.value = true
+
+    if (reset) {
+      availableGroups.value = []
+      availableGroupsCursor.value = null
+      hasMoreAvailableGroups.value = true
+    }
+
+    try {
+      const excludedIds = new Set([
+        ...(groupStore.getGroups || []).map((group) => group.id),
+        ...availableGroups.value.map((group) => group.id)
+      ])
+      const loaded = []
+      let cursor = availableGroupsCursor.value
+      let exhausted = false
+
+      while (loaded.length < AVAILABLE_GROUP_BATCH_SIZE && !exhausted) {
+        const constraints = [orderBy('name'), limit(AVAILABLE_GROUP_QUERY_SIZE)]
+        if (cursor) constraints.push(startAfter(cursor))
+
+        const snapshot = await getDocs(
+          query(collection(database, DB_NODES.GROUPS), ...constraints)
+        )
+
+        if (snapshot.empty) {
+          exhausted = true
+          break
+        }
+
+        cursor = snapshot.docs[snapshot.docs.length - 1]
+
+        snapshot.docs.forEach((docSnap) => {
+          if (loaded.length >= AVAILABLE_GROUP_BATCH_SIZE) return
+
+          const group = { id: docSnap.id, ...docSnap.data() }
+          const hasPendingInvitation = (group.pendingMembers || []).some(
+            (member) =>
+              (member.uid || member.mobile) === authStore.getActiveUser ||
+              member.mobile === authStore.getActiveUser
+          )
+
+          if (
+            excludedIds.has(group.id) ||
+            isMemberOfGroup(group) ||
+            hasPendingInvitation
+          ) {
+            return
+          }
+
+          excludedIds.add(group.id)
+          loaded.push(group)
+        })
+
+        if (snapshot.size < AVAILABLE_GROUP_QUERY_SIZE) {
+          exhausted = true
+        }
+      }
+
+      availableGroupsCursor.value = cursor
+      hasMoreAvailableGroups.value = !exhausted
+      availableGroups.value = reset
+        ? loaded
+        : [...availableGroups.value, ...loaded]
+    } catch (error) {
+      showError('Failed to load available groups. Please try again.')
+      console.error('Error loading available groups:', error)
+    } finally {
+      availableGroupsLoading.value = false
+    }
+  }
+
   async function acceptInvitation(groupId) {
-    const group = groups.value.find((g) => g.id === groupId)
+    const group = findGroupById(groupId)
     if (!group) return
     const me = authStore.getActiveUser
     const myUser = userStore.getUserByMobile(me)
@@ -285,7 +396,7 @@ export const Groups = () => {
   }
 
   async function rejectInvitation(groupId) {
-    const group = groups.value.find((g) => g.id === groupId)
+    const group = findGroupById(groupId)
     if (!group) return
     const me = authStore.getActiveUser
     const myUser = userStore.getUserByMobile(me)
@@ -455,7 +566,7 @@ export const Groups = () => {
 
   // Get join requests for a group
   function getJoinRequests(groupId) {
-    const group = groups.value.find((g) => g.id === groupId)
+    const group = findGroupById(groupId)
     return group?.joinRequests || []
   }
 
@@ -482,26 +593,35 @@ export const Groups = () => {
       // Fetch users — needed for group creation and member display
       // Only include verified users to prevent unverified accounts from being added to groups
       try {
-        const users = await read(DB_NODES.USERS)
-        if (users) {
-          const list = Object.keys(users)
-            .filter((k) => users[k].emailVerified === true) // Only verified users
-            .map((k) => ({
-              uid: k,
-              mobile: users[k].mobile || '',
-              name: users[k].name || '',
-              email: users[k].email || '',
-              maskedMobile: maskMobile(users[k].mobile || ''),
-              bugResolver: users[k].bugResolver === true
-            }))
+        const usersSnapshot = await getDocs(
+          query(
+            collection(database, DB_NODES.USERS),
+            where('emailVerified', '==', true)
+          )
+        )
+        if (!usersSnapshot.empty) {
+          const list = usersSnapshot.docs.map((docSnap) => {
+            const user = docSnap.data()
+            return {
+              uid: docSnap.id,
+              mobile: user.mobile || '',
+              name: user.name || '',
+              email: user.email || '',
+              maskedMobile: maskMobile(user.mobile || ''),
+              bugResolver: user.bugResolver === true
+            }
+          })
           userStore.setUsers(list)
         }
       } catch (error) {
         console.error('Error fetching users:', error)
       }
 
-      // Set up real-time listener for groups.
-      const groupsRef = dbRef(DB_NODES.GROUPS)
+      // Set up real-time listener for the current user's joined / invited groups.
+      const groupsRef = query(
+        collection(database, DB_NODES.GROUPS),
+        where('memberMobiles', 'array-contains', authStore.getActiveUser)
+      )
 
       const loadingTimeout = setTimeout(() => {
         isPageLoading.value = false
@@ -512,23 +632,34 @@ export const Groups = () => {
         (snapshot) => {
           clearTimeout(loadingTimeout)
           isPageLoading.value = false
-          if (!snapshot.empty) {
-            const groupList = snapshot.docs.map((d) => ({
-              id: d.id,
-              ...d.data()
-            }))
-            groupStore.setGroups(groupList)
+          const groupList = snapshot.docs.map((d) => ({
+            id: d.id,
+            ...d.data()
+          }))
+          groupStore.setGroups(groupList)
 
-            // Auto-select the user's group on first load if none is already active
-            if (!groupStore.getActiveGroup) {
-              const mobile = authStore.getActiveUser
-              const myGroup = groups.value.find((g) =>
-                (g.members || []).some((m) => m.mobile === mobile)
-              )
-              if (myGroup) groupStore.setActiveGroup(myGroup.id)
-            }
-          } else {
-            groupStore.setGroups([])
+          const loadedIds = new Set(groupList.map((group) => group.id))
+          availableGroups.value = availableGroups.value.filter(
+            (group) => !loadedIds.has(group.id)
+          )
+
+          if (!availableGroupsInitialized.value) {
+            availableGroupsInitialized.value = true
+            void loadMoreAvailableGroups(true)
+          } else if (
+            availableGroups.value.length < AVAILABLE_GROUP_BATCH_SIZE &&
+            hasMoreAvailableGroups.value
+          ) {
+            void loadMoreAvailableGroups()
+          }
+
+          // Auto-select the user's group on first load if none is already active
+          if (!groupStore.getActiveGroup) {
+            const mobile = authStore.getActiveUser
+            const myGroup = groupList.find((g) =>
+              (g.members || []).some((m) => m.mobile === mobile)
+            )
+            if (myGroup) groupStore.setActiveGroup(myGroup.id)
           }
         },
         (error) => {
@@ -793,7 +924,7 @@ export const Groups = () => {
   // Request to join a group
   async function requestToJoinGroup(groupId) {
     try {
-      const group = groups.value.find((g) => g.id === groupId)
+      const group = findGroupById(groupId)
       if (!group) return
 
       const mobile = authStore.getActiveUser
@@ -817,6 +948,7 @@ export const Groups = () => {
       )
 
       groupStore.updateGroup(group)
+      upsertAvailableGroup(group)
 
       showSuccess('Join request sent to group owner')
     } catch (err) {
@@ -827,7 +959,7 @@ export const Groups = () => {
   // Cancel join request
   async function cancelJoinRequest(groupId) {
     try {
-      const group = groups.value.find((g) => g.id === groupId)
+      const group = findGroupById(groupId)
       if (!group) return
 
       const mobile = authStore.getActiveUser
@@ -844,6 +976,7 @@ export const Groups = () => {
       )
 
       groupStore.updateGroup(group)
+      upsertAvailableGroup(group)
 
       showSuccess('Join request cancelled')
     } catch (err) {
@@ -2163,7 +2296,10 @@ export const Groups = () => {
     filteredGroups,
     joinedGroups,
     otherGroups,
+    availableGroupsLoading,
+    hasMoreAvailableGroups,
     pendingInvitations,
+    loadMoreAvailableGroups,
     acceptInvitation,
     rejectInvitation,
     editDialogVisible,

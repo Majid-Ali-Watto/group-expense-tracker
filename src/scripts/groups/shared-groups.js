@@ -1,6 +1,14 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { auth, onAuthStateChanged } from '@/firebase'
+import {
+  auth,
+  onAuthStateChanged,
+  collection,
+  database,
+  getDocs,
+  query,
+  where
+} from '@/firebase'
 import { useFireBase } from '@/composables'
 import { useAuthStore, useGroupStore, useUserStore } from '@/stores'
 import { DB_NODES } from '@/constants'
@@ -70,21 +78,27 @@ export const SharedGroups = () => {
     loading.value = true
     try {
       const [usersData, groupsData] = await Promise.all([
-        read(DB_NODES.USERS, false),
+        getDocs(
+          query(
+            collection(database, DB_NODES.USERS),
+            where('emailVerified', '==', true)
+          )
+        ),
         read(DB_NODES.GROUPS, false)
       ])
 
-      if (usersData) {
-        const users = Object.keys(usersData)
-          .filter((uid) => usersData[uid].emailVerified === true)
-          .map((uid) => ({
-            uid,
-            mobile: usersData[uid].mobile || '',
-            name: usersData[uid].name || '',
-            email: usersData[uid].email || '',
-            maskedMobile: maskMobile(usersData[uid].mobile || ''),
-            bugResolver: usersData[uid].bugResolver === true
-          }))
+      if (!usersData.empty) {
+        const users = usersData.docs.map((docSnap) => {
+          const user = docSnap.data()
+          return {
+            uid: docSnap.id,
+            mobile: user.mobile || '',
+            name: user.name || '',
+            email: user.email || '',
+            maskedMobile: maskMobile(user.mobile || ''),
+            bugResolver: user.bugResolver === true
+          }
+        })
         userStore.setUsers(users)
       }
 
@@ -179,7 +193,13 @@ export const SharedGroups = () => {
 
       let payload = {
         members: newMembers,
-        pendingMembers: newPending.length ? newPending : null
+        pendingMembers: newPending.length ? newPending : null,
+        memberMobiles: [
+          ...new Set([
+            ...newMembers.map((member) => member.uid || member.mobile),
+            ...newPending.map((member) => member.uid || member.mobile)
+          ])
+        ]
       }
 
       let updatedGroup = {

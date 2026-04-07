@@ -4,6 +4,8 @@ import {
   auth,
   database,
   collection,
+  query,
+  orderBy,
   doc,
   addDoc,
   setDoc,
@@ -653,11 +655,12 @@ export const BugReport = (props) => {
     if (!mobile) return
     myReportsLoading.value = true
     myReportsUnsubscribe = onSnapshot(
-      collection(database, DB_NODES.BUG_REPORTS, mobile, 'reports'),
+      query(
+        collection(database, DB_NODES.BUG_REPORTS, mobile, 'reports'),
+        orderBy('submittedAt', 'desc')
+      ),
       (snap) => {
-        myReports.value = snap.docs
-          .map((d) => ({ id: d.id, ...d.data() }))
-          .sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt))
+        myReports.value = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
         myReportsLoading.value = false
       },
       () => {

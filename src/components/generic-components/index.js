@@ -3,6 +3,7 @@ import AmountInput from './GenericAmountField.vue'
 import BarChart from './BarChart.vue'
 import DataTimePicker from './DateTimePicker.vue'
 import DonutChart from './DonutChart.vue'
+import FilterBar from './FilterBar.vue'
 import FloatingThemeButton from './FloatingThemeButton.vue'
 import GenericButton from './GenericButton.vue'
 import GenericDropDown from './GenericDropDown.vue'
@@ -11,6 +12,7 @@ import GenericInputNumber from './GenericInputNumber.vue'
 import GroupActionButtons from './GroupActionButtons.vue'
 import GroupDetailsAccordion from './GroupDetailsAccordion.vue'
 import GroupNotificationsForCurrentUser from './GroupNotificationsForCurrentUser.vue'
+import GroupPendingMembersList from './GroupPendingMembersList.vue'
 import GroupRequestButtons from './GroupRequestButtons.vue'
 import HelpDialog from './HelpDialog.vue'
 import MarkdownEditor from './MarkdownEditor.vue'
@@ -30,6 +32,7 @@ export {
   BarChart,
   DataTimePicker,
   DonutChart,
+  FilterBar,
   FloatingThemeButton,
   GenericButton,
   GenericDropDown,
@@ -39,6 +42,7 @@ export {
   GroupActionButtons,
   GroupDetailsAccordion,
   GroupNotificationsForCurrentUser,
+  GroupPendingMembersList,
   GroupRequestButtons,
   HelpDialog,
   MarkdownEditor,

@@ -165,6 +165,15 @@
           :load-group-balances="loadGroupBalances"
         />
       </div>
+      <div v-if="hasMoreAvailableGroups" class="mt-4 flex justify-center">
+        <GenericButton
+          type="default"
+          :loading="availableGroupsLoading"
+          @click="loadMoreAvailableGroups()"
+        >
+          Load More Groups
+        </GenericButton>
+      </div>
 
       <GroupEditDialog
         v-model="editDialogVisible"
@@ -227,7 +236,10 @@ const {
   allCategoryOptions,
   joinedGroups,
   otherGroups,
+  availableGroupsLoading,
+  hasMoreAvailableGroups,
   pendingInvitations,
+  loadMoreAvailableGroups,
   acceptInvitation,
   rejectInvitation,
   editDialogVisible,

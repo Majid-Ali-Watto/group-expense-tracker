@@ -10,114 +10,12 @@
       />
 
       <div ref="loanContent">
-        <!-- Month Filter -->
-        <div class="flex items-center justify-between mb-2 mt-4 no-print-pdf">
-          <span class="text-sm font-semibold text-gray-700">Filters</span>
-          <div class="flex items-center gap-2">
-            <button
-              v-if="showFilters"
-              class="clear-filter-link sm:hidden"
-              @click="clearFilters()"
-            >
-              Clear
-            </button>
-            <button
-              class="clear-filter-link hidden sm:inline"
-              @click="clearFilters()"
-            >
-              Clear
-            </button>
-            <el-button
-              circle
-              :type="showFilters ? 'danger' : 'primary'"
-              size="small"
-              class="sm:hidden"
-              :icon="showFilters ? Close : Filter"
-              @click="showFilters = !showFilters"
-            />
-          </div>
-        </div>
-        <div class="hidden sm:block mb-3 mt-4 no-print-pdf">
-          <el-row :gutter="5" class="filter-bar" justify="start">
-            <el-col :lg="6" :md="6" :sm="12" :xs="12">
-              <GenericDropDown
-                v-model="selectedMonth"
-                label="Month"
-                placeholder="Select Month"
-                :options="[{ label: 'All Months', value: 'All' }, ...months]"
-                size="small"
-                @update:modelValue="fetchLoans"
-              />
-            </el-col>
-            <el-col :lg="6" :md="6" :sm="12" :xs="12">
-              <GenericDropDown
-                v-model="selectedGiver"
-                label="Giver"
-                placeholder="All Givers"
-                :options="[
-                  { label: 'All Givers', value: 'All' },
-                  ...giverOptions.map((o) => ({
-                    label: o.name,
-                    value: o.mobile
-                  }))
-                ]"
-                size="small"
-              />
-            </el-col>
-            <el-col :lg="6" :md="6" :sm="12" :xs="12">
-              <GenericDropDown
-                v-model="selectedCategory"
-                label="Category"
-                placeholder="All Categories"
-                :options="categoryOptions"
-                size="small"
-              />
-            </el-col>
-          </el-row>
-        </div>
-        <Transition name="form-slide">
-          <el-row
-            v-if="showFilters"
-            :gutter="5"
-            class="filter-bar mb-3 mt-4 no-print-pdf sm:hidden"
-            justify="space-between"
-          >
-            <el-col :lg="6" :md="6" :sm="12" :xs="12">
-              <GenericDropDown
-                v-model="selectedMonth"
-                label="Month"
-                placeholder="Select Month"
-                :options="[{ label: 'All Months', value: 'All' }, ...months]"
-                size="small"
-                @update:modelValue="fetchLoans"
-              />
-            </el-col>
-            <el-col :lg="6" :md="6" :sm="12" :xs="12">
-              <GenericDropDown
-                v-model="selectedGiver"
-                label="Giver"
-                placeholder="All Givers"
-                :options="[
-                  { label: 'All Givers', value: 'All' },
-                  ...giverOptions.map((o) => ({
-                    label: o.name,
-                    value: o.mobile
-                  }))
-                ]"
-                size="small"
-              />
-            </el-col>
-            <el-col :lg="6" :md="6" :sm="12" :xs="12">
-              <GenericDropDown
-                v-model="selectedCategory"
-                label="Category"
-                placeholder="All Categories"
-                :options="categoryOptions"
-                size="small"
-              />
-            </el-col>
-          </el-row>
-        </Transition>
+        <!-- Filters -->
+        <FilterBar
+          :fields="filterFields"
+          class="mt-4 no-print-pdf"
+          @clear="clearFilters"
+        />
         <!-- Accordions -->
         <el-collapse v-model="openPanels" class="mt-4">
           <!-- Summary Statistics -->
@@ -212,9 +110,8 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useMobileScreen } from '@/composables'
-import { Filter, Close } from '@element-plus/icons-vue'
 import { Table, BalanceSummaryCard, LoadingSkeleton } from '@/components/shared'
-import { GenericDropDown } from '@/components/generic-components'
+import { FilterBar } from '@/components/generic-components'
 import { PersonalLoans } from '@/scripts/personal-loans'
 import { loadAsyncComponent } from '@/utils'
 const LoanForm = loadAsyncComponent(
@@ -232,24 +129,18 @@ const {
   loanKeys,
   loanContent,
   selectedMonth,
-  selectedGiver,
-  selectedCategory,
   isContentLoading,
-  giverOptions,
   filteredLoans,
-  months,
-  categoryOptions,
   showLoanForm,
   closeLoanForm,
-  fetchLoans,
   totalLending,
   totalDebting,
   netPosition,
   pairwiseSettlements,
+  filterFields,
   clearFilters
 } = PersonalLoans()
 
-const showFilters = ref(false)
 const openPanels = ref([])
 const { isMobileScreen } = useMobileScreen()
 

@@ -5,7 +5,15 @@ import { useFireBase, useDebouncedRef } from '@/composables'
 import { useAuthStore, useGroupStore, useUserStore } from '@/stores'
 import { DB_NODES } from '@/constants'
 import { showError, maskMobile, appendNotificationForUser } from '@/utils'
-import { auth, deleteUser, onSnapshot, collection, database } from '@/firebase'
+import {
+  auth,
+  deleteUser,
+  onSnapshot,
+  collection,
+  query,
+  where,
+  database
+} from '@/firebase'
 
 export const Users = () => {
   const isPageLoading = ref(true)
@@ -188,24 +196,25 @@ export const Users = () => {
   let usersUnsubscribe = null
   onMounted(() => {
     usersUnsubscribe = onSnapshot(
-      collection(database, DB_NODES.USERS),
+      query(
+        collection(database, DB_NODES.USERS),
+        where('emailVerified', '==', true)
+      ),
       (snap) => {
         snap.docs.forEach((docSnap) => {
           const uid = docSnap.id
           const u = docSnap.data()
-          if (u.emailVerified === true) {
-            userStore.addUser({
-              uid,
-              mobile: u.mobile || '',
-              name: u.name || '',
-              email: u.email || '',
-              addedBy: u.addedBy || null,
-              maskedMobile: maskMobile(u.mobile || ''),
-              deleteRequest: u.deleteRequest || null,
-              updateRequest: u.updateRequest || null,
-              bugResolver: u.bugResolver === true
-            })
-          }
+          userStore.addUser({
+            uid,
+            mobile: u.mobile || '',
+            name: u.name || '',
+            email: u.email || '',
+            addedBy: u.addedBy || null,
+            maskedMobile: maskMobile(u.mobile || ''),
+            deleteRequest: u.deleteRequest || null,
+            updateRequest: u.updateRequest || null,
+            bugResolver: u.bugResolver === true
+          })
         })
         isPageLoading.value = false
       },

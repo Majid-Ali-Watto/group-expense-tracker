@@ -92,162 +92,8 @@
           </div>
         </div>
       </div>
-      <!-- Mobile filter toggle -->
-      <div class="flex items-center justify-between mb-2">
-        <span class="text-sm font-semibold text-gray-700">Filters</span>
-        <div class="flex items-center gap-2">
-          <button
-            v-if="showFilters"
-            class="clear-filter-link sm:hidden"
-            @click="clearFilters()"
-          >
-            Clear
-          </button>
-          <button
-            class="clear-filter-link hidden sm:inline"
-            @click="clearFilters()"
-          >
-            Clear
-          </button>
-          <el-button
-            circle
-            :type="showFilters ? 'danger' : 'primary'"
-            size="small"
-            class="sm:hidden"
-            :icon="showFilters ? Close : Filter"
-            @click="showFilters = !showFilters"
-          />
-        </div>
-      </div>
-      <!-- Filters: desktop always visible -->
-      <div class="hidden sm:block mb-1">
-        <el-row :gutter="5" class="filter-bar" justify="start">
-          <!-- Month Selection -->
-          <el-col :lg="5" :md="5" :sm="12" :xs="12">
-            <GenericDropDown
-              v-model="selectedMonth"
-              label="Month"
-              placeholder="Select Month"
-              :options="months"
-              size="small"
-            />
-          </el-col>
-          <el-col :lg="5" :md="5" :sm="12" :xs="12">
-            <!-- Payer Selection -->
-            <GenericDropDown
-              v-model="selectedFriend"
-              label="Payer"
-              placeholder="Select Payer"
-              :options="[{ label: 'All', value: 'All' }, ...usersOptions]"
-              size="small"
-            />
-          </el-col>
-          <el-col :lg="5" :md="5" :sm="12" :xs="12">
-            <!-- Payer Mode Filter -->
-            <GenericDropDown
-              v-model="selectedPayerMode"
-              label="Payer Mode"
-              :filterable="false"
-              :options="[
-                { label: 'All', value: 'all' },
-                { label: 'Single', value: 'single' },
-                { label: 'Multiple', value: 'multiple' }
-              ]"
-              size="small"
-            />
-          </el-col>
-          <el-col :lg="5" :md="5" :sm="12" :xs="12">
-            <!-- Split Mode Filter -->
-            <GenericDropDown
-              v-model="selectedSplitMode"
-              label="Split Mode"
-              :filterable="false"
-              :options="[
-                { label: 'All', value: 'all' },
-                { label: 'Equal', value: 'equal' },
-                { label: 'Custom', value: 'custom' }
-              ]"
-              size="small"
-            />
-          </el-col>
-          <el-col :lg="4" :md="4" :sm="12" :xs="12">
-            <GenericDropDown
-              v-model="selectedCategory"
-              label="Category"
-              placeholder="All Categories"
-              :options="categoryOptions"
-              size="small"
-            />
-          </el-col>
-        </el-row>
-      </div>
-      <!-- Mobile filters (toggle) -->
-      <Transition name="form-slide">
-        <el-row
-          v-if="showFilters"
-          :gutter="5"
-          class="filter-bar mb-1 sm:hidden"
-          justify="space-between"
-        >
-          <!-- Month Selection -->
-          <el-col :lg="6" :md="6" :sm="12" :xs="12">
-            <GenericDropDown
-              v-model="selectedMonth"
-              label="Month"
-              placeholder="Select Month"
-              :options="months"
-              size="small"
-            />
-          </el-col>
-          <el-col :lg="6" :md="6" :sm="12" :xs="12">
-            <!-- Payer Selection -->
-            <GenericDropDown
-              v-model="selectedFriend"
-              label="Payer"
-              placeholder="Select Payer"
-              :options="[{ label: 'All', value: 'All' }, ...usersOptions]"
-              size="small"
-            />
-          </el-col>
-          <el-col :lg="6" :md="6" :sm="12" :xs="12">
-            <!-- Payer Mode Filter -->
-            <GenericDropDown
-              v-model="selectedPayerMode"
-              label="Payer Mode"
-              :filterable="false"
-              :options="[
-                { label: 'All', value: 'all' },
-                { label: 'Single', value: 'single' },
-                { label: 'Multiple', value: 'multiple' }
-              ]"
-              size="small"
-            />
-          </el-col>
-          <el-col :lg="6" :md="6" :sm="12" :xs="12">
-            <!-- Split Mode Filter -->
-            <GenericDropDown
-              v-model="selectedSplitMode"
-              label="Split Mode"
-              :filterable="false"
-              :options="[
-                { label: 'All', value: 'all' },
-                { label: 'Equal', value: 'equal' },
-                { label: 'Custom', value: 'custom' }
-              ]"
-              size="small"
-            />
-          </el-col>
-          <el-col :lg="6" :md="6" :sm="12" :xs="12">
-            <GenericDropDown
-              v-model="selectedCategory"
-              label="Category"
-              placeholder="All Categories"
-              :options="categoryOptions"
-              size="small"
-            />
-          </el-col>
-        </el-row>
-      </Transition>
+      <!-- Filters -->
+      <FilterBar :fields="filterFields" @clear="clearFilters" />
       <div ref="pdfContent">
         <Summary :payments="filteredPayments" />
         <Settlement
@@ -280,12 +126,10 @@
   </div>
 </template>
 <script setup>
-import { ref } from 'vue'
-import { Filter, Close } from '@element-plus/icons-vue'
+import { Table, LoadingSkeleton } from '@/components/shared'
+import { FilterBar } from '@/components/generic-components'
 import Settlement from './Settlement.vue'
 import Summary from './Summary.vue'
-import { Table, LoadingSkeleton } from '@/components/shared'
-import { GenericDropDown } from '@/components/generic-components'
 import { ExpenseList } from '@/scripts/shared-expenses'
 import { DB_NODES } from '@/constants'
 import { loadAsyncComponent } from '@/utils'
@@ -302,17 +146,11 @@ const props = defineProps({
 })
 
 const {
-  usersOptions,
   pdfContent,
-  months,
   paymentKeys,
   isContentLoading,
   selectedMonth,
   selectedFriend,
-  selectedPayerMode,
-  selectedSplitMode,
-  selectedCategory,
-  categoryOptions,
   filteredPayments,
   activeUser,
   userNotifications,
@@ -326,8 +164,7 @@ const {
   cancelRequest,
   approveRequest,
   rejectRequest,
+  filterFields,
   clearFilters
 } = ExpenseList(props)
-
-const showFilters = ref(false)
 </script>

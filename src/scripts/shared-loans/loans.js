@@ -373,6 +373,39 @@ export const Loans = () => {
     }
   ])
 
+  const clearFilters = () => {
+    selectedMonth.value = getCurrentMonth()
+    selectedGiver.value = 'All'
+    selectedCategory.value = ''
+  }
+
+  const filterFields = computed(() => [
+    {
+      key: 'month',
+      label: 'Month',
+      placeholder: 'Select Month',
+      modelValue: selectedMonth.value,
+      options: months.value,
+      onChange: (v) => { selectedMonth.value = v }
+    },
+    {
+      key: 'giver',
+      label: 'Giver',
+      placeholder: 'Select Giver',
+      modelValue: selectedGiver.value,
+      options: [{ label: 'All Givers', value: 'All' }, ...usersOptions.value],
+      onChange: (v) => { selectedGiver.value = v }
+    },
+    {
+      key: 'category',
+      label: 'Category',
+      placeholder: 'All Categories',
+      modelValue: selectedCategory.value,
+      options: categoryOptions.value,
+      onChange: (v) => { selectedCategory.value = v }
+    }
+  ])
+
   return {
     formatAmount,
     showLoanForm,
@@ -402,12 +435,8 @@ export const Loans = () => {
     cancelRequest,
     approveRequest,
     rejectRequest,
-    showFilters,
     loanBalanceColumns,
-    clearFilters: () => {
-      selectedMonth.value = getCurrentMonth()
-      selectedGiver.value = 'All'
-      selectedCategory.value = ''
-    }
+    filterFields,
+    clearFilters
   }
 }

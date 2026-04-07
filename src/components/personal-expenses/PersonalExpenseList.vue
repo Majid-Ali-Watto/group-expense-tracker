@@ -12,53 +12,7 @@
 
       <!-- Filter -->
       <div class="sel-filter no-print-pdf">
-        <div class="sel-filter-toggle">
-          <span class="sel-filter-label">Filters</span>
-          <div class="flex items-center gap-2">
-            <button
-              v-if="showFilters"
-              class="clear-filter-link sm:hidden"
-              @click="clearFilters()"
-            >
-              Clear
-            </button>
-            <button
-              class="clear-filter-link hidden sm:inline"
-              @click="clearFilters()"
-            >
-              Clear
-            </button>
-            <el-button
-              circle
-              :type="showFilters ? 'danger' : 'primary'"
-              size="small"
-              class="sm:hidden"
-              :icon="showFilters ? Close : Filter"
-              @click="showFilters = !showFilters"
-            />
-          </div>
-        </div>
-        <div class="flex items-center gap-2">
-          <div :class="showFilters ? 'block flex-1' : 'hidden sm:block flex-1'">
-            <GenericDropDown
-              size="small"
-              v-model="selectedMonth"
-              label="Month"
-              placeholder="Select month"
-              :options="months"
-              @update:modelValue="fetchExpenses"
-            />
-          </div>
-          <div :class="showFilters ? 'block flex-1' : 'hidden sm:block flex-1'">
-            <GenericDropDown
-              size="small"
-              v-model="selectedCategory"
-              label="Category"
-              placeholder="All Categories"
-              :options="categoryOptions"
-            />
-          </div>
-        </div>
+        <FilterBar :fields="filterFields" @clear="clearFilters" />
       </div>
 
       <Table
@@ -73,30 +27,24 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { Filter, Close } from '@element-plus/icons-vue'
 import { Table, LoadingSkeleton } from '@/components/shared'
-import { GenericDropDown } from '@/components/generic-components'
+import { FilterBar } from '@/components/generic-components'
 import PersonalExpenseStats from './PersonalExpenseStats.vue'
 import { PersonalExpenseList } from '@/scripts/personal-expenses'
 
 const {
   formatAmount,
   selectedMonth,
-  selectedCategory,
   expenses,
   filteredExpenses,
   keys,
   totalSpent,
   remaining,
-  months,
-  categoryOptions,
   content,
   isContentLoading,
-  fetchExpenses,
+  filterFields,
   clearFilters
 } = PersonalExpenseList()
-const showFilters = ref(false)
 </script>
 
 <style scoped>

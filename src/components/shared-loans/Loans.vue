@@ -225,111 +225,8 @@
             </div>
           </div>
         </div>
-        <!-- Mobile filter toggle -->
-        <div class="flex items-center justify-between mb-2 mt-4">
-          <span class="text-sm font-semibold text-gray-700">Filters</span>
-          <div class="flex items-center gap-2">
-            <button
-              v-if="showFilters"
-              class="clear-filter-link sm:hidden"
-              @click="clearFilters()"
-            >
-              Clear
-            </button>
-            <button
-              class="clear-filter-link hidden sm:inline"
-              @click="clearFilters()"
-            >
-              Clear
-            </button>
-            <el-button
-              circle
-              :type="showFilters ? 'danger' : 'primary'"
-              size="small"
-              class="sm:hidden"
-              :icon="showFilters ? Close : Filter"
-              @click="showFilters = !showFilters"
-            />
-          </div>
-        </div>
-        <!-- Filters: desktop always visible -->
-        <div class="hidden sm:block mb-3 mt-4">
-          <el-row :gutter="5" class="filter-bar" justify="start">
-            <!-- Month Selection -->
-            <el-col :lg="6" :md="6" :sm="12" :xs="12">
-              <GenericDropDown
-                v-model="selectedMonth"
-                label="Month"
-                placeholder="Select Month"
-                :options="months"
-                size="small"
-              />
-            </el-col>
-            <el-col :lg="6" :md="6" :sm="12" :xs="12">
-              <!-- Giver Selection -->
-              <GenericDropDown
-                v-model="selectedGiver"
-                label="Giver"
-                placeholder="Select Giver"
-                :options="[
-                  { label: 'All Givers', value: 'All' },
-                  ...usersOptions
-                ]"
-                size="small"
-              />
-            </el-col>
-            <el-col :lg="6" :md="6" :sm="12" :xs="12">
-              <GenericDropDown
-                v-model="selectedCategory"
-                label="Category"
-                placeholder="All Categories"
-                :options="categoryOptions"
-                size="small"
-              />
-            </el-col>
-          </el-row>
-        </div>
-        <!-- Mobile filters (toggle) -->
-        <Transition name="form-slide">
-          <el-row
-            v-if="showFilters"
-            :gutter="5"
-            class="filter-bar mb-3 mt-2 sm:hidden"
-            justify="space-between"
-          >
-            <el-col :lg="6" :md="6" :sm="12" :xs="12">
-              <GenericDropDown
-                v-model="selectedMonth"
-                label="Month"
-                placeholder="Select Month"
-                :options="months"
-                size="small"
-              />
-            </el-col>
-            <el-col :lg="6" :md="6" :sm="12" :xs="12">
-              <!-- Giver Selection -->
-              <GenericDropDown
-                v-model="selectedGiver"
-                label="Giver"
-                placeholder="Select Giver"
-                :options="[
-                  { label: 'All Givers', value: 'All' },
-                  ...usersOptions
-                ]"
-                size="small"
-              />
-            </el-col>
-            <el-col :lg="6" :md="6" :sm="12" :xs="12">
-              <GenericDropDown
-                v-model="selectedCategory"
-                label="Category"
-                placeholder="All Categories"
-                :options="categoryOptions"
-                size="small"
-              />
-            </el-col>
-          </el-row>
-        </Transition>
+        <!-- Filters -->
+        <FilterBar :fields="filterFields" class="mt-4" @clear="clearFilters" />
         <div ref="loanContent">
           <!-- Display Final Balances -->
           <h3 class="mb-2">Loan Details</h3>
@@ -354,9 +251,8 @@
 </template>
 
 <script setup>
-import { Filter, Close } from '@element-plus/icons-vue'
 import { Table, BalanceSummaryCard, LoadingSkeleton } from '@/components/shared'
-import { GenericDropDown } from '@/components/generic-components'
+import { FilterBar } from '@/components/generic-components'
 import { Loans } from '@/scripts/shared-loans'
 import { loadAsyncComponent } from '@/utils'
 const LoanForm = loadAsyncComponent(() => import('./LoanForm.vue'))
@@ -365,13 +261,8 @@ const {
   formatAmount,
   showLoanForm,
   selectedMonth,
-  selectedGiver,
-  selectedCategory,
-  months,
-  categoryOptions,
   isContentLoading,
   activeUser,
-  usersOptions,
   loanKeys,
   loanContent,
   filteredLoans,
@@ -379,7 +270,7 @@ const {
   userNotifications,
   pendingRequests,
   loanBalanceColumns,
-  showFilters,
+  filterFields,
   closeLoanForm,
   dismissNotification,
   getTotalMembers,

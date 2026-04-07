@@ -62,6 +62,7 @@
 
     <!-- Expenses Summary Dialog -->
     <NetPositionDialog
+      v-if="loggedIn"
       v-model="showNetPositionDialog"
       :summary="netPositionSummary"
     />

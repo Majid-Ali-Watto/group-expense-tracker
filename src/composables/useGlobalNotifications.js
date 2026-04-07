@@ -1,6 +1,6 @@
 import { computed, ref, watch } from 'vue'
 import { useAuthStore, useGroupStore, useUserStore } from '@/stores'
-import { onSnapshot, collection, database } from '@/firebase'
+import { onSnapshot, collection, database, query, where } from '@/firebase'
 import useFireBase from './useFirebase'
 import { Tabs } from '@/assets'
 import { getCurrentMonth, maskMobile } from '@/utils'
@@ -614,7 +614,10 @@ export function useGlobalNotifications() {
   // member-renamed, join requests, delete requests) appear in the bell
   // immediately without needing to open the Groups tab.
   const groupsUnsubscribe = onSnapshot(
-    collection(database, DB_NODES.GROUPS),
+    query(
+      collection(database, DB_NODES.GROUPS),
+      where('memberMobiles', 'array-contains', activeUser.value)
+    ),
     (snap) => {
       const groupList = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
       groupStore.setGroups(groupList)
@@ -625,25 +628,26 @@ export function useGlobalNotifications() {
   // Keeps userStore up-to-date from any tab so that delete/update request
   // notifications appear in the bell immediately, without needing to open the Users tab.
   const usersUnsubscribe = onSnapshot(
-    collection(database, DB_NODES.USERS),
+    query(
+      collection(database, DB_NODES.USERS),
+      where('emailVerified', '==', true)
+    ),
     (snap) => {
       snap.docs.forEach((docSnap) => {
         const uid = docSnap.id
         const u = docSnap.data()
-        if (u.emailVerified === true) {
-          userStore.addUser({
-            uid,
-            mobile: u.mobile || '',
-            name: u.name || '',
-            email: u.email || '',
-            addedBy: u.addedBy || null,
-            maskedMobile: maskMobile(u.mobile || ''),
-            deleteRequest: u.deleteRequest || null,
-            updateRequest: u.updateRequest || null,
-            bugResolver: u.bugResolver === true,
-            rejectionNotification: u.rejectionNotification || null
-          })
-        }
+        userStore.addUser({
+          uid,
+          mobile: u.mobile || '',
+          name: u.name || '',
+          email: u.email || '',
+          addedBy: u.addedBy || null,
+          maskedMobile: maskMobile(u.mobile || ''),
+          deleteRequest: u.deleteRequest || null,
+          updateRequest: u.updateRequest || null,
+          bugResolver: u.bugResolver === true,
+          rejectionNotification: u.rejectionNotification || null
+        })
       })
     }
   )

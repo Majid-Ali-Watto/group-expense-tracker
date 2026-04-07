@@ -334,6 +334,65 @@ export const ExpenseList = (props) => {
     }
   })
 
+  const clearFilters = () => {
+    selectedMonth.value = getCurrentMonth()
+    selectedFriend.value = 'All'
+    selectedPayerMode.value = 'all'
+    selectedSplitMode.value = 'all'
+    selectedCategory.value = ''
+  }
+
+  const filterFields = computed(() => [
+    {
+      key: 'month',
+      label: 'Month',
+      placeholder: 'Select Month',
+      modelValue: selectedMonth.value,
+      options: months.value,
+      onChange: (v) => { selectedMonth.value = v }
+    },
+    {
+      key: 'payer',
+      label: 'Payer',
+      placeholder: 'Select Payer',
+      modelValue: selectedFriend.value,
+      options: [{ label: 'All', value: 'All' }, ...usersOptions.value],
+      onChange: (v) => { selectedFriend.value = v }
+    },
+    {
+      key: 'payerMode',
+      label: 'Payer Mode',
+      filterable: false,
+      modelValue: selectedPayerMode.value,
+      options: [
+        { label: 'All', value: 'all' },
+        { label: 'Single', value: 'single' },
+        { label: 'Multiple', value: 'multiple' }
+      ],
+      onChange: (v) => { selectedPayerMode.value = v }
+    },
+    {
+      key: 'splitMode',
+      label: 'Split Mode',
+      filterable: false,
+      modelValue: selectedSplitMode.value,
+      options: [
+        { label: 'All', value: 'all' },
+        { label: 'Equal', value: 'equal' },
+        { label: 'Custom', value: 'custom' }
+      ],
+      onChange: (v) => { selectedSplitMode.value = v }
+    },
+    {
+      key: 'category',
+      label: 'Category',
+      placeholder: 'All Categories',
+      modelValue: selectedCategory.value,
+      options: categoryOptions.value,
+      onChange: (v) => { selectedCategory.value = v }
+    }
+  ])
+
   return {
     userStore,
     formatAmount,
@@ -362,12 +421,7 @@ export const ExpenseList = (props) => {
     cancelRequest,
     approveRequest,
     rejectRequest,
-    clearFilters: () => {
-      selectedMonth.value = getCurrentMonth()
-      selectedFriend.value = 'All'
-      selectedPayerMode.value = 'all'
-      selectedSplitMode.value = 'all'
-      selectedCategory.value = ''
-    }
+    filterFields,
+    clearFilters
   }
 }
