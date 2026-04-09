@@ -43,7 +43,7 @@ npx -y gsutil cors set cors.json gs://<your-storage-bucket>
 - **Backend:** Firebase Realtime Database (no server code in this repo).
 - **Storage:** Cloudinary for receipts (images only, max 1 MB enforced client-side).
 - **PWA bits:** `src/service-worker.js` registers a service worker (basic; extend as needed).
-- **State & Security:** Active session kept in Pinia plus `sessionStorage`, both encrypted with different AES keys (see `src/utils/sessionCrypto.js`). Session re-verified every 5 minutes against Firebase.
+- **State & Security:** Active session kept in Pinia plus `sessionStorage`, both encrypted with different AES keys (see `src/utils/sessionCrypto.js`). Session re-verified every 5 minutes against Firebase and automatically logs out after inactivity.
 
 ---
 
@@ -63,6 +63,7 @@ npx -y gsutil cors set cors.json gs://<your-storage-bucket>
 - **Login / Register:** Users enter name, mobile (PK), and a password. New users set the code and receive printable recovery passcodes (see `src/scripts/login.js`).
 - **Recovery:** "Forgot password" consumes one recovery passcode; on last code, fresh codes are generated and shown.
 - **Session hardening:** A random token is encrypted twice (AES-GCM in sessionStorage, AES-CBC in Pinia). Every tab change and a 5‑minute timer re-verify token + password on Firebase; failures force logout.
+- **Idle logout:** Logged-in users are forced out after `VITE_INACTIVITY_LOGOUT_MINUTES` without activity. If the env var is missing or invalid, the app falls back to 15 minutes.
 - **Remember Me:** Stores name/mobile/password in `localStorage` for prefill only (session still crypto-based).
 
 ---

@@ -9,7 +9,8 @@ import {
 import {
   useFireBase,
   useGlobalNotifications,
-  loadAppConfig
+  loadAppConfig,
+  useInactivityLogout
 } from '@/composables'
 import { DB_NODES } from '@/constants'
 import { tabs as allTabs, Tabs } from '@/assets'
@@ -50,6 +51,10 @@ export const App = () => {
   const netPositionSummary = ref(null)
   const { showNetPositionConfirmation, calculateCompleteNetPosition } =
     NetPosition()
+  const formatInactivityLabel = (timeoutMs) => {
+    const minutes = Math.round(timeoutMs / 60_000)
+    return minutes === 1 ? '1 minute' : `${minutes} minutes`
+  }
 
   // Theme management - Initialize immediately
   const savedTheme = localStorage.getItem('theme')
@@ -221,6 +226,18 @@ export const App = () => {
       sessionStorage.getItem('_session')
     )
   })
+  const {
+    startInactivityTracking,
+    stopInactivityTracking
+  } = useInactivityLogout({
+    isLoggedIn: loggedIn,
+    onTimeout: async (timeoutMs) => {
+      showError(
+        `You were logged out after ${formatInactivityLabel(timeoutMs)} of inactivity.`
+      )
+      await logout()
+    }
+  })
 
   // Computed tabs based on active group + bugResolver privilege
   const tabs = computed(() => {
@@ -305,19 +322,33 @@ export const App = () => {
       nextIndex > currentIndex ? 'tab-page-forward' : 'tab-page-backward'
   }
 
+  let logoutPromise = null
   async function logout() {
-    clearAllCache()
-    authStore.setActiveUser(null)
-    groupStore.setActiveGroup(null)
-    authStore.setSessionToken(null)
-    authStore.setActivePassword(null)
-    sessionStorage.removeItem('_session')
-    sessionStorage.removeItem('_lastRoute')
-    sessionStorage.removeItem('_lastGroupId')
-    // rememberMeData (name + mobile) is intentionally kept if Remember Me was enabled.
-    // It was already cleared during login when Remember Me is OFF.
-    await signOut(auth)
-    router.replace('/login')
+    if (logoutPromise) return logoutPromise
+
+    logoutPromise = (async () => {
+      stopInactivityTracking()
+      clearAllCache()
+      authStore.setActiveUser(null)
+      groupStore.setActiveGroup(null)
+      authStore.setSessionToken(null)
+      authStore.setActivePassword(null)
+      sessionStorage.removeItem('_session')
+      sessionStorage.removeItem('_lastRoute')
+      sessionStorage.removeItem('_lastGroupId')
+      // rememberMeData (name + mobile) is intentionally kept if Remember Me was enabled.
+      // It was already cleared during login when Remember Me is OFF.
+      try {
+        await signOut(auth)
+      } catch (error) {
+        console.error('Firebase sign-out failed:', error)
+      } finally {
+        await router.replace('/login')
+        logoutPromise = null
+      }
+    })()
+
+    return logoutPromise
   }
 
   // Header emits false on logout click; any other caller also uses this
@@ -404,6 +435,7 @@ export const App = () => {
         logout()
         return
       }
+      startInactivityTracking()
       verifyInterval = setInterval(async () => {
         const verified = await verifyUser(false)
         if (!verified) {
@@ -412,6 +444,7 @@ export const App = () => {
         }
       }, 5 * 60_000)
     } else {
+      stopInactivityTracking()
       if (verifyInterval) {
         clearInterval(verifyInterval)
         verifyInterval = null
@@ -420,6 +453,7 @@ export const App = () => {
   })
 
   onUnmounted(() => {
+    stopInactivityTracking()
     if (verifyInterval) clearInterval(verifyInterval)
   })
 
