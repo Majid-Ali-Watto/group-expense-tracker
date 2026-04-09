@@ -7,8 +7,20 @@ import {
   loadAppConfig,
   useRateLimit
 } from '@/composables'
-import { validateEmail, findUserByEmail, findUserByMobile } from '@/helpers'
-import { useAuthStore, useGroupStore } from '@/stores'
+import {
+  validateEmail,
+  findUserByEmail,
+  findUserByMobile,
+  USER_TAB_KEYS,
+  createUserTabSelection,
+  buildUserTabConfig,
+  hasSavedUserTabConfig,
+  hasEnabledUserTabs,
+  findUserTabConfigByUid,
+  buildUserTabConfigDocument,
+  canAccessManageTabs
+} from '@/helpers'
+import { useAuthStore, useGroupStore, useUserStore } from '@/stores'
 import { DB_NODES } from '@/constants'
 import {
   showError,
@@ -21,14 +33,18 @@ import {
 import { withTrace } from '@/utils/performance'
 import {
   auth,
+  database,
+  doc,
   sendPasswordResetEmail,
   sendEmailVerification,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  setDoc,
   updateProfile,
   setPersistence,
   browserLocalPersistence,
-  browserSessionPersistence
+  browserSessionPersistence,
+  signOut
 } from '@/firebase'
 
 export const Login = () => {
@@ -36,6 +52,7 @@ export const Login = () => {
   const router = useRouter()
   const authStore = useAuthStore()
   const groupStore = useGroupStore()
+  const userStore = useUserStore()
   const { setData, updateData } = useFireBase()
   const {
     clearLoginAttempts,
@@ -83,6 +100,10 @@ export const Login = () => {
   // Email verification state
   const lastRegisteredEmail = ref('')
   const showResendVerification = ref(false)
+  const featureSelectionDialogVisible = ref(false)
+  const isSavingFeatureSelection = ref(false)
+  const featureSelection = ref(createUserTabSelection())
+  const pendingLoginContext = ref(null)
 
   onMounted(async () => {
     // Check for a new app version and notify the user if one is being applied
@@ -134,6 +155,16 @@ export const Login = () => {
 
   async function completeLogin(payload, message) {
     clearLoginAttempts()
+    userStore.addUser({
+      uid: payload.uid,
+      name: payload.name || '',
+      mobile: payload.mobile || '',
+      email: payload.email || ''
+    })
+    userStore.setActiveUserTabAccess({
+      config: payload.userTabConfig || null,
+      accessManageTabs: canAccessManageTabs(payload.userTabConfig)
+    })
     const token = generateUUID()
     const [encryptedSession, encryptedStore] = await Promise.all([
       encryptForSession({ ...payload, token }),
@@ -148,6 +179,97 @@ export const Login = () => {
     loadAppConfig() // fire-and-forget: load remote config flags after login
     trackAnalyticsEvent('login', { method: 'password' })
     showSuccess(message || 'Login successful!')
+  }
+
+  function resetFeatureSelectionDialog() {
+    featureSelection.value = createUserTabSelection()
+    pendingLoginContext.value = null
+    featureSelectionDialogVisible.value = false
+  }
+
+  function openFeatureSelectionDialog(user, password, existingTabConfig = null) {
+    featureSelection.value = createUserTabSelection()
+    pendingLoginContext.value = {
+      uid: user.uid,
+      name: user.name || '',
+      mobile: user.mobile || '',
+      email: user.email || '',
+      password,
+      existingTabConfig
+    }
+    featureSelectionDialogVisible.value = true
+  }
+
+  watch(
+    () => featureSelection.value.shared,
+    (enabled) => {
+      if (enabled) {
+        featureSelection.value[USER_TAB_KEYS.GROUPS] = true
+        return
+      }
+
+      featureSelection.value[USER_TAB_KEYS.GROUPS] = false
+      featureSelection.value[USER_TAB_KEYS.SHARED_EXPENSES] = false
+      featureSelection.value[USER_TAB_KEYS.SHARED_LOANS] = false
+      featureSelection.value[USER_TAB_KEYS.USERS] = false
+    }
+  )
+
+  watch(
+    () => featureSelection.value.personal,
+    (enabled) => {
+      if (enabled) return
+
+      featureSelection.value[USER_TAB_KEYS.PERSONAL_EXPENSES] = false
+      featureSelection.value[USER_TAB_KEYS.PERSONAL_LOANS] = false
+    }
+  )
+
+  async function saveFeatureSelection() {
+    if (!pendingLoginContext.value || isSavingFeatureSelection.value) return
+
+    isSavingFeatureSelection.value = true
+    try {
+      const userTabConfig = buildUserTabConfig(featureSelection.value)
+      if (!hasEnabledUserTabs(userTabConfig)) {
+        return showError('Select at least one actual tab to continue.')
+      }
+      const { uid, name, mobile, email, password, existingTabConfig } =
+        pendingLoginContext.value
+      const payload = buildUserTabConfigDocument(
+        uid,
+        userTabConfig,
+        existingTabConfig
+      )
+      await setDoc(doc(database, DB_NODES.USER_TAB_CONFIGS, uid), payload, {
+        merge: true
+      })
+
+      featureSelectionDialogVisible.value = false
+      await completeLogin(
+        { uid, name, mobile, email, password, userTabConfig: payload },
+        'Login successful!'
+      )
+      pendingLoginContext.value = null
+    } catch (error) {
+      console.error('Failed to save initial tab selection:', error)
+      showError(
+        error?.code === 'permission-denied'
+          ? 'You do not have permission to save tab settings.'
+          : error?.message || 'Failed to save tab settings.'
+      )
+    } finally {
+      isSavingFeatureSelection.value = false
+    }
+  }
+
+  async function cancelFeatureSelection() {
+    resetFeatureSelectionDialog()
+    try {
+      await signOut(auth)
+    } catch {
+      // Best effort; the UI is already back on the login form.
+    }
   }
 
   // ── Main handlers ─────────────────────────────────────────────────────────
@@ -365,6 +487,12 @@ export const Login = () => {
         )
       }
 
+      const resolvedUser = {
+        ...user,
+        uid: userCredential.user.uid,
+        emailVerified: true
+      }
+
       // Hide resend verification option on successful login
       showResendVerification.value = false
 
@@ -375,9 +503,23 @@ export const Login = () => {
         localStorage.removeItem('rememberedEmail')
       }
 
+      const tabConfigDoc = await findUserTabConfigByUid(resolvedUser.uid)
+
+      if (!hasSavedUserTabConfig(tabConfigDoc)) {
+        openFeatureSelectionDialog(resolvedUser, password, tabConfigDoc)
+        return
+      }
+
       // Complete login
       await completeLogin(
-        { name: user.name, mobile: user.mobile, uid: user.uid, password },
+        {
+          name: resolvedUser.name,
+          mobile: resolvedUser.mobile,
+          email: resolvedUser.email,
+          uid: resolvedUser.uid,
+          password,
+          userTabConfig: tabConfigDoc
+        },
         'Login successful!'
       )
     } catch (error) {
@@ -531,9 +673,14 @@ export const Login = () => {
     resetEmail,
     isEmailResetLoading,
     showResendVerification,
+    featureSelection,
+    featureSelectionDialogVisible,
+    isSavingFeatureSelection,
     handleSubmit,
     handleForgotCode,
     sendResetEmail,
-    handleResendVerification
+    handleResendVerification,
+    saveFeatureSelection,
+    cancelFeatureSelection
   }
 }

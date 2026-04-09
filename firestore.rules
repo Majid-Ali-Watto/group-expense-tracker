@@ -13,6 +13,27 @@ service cloud.firestore {
       allow read, write: if request.auth != null;
     }
 
+    // User tab configs — owner can read/write their own tab flags.
+    // `accessManageTabs` is admin-controlled and must not be changed by clients.
+    match /user-tab-configs/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow create: if request.auth != null
+                    && request.auth.uid == uid
+                    && request.resource.data.uid == uid
+                    && !('accessManageTabs' in request.resource.data);
+      allow update: if request.auth != null
+                    && request.auth.uid == uid
+                    && request.resource.data.uid == uid
+                    && (
+                      !('accessManageTabs' in request.resource.data)
+                      || (
+                        'accessManageTabs' in resource.data
+                        && request.resource.data.accessManageTabs == resource.data.accessManageTabs
+                      )
+                    );
+      allow delete: if false;
+    }
+
     // Groups — any authenticated user can read and write (all subcollections)
     match /groups/{groupId} {
       allow read, write: if request.auth != null;

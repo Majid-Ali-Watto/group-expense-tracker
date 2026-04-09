@@ -59,10 +59,18 @@
           >
             {{ isBulkDeleteDirectly ? 'Delete' : 'Request Delete' }}
           </el-button>
-          <el-button size="small" plain @click="downloadSelectedExcel"
+          <el-button
+            v-if="canDownloadExcel"
+            size="small"
+            plain
+            @click="downloadSelectedExcel"
             >Excel</el-button
           >
-          <el-button size="small" plain @click="downloadSelectedPdf"
+          <el-button
+            v-if="canDownloadPdf"
+            size="small"
+            plain
+            @click="downloadSelectedPdf"
             >PDF</el-button
           >
           <span class="bulk-count flex-shrink-0"
@@ -565,10 +573,18 @@
 
   <!-- Download buttons -->
   <div v-if="isDownloadAvailable" class="mt-2 flex justify-between">
-    <GenericButton size="small" type="" @click="downloadExcelData"
+    <GenericButton
+      v-if="canDownloadExcel"
+      size="small"
+      type=""
+      @click="downloadExcelData"
       >Download Excel</GenericButton
     >
-    <GenericButton size="small" type="success" @click="downloadPdfData"
+    <GenericButton
+      v-if="canDownloadPdf"
+      size="small"
+      type="success"
+      @click="downloadPdfData"
       >Download PDF</GenericButton
     >
   </div>
@@ -650,6 +666,8 @@ const {
   deleteMode,
   activeTabComponent,
   dialogComponentProps,
+  canDownloadExcel,
+  canDownloadPdf,
   isDownloadAvailable,
   formatAmount,
   dialogWidth,

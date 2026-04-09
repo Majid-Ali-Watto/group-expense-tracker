@@ -11,44 +11,112 @@
  *   - false → provider is explicitly disabled; never used, even as fallback
  */
 
-import { database, doc, getDoc } from '@/firebase'
+import { reactive } from 'vue'
+import { database, doc, onSnapshot } from '@/firebase'
 import { DB_NODES } from '@/constants'
 import { setCacheEnabled } from '@/utils/queryCache'
 
 // Module-level singleton — loaded once per session, shared everywhere
-const _config = {
+const _config = reactive({
   storage: null, // null = not yet loaded (use defaults)
-  app: null
-}
+  app: null,
+  downloads: null,
+  manageTabs: null,
+  bugs: null
+})
 
 let _loaded = false
+let _unsubscribers = []
+
+function resetConfigState() {
+  _config.storage = null
+  _config.app = null
+  _config.downloads = null
+  _config.manageTabs = null
+  _config.bugs = null
+  setCacheEnabled(true)
+}
 
 /**
  * Load app config from Firestore.
  * Called once after successful login. Subsequent calls are no-ops.
- * Reads two documents in parallel:
+ * Subscribes to config documents in real time:
  *   configs/storage  → { cloudinary, firebase }  (storage provider flags)
  *   configs/cache    → { isCached }               (feature flags)
+ *   configs/downloads → { pdf, excel }            (download button flags)
+ *   configs/manage-tabs → { showManageTab }       (manage-tabs visibility)
+ *   configs/bugs → { report }                     (bug-report visibility)
  */
 export async function loadAppConfig() {
   if (_loaded) return
   _loaded = true
-  try {
-    const [storageSnap, appSnap] = await Promise.all([
-      getDoc(doc(database, DB_NODES.CONFIGS, 'storage')),
-      getDoc(doc(database, DB_NODES.CONFIGS, 'cache'))
-    ])
-    _config.storage = storageSnap.exists() ? storageSnap.data() : {}
-    _config.app = appSnap.exists() ? appSnap.data() : {}
-  } catch {
-    // Non-critical — network error or permissions issue; fall back to defaults
-    _config.storage = {}
-    _config.app = {}
-  }
 
-  // Apply cache flag immediately so all subsequent reads respect it
-  // Default: cache enabled (true) unless explicitly set to false
-  setCacheEnabled(_config.app?.isCached !== false)
+  const listeners = [
+    {
+      key: 'storage',
+      ref: doc(database, DB_NODES.CONFIGS, 'storage'),
+      onData: (snap) => {
+        _config.storage = snap.exists() ? snap.data() : {}
+      },
+      onError: () => {
+        _config.storage = {}
+      }
+    },
+    {
+      key: 'app',
+      ref: doc(database, DB_NODES.CONFIGS, 'cache'),
+      onData: (snap) => {
+        _config.app = snap.exists() ? snap.data() : {}
+        // Default: cache enabled (true) unless explicitly set to false
+        setCacheEnabled(_config.app?.isCached !== false)
+      },
+      onError: () => {
+        _config.app = {}
+        setCacheEnabled(true)
+      }
+    },
+    {
+      key: 'downloads',
+      ref: doc(database, DB_NODES.CONFIGS, 'downloads'),
+      onData: (snap) => {
+        _config.downloads = snap.exists() ? snap.data() : {}
+      },
+      onError: () => {
+        _config.downloads = {}
+      }
+    },
+    {
+      key: 'manageTabs',
+      ref: doc(database, DB_NODES.CONFIGS, 'manage-tabs'),
+      onData: (snap) => {
+        _config.manageTabs = snap.exists() ? snap.data() : {}
+      },
+      onError: () => {
+        _config.manageTabs = {}
+      }
+    },
+    {
+      key: 'bugs',
+      ref: doc(database, DB_NODES.CONFIGS, 'bugs'),
+      onData: (snap) => {
+        _config.bugs = snap.exists() ? snap.data() : {}
+      },
+      onError: () => {
+        _config.bugs = {}
+      }
+    }
+  ]
+
+  _unsubscribers = listeners.map(({ ref, onData, onError }) =>
+    onSnapshot(ref, onData, onError)
+  )
+}
+
+export function stopAppConfigSync() {
+  _unsubscribers.forEach((unsubscribe) => unsubscribe?.())
+  _unsubscribers = []
+  _loaded = false
+  resetConfigState()
 }
 
 /**
@@ -68,5 +136,39 @@ export function getStorageConfig() {
   return {
     cloudinary: cfg.cloudinary !== false, // absent or true → enabled
     firebase: cfg.firebase !== false // absent or true → enabled
+  }
+}
+
+export function getDownloadConfig() {
+  const cfg = _config.downloads
+  if (!cfg) {
+    return { pdf: true, excel: true }
+  }
+
+  return {
+    pdf: cfg.pdf !== false,
+    excel: cfg.excel !== false
+  }
+}
+
+export function getManageTabsConfig() {
+  const cfg = _config.manageTabs
+  if (!cfg) {
+    return { showManageTab: true }
+  }
+
+  return {
+    showManageTab: cfg.showManageTab !== false
+  }
+}
+
+export function getBugReportConfig() {
+  const cfg = _config.bugs
+  if (!cfg) {
+    return { report: true }
+  }
+
+  return {
+    report: cfg.report !== false
   }
 }

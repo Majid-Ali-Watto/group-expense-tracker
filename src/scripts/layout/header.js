@@ -1,20 +1,51 @@
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { database, doc, deleteDoc, updateDoc, deleteField } from '@/firebase'
+import {
+  database,
+  doc,
+  deleteDoc,
+  updateDoc,
+  deleteField,
+  setDoc
+} from '@/firebase'
+import { getManageTabsConfig, getBugReportConfig } from '@/composables'
 import { DB_NODES } from '@/constants'
 import { PUBLIC_NAV_LINKS } from '@/constants'
 import { confirmAction } from '@/utils/confirmAction'
 import { showError, showSuccess } from '@/utils/showAlerts'
-import { useDataStore } from '@/stores'
+import { useAuthStore, useDataStore, useUserStore } from '@/stores'
+import {
+  USER_TAB_KEYS,
+  createUserTabSelection,
+  createUserTabSelectionFromConfig,
+  buildUserTabConfig,
+  hasEnabledUserTabs,
+  buildUserTabConfigDocument,
+  canAccessManageTabs
+} from '@/helpers'
 
 export const Header = (props, emit) => {
   const route = useRoute()
   const router = useRouter()
+  const authStore = useAuthStore()
+  const userStore = useUserStore()
   const notifVisible = ref(false)
   const showHelp = ref(false)
   const showBugReport = ref(false)
+  const showManageTabs = ref(false)
+  const isSavingTabs = ref(false)
+  const tabSelection = ref(createUserTabSelection())
   const bugReportView = ref('form') // 'form' | 'my-reports'
   const bugReportOpenId = ref(null)
+  const canShowManageTabs = computed(
+    () =>
+      props.loggedIn &&
+      getManageTabsConfig().showManageTab &&
+      userStore.canActiveUserManageTabs
+  )
+  const canShowBugReport = computed(
+    () => props.loggedIn && getBugReportConfig().report
+  )
   const isPublicPage = computed(
     () =>
       !props.loggedIn &&
@@ -28,6 +59,43 @@ export const Header = (props, emit) => {
       bugReportOpenId.value = null
     }
   })
+
+  watch(canShowBugReport, (allowed) => {
+    if (!allowed && showBugReport.value) {
+      showBugReport.value = false
+    }
+  })
+
+  watch(canShowManageTabs, (allowed) => {
+    if (!allowed && showManageTabs.value) {
+      closeManageTabs()
+    }
+  })
+
+  watch(
+    () => tabSelection.value.shared,
+    (enabled) => {
+      if (enabled) {
+        tabSelection.value[USER_TAB_KEYS.GROUPS] = true
+        return
+      }
+
+      tabSelection.value[USER_TAB_KEYS.GROUPS] = false
+      tabSelection.value[USER_TAB_KEYS.SHARED_EXPENSES] = false
+      tabSelection.value[USER_TAB_KEYS.SHARED_LOANS] = false
+      tabSelection.value[USER_TAB_KEYS.USERS] = false
+    }
+  )
+
+  watch(
+    () => tabSelection.value.personal,
+    (enabled) => {
+      if (enabled) return
+
+      tabSelection.value[USER_TAB_KEYS.PERSONAL_EXPENSES] = false
+      tabSelection.value[USER_TAB_KEYS.PERSONAL_LOANS] = false
+    }
+  )
 
   function setLoggedInStatus() {
     emit('click-log', false)
@@ -153,11 +221,66 @@ export const Header = (props, emit) => {
     router.push(path)
   }
 
+  function openManageTabs() {
+    if (!canShowManageTabs.value) return
+
+    tabSelection.value = createUserTabSelectionFromConfig(
+      userStore.getActiveUserTabConfig
+    )
+    showManageTabs.value = true
+  }
+
+  function closeManageTabs() {
+    showManageTabs.value = false
+    tabSelection.value = createUserTabSelection()
+  }
+
+  async function saveManageTabs() {
+    const uid = authStore.getActiveUser
+    if (!uid || isSavingTabs.value) return
+
+    isSavingTabs.value = true
+    try {
+      const userTabConfig = buildUserTabConfig(tabSelection.value)
+      if (!hasEnabledUserTabs(userTabConfig)) {
+        return showError('Select at least one actual tab to continue.')
+      }
+      const payload = buildUserTabConfigDocument(
+        uid,
+        userTabConfig,
+        userStore.getActiveUserTabConfig
+      )
+      await setDoc(doc(database, DB_NODES.USER_TAB_CONFIGS, uid), payload, {
+        merge: true
+      })
+      userStore.setActiveUserTabAccess({
+        config: payload,
+        accessManageTabs: canAccessManageTabs(payload)
+      })
+      showSuccess('Tabs updated successfully.')
+      showManageTabs.value = false
+    } catch (error) {
+      console.error('Failed to update tabs:', error)
+      showError(
+        error?.code === 'permission-denied'
+          ? 'You do not have permission to update tab settings.'
+          : error?.message || 'Failed to update tab settings.'
+      )
+    } finally {
+      isSavingTabs.value = false
+    }
+  }
+
   return {
     route,
     notifVisible,
     showHelp,
     showBugReport,
+    canShowBugReport,
+    showManageTabs,
+    canShowManageTabs,
+    isSavingTabs,
+    tabSelection,
     bugReportView,
     bugReportOpenId,
     isPublicPage,
@@ -168,6 +291,9 @@ export const Header = (props, emit) => {
     navigateTo,
     shareCurrentUrl,
     handleNavigate,
+    openManageTabs,
+    closeManageTabs,
+    saveManageTabs,
     notifsByCategory,
     notifCategories
   }

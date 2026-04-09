@@ -6,14 +6,21 @@ import {
   useGroupStore,
   useUserStore
 } from '@/stores'
-import { loadAppConfig } from '@/composables/useAppConfig'
+import { loadAppConfig, stopAppConfigSync } from '@/composables/useAppConfig'
 import useFireBase from '@/composables/useFirebase'
 import { useGlobalNotifications } from '@/composables/useGlobalNotifications'
 import { useInactivityLogout } from '@/composables/useInactivityLogout'
 import { DB_NODES } from '@/constants'
 import { tabs as allTabs, Tabs } from '@/assets'
 import { TAB_ROUTES, ROUTE_TABS, GROUP_TABS } from '@/router'
-import { findUserByEmail } from '@/helpers'
+import {
+  findUserByEmail,
+  canAccessTab,
+  getAccessibleTabs,
+  getDefaultAccessibleTab,
+  findUserTabConfigByUid,
+  canAccessManageTabs
+} from '@/helpers'
 import {
   setAnalyticsIdentity,
   clearAnalyticsIdentity,
@@ -35,8 +42,10 @@ import {
   onAuthStateChanged,
   signOut,
   collection,
+  doc,
   database,
   getDocs,
+  onSnapshot,
   query,
   where
 } from '@/firebase'
@@ -58,6 +67,83 @@ export const App = () => {
   const formatInactivityLabel = (timeoutMs) => {
     const minutes = Math.round(timeoutMs / 60_000)
     return minutes === 1 ? '1 minute' : `${minutes} minutes`
+  }
+
+  const getActiveUserProfile = () => {
+    const uid = authStore.getActiveUser
+    return uid ? userStore.getUserByUid(uid) : null
+  }
+  let activeUserTabConfigUnsubscribe = null
+
+  function stopActiveUserTabConfigSync() {
+    if (activeUserTabConfigUnsubscribe) {
+      activeUserTabConfigUnsubscribe()
+      activeUserTabConfigUnsubscribe = null
+    }
+  }
+
+  function startActiveUserTabConfigSync(uid) {
+    stopActiveUserTabConfigSync()
+    if (!uid) {
+      userStore.clearActiveUserTabAccess()
+      return
+    }
+
+    activeUserTabConfigUnsubscribe = onSnapshot(
+      doc(database, DB_NODES.USER_TAB_CONFIGS, uid),
+      (snap) => {
+        const config = snap.exists() ? { id: snap.id, ...snap.data() } : null
+        userStore.setActiveUserTabAccess({
+          config,
+          accessManageTabs: canAccessManageTabs(config)
+        })
+      },
+      () => {
+        userStore.setActiveUserTabAccess({
+          config: null,
+          accessManageTabs: true
+        })
+      }
+    )
+  }
+
+  function buildPathForTab(tab, groupId = groupStore.getActiveGroup) {
+    return GROUP_TABS.has(tab) && groupId
+      ? `${TAB_ROUTES[tab]}/${groupId}`
+      : TAB_ROUTES[tab]
+  }
+
+  function canAccessPath(path, userTabConfig, groupId = groupStore.getActiveGroup) {
+    if (!path || typeof path !== 'string' || !path.startsWith('/')) return false
+
+    const basePath = '/' + path.split('/')[1].split('?')[0]
+    const tab = ROUTE_TABS[basePath]
+
+    if (basePath === '/shared-groups') {
+      return canAccessTab(Tabs.GROUPS, userTabConfig)
+    }
+
+    if (!tab) return false
+
+    return canAccessTab(tab, userTabConfig, {
+      hasActiveGroup: GROUP_TABS.has(tab) ? !!groupId : true
+    })
+  }
+
+  function getDefaultAccessiblePath(
+    userTabConfig = userStore.getActiveUserTabConfig,
+    groupId = groupStore.getActiveGroup
+  ) {
+    const tab = getDefaultAccessibleTab(userTabConfig, {
+      hasActiveGroup: !!groupId
+    })
+    return buildPathForTab(tab, groupId)
+  }
+
+  function resolveAccessiblePath(path, userTabConfig, groupId = groupStore.getActiveGroup) {
+    return canAccessPath(path, userTabConfig, groupId)
+      ? path
+      : getDefaultAccessiblePath(userTabConfig, groupId)
   }
 
   // Theme management - Initialize immediately
@@ -142,6 +228,7 @@ export const App = () => {
         if (!userData?.emailVerified) return
 
         const uid = userData.uid
+        const userTabConfig = await findUserTabConfigByUid(uid)
         const token = generateUUID()
         const dataForEncryption = {
           name: userData.name,
@@ -159,6 +246,10 @@ export const App = () => {
         authStore.setSessionToken(encryptedStore)
         authStore.setActivePassword('')
         loadAppConfig() // fire-and-forget: load remote config flags on auto-login
+        userStore.setActiveUserTabAccess({
+          config: userTabConfig,
+          accessManageTabs: canAccessManageTabs(userTabConfig)
+        })
 
         // Populate the active user immediately so displayName is never "Guest".
         userStore.addUser({
@@ -166,7 +257,8 @@ export const App = () => {
           mobile: userData.mobile || '',
           name: userData.name || '',
           email: userData.email || '',
-          maskedMobile: maskMobile(userData.mobile || '')
+          maskedMobile: maskMobile(userData.mobile || ''),
+          bugResolver: userData.bugResolver === true
         })
 
         // Restore last route — this is a page-refresh, not a fresh login.
@@ -209,8 +301,8 @@ export const App = () => {
           keepCurrentProtectedRoute ||
           (savedBasePath && validAppRoutes.has(savedBasePath)
             ? savedRoute
-            : '/groups')
-        router.replace(destination)
+            : null)
+        router.replace(resolveAccessiblePath(destination, userTabConfig))
       }).catch((e) => {
         console.error('Auto session restore failed:', e)
       })
@@ -245,15 +337,12 @@ export const App = () => {
   // Computed tabs based on active group + bugResolver privilege
   const tabs = computed(() => {
     const activeGroup = groupStore.getActiveGroup
-    const uid = authStore.getActiveUser
-    const user = uid ? userStore.getUserByUid(uid) : null
+    const user = getActiveUserProfile()
     const isBugResolver = user?.bugResolver === true
 
-    let base = activeGroup
-      ? allTabs
-      : allTabs.filter(
-          (tab) => tab !== Tabs.SHARED_EXPENSES && tab !== Tabs.SHARED_LOANS
-        )
+    let base = getAccessibleTabs(userStore.getActiveUserTabConfig, {
+      hasActiveGroup: !!activeGroup
+    }).filter((tab) => allTabs.includes(tab))
 
     if (isBugResolver && !base.includes(Tabs.BUG_RESOLVER)) {
       base = [...base, Tabs.BUG_RESOLVER]
@@ -265,6 +354,9 @@ export const App = () => {
   const { read } = useFireBase()
   const displayName = computed(
     () => userStore.getUserByUid(authStore.getActiveUser)?.name || 'Guest'
+  )
+  const activeUserTabConfig = computed(
+    () => userStore.getActiveUserTabConfig
   )
   const activeGroup = computed(
     () => groupStore.getGroupById(groupStore.getActiveGroup)?.name
@@ -302,6 +394,19 @@ export const App = () => {
     }
   )
 
+  watch(
+    [loggedIn, activeUserTabConfig, () => route.fullPath],
+    ([isLoggedIn, userTabConfig, currentPath]) => {
+      if (!isLoggedIn || !currentPath) return
+      if (canAccessPath(currentPath, userTabConfig)) return
+
+      const fallbackPath = getDefaultAccessiblePath(userTabConfig)
+      if (currentPath !== fallbackPath) {
+        router.replace(fallbackPath)
+      }
+    }
+  )
+
   // Persist the active group separately so it survives page refresh on any tab.
   // This is a dedicated watcher rather than part of the route watcher because
   // the route watcher fires before Pinia is hydrated on reload — reading
@@ -334,6 +439,9 @@ export const App = () => {
 
     logoutPromise = (async () => {
       stopInactivityTracking()
+      stopActiveUserTabConfigSync()
+      userStore.clearActiveUserTabAccess()
+      stopAppConfigSync()
       await trackAnalyticsEvent('logout', { reason })
       clearAllCache()
       authStore.setActiveUser(null)
@@ -396,11 +504,15 @@ export const App = () => {
 
   // Function to handle tab changes — verifies user on every tab switch
   async function handleActiveTab(tab) {
+    if (!tabs.value.includes(tab)) {
+      tabBarKey.value += 1
+      return
+    }
+
     const previousTab =
       ROUTE_TABS['/' + route.path.split('/')[1]] || Tabs.GROUPS
     const gid = groupStore.getActiveGroup
-    const path =
-      GROUP_TABS.has(tab) && gid ? `${TAB_ROUTES[tab]}/${gid}` : TAB_ROUTES[tab]
+    const path = buildPathForTab(tab, gid)
     const previousRoute = route.fullPath
     await router.push(path)
 
@@ -423,6 +535,7 @@ export const App = () => {
   let verifyInterval = null
   watch(loggedIn, async (isLoggedIn) => {
     if (isLoggedIn) {
+      startActiveUserTabConfigSync(authStore.getActiveUser)
       // Fresh login from /login or /register → navigate immediately so the
       // login form is replaced at once; verification runs in the background.
       if (route.path === '/login' || route.path === '/register') {
@@ -430,9 +543,11 @@ export const App = () => {
         sessionStorage.removeItem('_lastGroupId')
         const redirectTo = route.query.redirect
         router.replace(
-          typeof redirectTo === 'string' && redirectTo.startsWith('/')
-            ? redirectTo
-            : '/groups'
+          resolveAccessiblePath(
+            typeof redirectTo === 'string' && redirectTo.startsWith('/')
+              ? redirectTo
+              : null
+          )
         )
       }
       // Background check — catches anyone who faked store/sessionStorage values
@@ -452,6 +567,8 @@ export const App = () => {
         }
       }, 5 * 60_000)
     } else {
+      stopActiveUserTabConfigSync()
+      userStore.clearActiveUserTabAccess()
       clearAnalyticsIdentity()
       stopInactivityTracking()
       if (verifyInterval) {
@@ -462,6 +579,7 @@ export const App = () => {
   })
 
   onUnmounted(() => {
+    stopActiveUserTabConfigSync()
     stopInactivityTracking()
     if (verifyInterval) clearInterval(verifyInterval)
   })
@@ -479,9 +597,10 @@ export const App = () => {
   }
 
   function navigateToTab(tab, groupId) {
+    if (!tabs.value.includes(tab)) return
+
     const gid = groupId || groupStore.getActiveGroup
-    const path =
-      GROUP_TABS.has(tab) && gid ? `${TAB_ROUTES[tab]}/${gid}` : TAB_ROUTES[tab]
+    const path = buildPathForTab(tab, gid)
     const previousRoute = route.fullPath
 
     router.push(path).then(() => {

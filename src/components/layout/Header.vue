@@ -104,7 +104,7 @@
         <div class="hidden md:flex items-center gap-2">
           <!-- Bug Report — only when logged in -->
           <button
-            v-if="loggedIn"
+            v-if="canShowBugReport"
             class="theme-btn"
             @click="showBugReport = true"
             title="Report a Bug"
@@ -172,6 +172,17 @@
             @click="handleNetPosition"
           >
             Expenses Summary
+          </el-button>
+
+          <el-button
+            v-if="canShowManageTabs"
+            type="primary"
+            plain
+            size="small"
+            class="logout-btn"
+            @click="openManageTabs"
+          >
+            Manage Tabs
           </el-button>
 
           <!-- Logout — only when logged in -->
@@ -253,7 +264,10 @@
               </el-dropdown-item>
 
               <!-- Bug Report — only when logged in -->
-              <el-dropdown-item v-if="loggedIn" @click="showBugReport = true">
+              <el-dropdown-item
+                v-if="canShowBugReport"
+                @click="showBugReport = true"
+              >
                 <div class="flex items-center gap-3">
                   <AlertTriangleIcon class="w-5 h-5 menu-icon" />
                   <span>Report a Bug</span>
@@ -276,6 +290,12 @@
                     ><DataAnalysis
                   /></el-icon>
                   <span>Expenses Summary</span>
+                </div>
+              </el-dropdown-item>
+              <el-dropdown-item v-if="canShowManageTabs" @click="openManageTabs">
+                <div class="flex items-center gap-3">
+                  <el-icon class="menu-icon" :size="20"><Setting /></el-icon>
+                  <span>Manage Tabs</span>
                 </div>
               </el-dropdown-item>
               <!-- Theme Toggle -->
@@ -328,10 +348,28 @@
       :open-bug-id="bugReportOpenId"
     />
   </el-dialog>
+
+  <UserTabConfigDialog
+    :visible="showManageTabs"
+    :selection="tabSelection"
+    :loading="isSavingTabs"
+    title="Manage Your Tabs"
+    confirm-text="Save Changes"
+    cancel-text="Cancel"
+    :show-close="true"
+    @update:visible="
+      (value) => {
+        if (!value) closeManageTabs()
+      }
+    "
+    @update:selection="tabSelection = $event"
+    @confirm="saveManageTabs"
+    @cancel="closeManageTabs"
+  />
 </template>
 
 <script setup>
-import { SwitchButton, DataAnalysis } from '@element-plus/icons-vue'
+import { SwitchButton, DataAnalysis, Setting } from '@element-plus/icons-vue'
 import {
   AlertTriangleIcon,
   BellIcon,
@@ -351,6 +389,9 @@ const HelpDialog = loadAsyncComponent(
 )
 const BugReportPage = loadAsyncComponent(
   () => import('../bug-report/BugReport.vue')
+)
+const UserTabConfigDialog = loadAsyncComponent(
+  () => import('../generic-components/UserTabConfigDialog.vue')
 )
 
 const props = defineProps({
@@ -376,6 +417,11 @@ const {
   notifVisible,
   showHelp,
   showBugReport,
+  canShowBugReport,
+  showManageTabs,
+  canShowManageTabs,
+  isSavingTabs,
+  tabSelection,
   bugReportView,
   bugReportOpenId,
   isPublicPage,
@@ -385,6 +431,9 @@ const {
   navigateTo,
   shareCurrentUrl,
   handleNavigate,
+  openManageTabs,
+  closeManageTabs,
+  saveManageTabs,
   notifsByCategory,
   notifCategories
 } = Header(props, emit)

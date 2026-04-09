@@ -21,6 +21,7 @@ import NoGroupFound from './NoGroupFound.vue'
 import NotificationsForCurrentUser from './NotificationsForCurrentUser.vue'
 import ReceiptUploadField from './ReceiptUploadField.vue'
 import ShowPaymentDetails from './ShowPaymentDetails.vue'
+import UserTabConfigDialog from './UserTabConfigDialog.vue'
 import WelcomeBanner from './WelcomeBanner.vue'
 import YourPositionInGroup from './YourPositionInGroup.vue'
 
@@ -51,6 +52,7 @@ export {
   NotificationsForCurrentUser,
   ReceiptUploadField,
   ShowPaymentDetails,
+  UserTabConfigDialog,
   WelcomeBanner,
   YourPositionInGroup
 }

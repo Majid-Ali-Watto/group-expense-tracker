@@ -47,6 +47,23 @@
         @update:email="resetEmail = $event"
         @send="sendResetEmail"
       />
+
+      <UserTabConfigDialog
+        :visible="featureSelectionDialogVisible"
+        :selection="featureSelection"
+        :loading="isSavingFeatureSelection"
+        title="Choose Your Tabs"
+        confirm-text="Continue"
+        cancel-text="Sign out"
+        @update:visible="
+          (value) => {
+            if (!value) cancelFeatureSelection()
+          }
+        "
+        @update:selection="featureSelection = $event"
+        @confirm="saveFeatureSelection"
+        @cancel="cancelFeatureSelection"
+      />
     </div>
   </div>
 </template>
@@ -64,6 +81,9 @@ import {
 const PasswordResetDialog = loadAsyncComponent(
   () => import('./components/PasswordResetDialog.vue')
 )
+const UserTabConfigDialog = loadAsyncComponent(
+  () => import('../generic-components/UserTabConfigDialog.vue')
+)
 
 const {
   form,
@@ -74,10 +94,15 @@ const {
   resetEmail,
   isEmailResetLoading,
   showResendVerification,
+  featureSelection,
+  featureSelectionDialogVisible,
+  isSavingFeatureSelection,
   handleSubmit,
   handleForgotCode,
   sendResetEmail,
-  handleResendVerification
+  handleResendVerification,
+  saveFeatureSelection,
+  cancelFeatureSelection
 } = Login()
 
 function updateRememberMe(value) {

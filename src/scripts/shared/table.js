@@ -31,7 +31,7 @@ import {
 import { Tabs } from '@/assets'
 import { database, writeBatch, doc } from '@/firebase'
 import { DB_NODES } from '@/constants'
-import { useDebouncedRef } from '@/composables'
+import { useDebouncedRef, getDownloadConfig } from '@/composables'
 import { useRoute, useRouter } from 'vue-router'
 
 const TABLE_HEADER_CONFIG = {
@@ -156,12 +156,23 @@ export const Table = (props) => {
     return base
   })
 
-  const isDownloadAvailable = ref(props.rows.length > 0)
+  const hasDownloadRows = ref(props.rows.length > 0)
+  const canDownloadExcel = computed(() => {
+    const config = getDownloadConfig()
+    return hasDownloadRows.value && config.excel
+  })
+  const canDownloadPdf = computed(() => {
+    const config = getDownloadConfig()
+    return hasDownloadRows.value && config.pdf
+  })
+  const isDownloadAvailable = computed(
+    () => canDownloadExcel.value || canDownloadPdf.value
+  )
 
   watch(
     () => props.rows,
     (newRows) => {
-      isDownloadAvailable.value = newRows.length > 0
+      hasDownloadRows.value = newRows.length > 0
     },
     { immediate: true, deep: true }
   )
@@ -947,6 +958,7 @@ export const Table = (props) => {
   }
 
   function downloadPdfData() {
+    if (!canDownloadPdf.value) return
     if (!props.dataRef) return
     const printRows = props.rows
     if (!headers.value.length || !printRows.length) return
@@ -962,6 +974,7 @@ export const Table = (props) => {
   }
 
   function downloadExcelData() {
+    if (!canDownloadExcel.value) return
     downloadExcel(
       props.rows,
       getCurrentMonth() + `_${props.downloadTitle}_`,
@@ -1149,6 +1162,7 @@ export const Table = (props) => {
   }
 
   function downloadSelectedExcel() {
+    if (!canDownloadExcel.value) return
     if (!selectedRows.value.length) return
     downloadExcel(
       selectedRows.value,
@@ -1158,6 +1172,7 @@ export const Table = (props) => {
   }
 
   function downloadSelectedPdf() {
+    if (!canDownloadPdf.value) return
     if (!selectedRows.value.length || !props.dataRef) return
     if (!headers.value.length) return
 
@@ -1470,6 +1485,8 @@ export const Table = (props) => {
     childRef,
     activeTabComponent,
     dialogComponentProps,
+    canDownloadExcel,
+    canDownloadPdf,
     isDownloadAvailable,
     formatAmount,
     dialogWidth,

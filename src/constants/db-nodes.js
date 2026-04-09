@@ -5,6 +5,7 @@ export const DB_NODES = {
   PERSONAL_EXPENSES: 'personal-expenses',
   PERSONAL_LOANS: 'personal-loans',
   USERS: 'users',
+  USER_TAB_CONFIGS: 'user-tab-configs',
   GROUPS: 'groups',
   SALARIES: 'salaries',
   BUG_REPORTS: 'bug-reports',

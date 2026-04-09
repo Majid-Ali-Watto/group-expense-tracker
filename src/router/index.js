@@ -4,6 +4,15 @@ import { useAuthStore } from '../stores/authStore'
 import { useUserStore } from '../stores/userStore'
 import { Tabs } from '../assets/enums'
 import { SEO_PAGES } from '@/constants'
+import {
+  findUserByEmail,
+  canAccessTab,
+  getDefaultAccessibleTab,
+  findUserTabConfigByUid,
+  canAccessManageTabs
+} from '@/helpers'
+import { maskMobile } from '@/utils/maskMobile'
+import { auth } from '@/firebase'
 
 // Standard dynamic imports — do NOT use loadAsyncComponent here.
 // loadAsyncComponent sets suspensible:false which conflicts with Vue Router's
@@ -109,23 +118,43 @@ const routes = [
   {
     path: '/groups',
     component: Groups,
-    meta: { tab: Tabs.GROUPS, requiresAuth: true, seo: SEO_PAGES.app }
+    meta: {
+      tab: Tabs.GROUPS,
+      requiresAuth: true,
+      requiresUserTab: Tabs.GROUPS,
+      seo: SEO_PAGES.app
+    }
   },
   {
     // groupId is part of the path so it survives page refresh and is shareable
     path: '/shared-expenses/:groupId',
     component: SharedExpenses,
-    meta: { tab: Tabs.SHARED_EXPENSES, requiresAuth: true, seo: SEO_PAGES.app }
+    meta: {
+      tab: Tabs.SHARED_EXPENSES,
+      requiresAuth: true,
+      requiresUserTab: Tabs.SHARED_EXPENSES,
+      seo: SEO_PAGES.app
+    }
   },
   {
     path: '/shared-loans/:groupId',
     component: SharedLoansGuard,
-    meta: { tab: Tabs.SHARED_LOANS, requiresAuth: true, seo: SEO_PAGES.app }
+    meta: {
+      tab: Tabs.SHARED_LOANS,
+      requiresAuth: true,
+      requiresUserTab: Tabs.SHARED_LOANS,
+      seo: SEO_PAGES.app
+    }
   },
   {
     path: '/users',
     component: Users,
-    meta: { tab: Tabs.USERS, requiresAuth: true, seo: SEO_PAGES.app }
+    meta: {
+      tab: Tabs.USERS,
+      requiresAuth: true,
+      requiresUserTab: Tabs.USERS,
+      seo: SEO_PAGES.app
+    }
   },
   {
     path: '/personal-expenses',
@@ -133,13 +162,19 @@ const routes = [
     meta: {
       tab: Tabs.PERSONAL_EXPENSES,
       requiresAuth: true,
+      requiresUserTab: Tabs.PERSONAL_EXPENSES,
       seo: SEO_PAGES.app
     }
   },
   {
     path: '/personal-loans',
     component: PersonalLoans,
-    meta: { tab: Tabs.PERSONAL_LOANS, requiresAuth: true, seo: SEO_PAGES.app }
+    meta: {
+      tab: Tabs.PERSONAL_LOANS,
+      requiresAuth: true,
+      requiresUserTab: Tabs.PERSONAL_LOANS,
+      seo: SEO_PAGES.app
+    }
   },
   {
     path: '/bug-reports',
@@ -154,7 +189,11 @@ const routes = [
   {
     path: '/shared-groups',
     component: SharedGroups,
-    meta: { requiresAuth: true, seo: SEO_PAGES.app }
+    meta: {
+      requiresAuth: true,
+      requiresUserTab: Tabs.GROUPS,
+      seo: SEO_PAGES.app
+    }
   },
   // Catch-all → redirect based on session
   {
@@ -173,33 +212,109 @@ const router = createRouter({
   }
 })
 
-router.beforeEach((to) => {
+async function getCurrentUserProfile() {
+  const authStore = useAuthStore()
+  const userStore = useUserStore()
+  const cachedUser = authStore.getActiveUser
+    ? userStore.getUserByUid(authStore.getActiveUser)
+    : null
+
+  if (cachedUser) return cachedUser
+
+  const currentEmail = auth.currentUser?.email?.trim()?.toLowerCase()
+  if (!currentEmail) return null
+
+  const user = await findUserByEmail(currentEmail)
+  if (!user) return null
+
+  authStore.setActiveUser(user.uid)
+  userStore.addUser({
+    uid: user.uid,
+    mobile: user.mobile || '',
+    name: user.name || '',
+    email: user.email || '',
+    maskedMobile: maskMobile(user.mobile || ''),
+    bugResolver: user.bugResolver === true
+  })
+
+  return userStore.getUserByUid(user.uid) || user
+}
+
+async function getCurrentUserTabConfig(uid) {
+  const userStore = useUserStore()
+  if (userStore.isActiveUserTabConfigLoaded) {
+    return userStore.getActiveUserTabConfig
+  }
+
+  const config = await findUserTabConfigByUid(uid)
+  userStore.setActiveUserTabAccess({
+    config,
+    accessManageTabs: canAccessManageTabs(config)
+  })
+  return config
+}
+
+function getFallbackPath(userTabConfig, groupId = null) {
+  const tab = getDefaultAccessibleTab(userTabConfig, {
+    hasActiveGroup: !!groupId
+  })
+
+  return GROUP_TABS.has(tab) && groupId
+    ? `${TAB_ROUTES[tab]}/${groupId}`
+    : TAB_ROUTES[tab]
+}
+
+router.beforeEach(async (to) => {
   const session = hasSession()
 
-  if (to.path === '/' && session) return '/groups'
+  if (to.path === '/' && session) {
+    const user = await getCurrentUserProfile()
+    const tabConfig = await getCurrentUserTabConfig(user?.uid)
+    return getFallbackPath(tabConfig, useGroupStore().getActiveGroup)
+  }
 
-  // Logged-in users hitting /login or /register → go to app
-  if (to.meta.requiresGuest && session) return '/groups'
+  if (to.meta.requiresGuest && session) {
+    const user = await getCurrentUserProfile()
+    const tabConfig = await getCurrentUserTabConfig(user?.uid)
+    return getFallbackPath(tabConfig, useGroupStore().getActiveGroup)
+  }
 
-  // Unauthenticated users hitting any app route → redirect to login,
-  // preserving the intended destination so it can be restored after login
   if (to.meta.requiresAuth && !session) {
     return { path: '/login', query: { redirect: to.fullPath } }
   }
 
+  const groupStore = useGroupStore()
+
   // Group-gated routes — set active group from URL param.
   // Non-member access is handled inside the route component (GroupAccessGuard).
   if (to.params.groupId) {
-    const groupStore = useGroupStore()
     groupStore.setActiveGroup(to.params.groupId)
   }
 
-  // Admin-only routes
-  if (to.meta.requiresBugResolver) {
-    const authStore = useAuthStore()
-    const userStore = useUserStore()
-    const user = userStore.getUserByUid(authStore.getActiveUser)
-    if (!user?.bugResolver) return '/groups'
+  if (to.meta.requiresBugResolver || to.meta.requiresUserTab) {
+    const user = await getCurrentUserProfile()
+    const tabConfig = await getCurrentUserTabConfig(user?.uid)
+    const fallbackPath = getFallbackPath(
+      tabConfig,
+      to.params.groupId || groupStore.getActiveGroup
+    )
+
+    if (to.meta.requiresUserTab) {
+      const allowed = canAccessTab(
+        to.meta.requiresUserTab,
+        tabConfig,
+        {
+          hasActiveGroup: GROUP_TABS.has(to.meta.requiresUserTab)
+            ? !!to.params.groupId
+            : true
+        }
+      )
+      if (!allowed) return fallbackPath
+    }
+
+    if (to.meta.requiresBugResolver && !user?.bugResolver) {
+      return fallbackPath
+    }
   }
 })
 
