@@ -343,8 +343,6 @@ export const Loans = () => {
     }
   })
 
-  const showFilters = ref(false)
-
   const loanBalanceColumns = computed(() => [
     {
       key: 'name',
@@ -386,7 +384,9 @@ export const Loans = () => {
       placeholder: 'Select Month',
       modelValue: selectedMonth.value,
       options: months.value,
-      onChange: (v) => { selectedMonth.value = v }
+      onChange: (v) => {
+        selectedMonth.value = v
+      }
     },
     {
       key: 'giver',
@@ -394,7 +394,9 @@ export const Loans = () => {
       placeholder: 'Select Giver',
       modelValue: selectedGiver.value,
       options: [{ label: 'All Givers', value: 'All' }, ...usersOptions.value],
-      onChange: (v) => { selectedGiver.value = v }
+      onChange: (v) => {
+        selectedGiver.value = v
+      }
     },
     {
       key: 'category',
@@ -402,7 +404,9 @@ export const Loans = () => {
       placeholder: 'All Categories',
       modelValue: selectedCategory.value,
       options: categoryOptions.value,
-      onChange: (v) => { selectedCategory.value = v }
+      onChange: (v) => {
+        selectedCategory.value = v
+      }
     }
   ])
 

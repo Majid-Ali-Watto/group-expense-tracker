@@ -4,7 +4,7 @@ import { ElMessageBox } from 'element-plus'
 import { database, doc, deleteDoc, updateDoc, deleteField } from '@/firebase'
 import { DB_NODES } from '@/constants'
 import { PUBLIC_NAV_LINKS } from '@/constants'
-import { showError, showSuccess } from '@/utils'
+import { showError, showSuccess } from '@/utils/showAlerts'
 import { useDataStore } from '@/stores'
 
 export const Header = (props, emit) => {

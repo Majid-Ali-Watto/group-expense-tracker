@@ -11,15 +11,10 @@ import {
   arrayUnion
 } from 'firebase/firestore'
 import { database } from '@/firebase'
-import {
-  startLoading,
-  stopLoading,
-  withLoading,
-  showError,
-  showSuccess,
-  resetForm
-} from '@/utils'
-import { getCurrentMonth, dateToMonthNode } from '@/utils'
+import { startLoading, stopLoading, withLoading } from '@/utils/loading'
+import getCurrentMonth, { dateToMonthNode } from '@/utils/getCurrentMonth'
+import { resetForm } from '@/utils/reset-form'
+import { showError, showSuccess } from '@/utils/showAlerts'
 import { DB_NODES } from '@/constants'
 
 export default function useFireBase() {

@@ -1,13 +1,5 @@
-import BalanceSummaryCard from './BalanceSummaryCard.vue'
-import BottomButtons from './BottomButtons.vue'
-import GroupAccessGuard from './GroupAccessGuard.vue'
-import LoadingSkeleton from './LoadingSkeleton.vue'
-import Table from './Table.vue'
-
-export {
-  BalanceSummaryCard,
-  BottomButtons,
-  GroupAccessGuard,
-  LoadingSkeleton,
-  Table
-}
+export { default as BalanceSummaryCard } from './BalanceSummaryCard.vue'
+export { default as BottomButtons } from './BottomButtons.vue'
+export { default as GroupAccessGuard } from './GroupAccessGuard.vue'
+export { default as LoadingSkeleton } from './LoadingSkeleton.vue'
+export { default as Table } from './Table.vue'

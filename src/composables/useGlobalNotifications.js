@@ -3,7 +3,8 @@ import { useAuthStore, useGroupStore, useUserStore } from '@/stores'
 import { onSnapshot, collection, database, query, where } from '@/firebase'
 import useFireBase from './useFirebase'
 import { Tabs } from '@/assets'
-import { getCurrentMonth, maskMobile } from '@/utils'
+import getCurrentMonth from '@/utils/getCurrentMonth'
+import { maskMobile } from '@/utils/maskMobile'
 import { DB_NODES } from '@/constants'
 import {
   isMemberOfGroup,

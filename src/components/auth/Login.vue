@@ -54,7 +54,7 @@
 <script setup>
 import { loginRules as rules } from '@/assets'
 import { Login } from '@/scripts/auth'
-import { loadAsyncComponent } from '@/utils'
+import { loadAsyncComponent } from '@/utils/async-component'
 import {
   AuthActions,
   AuthFormFields,

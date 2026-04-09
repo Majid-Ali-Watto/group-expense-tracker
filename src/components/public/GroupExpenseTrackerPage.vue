@@ -14,7 +14,9 @@
       <article class="bullet-card">
         <h2>Why this flow matters</h2>
         <ul>
-          <li v-for="point in GROUP_EXPENSE_BENEFITS" :key="point">{{ point }}</li>
+          <li v-for="point in GROUP_EXPENSE_BENEFITS" :key="point">
+            {{ point }}
+          </li>
         </ul>
       </article>
 

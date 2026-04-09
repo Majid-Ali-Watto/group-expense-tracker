@@ -1,6 +1,6 @@
 # Kharchafy — Group Expense, Loans, and Personal Budget Hub
 
-Kharchafy is a Vue 3 + Pinia single-page app for running small-group or household finances. It keeps shared expenses, shared loans, personal loans, and personal salary budgets in one place, backed by Firebase Realtime Database and Cloudinary for receipt storage. Every sensitive change flows through member approvals, so nothing destructive happens without consensus.
+Kharchafy is a Vue 3 + Pinia single-page app for running small-group or household finances. It keeps shared expenses, shared loans, personal loans, and personal salary budgets in one place, backed by Cloud Firestore and Cloudinary for receipt storage. Every sensitive change flows through member approvals, so nothing destructive happens without consensus.
 
 ---
 
@@ -20,11 +20,17 @@ VITE_PROJECT_ID=...
 VITE_STORAGE_BUCKET=...
 VITE_MESSAGE_SENDER_ID=...
 VITE_APP_ID=...
+VITE_MEASUREMENT_ID=...
+
+VITE_RECAPTCHA_SITE_KEY=...
+VITE_APP_CHECK_DEBUG_TOKEN=...
 
 VITE_CLOUDINARY_CLOUD_NAME=...
 VITE_CLOUDINARY_UPLOAD_PRESET=...
 VITE_CLOUDINARY_API_KEY=...
 VITE_CLOUDINARY_API_SECRET=...
+
+VITE_INACTIVITY_LOGOUT_MINUTES=15
 ```
 
 ### Firebase Storage CORS (for Cloudinary fallback receipts in Storage, if you use it)
@@ -40,7 +46,7 @@ npx -y gsutil cors set cors.json gs://<your-storage-bucket>
 
 ## High-Level Architecture
 - **Frontend:** Vue 3 (Composition API), Pinia for state, Element Plus UI, Tailwind utilities, Vite build.
-- **Backend:** Firebase Realtime Database (no server code in this repo).
+- **Backend:** Cloud Firestore via the Firebase Web SDK (no server code in this repo).
 - **Storage:** Cloudinary for receipts (images only, max 1 MB enforced client-side).
 - **PWA bits:** `src/service-worker.js` registers a service worker (basic; extend as needed).
 - **State & Security:** Active session kept in Pinia plus `sessionStorage`, both encrypted with different AES keys (see `src/utils/sessionCrypto.js`). Session re-verified every 5 minutes against Firebase and automatically logs out after inactivity.
@@ -48,31 +54,38 @@ npx -y gsutil cors set cors.json gs://<your-storage-bucket>
 
 ---
 
-## Data Model (paths in Realtime DB)
-- `users/{mobile}` — `{ name, password, recoveryCodes[], addedBy, deleteRequest?, updateRequest? }`
-- `groups/{groupId}` — `{ name, description, ownerMobile, members[], joinRequests[], leaveRequests[], editRequest?, addMemberRequest?, deleteRequest?, transferOwnershipRequest?, settlementRequest?, notifications? }`
-- `payments/{groupId|global}/{YYYY-MM}/{paymentId}` — shared expenses with splits, payer mode, receipts, update/delete requests, per-user notifications.
-- `payments-backup/{groupId|global}/{YYYY-MM}` — archived after settlement.
-- `loans/{groupId|global}/{YYYY-MM}/{loanId}` — shared loans plus requests/notifications.
-- `personal-loans/{mobile}/{YYYY-MM}/{loanId}` — personal loans.
-- `expenses/{mobile}/{YYYY-MM}/{expenseId}` — personal monthly expenses.
-- `salaries/{mobile}/{YYYY-MM}` — personal monthly salary.
+## Data Model (top-level Firestore collections / document paths)
+- `users/{uid}` — user profile (`name`, `mobile`, `email`, `emailVerified`, optional approval request fields).
+- `groups/{groupId}` — group metadata, members, requests, transfer/delete/settlement state, and notifications.
+- `shared-expenses/{groupId}/months/{YYYY-MM}/payments/{paymentId}` — shared expense records for a group and month.
+- `shared-expenses-backup/{groupId}/months/{YYYY-MM}/payments/{paymentId}` — archived shared expenses after settlement finalization.
+- `shared-loans/{groupId}/months/{YYYY-MM}/loans/{loanId}` — shared loan records for a group and month.
+- `personal-expenses/{uid}/months/{YYYY-MM}/expenses/{expenseId}` — personal expense entries for a user and month.
+- `personal-loans/{uid}/months/{YYYY-MM}/loans/{loanId}` — personal loan records for a user and month.
+- `salaries/{uid}/months/{YYYY-MM}` — monthly salary entry for a user.
+- `bug-reports/{uid}/reports/{reportId}` — user-submitted bug reports and note threads.
+- `bug-report-notifications/admin/items/{bugId}` — admin-side bug-report notifications.
+- `configs/storage`, `configs/cache` — app configuration and feature flags.
 
 ---
 
 ## Authentication & Session Flow
-- **Login / Register:** Users enter name, mobile (PK), and a password. New users set the code and receive printable recovery passcodes (see `src/scripts/login.js`).
-- **Recovery:** "Forgot password" consumes one recovery passcode; on last code, fresh codes are generated and shown.
+- **Register:** Users sign up with name, mobile, email, and password. Firebase Auth creates the account and a profile document is stored under `users/{uid}`.
+- **Email verification:** New accounts must verify their email before login succeeds. The app supports resend-verification from the auth screen.
+- **Login:** Users sign in with email and password, not mobile.
+- **Password recovery:** "Forgot Password" sends a Firebase password-reset email.
 - **Session hardening:** A random token is encrypted twice (AES-GCM in sessionStorage, AES-CBC in Pinia). Every tab change and a 5‑minute timer re-verify token + password on Firebase; failures force logout.
-- **Idle logout:** Logged-in users are forced out after `VITE_INACTIVITY_LOGOUT_MINUTES` without activity. If the env var is missing or invalid, the app falls back to 15 minutes.
-- **Remember Me:** Stores name/mobile/password in `localStorage` for prefill only (session still crypto-based).
+- **Idle logout:** Logged-in users are forced out after `VITE_INACTIVITY_LOGOUT_MINUTES` without activity. This repo currently sets `15` minutes in `.env`; the composable fallback is `30` if the env value is missing or invalid.
+- **Remember Me:** Stores only the email in `localStorage` for prefill and uses Firebase persistence to keep or limit auth state.
 
 ---
 
 ## Tabs & Navigation
 - Tabs are defined in `src/assets/data.js` and rendered via `App.vue`/`HOC.vue`.
 - When no active group is selected, shared tabs are hidden (you still see personal salary/expenses, personal loans, users, groups).
-- Tab → component mapping lives in `src/utils/active-tab.js` (also reused for edit dialogs).
+- Tab → component mapping for the authenticated app lives in `src/router/index.js`.
+- Public SEO routes are also available for non-logged-in users: `/`, `/features`, `/group-expense-tracker`, `/personal-budget-tracker`, `/help`, `/faq`.
+- The public header/footer navigation is intentionally available on marketing routes and guest auth routes like `/login` and `/register`.
 
 ---
 
@@ -88,8 +101,8 @@ npx -y gsutil cors set cors.json gs://<your-storage-bucket>
 - Members raise leave requests; all members must approve before removal.
 
 **Editing**
-- Name/description edits apply immediately and notify others.
-- Member changes trigger an edit request. All affected members (existing, added, removed) must approve; on success the membership list is replaced.
+- If only the name/description changes, the owner can update directly and members are notified.
+- If membership changes, an edit request is created and the remaining members must approve before the new member list is applied.
 
 **Adding members (non-owner)**
 - Any member can propose an add-member request; all members approve, then owner clicks "Add Member Now".
@@ -113,7 +126,7 @@ npx -y gsutil cors set cors.json gs://<your-storage-bucket>
 ---
 
 ## Shared Expenses (tab: "Shared Expenses")
-Component stack: `PaymentForm.vue` → `ExpenseList.vue` → `Table.vue`
+Component stack: `SharedExpenses.vue` → `ExpenseList.vue` → shared table/helpers
 
 **Add / edit payments**
 - Payer modes: single payer or multi-payer with per-payer amounts (must balance total).
@@ -177,7 +190,7 @@ Component stack: `PaymentForm.vue` → `ExpenseList.vue` → `Table.vue`
 - **Sort:** alphabetical A–Z or Z–A buttons.
 - **Shared Groups Only:** checkbox to filter to users who share at least one group with you.
 - Each user card shows which groups they belong to.
-- **Admin actions:** add users, reset password (sets password=null so the user recreates it), rename/delete with group-owner approvals.
+- **Account actions:** update profile details and raise delete requests. Delete requests require approval from relevant group owners/members before finalization.
 
 ---
 
@@ -212,11 +225,11 @@ All charts are pure SVG/CSS — no external chart library dependency.
 
 ---
 
-## Help Dialog
-- Accessible from the header on every page, before and after login (desktop button + mobile menu).
-- Lists all app features in a collapsible accordion, written for new users.
-- Footer includes a theme toggle button and logout button (when logged in).
-- Full dark theme support.
+## Help Surfaces
+- The in-app help dialog is available from the header when browsing the private app.
+- A public help page is also available at `/help` and reuses the same content source as the dialog.
+- The shared help content lives in `src/components/generic-components/HelpContent.vue`.
+- The dialog footer includes a theme toggle and logout button (when logged in).
 
 ---
 
@@ -243,20 +256,22 @@ All charts are pure SVG/CSS — no external chart library dependency.
 
 ## Key Files (for new contributors)
 - App shell: `src/App.vue`, `src/main.js`
-- State: `src/stores/store.js`
-- Routing-by-tabs: `src/utils/active-tab.js`
-- Shared expenses: `src/components/PaymentForm.vue`, `src/components/ExpenseList.vue`, `src/scripts/payment-form.js`, `src/scripts/expense-list.js`
-- Settlements: `src/components/Settlement.vue`, `src/scripts/settlement.js`
-- Shared loans: `src/components/Loans.vue`, `src/scripts/loans.js`, `src/components/SharedLoansGuard.vue`
-- Personal budget: `src/components/monthly-sallary-expense-manager/*`, `src/components/personal-loans/PersonalLoans.vue`
-- Personal loans composable: `src/scripts/loan-form.js`, `src/scripts/personal-loans.js`
-- Groups: `src/components/Groups.vue`, `src/scripts/groups.js`, `src/helpers/users.js`
-- Users: `src/components/Users.vue`, `src/scripts/users.js`
-- Auth & security: `src/components/Login.vue`, `src/scripts/login.js`, `src/utils/sessionCrypto.js`, `src/utils/passcodes.js`
+- Router + SEO: `src/router/index.js`, `src/constants/seo.js`, `src/utils/seo.js`
+- State: `src/stores/authStore.js`, `src/stores/groupStore.js`, `src/stores/userStore.js`, `src/stores/dataStore.js`, `src/stores/tabStore.js`
+- Shared expenses: `src/components/shared-expenses/SharedExpenses.vue`, `src/components/shared-expenses/ExpenseList.vue`, `src/scripts/shared-expenses/shared-expenses.js`, `src/scripts/shared-expenses/expense-list.js`
+- Settlements: `src/components/shared-expenses/Settlement.vue`, `src/scripts/shared-expenses/settlement.js`
+- Shared loans: `src/components/shared-loans/Loans.vue`, `src/components/shared-loans/LoanForm.vue`, `src/components/shared-loans/SharedLoansGuard.vue`, `src/scripts/shared-loans/loans.js`, `src/scripts/shared-loans/loan-form.js`
+- Personal budget: `src/components/personal-expenses/PersonalExpenses.vue`, `src/components/personal-expenses/PersonalExpenseForm.vue`, `src/components/personal-expenses/PersonalExpenseList.vue`, `src/components/personal-expenses/SalaryForm.vue`
+- Personal loans: `src/components/personal-loans/PersonalLoans.vue`, `src/scripts/personal-loans/personal-loans.js`
+- Groups: `src/components/groups/Groups.vue`, `src/components/groups/SharedGroups.vue`, `src/scripts/groups/groups.js`
+- Users: `src/components/users/Users.vue`, `src/scripts/users/users.js`
+- Auth & security: `src/components/auth/Login.vue`, `src/scripts/auth/login.js`, `src/utils/sessionCrypto.js`, `src/composables/useInactivityLogout.js`
+- Analytics: `src/firebase.js`, `src/utils/analytics.js`
 - Charts: `src/components/generic-components/DonutChart.vue`, `src/components/generic-components/BarChart.vue`
 - Expenses Summary: `src/components/generic-components/NetPositionDialog.vue`
-- Help: `src/components/generic-components/HelpDialog.vue`
-- Header: `src/components/Header.vue`
+- Help: `src/components/generic-components/HelpDialog.vue`, `src/components/generic-components/HelpContent.vue`, `src/components/public/HelpPage.vue`
+- Public pages: `src/components/public/*`
+- Header: `src/components/layout/Header.vue`
 
 ---
 

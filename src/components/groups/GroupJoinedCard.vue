@@ -49,8 +49,9 @@
           class="flex flex-wrap items-center justify-between gap-y-0.5 mt-0.5"
         >
           <p class="text-xs text-gray-500 dark:text-gray-400">
-            Owner: {{ ownerName }}
-            ({{ displayMobileForGroup(group.ownerMobile, group) }})
+            Owner: {{ ownerName }} ({{
+              displayMobileForGroup(group.ownerMobile, group)
+            }})
           </p>
           <p
             v-if="group.category"

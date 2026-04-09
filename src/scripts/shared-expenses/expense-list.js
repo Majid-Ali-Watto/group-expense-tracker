@@ -349,7 +349,9 @@ export const ExpenseList = (props) => {
       placeholder: 'Select Month',
       modelValue: selectedMonth.value,
       options: months.value,
-      onChange: (v) => { selectedMonth.value = v }
+      onChange: (v) => {
+        selectedMonth.value = v
+      }
     },
     {
       key: 'payer',
@@ -357,7 +359,9 @@ export const ExpenseList = (props) => {
       placeholder: 'Select Payer',
       modelValue: selectedFriend.value,
       options: [{ label: 'All', value: 'All' }, ...usersOptions.value],
-      onChange: (v) => { selectedFriend.value = v }
+      onChange: (v) => {
+        selectedFriend.value = v
+      }
     },
     {
       key: 'payerMode',
@@ -369,7 +373,9 @@ export const ExpenseList = (props) => {
         { label: 'Single', value: 'single' },
         { label: 'Multiple', value: 'multiple' }
       ],
-      onChange: (v) => { selectedPayerMode.value = v }
+      onChange: (v) => {
+        selectedPayerMode.value = v
+      }
     },
     {
       key: 'splitMode',
@@ -381,7 +387,9 @@ export const ExpenseList = (props) => {
         { label: 'Equal', value: 'equal' },
         { label: 'Custom', value: 'custom' }
       ],
-      onChange: (v) => { selectedSplitMode.value = v }
+      onChange: (v) => {
+        selectedSplitMode.value = v
+      }
     },
     {
       key: 'category',
@@ -389,7 +397,9 @@ export const ExpenseList = (props) => {
       placeholder: 'All Categories',
       modelValue: selectedCategory.value,
       options: categoryOptions.value,
-      onChange: (v) => { selectedCategory.value = v }
+      onChange: (v) => {
+        selectedCategory.value = v
+      }
     }
   ])
 

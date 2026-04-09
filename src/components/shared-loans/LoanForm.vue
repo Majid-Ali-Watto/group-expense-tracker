@@ -165,12 +165,16 @@
                   class="mt-1 flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300"
                 >
                   <span class="font-medium">{{ formData.loanGiver }}</span>
-                  <span class="text-gray-400 text-xs">· {{ maskMobile(formData.loanGiverMobile) }}</span>
+                  <span class="text-gray-400 text-xs"
+                    >· {{ maskMobile(formData.loanGiverMobile) }}</span
+                  >
                   <button
                     type="button"
                     class="ml-auto text-xs text-red-400 hover:text-red-500"
                     @click="selectedGiverUser = ''"
-                  >✕ Change</button>
+                  >
+                    ✕ Change
+                  </button>
                 </div>
               </div>
             </el-col>
@@ -255,12 +259,16 @@
                   class="mt-1 flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300"
                 >
                   <span class="font-medium">{{ formData.loanReceiver }}</span>
-                  <span class="text-gray-400 text-xs">· {{ maskMobile(formData.loanReceiverMobile) }}</span>
+                  <span class="text-gray-400 text-xs"
+                    >· {{ maskMobile(formData.loanReceiverMobile) }}</span
+                  >
                   <button
                     type="button"
                     class="ml-auto text-xs text-red-400 hover:text-red-500"
                     @click="selectedReceiverUser = ''"
-                  >✕ Change</button>
+                  >
+                    ✕ Change
+                  </button>
                 </div>
               </div>
             </el-col>

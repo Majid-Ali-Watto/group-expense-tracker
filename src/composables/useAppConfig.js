@@ -13,7 +13,7 @@
 
 import { database, doc, getDoc } from '@/firebase'
 import { DB_NODES } from '@/constants'
-import { setCacheEnabled } from '@/utils'
+import { setCacheEnabled } from '@/utils/queryCache'
 
 // Module-level singleton — loaded once per session, shared everywhere
 const _config = {

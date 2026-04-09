@@ -1,5 +1,4 @@
 import { initializeApp } from 'firebase/app'
-import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check'
 import {
   getFirestore,
   collection,
@@ -38,7 +37,6 @@ import {
   onAuthStateChanged,
   signOut
 } from 'firebase/auth'
-import { getAnalytics, isSupported } from 'firebase/analytics'
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_API_KEY,
@@ -56,8 +54,11 @@ const analyticsReady =
   import.meta.env.PROD &&
   typeof window !== 'undefined' &&
   import.meta.env.VITE_MEASUREMENT_ID
-    ? isSupported()
-        .then((supported) => (supported ? getAnalytics(app) : null))
+    ? import('firebase/analytics')
+        .then(async ({ getAnalytics, isSupported }) => {
+          const supported = await isSupported()
+          return supported ? getAnalytics(app) : null
+        })
         .catch((error) => {
           console.warn('Firebase Analytics is unavailable:', error)
           return null
@@ -71,12 +72,19 @@ if (import.meta.env.DEV) {
   self.FIREBASE_APPCHECK_DEBUG_TOKEN =
     import.meta.env.VITE_APP_CHECK_DEBUG_TOKEN || true
 }
-let appCheck = null
-if (import.meta.env.VITE_RECAPTCHA_SITE_KEY) {
-  appCheck = initializeAppCheck(app, {
-    provider: new ReCaptchaV3Provider(import.meta.env.VITE_RECAPTCHA_SITE_KEY),
-    isTokenAutoRefreshEnabled: true
-  })
+if (typeof window !== 'undefined' && import.meta.env.VITE_RECAPTCHA_SITE_KEY) {
+  import('firebase/app-check')
+    .then(({ initializeAppCheck, ReCaptchaV3Provider }) => {
+      initializeAppCheck(app, {
+        provider: new ReCaptchaV3Provider(
+          import.meta.env.VITE_RECAPTCHA_SITE_KEY
+        ),
+        isTokenAutoRefreshEnabled: true
+      })
+    })
+    .catch((error) => {
+      console.warn('Firebase App Check is unavailable:', error)
+    })
 }
 
 const database = getFirestore(app)
@@ -85,7 +93,6 @@ const auth = getAuth(app)
 export {
   app,
   analyticsReady,
-  appCheck,
   database,
   collection,
   doc,

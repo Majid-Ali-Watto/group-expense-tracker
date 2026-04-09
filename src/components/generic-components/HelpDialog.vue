@@ -191,5 +191,4 @@ const { isMobile, visible, handleClose, handleLogout } = HelpDialog(props, emit)
 :root.dark-theme .help-email-link:hover {
   color: #4ade80;
 }
-
 </style>

@@ -10,7 +10,11 @@
       </div>
 
       <nav class="public-footer__links" aria-label="Public pages">
-        <RouterLink v-for="link in PUBLIC_NAV_LINKS" :key="link.to" :to="link.to">
+        <RouterLink
+          v-for="link in PUBLIC_NAV_LINKS"
+          :key="link.to"
+          :to="link.to"
+        >
           {{ link.label }}
         </RouterLink>
         <RouterLink to="/login">Login</RouterLink>
@@ -47,6 +51,7 @@ import { PUBLIC_NAV_LINKS } from '@/constants'
   margin: 0;
   font-size: 1.05rem;
   font-weight: 800;
+  color: #f7fff9;
 }
 
 .public-footer__copy {

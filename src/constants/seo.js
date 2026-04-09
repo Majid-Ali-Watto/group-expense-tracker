@@ -194,7 +194,8 @@ export const SEO_PAGES = {
     structuredData: [softwareApplicationSchema]
   }),
   groupExpenseTracker: buildPageSeo({
-    title: 'Group Expense Tracker | Split Bills for Trips, Roommates, and Families',
+    title:
+      'Group Expense Tracker | Split Bills for Trips, Roommates, and Families',
     description:
       'Use Kharchafy as a group expense tracker to split bills, review balances, and settle shared costs for roommates, travel, and household spending.',
     canonicalPath: '/group-expense-tracker',
@@ -212,7 +213,8 @@ export const SEO_PAGES = {
     structuredData: [softwareApplicationSchema]
   }),
   faq: buildPageSeo({
-    title: 'Kharchafy FAQ | Shared Expenses, Bills, and Budget Tracking Questions',
+    title:
+      'Kharchafy FAQ | Shared Expenses, Bills, and Budget Tracking Questions',
     description:
       'Read answers to common questions about Kharchafy, including shared expenses, bill splitting, personal budgeting, and how the app works.',
     canonicalPath: '/faq',
@@ -237,7 +239,8 @@ export const SEO_PAGES = {
   }),
   register: buildPageSeo({
     title: 'Register | Kharchafy',
-    description: 'Create a Kharchafy account to manage shared expenses and budgets.',
+    description:
+      'Create a Kharchafy account to manage shared expenses and budgets.',
     canonicalPath: '/register',
     robots: PRIVATE_ROBOTS
   }),

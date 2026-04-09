@@ -1,16 +1,25 @@
 <template>
   <div v-if="pendingMemberCount > 0">
-    <div class="text-xs font-medium text-orange-500 mb-2 flex items-center gap-1">
+    <div
+      class="text-xs font-medium text-orange-500 mb-2 flex items-center gap-1"
+    >
       <span>⏳ Pending Invitations ({{ pendingMemberCount }})</span>
     </div>
     <div class="flex flex-wrap gap-2">
       <el-tag
-        v-for="(member, i) in group.pendingMembers.slice(0, initialMemberLoadCount)"
+        v-for="(member, i) in group.pendingMembers.slice(
+          0,
+          initialMemberLoadCount
+        )"
         :key="i"
         size="small"
         type="warning"
       >
-        {{ userStore.getUserByMobile(member.mobile)?.name || member.name || member.mobile }}
+        {{
+          userStore.getUserByMobile(member.mobile)?.name ||
+          member.name ||
+          member.mobile
+        }}
         ({{ displayMobileForGroup(member.mobile, group) }})
       </el-tag>
       <el-tag
@@ -41,18 +50,28 @@
             class="w-7 h-7 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center text-xs font-semibold shrink-0"
           >
             {{
-              (userStore.getUserByMobile(member.mobile)?.name || member.name || member.mobile)
+              (
+                userStore.getUserByMobile(member.mobile)?.name ||
+                member.name ||
+                member.mobile
+              )
                 .charAt(0)
                 .toUpperCase()
             }}
           </div>
           <div class="text-sm text-gray-700">
-            {{ userStore.getUserByMobile(member.mobile)?.name || member.name || member.mobile }}
+            {{
+              userStore.getUserByMobile(member.mobile)?.name ||
+              member.name ||
+              member.mobile
+            }}
             <span class="text-gray-500 font-bold text-xs ml-1">
               ({{ displayMobileForGroup(member.mobile, group) }})
             </span>
           </div>
-          <el-tag size="small" type="warning" class="ml-auto shrink-0">Pending</el-tag>
+          <el-tag size="small" type="warning" class="ml-auto shrink-0"
+            >Pending</el-tag
+          >
         </div>
       </div>
     </el-dialog>
@@ -72,5 +91,7 @@ const props = defineProps({
 })
 
 const initialMemberLoadCount = 2
-const pendingMemberCount = computed(() => props.group.pendingMembers?.length ?? 0)
+const pendingMemberCount = computed(
+  () => props.group.pendingMembers?.length ?? 0
+)
 </script>

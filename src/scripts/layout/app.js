@@ -6,29 +6,29 @@ import {
   useGroupStore,
   useUserStore
 } from '@/stores'
-import {
-  useFireBase,
-  useGlobalNotifications,
-  loadAppConfig,
-  useInactivityLogout
-} from '@/composables'
+import { loadAppConfig } from '@/composables/useAppConfig'
+import useFireBase from '@/composables/useFirebase'
+import { useGlobalNotifications } from '@/composables/useGlobalNotifications'
+import { useInactivityLogout } from '@/composables/useInactivityLogout'
 import { DB_NODES } from '@/constants'
 import { tabs as allTabs, Tabs } from '@/assets'
 import { TAB_ROUTES, ROUTE_TABS, GROUP_TABS } from '@/router'
 import { findUserByEmail } from '@/helpers'
 import {
-  showError,
-  generateUUID,
-  maskMobile,
   setAnalyticsIdentity,
   clearAnalyticsIdentity,
-  trackAnalyticsEvent,
-  clearAllCache,
+  trackAnalyticsEvent
+} from '@/utils/analytics'
+import { maskMobile } from '@/utils/maskMobile'
+import { clearAllCache } from '@/utils/queryCache'
+import {
   decryptFromSession,
   decryptFromStore,
   encryptForSession,
   encryptForStore
-} from '@/utils'
+} from '@/utils/sessionCrypto'
+import { showError } from '@/utils/showAlerts'
+import { generateUUID } from '@/utils/uuid'
 import {
   auth,
   onAuthStateChanged,
@@ -229,19 +229,17 @@ export const App = () => {
       sessionStorage.getItem('_session')
     )
   })
-  const {
-    startInactivityTracking,
-    stopInactivityTracking
-  } = useInactivityLogout({
-    isLoggedIn: loggedIn,
-    onTimeout: async (timeoutMs) => {
-      showError(
-        `You were logged out after ${formatInactivityLabel(timeoutMs)} of inactivity.`,
-        { duration: 0 }
-      )
-      await logout('inactivity')
-    }
-  })
+  const { startInactivityTracking, stopInactivityTracking } =
+    useInactivityLogout({
+      isLoggedIn: loggedIn,
+      onTimeout: async (timeoutMs) => {
+        showError(
+          `You were logged out after ${formatInactivityLabel(timeoutMs)} of inactivity.`,
+          { duration: 0 }
+        )
+        await logout('inactivity')
+      }
+    })
 
   // Computed tabs based on active group + bugResolver privilege
   const tabs = computed(() => {

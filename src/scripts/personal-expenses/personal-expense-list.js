@@ -238,7 +238,10 @@ export const PersonalExpenseList = () => {
       placeholder: 'Select month',
       modelValue: selectedMonth.value,
       options: months.value,
-      onChange: (v) => { selectedMonth.value = v; fetchExpenses() }
+      onChange: (v) => {
+        selectedMonth.value = v
+        fetchExpenses()
+      }
     },
     {
       key: 'category',
@@ -246,7 +249,9 @@ export const PersonalExpenseList = () => {
       placeholder: 'All Categories',
       modelValue: selectedCategory.value,
       options: categoryOptions.value,
-      onChange: (v) => { selectedCategory.value = v }
+      onChange: (v) => {
+        selectedCategory.value = v
+      }
     }
   ])
 

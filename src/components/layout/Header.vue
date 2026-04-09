@@ -244,10 +244,7 @@
               </template>
 
               <!-- Help — always visible -->
-              <el-dropdown-item
-                v-if="!isPublicPage"
-                @click="showHelp = true"
-              >
+              <el-dropdown-item v-if="!isPublicPage" @click="showHelp = true">
                 <div class="flex items-center gap-3">
                   <QuestionCircleIcon class="w-5 h-5 menu-icon" />
                   <span>Help</span>
@@ -345,7 +342,7 @@ import {
   SunIcon
 } from '@/components/icons'
 import { Header } from '@/scripts/layout'
-import { loadAsyncComponent } from '@/utils'
+import { loadAsyncComponent } from '@/utils/async-component'
 
 defineOptions({ inheritAttrs: false })
 const HelpDialog = loadAsyncComponent(

@@ -316,12 +316,14 @@ export const LoanForm = (props, emit) => {
         const giverMob = formData.value.loanGiverMobile
         if (giverMob && !isMeGiver.value) {
           const giverUser = userStore.getUserByMobile(giverMob)
-          if (giverUser) selectedGiverUser.value = giverUser.uid || giverUser.mobile
+          if (giverUser)
+            selectedGiverUser.value = giverUser.uid || giverUser.mobile
         }
         const receiverMob = formData.value.loanReceiverMobile
         if (receiverMob && !isMeReceiver.value) {
           const receiverUser = userStore.getUserByMobile(receiverMob)
-          if (receiverUser) selectedReceiverUser.value = receiverUser.uid || receiverUser.mobile
+          if (receiverUser)
+            selectedReceiverUser.value = receiverUser.uid || receiverUser.mobile
         }
         // Wait for the selectedGiverUser / selectedReceiverUser watchers to
         // finish updating formData, then re-snapshot so the form isn't dirty
@@ -594,10 +596,12 @@ export const LoanForm = (props, emit) => {
       // For shared loans the giver/receiver field stores a UID (ME? case) or a
       // name (dropdown case). Always resolve to a human-readable name here.
       giverName: !props.isPersonal
-        ? userStore.getUserByMobile(giverMobile)?.name || formData.value.loanGiver
+        ? userStore.getUserByMobile(giverMobile)?.name ||
+          formData.value.loanGiver
         : formData.value.loanGiver,
       receiverName: !props.isPersonal
-        ? userStore.getUserByMobile(receiverMobile)?.name || formData.value.loanReceiver
+        ? userStore.getUserByMobile(receiverMobile)?.name ||
+          formData.value.loanReceiver
         : formData.value.loanReceiver,
       ...(!props.isPersonal
         ? { group: groupStore.getActiveGroup || null }

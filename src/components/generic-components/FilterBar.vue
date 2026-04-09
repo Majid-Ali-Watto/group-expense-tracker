@@ -21,10 +21,7 @@
       </div>
     </div>
     <Transition name="form-slide">
-      <div
-        v-show="showFilters || !isMobileScreen"
-        class="flex flex-wrap gap-3"
-      >
+      <div v-show="showFilters || !isMobileScreen" class="flex flex-wrap gap-3">
         <div
           v-for="field in fields"
           :key="field.key"

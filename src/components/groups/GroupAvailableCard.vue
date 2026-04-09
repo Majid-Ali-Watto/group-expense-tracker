@@ -6,8 +6,9 @@
       <h3 class="font-semibold text-lg mb-0.5">{{ group.name }}</h3>
       <div class="flex flex-wrap items-center gap-x-4 gap-y-0.5 mb-2">
         <p class="text-xs text-gray-500 dark:text-gray-400">
-          Owner: {{ ownerName }}
-          ({{ displayMobileForGroup(group.ownerMobile, group) }})
+          Owner: {{ ownerName }} ({{
+            displayMobileForGroup(group.ownerMobile, group)
+          }})
         </p>
         <p
           v-if="group.category"

@@ -3,20 +3,28 @@
     <section class="hero-section">
       <div class="hero-copy">
         <p class="eyebrow">Shared spending made clearer</p>
-        <h1>Group expense tracking for trips, roommates, and monthly budgets</h1>
+        <h1>
+          Group expense tracking for trips, roommates, and monthly budgets
+        </h1>
         <p class="hero-text">
           Kharchafy helps you split bills, track shared loans, store receipts,
           and manage personal budgets without losing track of who paid, who
           owes, or what changed.
         </p>
         <div class="hero-actions">
-          <RouterLink class="cta-primary" to="/register">Create account</RouterLink>
+          <RouterLink class="cta-primary" to="/register"
+            >Create account</RouterLink
+          >
           <RouterLink class="cta-secondary" to="/login">Open app</RouterLink>
         </div>
       </div>
 
       <div class="hero-panel">
-        <div v-for="item in LANDING_HIGHLIGHTS" :key="item.title" class="hero-card">
+        <div
+          v-for="item in LANDING_HIGHLIGHTS"
+          :key="item.title"
+          class="hero-card"
+        >
           <h2>{{ item.title }}</h2>
           <p>{{ item.description }}</p>
         </div>
@@ -26,11 +34,14 @@
     <section class="content-section">
       <div class="section-heading">
         <p class="eyebrow">Common use cases</p>
-        <h2>Built for real shared-money workflows</h2>
       </div>
 
       <div class="card-grid">
-        <article v-for="item in PUBLIC_USE_CASES" :key="item.title" class="content-card">
+        <article
+          v-for="item in PUBLIC_USE_CASES"
+          :key="item.title"
+          class="content-card"
+        >
           <h3>{{ item.title }}</h3>
           <p>{{ item.description }}</p>
         </article>
@@ -40,7 +51,6 @@
     <section class="content-section accent-section">
       <div class="section-heading">
         <p class="eyebrow">Explore more</p>
-        <h2>Public pages Google can index today</h2>
       </div>
 
       <div class="card-grid">
@@ -52,9 +62,14 @@
           <h3>Group expense tracker</h3>
           <p>Learn how Kharchafy handles roommates, trips, and shared bills.</p>
         </RouterLink>
-        <RouterLink class="content-card link-card" to="/personal-budget-tracker">
+        <RouterLink
+          class="content-card link-card"
+          to="/personal-budget-tracker"
+        >
           <h3>Personal budget tracker</h3>
-          <p>Review salary, monthly expenses, and personal finance workflows.</p>
+          <p>
+            Review salary, monthly expenses, and personal finance workflows.
+          </p>
         </RouterLink>
         <RouterLink class="content-card link-card" to="/faq">
           <h3>FAQ</h3>
@@ -96,7 +111,11 @@ import { LANDING_HIGHLIGHTS, PUBLIC_USE_CASES } from '@/constants'
 .hero-copy {
   padding: 34px;
   background:
-    radial-gradient(circle at top left, rgba(255, 255, 255, 0.9), transparent 46%),
+    radial-gradient(
+      circle at top left,
+      rgba(255, 255, 255, 0.9),
+      transparent 46%
+    ),
     linear-gradient(135deg, #f1fdf5 0%, #dcfce7 100%);
 }
 

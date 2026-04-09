@@ -10,7 +10,11 @@
     </section>
 
     <section class="stacked-grid">
-      <article v-for="section in FEATURE_SECTIONS" :key="section.title" class="feature-card">
+      <article
+        v-for="section in FEATURE_SECTIONS"
+        :key="section.title"
+        class="feature-card"
+      >
         <h2>{{ section.title }}</h2>
         <ul>
           <li v-for="point in section.points" :key="point">{{ point }}</li>

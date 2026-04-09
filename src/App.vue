@@ -73,7 +73,7 @@
 
 <script setup>
 import { App } from '@/scripts/layout'
-import { loadAsyncComponent } from '@/utils'
+import { loadAsyncComponent } from '@/utils/async-component'
 const Header = loadAsyncComponent(
   () => import('@/components/layout/Header.vue')
 )

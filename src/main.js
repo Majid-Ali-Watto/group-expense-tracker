@@ -5,13 +5,11 @@ import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
 import overflowPopup from '@/directives/overflow-popup'
+import { initializeAnalytics, trackPageView } from '@/utils/analytics'
+import { applySeoForRoute } from '@/utils/seo'
+import { toCapitalize } from '@/utils/string-formatting'
 import './main.css'
-import {
-  applySeoForRoute,
-  initializeAnalytics,
-  toCapitalize,
-  trackPageView
-} from '@/utils'
+
 const app = createApp(App)
 const PKR = new Intl.NumberFormat('en-PK', {
   style: 'currency',

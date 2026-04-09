@@ -210,7 +210,9 @@
             v-else-if="column.key === 'split'"
             class="px-2 text-sm et-cell-overflow"
           >
-            <template v-if="Array.isArray(rowData.split) && rowData.split.length">
+            <template
+              v-if="Array.isArray(rowData.split) && rowData.split.length"
+            >
               <span
                 v-overflow-popup="{ title: column.title }"
                 class="et-cell-text"
@@ -298,21 +300,21 @@
 
           <!-- loanGiver / loanReceiver (personal loans) -->
           <span
-            v-else-if="column.key === 'loanGiver' || column.key === 'loanReceiver'"
+            v-else-if="
+              column.key === 'loanGiver' || column.key === 'loanReceiver'
+            "
             v-overflow-popup="{ title: column.title }"
             class="et-cell-text px-2 text-sm"
             :data-cell-title="column.title"
           >
             {{
-              displayFormattedValue(
-                rowData[column.key],
-                (value) =>
-                  formatUser(
-                    value,
-                    column.key === 'loanGiver'
-                      ? rowData.giverName
-                      : rowData.receiverName
-                  )
+              displayFormattedValue(rowData[column.key], (value) =>
+                formatUser(
+                  value,
+                  column.key === 'loanGiver'
+                    ? rowData.giverName
+                    : rowData.receiverName
+                )
               )
             }}
           </span>
@@ -327,20 +329,25 @@
             {{ displayFormattedValue(rowData[column.key], formatRecipient) }}
           </span>
 
-            <!-- splitItems -->
+          <!-- splitItems -->
           <span
             v-else-if="column.key === 'splitItems'"
             class="px-2 text-sm et-cell-overflow"
           >
             <template
-              v-if="Array.isArray(rowData.splitItems) && rowData.splitItems.length"
+              v-if="
+                Array.isArray(rowData.splitItems) && rowData.splitItems.length
+              "
             >
               <span
                 v-overflow-popup="{ title: column.title }"
                 class="et-cell-text"
                 :data-cell-title="column.title"
               >
-                <span v-for="(item, i) in rowData.splitItems.slice(0, 2)" :key="i">
+                <span
+                  v-for="(item, i) in rowData.splitItems.slice(0, 2)"
+                  :key="i"
+                >
                   {{ formatSplitItem(item)
                   }}<span v-if="i < Math.min(1, rowData.splitItems.length - 1)"
                     >,
@@ -449,9 +456,7 @@
             class="et-cell-text px-2 text-sm"
             :data-cell-title="column.title"
           >
-            {{
-              displayCellValue(rowData[column.key])
-            }}
+            {{ displayCellValue(rowData[column.key]) }}
           </span>
         </template>
       </el-table-v2>

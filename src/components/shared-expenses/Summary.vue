@@ -64,15 +64,30 @@
 
   <!-- PDF-only summary: plain HTML table, always hidden in the app.
        _downloadPdf shows this and hides the el-collapse above. -->
-  <div class="pdf-only-summary" style="display:none">
+  <div class="pdf-only-summary" style="display: none">
     <table
-      style="width:100%;border-collapse:collapse;font-family:Poppins,sans-serif;font-size:13px;margin-bottom:12px;"
+      style="
+        width: 100%;
+        border-collapse: collapse;
+        font-family: Poppins, sans-serif;
+        font-size: 13px;
+        margin-bottom: 12px;
+      "
     >
       <thead>
         <tr>
           <th
             colspan="2"
-            style="text-align:left;padding:8px 12px;background:#22c55e;color:#fff;font-size:13px;font-weight:700;border:1px solid #16a34a;letter-spacing:.04em;"
+            style="
+              text-align: left;
+              padding: 8px 12px;
+              background: #22c55e;
+              color: #fff;
+              font-size: 13px;
+              font-weight: 700;
+              border: 1px solid #16a34a;
+              letter-spacing: 0.04em;
+            "
           >
             Expense Summary
           </th>
@@ -81,24 +96,53 @@
       <tbody>
         <tr>
           <th
-            style="padding:8px 12px;border:1px solid #d1d5db;background:#f5f7fa;color:#111827;font-weight:600;font-size:12px;text-align:left;width:40%;"
+            style="
+              padding: 8px 12px;
+              border: 1px solid #d1d5db;
+              background: #f5f7fa;
+              color: #111827;
+              font-weight: 600;
+              font-size: 12px;
+              text-align: left;
+              width: 40%;
+            "
           >
             Total Spent
           </th>
           <td
-            style="padding:8px 12px;border:1px solid #d1d5db;background:#ffffff;color:#111827;font-size:13px;"
+            style="
+              padding: 8px 12px;
+              border: 1px solid #d1d5db;
+              background: #ffffff;
+              color: #111827;
+              font-size: 13px;
+            "
           >
             {{ formatAmount(totalSpent) }}
           </td>
         </tr>
         <tr v-if="!hasCustomSplits">
           <th
-            style="padding:8px 12px;border:1px solid #d1d5db;background:#f5f7fa;color:#111827;font-weight:600;font-size:12px;text-align:left;"
+            style="
+              padding: 8px 12px;
+              border: 1px solid #d1d5db;
+              background: #f5f7fa;
+              color: #111827;
+              font-weight: 600;
+              font-size: 12px;
+              text-align: left;
+            "
           >
             Average Per Person
           </th>
           <td
-            style="padding:8px 12px;border:1px solid #d1d5db;background:#ffffff;color:#111827;font-size:13px;"
+            style="
+              padding: 8px 12px;
+              border: 1px solid #d1d5db;
+              background: #ffffff;
+              color: #111827;
+              font-size: 13px;
+            "
           >
             {{ formatAmount(averageSpent) }}
           </td>
@@ -106,12 +150,26 @@
         <template v-if="hasCustomSplits">
           <tr v-for="(person, i) in perPersonOwed" :key="'p' + i">
             <th
-              style="padding:8px 12px;border:1px solid #d1d5db;background:#f5f7fa;color:#111827;font-weight:600;font-size:12px;text-align:left;"
+              style="
+                padding: 8px 12px;
+                border: 1px solid #d1d5db;
+                background: #f5f7fa;
+                color: #111827;
+                font-weight: 600;
+                font-size: 12px;
+                text-align: left;
+              "
             >
               {{ person.name }}'s Expense
             </th>
             <td
-              style="padding:8px 12px;border:1px solid #d1d5db;background:#ffffff;color:#111827;font-size:13px;"
+              style="
+                padding: 8px 12px;
+                border: 1px solid #d1d5db;
+                background: #ffffff;
+                color: #111827;
+                font-size: 13px;
+              "
             >
               {{ formatAmount(person.amount) }}
             </td>
@@ -119,12 +177,26 @@
         </template>
         <tr v-for="(friend, i) in friendTotals" :key="'f' + i">
           <th
-            style="padding:8px 12px;border:1px solid #d1d5db;background:#f5f7fa;color:#111827;font-weight:600;font-size:12px;text-align:left;"
+            style="
+              padding: 8px 12px;
+              border: 1px solid #d1d5db;
+              background: #f5f7fa;
+              color: #111827;
+              font-weight: 600;
+              font-size: 12px;
+              text-align: left;
+            "
           >
             {{ friend.name }} Paid
           </th>
           <td
-            style="padding:8px 12px;border:1px solid #d1d5db;background:#ffffff;color:#111827;font-size:13px;"
+            style="
+              padding: 8px 12px;
+              border: 1px solid #d1d5db;
+              background: #ffffff;
+              color: #111827;
+              font-size: 13px;
+            "
           >
             {{ formatAmount(friend.total) }}
           </td>

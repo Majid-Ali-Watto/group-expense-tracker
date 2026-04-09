@@ -27,8 +27,16 @@
             <strong>Login</strong> — Use your email and password to sign in.
           </li>
           <li>
-            <strong>Forgot Password</strong> — Use the "Forgot Password" link
-            on the login screen to get a reset email.
+            <strong>Remember Me</strong> — Optionally keep your email pre-filled
+            and use longer Firebase auth persistence on this device.
+          </li>
+          <li>
+            <strong>Forgot Password</strong> — Use the "Forgot Password" link on
+            the login screen to get a reset email.
+          </li>
+          <li>
+            <strong>Session Timeout</strong> — Logged-in sessions auto-logout
+            after inactivity and show a message explaining what happened.
           </li>
         </ul>
       </el-collapse-item>
@@ -83,7 +91,9 @@
             <strong>Add Expense</strong> — Click the "+" button. Enter
             description, amount, date, and choose who paid and how to split.
           </li>
-          <li><strong>Single Payer</strong> — One person paid the full amount.</li>
+          <li>
+            <strong>Single Payer</strong> — One person paid the full amount.
+          </li>
           <li>
             <strong>Multiple Payers</strong> — More than one person paid
             different portions.
@@ -157,6 +167,11 @@
           </li>
           <li>
             <strong>Download</strong> — Export loan records to PDF or Excel.
+          </li>
+          <li>
+            <strong>Two-person flow</strong> — If a group has more than two
+            members, the app shows a warning because shared loans work best for
+            two-party groups.
           </li>
         </ul>
       </el-collapse-item>
@@ -243,7 +258,9 @@
             <strong>Browse Users</strong> — See all registered users. Mobile
             numbers are masked for privacy.
           </li>
-          <li><strong>Search</strong> — Search by name, mobile, or group name.</li>
+          <li>
+            <strong>Search</strong> — Search by name, mobile, or group name.
+          </li>
           <li><strong>Sort</strong> — Sort users alphabetically A–Z or Z–A.</li>
           <li>
             <strong>Shared Groups Only</strong> — Filter to show only users who
@@ -299,7 +316,10 @@
             <strong>What it is</strong> — A personal finance tool separate from
             group expenses.
           </li>
-          <li><strong>Add Salary</strong> — Enter your monthly salary for any month.</li>
+          <li>
+            <strong>Add Salary</strong> — Enter your monthly salary for any
+            month.
+          </li>
           <li>
             <strong>Add Personal Expenses</strong> — Record your own expenses
             for that month.
@@ -326,9 +346,9 @@
             count of pending actions that need your attention.
           </li>
           <li>
-            <strong>Types of notifications</strong> — Pending expense edit/delete
-            approvals, loan approvals, group member requests, and settlement
-            requests.
+            <strong>Types of notifications</strong> — Pending expense
+            edit/delete approvals, loan approvals, group member requests, and
+            settlement requests.
           </li>
           <li>
             <strong>Click to navigate</strong> — Tap any notification to go
@@ -413,6 +433,11 @@
           <li>
             <strong>Mobile</strong> — On mobile, the theme toggle is inside the
             hamburger menu at the top right.
+          </li>
+          <li>
+            <strong>Help Access</strong> — Guests can read the public help page
+            at `/help`, and logged-in users can also open the help dialog from
+            the header.
           </li>
         </ul>
       </el-collapse-item>

@@ -45,12 +45,6 @@ export const Users = () => {
     router.replace({ path: route.path, query })
   })
 
-  const activeGroupMemberIds = computed(() => {
-    const groupId = groupStore.getActiveGroup
-    const group = groupId ? groupStore.getGroupById(groupId) : null
-    return (group?.members || []).map((m) => m.uid || m.mobile)
-  })
-
   function getUserId(user) {
     return user?.uid || user?.mobile || ''
   }

@@ -64,7 +64,11 @@ function hasSession() {
 
 const routes = [
   // Public marketing pages
-  { path: '/', component: LandingPage, meta: { publicPage: true, seo: SEO_PAGES.home } },
+  {
+    path: '/',
+    component: LandingPage,
+    meta: { publicPage: true, seo: SEO_PAGES.home }
+  },
   {
     path: '/features',
     component: FeaturesPage,

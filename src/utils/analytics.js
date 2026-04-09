@@ -1,19 +1,27 @@
-import { logEvent, setUserId, setUserProperties } from 'firebase/analytics'
 import { analyticsReady } from '@/firebase'
 
 const APP_NAME = 'Kharchafy'
 
 let analyticsInitialized = false
 let lastTrackedPageKey = ''
+let analyticsModulePromise = null
+
+function getAnalyticsModule() {
+  analyticsModulePromise ||= import('firebase/analytics')
+  return analyticsModulePromise
+}
 
 async function withAnalytics(callback) {
   const analytics = await analyticsReady
   if (!analytics) return null
-  return callback(analytics)
+  const analyticsModule = await getAnalyticsModule()
+  return callback(analytics, analyticsModule)
 }
 
 export async function trackAnalyticsEvent(name, params = {}) {
-  return withAnalytics((analytics) => logEvent(analytics, name, params))
+  return withAnalytics((analytics, { logEvent }) =>
+    logEvent(analytics, name, params)
+  )
 }
 
 export async function trackPageView(route) {
@@ -36,7 +44,11 @@ export async function trackPageView(route) {
 }
 
 export function initializeAnalytics(router) {
-  if (analyticsInitialized || typeof window === 'undefined' || !import.meta.env.PROD)
+  if (
+    analyticsInitialized ||
+    typeof window === 'undefined' ||
+    !import.meta.env.PROD
+  )
     return
 
   analyticsInitialized = true
@@ -48,7 +60,7 @@ export function initializeAnalytics(router) {
 export async function setAnalyticsIdentity(userId, properties = {}) {
   if (!userId) return clearAnalyticsIdentity()
 
-  return withAnalytics((analytics) => {
+  return withAnalytics((analytics, { setUserId, setUserProperties }) => {
     setUserId(analytics, userId)
     setUserProperties(analytics, {
       signed_in: 'true',
@@ -58,7 +70,7 @@ export async function setAnalyticsIdentity(userId, properties = {}) {
 }
 
 export async function clearAnalyticsIdentity() {
-  return withAnalytics((analytics) => {
+  return withAnalytics((analytics, { setUserId, setUserProperties }) => {
     setUserId(analytics, null)
     setUserProperties(analytics, { signed_in: 'false' })
   })

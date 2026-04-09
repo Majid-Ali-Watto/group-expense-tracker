@@ -65,7 +65,10 @@ function resolveAbsoluteUrl(value, origin) {
 
 function replaceSeoTokens(value, replacements) {
   if (typeof value === 'string') {
-    return value.replace(/__([A-Z_]+)__/g, (_, token) => replacements[token] || '')
+    return value.replace(
+      /__([A-Z_]+)__/g,
+      (_, token) => replacements[token] || ''
+    )
   }
 
   if (Array.isArray(value)) {
@@ -115,10 +118,7 @@ export function applySeoForRoute(route) {
 
   upsertMeta('twitter:card', 'summary_large_image')
   upsertMeta('twitter:title', seo.twitterTitle || seo.title || SITE_NAME)
-  upsertMeta(
-    'twitter:description',
-    seo.twitterDescription || seo.description
-  )
+  upsertMeta('twitter:description', seo.twitterDescription || seo.description)
   upsertMeta('twitter:image', imageUrl)
 
   upsertCanonical(canonicalUrl)
@@ -130,4 +130,3 @@ export function applySeoForRoute(route) {
   })
   upsertStructuredData(structuredData)
 }
-
