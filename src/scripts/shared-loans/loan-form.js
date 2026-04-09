@@ -204,19 +204,19 @@ export const LoanForm = (props, emit) => {
     }
   })
 
-  watch(selectedGiverUser, async (mobile) => {
-    if (!mobile) {
+  watch(selectedGiverUser, async (uid) => {
+    if (!uid) {
       giverRealMobile.value = ''
       return
     }
-    if (props.isPersonal && mobile === getCurrentReceiverIdentity()) {
+    if (props.isPersonal && uid === getCurrentReceiverIdentity()) {
       selectedGiverUser.value = ''
       showError('Giver and Receiver cannot be the same person.')
       return
     }
-    const user = userStore.getUserByMobile(mobile)
+    const user = userStore.getUserByMobile(uid) // getUserByMobile also resolves UIDs
     if (!user) return
-    if (mobile === activeUser.value) {
+    if (isCurrentUserIdentity(uid)) {
       if (props.isPersonal && isMeReceiver.value) {
         selectedGiverUser.value = ''
         showError('If you are the receiver, you cannot also be the giver.')
@@ -231,24 +231,25 @@ export const LoanForm = (props, emit) => {
       isMeGiver.value = false
       await nextTick()
     }
-    giverRealMobile.value = mobile
-    formData.value.loanGiverMobile = user.maskedMobile || maskMobile(mobile)
+    // Store real (unmasked) mobile so validation passes
+    giverRealMobile.value = user.mobile || uid
+    formData.value.loanGiverMobile = user.mobile || uid
     formData.value.loanGiver = user.name || ''
   })
 
-  watch(selectedReceiverUser, async (mobile) => {
-    if (!mobile) {
+  watch(selectedReceiverUser, async (uid) => {
+    if (!uid) {
       receiverRealMobile.value = ''
       return
     }
-    if (props.isPersonal && mobile === getCurrentGiverIdentity()) {
+    if (props.isPersonal && uid === getCurrentGiverIdentity()) {
       selectedReceiverUser.value = ''
       showError('Giver and Receiver cannot be the same person.')
       return
     }
-    const user = userStore.getUserByMobile(mobile)
+    const user = userStore.getUserByMobile(uid) // getUserByMobile also resolves UIDs
     if (!user) return
-    if (isCurrentUserIdentity(mobile)) {
+    if (isCurrentUserIdentity(uid)) {
       if (props.isPersonal && isMeGiver.value) {
         selectedReceiverUser.value = ''
         showError('If you are the giver, you cannot also be the receiver.')
@@ -261,14 +262,15 @@ export const LoanForm = (props, emit) => {
       isMeReceiver.value = false
       await nextTick()
     }
-    receiverRealMobile.value = mobile
-    formData.value.loanReceiverMobile = user.maskedMobile || maskMobile(mobile)
+    // Store real (unmasked) mobile so validation passes
+    receiverRealMobile.value = user.mobile || uid
+    formData.value.loanReceiverMobile = user.mobile || uid
     formData.value.loanReceiver = user.name || ''
   })
 
   watch(
     () => props.row,
-    (newRow) => {
+    async (newRow) => {
       formData.value.amount = newRow?.amount ?? null
       formData.value.loanGiver = newRow?.giverName ?? newRow?.giver ?? ''
       formData.value.loanReceiver =
@@ -307,6 +309,24 @@ export const LoanForm = (props, emit) => {
       } else {
         isMeGiver.value = false
         isMeReceiver.value = false
+      }
+      // In edit mode for personal loans, pre-populate selectedGiverUser /
+      // selectedReceiverUser so the raw-mobile text fields are hidden
+      if (props.isPersonal && newRow?.amount) {
+        const giverMob = formData.value.loanGiverMobile
+        if (giverMob && !isMeGiver.value) {
+          const giverUser = userStore.getUserByMobile(giverMob)
+          if (giverUser) selectedGiverUser.value = giverUser.uid || giverUser.mobile
+        }
+        const receiverMob = formData.value.loanReceiverMobile
+        if (receiverMob && !isMeReceiver.value) {
+          const receiverUser = userStore.getUserByMobile(receiverMob)
+          if (receiverUser) selectedReceiverUser.value = receiverUser.uid || receiverUser.mobile
+        }
+        // Wait for the selectedGiverUser / selectedReceiverUser watchers to
+        // finish updating formData, then re-snapshot so the form isn't dirty
+        await nextTick()
+        initialFormSnapshot.value = JSON.stringify(formData.value)
       }
     },
     { immediate: true }
@@ -364,6 +384,17 @@ export const LoanForm = (props, emit) => {
   const validateForm = (whatTask = 'Save') => {
     loanForm.value.validate(async (valid) => {
       if (valid) {
+        // Shared loan guard: giver and receiver must not be the same person
+        if (!props.isPersonal) {
+          if (
+            formData.value.loanGiver &&
+            formData.value.loanGiver === formData.value.loanReceiver
+          ) {
+            showError('Giver and Receiver cannot be the same person.')
+            return
+          }
+        }
+
         // Personal loan guard: logged-in user must be either giver or receiver
         if (props.isPersonal) {
           const giverMobile =
@@ -447,7 +478,7 @@ export const LoanForm = (props, emit) => {
             () => getLoanData(receiptUrls, receiptMeta),
             loanForm,
             'Loan added successfully.',
-            () => {
+            async () => {
               if (expenseCopy) {
                 const mockFormRef = { value: { resetFields: () => {} } }
                 saveData(
@@ -462,6 +493,9 @@ export const LoanForm = (props, emit) => {
               if (isEditMode.value) {
                 emit('closeModal')
               } else {
+                // Sync snapshot so isFormDirty is false — prevents the
+                // "unsaved changes" dialog from appearing after a successful save
+                await resetForm()
                 closeForm()
               }
             }
@@ -557,8 +591,14 @@ export const LoanForm = (props, emit) => {
           : {}),
       [!props.isPersonal ? 'giver' : 'loanGiver']: giverMobile,
       [!props.isPersonal ? 'receiver' : 'loanReceiver']: receiverMobile,
-      giverName: formData.value.loanGiver,
-      receiverName: formData.value.loanReceiver,
+      // For shared loans the giver/receiver field stores a UID (ME? case) or a
+      // name (dropdown case). Always resolve to a human-readable name here.
+      giverName: !props.isPersonal
+        ? userStore.getUserByMobile(giverMobile)?.name || formData.value.loanGiver
+        : formData.value.loanGiver,
+      receiverName: !props.isPersonal
+        ? userStore.getUserByMobile(receiverMobile)?.name || formData.value.loanReceiver
+        : formData.value.loanReceiver,
       ...(!props.isPersonal
         ? { group: groupStore.getActiveGroup || null }
         : {}),

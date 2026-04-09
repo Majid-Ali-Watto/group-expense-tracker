@@ -236,25 +236,15 @@ export const NetPosition = () => {
         return group.members.some((m) => m.mobile === userMobile)
       })
 
-      // Calculate shared expenses for each group
+      // Calculate shared expenses and loans for each group in a single pass
       for (const group of userGroups) {
-        const expensesResult = await calculateSharedExpensesPosition(
-          group.id,
-          userMobile
-        )
+        const [expensesResult, loansResult] = await Promise.all([
+          calculateSharedExpensesPosition(group.id, userMobile),
+          calculateSharedLoansPosition(group.id, userMobile)
+        ])
+
         summary.sharedExpenses.lenderAmount += expensesResult.lenderAmount
         summary.sharedExpenses.debtorAmount += expensesResult.debtorAmount
-
-        // Yield to browser to keep UI responsive
-        await yieldToBrowser()
-      }
-
-      // Calculate shared loans for each group
-      for (const group of userGroups) {
-        const loansResult = await calculateSharedLoansPosition(
-          group.id,
-          userMobile
-        )
         summary.sharedLoans.lenderAmount += loansResult.lenderAmount
         summary.sharedLoans.debtorAmount += loansResult.debtorAmount
 

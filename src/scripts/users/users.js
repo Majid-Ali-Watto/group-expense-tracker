@@ -137,8 +137,8 @@ export const Users = () => {
     if (!targetUserId) return ''
     const user = userStore.getUserByMobile(targetUserId)
     const mobile = user?.mobile || targetUserId
+    // Active user sees their own real mobile; everyone else is always masked
     if (targetUserId === activeUser.value) return mobile
-    if (activeGroupMemberIds.value.includes(targetUserId)) return mobile
     return user?.maskedMobile || maskMobile(mobile)
   }
 

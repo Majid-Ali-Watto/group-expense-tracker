@@ -77,6 +77,7 @@
       class="expense-table-v2-scroll-wrapper"
     >
       <el-table-v2
+        ref="tableRef"
         class="expense-table-v2"
         :columns="tableColumns"
         :data="filteredSortedRows"
@@ -195,7 +196,13 @@
             class="et-cell-text px-2 text-sm"
             :data-cell-title="column.title"
           >
-            {{ formatAmount(rowData[column.key]) }}
+            {{
+              rowData[column.key] === undefined ||
+              rowData[column.key] === null ||
+              rowData[column.key] === ''
+                ? '-'
+                : formatAmount(rowData[column.key])
+            }}
           </span>
 
           <!-- split -->
@@ -203,7 +210,7 @@
             v-else-if="column.key === 'split'"
             class="px-2 text-sm et-cell-overflow"
           >
-            <template v-if="Array.isArray(rowData.split)">
+            <template v-if="Array.isArray(rowData.split) && rowData.split.length">
               <span
                 v-overflow-popup="{ title: column.title }"
                 class="et-cell-text"
@@ -233,7 +240,7 @@
               v-overflow-popup="{ title: column.title }"
               class="et-cell-text"
               :data-cell-title="column.title"
-              >{{ rowData.split }}</span
+              >{{ displayCellValue(rowData.split) }}</span
             >
           </span>
 
@@ -275,18 +282,39 @@
               class="et-cell-text"
               :data-cell-title="column.title"
             >
-              {{ formatUser(rowData.payer) }}
+              {{ displayFormattedValue(rowData.payer, formatUser) }}
             </span>
           </span>
 
-          <!-- giver / receiver -->
+          <!-- giver / receiver (shared loans) -->
           <span
             v-else-if="column.key === 'giver' || column.key === 'receiver'"
             v-overflow-popup="{ title: column.title }"
             class="et-cell-text px-2 text-sm"
             :data-cell-title="column.title"
           >
-            {{ formatUser(rowData[column.key]) }}
+            {{ displayFormattedValue(rowData[column.key], formatUser) }}
+          </span>
+
+          <!-- loanGiver / loanReceiver (personal loans) -->
+          <span
+            v-else-if="column.key === 'loanGiver' || column.key === 'loanReceiver'"
+            v-overflow-popup="{ title: column.title }"
+            class="et-cell-text px-2 text-sm"
+            :data-cell-title="column.title"
+          >
+            {{
+              displayFormattedValue(
+                rowData[column.key],
+                (value) =>
+                  formatUser(
+                    value,
+                    column.key === 'loanGiver'
+                      ? rowData.giverName
+                      : rowData.receiverName
+                  )
+              )
+            }}
           </span>
 
           <!-- recipient -->
@@ -296,7 +324,52 @@
             class="et-cell-text px-2 text-sm"
             :data-cell-title="column.title"
           >
-            {{ formatRecipient(rowData[column.key]) }}
+            {{ displayFormattedValue(rowData[column.key], formatRecipient) }}
+          </span>
+
+            <!-- splitItems -->
+          <span
+            v-else-if="column.key === 'splitItems'"
+            class="px-2 text-sm et-cell-overflow"
+          >
+            <template
+              v-if="Array.isArray(rowData.splitItems) && rowData.splitItems.length"
+            >
+              <span
+                v-overflow-popup="{ title: column.title }"
+                class="et-cell-text"
+                :data-cell-title="column.title"
+              >
+                <span v-for="(item, i) in rowData.splitItems.slice(0, 2)" :key="i">
+                  {{ formatSplitItem(item)
+                  }}<span v-if="i < Math.min(1, rowData.splitItems.length - 1)"
+                    >,
+                  </span>
+                </span>
+              </span>
+              <el-button
+                v-if="rowData.splitItems.length > 1"
+                link
+                size="small"
+                class="ml-2 flex-shrink-0"
+                @click.stop="
+                  openShowMore(
+                    'Split Items',
+                    rowData.splitItems.map(formatSplitItem)
+                  )
+                "
+              >
+                +{{ rowData.splitItems.length - 1 }} more
+              </el-button>
+            </template>
+            <span
+              v-else
+              v-overflow-popup="{ title: column.title }"
+              class="et-cell-text"
+              :data-cell-title="column.title"
+            >
+              {{ displayCellValue(rowData[column.key]) }}
+            </span>
           </span>
 
           <!-- receiptUrls (array) -->
@@ -335,7 +408,7 @@
                 +{{ rowData.receiptUrls.length - 1 }} more
               </el-button>
             </template>
-            <template v-else>—</template>
+            <template v-else>-</template>
           </span>
 
           <!-- actions -->
@@ -377,9 +450,7 @@
             :data-cell-title="column.title"
           >
             {{
-              typeof rowData[column.key] === 'object'
-                ? JSON.stringify(rowData[column.key])
-                : rowData[column.key]
+              displayCellValue(rowData[column.key])
             }}
           </span>
         </template>
@@ -567,7 +638,6 @@ const props = defineProps({
   reportMonth: { type: String, default: '' },
   showPopup: { type: Boolean, default: true }
 })
-
 const emit = defineEmits(['selection-change'])
 
 const {
@@ -605,13 +675,17 @@ const {
   colSettingsDragKey,
   handleColSettingsDrop,
   getRowClass,
+  tableRef,
   showMoreDialogVisible,
   showMoreTitle,
   showMoreItems,
   formatUser,
   formatRecipient,
+  displayCellValue,
+  displayFormattedValue,
   formatPayer,
   formatSplit,
+  formatSplitItem,
   formatReceipt,
   openShowMore,
   handleTableAction,
@@ -812,6 +886,17 @@ watch(selectedRows, (rows) => emit('selection-change', rows))
 
 .dark-theme .expense-table-v2 .et-row--selected {
   background-color: rgba(22, 163, 74, 0.2) !important; /* green-600/20 */
+}
+
+/* ── New-transaction highlight row ──────────────────────── */
+.expense-table-v2 .et-row--highlight {
+  background-color: rgba(234, 179, 8, 0.25) !important; /* amber-400/25 */
+  transition: background-color 1s ease-out;
+}
+
+.dark-theme .expense-table-v2 .et-row--highlight {
+  background-color: rgba(234, 179, 8, 0.2) !important; /* amber-400/20 */
+  transition: background-color 1s ease-out;
 }
 
 /* ── Normal row hover ────────────────────────────────────── */

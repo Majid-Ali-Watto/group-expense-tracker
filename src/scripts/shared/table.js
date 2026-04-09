@@ -2,6 +2,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   computed,
   inject,
+  nextTick,
   onMounted,
   onUnmounted,
   reactive,
@@ -12,7 +13,8 @@ import {
   useAuthStore,
   useTabStore,
   useGroupStore,
-  useUserStore
+  useUserStore,
+  useDataStore
 } from '@/stores'
 import {
   getEditComponent,
@@ -32,10 +34,40 @@ import { DB_NODES } from '@/constants'
 import { useDebouncedRef } from '@/composables'
 import { useRoute, useRouter } from 'vue-router'
 
+const TABLE_HEADER_CONFIG = {
+  [Tabs.SHARED_EXPENSES]: {
+    columns: ['amount', 'category', 'description', 'payer', 'date', 'split'],
+    optionalColumns: ['splitItems', 'location', 'receiptUrls']
+  },
+  [Tabs.SHARED_LOANS]: {
+    columns: ['amount', 'category', 'description', 'giver', 'receiver', 'date'],
+    optionalColumns: ['receiptUrls']
+  },
+  [Tabs.PERSONAL_EXPENSES]: {
+    columns: [
+      'amount',
+      'category',
+      'description',
+      'location',
+      'recipient',
+      'date'
+    ],
+    optionalColumns: ['receiptUrls']
+  },
+  [Tabs.PERSONAL_LOANS]: {
+    columns: [
+      'amount',
+      'category',
+      'description',
+      'loanGiver',
+      'loanReceiver',
+      'date'
+    ],
+    optionalColumns: ['receiptUrls']
+  }
+}
+
 export const Table = (props) => {
-  const clickTimeout = ref(null)
-  const lastClickTime = ref(0)
-  const doubleClickThreshold = 300
   const dialogFormVisible = ref(false)
   const deleteMode = ref(false)
   const state = reactive({ row: null })
@@ -44,7 +76,10 @@ export const Table = (props) => {
   const tabStore = useTabStore()
   const groupStore = useGroupStore()
   const userStore = useUserStore()
+  const dataStore = useDataStore()
   const childRef = ref(null)
+  const tableRef = ref(null)
+  const highlightRowId = ref(null)
 
   const activeTab = computed(() => tabStore.activeTab)
   const activeGroupObj = computed(() =>
@@ -64,14 +99,34 @@ export const Table = (props) => {
     formatUserDisplay(storeProxy, mobile, {
       name,
       group: activeGroupObj.value,
-      preferMasked: !activeGroupObj.value
+      preferMasked: true
     })
   const formatRecipient = (recipient) =>
     userStore.getUserByUid(recipient)?.name || recipient || '—'
 
+  function isEmptyCellValue(value) {
+    if (Array.isArray(value)) return value.length === 0
+    if (value && typeof value === 'object') return Object.keys(value).length === 0
+    return value === undefined || value === null || value === ''
+  }
+
+  function displayCellValue(value) {
+    if (isEmptyCellValue(value)) return '-'
+    return typeof value === 'object' ? JSON.stringify(value) : value
+  }
+
+  function displayFormattedValue(value, formatter) {
+    if (isEmptyCellValue(value)) return '-'
+    const formatted = formatter(value)
+    return formatted === undefined || formatted === null || formatted === ''
+      ? '-'
+      : formatted
+  }
+
   function getSearchableValue(key, value) {
     if (key === 'recipient') return formatRecipient(value)
     if (key === 'giver' || key === 'receiver') return formatUser(value)
+    if (key === 'loanGiver' || key === 'loanReceiver') return formatUser(value)
     if (key === 'payer') {
       return value ? formatUser(value) : ''
     }
@@ -194,16 +249,25 @@ export const Table = (props) => {
 
   onUnmounted(() => {
     window.removeEventListener('resize', updateScreenWidth)
-    clearTimeout(clickTimeout.value)
   })
 
   const dialogWidth = computed(() => {
     return screenWidth.value < 600 ? screenWidth.value * 0.95 : 500
   })
 
+  function hasAnyRowValue(key) {
+    return props.rows.some((row) => {
+      const value = row?.[key]
+      if (Array.isArray(value)) return value.length > 0
+      return value !== undefined && value !== null && value !== ''
+    })
+  }
+
   const headers = computed(() => {
     if (props.rows.length > 0) {
+      const config = TABLE_HEADER_CONFIG[activeTab.value]
       const isSharedLoans = activeTab.value === Tabs.SHARED_LOANS
+      const isPersonalLoans = activeTab.value === Tabs.PERSONAL_LOANS
 
       const excludedCols = [
         'whenAdded',
@@ -215,7 +279,7 @@ export const Table = (props) => {
         'notifications',
         'payerMode',
         'splitMode',
-        'splitItems',
+        // 'splitItems',
         'receiptMeta',
         'receiptUrls',
         'id',
@@ -223,28 +287,42 @@ export const Table = (props) => {
         'month'
       ]
       if (isSharedLoans) excludedCols.push('giverName', 'receiverName')
+      if (isPersonalLoans) excludedCols.push('giverName', 'receiverName')
 
-      const rowKeys = Object.keys(props.rows[0])
+      let cols = []
 
-      const cols = rowKeys.filter((col) => !excludedCols.includes(col))
-
-      return cols
+      if (config) {
+        cols = [
+          ...config.columns,
+          ...config.optionalColumns.filter((key) => hasAnyRowValue(key))
+        ]
+      } else {
+        cols = Object.keys(props.rows[0] || {}).filter(
+          (col) => !excludedCols.includes(col)
+        )
+      }
+      const receiptIndex = cols.indexOf('receiptUrls')
+      if (receiptIndex !== -1) cols.splice(receiptIndex, 1)
+      cols = cols
         .map((key) => ({
           label: key,
-          key: key === 'payers' ? 'payer' : key
+          key
         }))
         .sort((a, b) => {
           if (a.label < b.label) return -1
           if (a.label > b.label) return 1
           return 0
         })
-        .concat({ key: 'receiptUrls', label: 'Receipts' })
+
+      return receiptIndex !== -1
+        ? cols.concat({ key: 'receiptUrls', label: 'Receipts' })
+        : cols
     }
 
     return []
   })
 
-  const handleClick = (rowS, rowIndex) => {
+  const openForEdit = (rowS, rowIndex) => {
     if (rowS.deleteRequest || rowS.updateRequest) {
       const requestType = rowS.deleteRequest ? 'delete' : 'update'
       const requester =
@@ -270,7 +348,7 @@ export const Table = (props) => {
     state.row = { ...rowS, date, id: props.keys[rowIndex] }
   }
 
-  const handleDoubleClick = (row) => {
+  const showRowInfo = (row) => {
     const whoAdded = row?.whoAdded
     const addedBy = whoAdded
       ? formatUserDisplay(storeProxy, whoAdded, { group: activeGroupObj.value })
@@ -292,23 +370,6 @@ export const Table = (props) => {
         </div>
       `
     })
-  }
-
-  const handleRowClick = (rowS, rowIndex) => {
-    const now = Date.now()
-    const timeSinceLastClick = now - lastClickTime.value
-    lastClickTime.value = now
-
-    clearTimeout(clickTimeout.value)
-
-    if (timeSinceLastClick < doubleClickThreshold) {
-      handleDoubleClick(rowS)
-    } else {
-      clickTimeout.value = setTimeout(
-        () => handleClick(rowS, rowIndex),
-        doubleClickThreshold
-      )
-    }
   }
 
   const openForDelete = (rowS, rowIndex) => {
@@ -339,6 +400,264 @@ export const Table = (props) => {
   // Converts a rendered el-table element into a plain <table> by reading
   // the already-rendered cell text nodes. This avoids el-table's internal
   // horizontal scrollbar clipping that html2canvas cannot un-clip.
+  // ── Helpers shared by both PDF summary/settlement builders ──────────────
+  const TH_STYLE =
+    'padding:8px 12px;border:1px solid #d1d5db;background:#f5f7fa;color:#111827;font-weight:600;font-size:12px;text-align:left;width:40%;'
+  const TD_STYLE =
+    'padding:8px 12px;border:1px solid #d1d5db;background:#ffffff;color:#111827;font-size:13px;'
+  const SECTION_HEADER_STYLE =
+    'text-align:left;padding:8px 12px;background:#22c55e;color:#fff;font-size:13px;font-weight:700;border:1px solid #16a34a;letter-spacing:.04em;'
+  const TABLE_STYLE =
+    'width:100%;border-collapse:collapse;font-family:Poppins,sans-serif;font-size:13px;margin-bottom:12px;'
+
+  function makeRow(label, value) {
+    const tr = document.createElement('tr')
+    const th = document.createElement('th')
+    th.style.cssText = TH_STYLE
+    th.textContent = label
+    const td = document.createElement('td')
+    td.style.cssText = TD_STYLE
+    td.textContent = value
+    tr.appendChild(th)
+    tr.appendChild(td)
+    return tr
+  }
+
+  function buildSelectedSummaryEl(rows) {
+    const groupId = groupStore.getActiveGroup
+    const groupObj = groupId ? groupStore.getGroupById(groupId) : null
+    const usersList = groupObj?.members?.length
+      ? groupObj.members
+      : userStore.getUsers || []
+
+    const totalSpent = rows.reduce((sum, p) => sum + (p.amount || 0), 0)
+    const hasCustomSplits = rows.some(
+      (p) => (p.splitMode || 'equal') === 'custom'
+    )
+
+    // perPersonOwed (custom splits)
+    const perPersonMap = {}
+    rows.forEach((payment) => {
+      if (!payment.split?.length) return
+      payment.split.forEach((s) => {
+        if (!s.mobile || !(s.amount > 0)) return
+        if (!perPersonMap[s.mobile])
+          perPersonMap[s.mobile] = {
+            name: formatUser(s.mobile, s.name),
+            amount: 0
+          }
+        perPersonMap[s.mobile].amount += s.amount
+      })
+    })
+    const perPersonOwed = Object.values(perPersonMap)
+
+    // averageSpent
+    const participants = new Set()
+    rows.forEach((payment) => {
+      if (payment.split?.length) {
+        payment.split.forEach((s) => {
+          if (s.mobile && (s.amount || 0) > 0) participants.add(s.mobile)
+        })
+      } else if (payment.participants?.length) {
+        payment.participants.forEach((m) => participants.add(m))
+      }
+    })
+    const averageSpent = participants.size ? totalSpent / participants.size : 0
+
+    // friendTotals
+    const friendTotals = usersList
+      .map((user) => {
+        const mobile = user.mobile || user.uid
+        return {
+          name: formatUser(mobile, user.name),
+          total: rows.reduce((sum, payment) => {
+            if (payment.payerMode === 'multiple' && payment.payers?.length) {
+              const entry = payment.payers.find((p) => p.mobile === mobile)
+              return sum + (entry?.amount || 0)
+            }
+            if (payment.payer === mobile) return sum + (payment.amount || 0)
+            return sum
+          }, 0)
+        }
+      })
+      .filter((f) => f.total > 0)
+
+    const table = document.createElement('table')
+    table.style.cssText = TABLE_STYLE
+    const thead = document.createElement('thead')
+    const headerTr = document.createElement('tr')
+    const th = document.createElement('th')
+    th.colSpan = 2
+    th.style.cssText = SECTION_HEADER_STYLE
+    th.textContent = 'Expense Summary'
+    headerTr.appendChild(th)
+    thead.appendChild(headerTr)
+    table.appendChild(thead)
+
+    const tbody = document.createElement('tbody')
+    tbody.appendChild(makeRow('Total Spent', formatAmount(totalSpent)))
+    if (!hasCustomSplits) {
+      tbody.appendChild(
+        makeRow('Average Per Person', formatAmount(averageSpent))
+      )
+    } else {
+      perPersonOwed.forEach((p) =>
+        tbody.appendChild(
+          makeRow(`${p.name}'s Expense`, formatAmount(p.amount))
+        )
+      )
+    }
+    friendTotals.forEach((f) =>
+      tbody.appendChild(makeRow(`${f.name} Paid`, formatAmount(f.total)))
+    )
+    table.appendChild(tbody)
+    return table
+  }
+
+  function computeSettlements(rows) {
+    const users = userStore.getUsers?.length ? userStore.getUsers : []
+    const map = {}
+    users.forEach((u) => (map[u.uid || u.mobile] = 0))
+
+    rows.forEach((payment) => {
+      const amount = payment.amount || 0
+      const participants = payment.participants?.length
+        ? payment.participants
+        : users.map((u) => u.uid || u.mobile)
+
+      let shares = []
+      if (payment.split?.length) {
+        shares = payment.split.map((s) => ({ id: s.mobile, share: s.amount }))
+      } else if (
+        participants.length &&
+        typeof participants[0] === 'object' &&
+        participants[0].share != null
+      ) {
+        shares = participants.map((p) => ({
+          id: p.userId || p.name,
+          share: p.share
+        }))
+      } else {
+        const equalShare = participants.length
+          ? amount / participants.length
+          : 0
+        shares = participants.map((p) => ({
+          id: typeof p === 'string' ? p : p.userId || p.name,
+          share: equalShare
+        }))
+      }
+      shares.forEach((s) => {
+        map[s.id] = (map[s.id] || 0) - s.share
+      })
+
+      if (payment.payerMode === 'multiple' && payment.payers?.length) {
+        payment.payers.forEach((p) => {
+          if (p.mobile)
+            map[p.mobile] = (map[p.mobile] || 0) + (parseFloat(p.amount) || 0)
+        })
+      } else if (payment.payer) {
+        map[payment.payer] = (map[payment.payer] || 0) + amount
+      }
+    })
+
+    const list = Object.keys(map).map((m) => ({
+      mobile: m,
+      balance: Number(map[m] || 0)
+    }))
+    const creditors = list.filter((l) => l.balance > 0).map((c) => ({ ...c }))
+    const debtors = list
+      .filter((l) => l.balance < 0)
+      .map((d) => ({ ...d, balance: -d.balance }))
+
+    const result = []
+    let i = 0,
+      j = 0
+    while (i < debtors.length && j < creditors.length) {
+      const debtor = debtors[i],
+        creditor = creditors[j]
+      const amt = Math.min(debtor.balance, creditor.balance)
+      if (amt > 0) {
+        result.push({
+          from: debtor.mobile,
+          to: creditor.mobile,
+          amount: parseFloat(amt.toFixed(2))
+        })
+        debtor.balance = parseFloat((debtor.balance - amt).toFixed(2))
+        creditor.balance = parseFloat((creditor.balance - amt).toFixed(2))
+      }
+      if (debtor.balance <= 0.001) i++
+      if (creditor.balance <= 0.001) j++
+    }
+    return result
+  }
+
+  function buildSettlementTable(settlements) {
+    const CELL = 'padding:8px 12px;border:1px solid #d1d5db;font-size:12px;'
+    const table = document.createElement('table')
+    table.style.cssText = TABLE_STYLE
+
+    // section heading
+    const thead = document.createElement('thead')
+    const titleTr = document.createElement('tr')
+    const titleTh = document.createElement('th')
+    titleTh.colSpan = 3
+    titleTh.style.cssText = SECTION_HEADER_STYLE
+    titleTh.textContent = 'Pairwise Settlements (Who pays whom)'
+    titleTr.appendChild(titleTh)
+    thead.appendChild(titleTr)
+
+    // column headers — matches BalanceSummaryCard columns
+    const colTr = document.createElement('tr')
+    ;['Pays', 'Receives', 'Amount'].forEach((label) => {
+      const th = document.createElement('th')
+      th.style.cssText =
+        CELL +
+        'background:#f5f7fa;color:#6b7280;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.05em;text-align:left;'
+      th.textContent = label
+      colTr.appendChild(th)
+    })
+    thead.appendChild(colTr)
+    table.appendChild(thead)
+
+    const tbody = document.createElement('tbody')
+    if (!settlements.length) {
+      const tr = document.createElement('tr')
+      const td = document.createElement('td')
+      td.colSpan = 3
+      td.style.cssText =
+        CELL +
+        'background:#ffffff;color:#6b7280;font-style:italic;text-align:center;'
+      td.textContent = "No pending settlements. Everyone's balance is zero."
+      tr.appendChild(td)
+      tbody.appendChild(tr)
+    } else {
+      settlements.forEach((s, idx) => {
+        const tr = document.createElement('tr')
+        tr.style.backgroundColor = idx % 2 === 0 ? '#ffffff' : '#f9fafb'
+        const cellDefs = [
+          { text: formatUser(s.from), color: '#ef4444' },
+          { text: formatUser(s.to), color: '#16a34a' },
+          { text: formatAmount(s.amount), color: '#111827', bold: true }
+        ]
+        cellDefs.forEach(({ text, color, bold }) => {
+          const td = document.createElement('td')
+          td.style.cssText =
+            CELL +
+            `background:inherit;color:${color};${bold ? 'font-weight:700;' : ''}`
+          td.textContent = text
+          tr.appendChild(td)
+        })
+        tbody.appendChild(tr)
+      })
+    }
+    table.appendChild(tbody)
+    return table
+  }
+
+  function buildSelectedSettlementEl(rows) {
+    return buildSettlementTable(computeSettlements(rows))
+  }
+
   function buildRealTableFromElTable(elTableEl) {
     const headerCells = Array.from(
       elTableEl.querySelectorAll('.el-table__header thead tr th .cell')
@@ -446,12 +765,21 @@ export const Table = (props) => {
               })
               .join('\n')
           } else {
-            td.textContent = row.split ?? '—'
+            td.textContent = displayCellValue(row.split)
+          }
+        } else if (key === 'splitItems') {
+          if (Array.isArray(row.splitItems) && row.splitItems.length) {
+            td.textContent = row.splitItems.map(formatSplitItem).join('\n')
+          } else {
+            td.textContent = displayCellValue(row.splitItems)
           }
         } else if (key === 'giver' || key === 'receiver') {
-          td.textContent = row[key] ? formatUser(row[key]) : '—'
+          td.textContent = row[key] ? formatUser(row[key]) : '-'
+        } else if (key === 'loanGiver' || key === 'loanReceiver') {
+          const name = key === 'loanGiver' ? row.giverName : row.receiverName
+          td.textContent = row[key] ? formatUser(row[key], name) : '-'
         } else if (key === 'recipient') {
-          td.textContent = formatRecipient(row[key])
+          td.textContent = row[key] ? formatRecipient(row[key]) : '-'
         } else if (key === 'receiptUrls') {
           if (Array.isArray(row.receiptUrls) && row.receiptUrls.length) {
             row.receiptUrls.forEach((url, i) => {
@@ -464,16 +792,10 @@ export const Table = (props) => {
               td.appendChild(a)
             })
           } else {
-            td.textContent = '—'
+            td.textContent = '-'
           }
         } else {
-          const val = row[key]
-          td.textContent =
-            val == null
-              ? '—'
-              : typeof val === 'object'
-                ? JSON.stringify(val)
-                : String(val)
+          td.textContent = displayCellValue(row[key])
         }
         tr.appendChild(td)
       })
@@ -483,32 +805,55 @@ export const Table = (props) => {
     return table
   }
 
-  function downloadPdfData() {
-    if (!props.dataRef) return
+  function _downloadPdf(
+    rows,
+    filenamePrefix,
+    title,
+    subtitle,
+    isSelectedOnly = false
+  ) {
     const printHeaders = headers.value
-    const printRows = props.rows
-    if (!printHeaders.length || !printRows.length) return
 
-    // 1. Hide filter toolbar + any filter-bar rows in live DOM
+    // 1. Hide filter toolbar and no-print elements.
     const noPrint = Array.from(
       props.dataRef.querySelectorAll('.no-print-pdf, .filter-bar')
     )
     noPrint.forEach((el) => (el.style.display = 'none'))
 
-    // 2. Force-expand any collapsed el-collapse panels (e.g., Summary)
-    //    When collapsed, Vue v-show sets display:none on el-collapse-item__wrap
-    const collapseWraps = Array.from(
-      props.dataRef.querySelectorAll('.el-collapse-item__wrap')
+    // For a full PDF: show the pre-built pdf-only-summary (all-rows data).
+    // For a selected-rows PDF: compute fresh summary + settlement from the
+    // selected rows and inject them, treating selection exactly like a filter.
+    const pdfOnlySummaries = Array.from(
+      props.dataRef.querySelectorAll('.pdf-only-summary')
     )
-    const collapseWrapOrigDisplay = collapseWraps.map((el) => el.style.display)
-    collapseWraps.forEach((el) => {
-      el.style.display = 'block'
-      el.style.height = 'auto'
-      el.style.overflow = 'visible'
-    })
+    const selectedRestorations = []
 
-    // 3. Override CSS variables to force light mode on the captured section
-    //    (in case the user has dark theme active, which would produce dark backgrounds)
+    if (isSelectedOnly) {
+      const summarySection = props.dataRef.querySelector('.pdf-summary-section')
+      if (summarySection) {
+        const el = buildSelectedSummaryEl(rows)
+        summarySection.appendChild(el)
+        selectedRestorations.push(() => el.remove())
+      }
+      const settlementSection = props.dataRef.querySelector(
+        '.pdf-settlement-section'
+      )
+      if (settlementSection) {
+        // Hide the original Settlement component content so it doesn't print twice
+        const originalChildren = Array.from(settlementSection.children)
+        originalChildren.forEach((child) => (child.style.display = 'none'))
+        const el = buildSelectedSettlementEl(rows)
+        settlementSection.appendChild(el)
+        selectedRestorations.push(() => {
+          el.remove()
+          originalChildren.forEach((child) => (child.style.display = ''))
+        })
+      }
+    } else {
+      pdfOnlySummaries.forEach((el) => (el.style.display = ''))
+    }
+
+    // 2. Override app CSS variables to force light mode on the captured section.
     const lightVarDefs = {
       '--bg-primary': '#ffffff',
       '--bg-secondary': '#f9fafb',
@@ -528,75 +873,91 @@ export const Table = (props) => {
     props.dataRef.style.color = '#1f2937'
     props.dataRef.style.padding = '16px'
 
-    // 4. Replace regular el-table instances (Settlement, Who Owes Whom) with plain
-    //    <table> elements built from rendered cell text. el-table's internal horizontal
-    //    scroll clips columns that overflow, and html2canvas reads the already-computed
-    //    layout so CSS !important overrides don't help. DOM replacement is the only
-    //    reliable fix.
-    const elTables = Array.from(props.dataRef.querySelectorAll('.el-table'))
-    const elTableRestorations = []
-    elTables.forEach((elTableEl) => {
-      const realTable = buildRealTableFromElTable(elTableEl)
-      if (!realTable) return
-      const parent = elTableEl.parentNode
-      const sibling = elTableEl.nextSibling
-      parent.replaceChild(realTable, elTableEl)
-      elTableRestorations.push(() => {
-        realTable.remove()
-        if (sibling) parent.insertBefore(elTableEl, sibling)
-        else parent.appendChild(elTableEl)
+    // 3. Replace component-based tables with plain <table> elements so
+    //    html2canvas captures them correctly regardless of theme.
+    const domReplacements = []
+
+    const replaceEl = (origEl, replacement) => {
+      if (!replacement) return
+      const parent = origEl.parentNode
+      const sibling = origEl.nextSibling
+      parent.replaceChild(replacement, origEl)
+      domReplacements.push(() => {
+        replacement.remove()
+        if (sibling) parent.insertBefore(origEl, sibling)
+        else parent.appendChild(origEl)
       })
-    })
+    }
+
+    // el-table (clips overflow, relies on El Plus CSS vars)
+    props.dataRef
+      .querySelectorAll('.el-table')
+      .forEach((el) => replaceEl(el, buildRealTableFromElTable(el)))
+
+    // bsc-table (BalanceSummaryCard — Settlement section, relies on CSS vars)
+    // Replace only the .pdf-settlement-section's bsc-table for the full PDF.
+    if (!isSelectedOnly) {
+      props.dataRef
+        .querySelectorAll('.pdf-settlement-section .bsc-table')
+        .forEach((bscEl) => {
+          replaceEl(bscEl, buildSettlementTable(computeSettlements(props.rows)))
+        })
+    }
 
     // 5. Temporarily replace the virtualized scroll wrapper with a real <table>
     //    so html2canvas captures every row (not just visible ones in virtual scroll)
     const scrollWrapper = props.dataRef.querySelector(
       '.expense-table-v2-scroll-wrapper'
     )
-    const realTable = buildPrintTable(printHeaders, printRows)
+    const printTable = buildPrintTable(printHeaders, rows)
     let restoreTable = null
     if (scrollWrapper) {
       const parent = scrollWrapper.parentNode
       const sibling = scrollWrapper.nextSibling
-      parent.replaceChild(realTable, scrollWrapper)
+      parent.replaceChild(printTable, scrollWrapper)
       restoreTable = () => {
-        realTable.remove()
+        printTable.remove()
         if (sibling) parent.insertBefore(scrollWrapper, sibling)
         else parent.appendChild(scrollWrapper)
       }
     }
 
     // 6. Capture the live dataRef DOM, then restore everything
-    const pdfTitle = props.downloadTitle.replace(/_/g, ' ') + ' Report'
-    const pdfSubtitle = props.reportMonth
-      ? `Report for: ${props.reportMonth}`
-      : ''
-    downloadPDF(
-      props.dataRef,
+    return downloadPDF(props.dataRef, filenamePrefix, title, subtitle).finally(
+      () => {
+        // Restore no-print elements
+        noPrint.forEach((el) => (el.style.display = ''))
+        // Hide pdf-only-summary (full PDF) or remove injected els (selected PDF)
+        pdfOnlySummaries.forEach((el) => (el.style.display = 'none'))
+        selectedRestorations.forEach((restore) => restore())
+        // Restore CSS vars
+        Object.keys(lightVarDefs).forEach((k) =>
+          props.dataRef.style.removeProperty(k)
+        )
+        props.dataRef.style.backgroundColor = prevBg
+        props.dataRef.style.color = prevColor
+        props.dataRef.style.padding = prevPadding
+        // Restore replaced DOM elements (el-table, el-descriptions)
+        domReplacements.forEach((restore) => restore())
+        // Restore virtual table
+        if (restoreTable) restoreTable()
+      }
+    )
+  }
+
+  function downloadPdfData() {
+    if (!props.dataRef) return
+    const printRows = props.rows
+    if (!headers.value.length || !printRows.length) return
+
+    const title = props.downloadTitle.replace(/_/g, ' ') + ' Report'
+    const subtitle = props.reportMonth ? `Report for: ${props.reportMonth}` : ''
+    _downloadPdf(
+      printRows,
       getCurrentMonth() + `_${props.downloadTitle}_`,
-      pdfTitle,
-      pdfSubtitle
-    ).finally(() => {
-      // Restore no-print elements
-      noPrint.forEach((el) => (el.style.display = ''))
-      // Restore collapsed panels
-      collapseWraps.forEach((el, i) => {
-        el.style.display = collapseWrapOrigDisplay[i]
-        el.style.height = ''
-        el.style.overflow = ''
-      })
-      // Restore CSS vars
-      Object.keys(lightVarDefs).forEach((k) =>
-        props.dataRef.style.removeProperty(k)
-      )
-      props.dataRef.style.backgroundColor = prevBg
-      props.dataRef.style.color = prevColor
-      props.dataRef.style.padding = prevPadding
-      // Restore el-tables (Settlement, Who Owes Whom)
-      elTableRestorations.forEach((restore) => restore())
-      // Restore virtual table
-      if (restoreTable) restoreTable()
-    })
+      title,
+      subtitle
+    )
   }
 
   function downloadExcelData() {
@@ -795,73 +1156,20 @@ export const Table = (props) => {
     )
   }
 
-  async function downloadSelectedPdf() {
+  function downloadSelectedPdf() {
     if (!selectedRows.value.length || !props.dataRef) return
-    const printHeaders = headers.value
-    if (!printHeaders.length) return
+    if (!headers.value.length) return
 
-    // Mirror downloadPdfData exactly — operate on the live props.dataRef so
-    // html2canvas captures a fully-rendered, in-viewport element with all CSS
-    // variables applied. Only difference: buildPrintTable uses selectedRows only.
-
-    const noPrint = Array.from(
-      props.dataRef.querySelectorAll('.no-print-pdf, .filter-bar')
-    )
-    noPrint.forEach((el) => (el.style.display = 'none'))
-
-    const lightVarDefs = {
-      '--bg-primary': '#ffffff',
-      '--bg-secondary': '#f9fafb',
-      '--text-primary': '#1f2937',
-      '--text-secondary': '#6b7280',
-      '--border-color': '#e5e7eb',
-      '--card-bg': '#fafafa',
-      '--hover-bg': '#f3f4f6'
-    }
-    Object.entries(lightVarDefs).forEach(([k, v]) =>
-      props.dataRef.style.setProperty(k, v)
-    )
-    const prevBg = props.dataRef.style.backgroundColor
-    const prevColor = props.dataRef.style.color
-    const prevPadding = props.dataRef.style.padding
-    props.dataRef.style.backgroundColor = '#ffffff'
-    props.dataRef.style.color = '#1f2937'
-    props.dataRef.style.padding = '16px'
-
-    const scrollWrapper = props.dataRef.querySelector(
-      '.expense-table-v2-scroll-wrapper'
-    )
-    const printTable = buildPrintTable(printHeaders, selectedRows.value)
-    let restoreTable = null
-    if (scrollWrapper) {
-      const parent = scrollWrapper.parentNode
-      const sibling = scrollWrapper.nextSibling
-      parent.replaceChild(printTable, scrollWrapper)
-      restoreTable = () => {
-        printTable.remove()
-        if (sibling) parent.insertBefore(scrollWrapper, sibling)
-        else parent.appendChild(scrollWrapper)
-      }
-    }
-
-    const title = `${props.downloadTitle.replace(/_/g, ' ')} — ${selectedRows.value.length} selected row(s)`
+    const rows = selectedRows.value
+    const title = `${props.downloadTitle.replace(/_/g, ' ')} — ${rows.length} selected row(s)`
     const subtitle = props.reportMonth ? `Report for: ${props.reportMonth}` : ''
-
-    await downloadPDF(
-      props.dataRef,
+    _downloadPdf(
+      rows,
       `${getCurrentMonth()}_${props.downloadTitle}_Selected_`,
       title,
-      subtitle
-    ).finally(() => {
-      noPrint.forEach((el) => (el.style.display = ''))
-      Object.keys(lightVarDefs).forEach((k) =>
-        props.dataRef.style.removeProperty(k)
-      )
-      props.dataRef.style.backgroundColor = prevBg
-      props.dataRef.style.color = prevColor
-      props.dataRef.style.padding = prevPadding
-      if (restoreTable) restoreTable()
-    })
+      subtitle,
+      true
+    )
   }
 
   const columnOrder = ref([])
@@ -1067,13 +1375,37 @@ export const Table = (props) => {
   const getRowClass = ({ rowData, rowIndex }) => {
     const base = 'et-row'
     let cls = base
-    if (rowData.deleteRequest) cls += ' et-row--delete'
+    if (rowData.id === highlightRowId.value) cls += ' et-row--highlight'
+    else if (rowData.deleteRequest) cls += ' et-row--delete'
     else if (rowData.updateRequest) cls += ' et-row--update'
     else if (rowIndex % 2 !== 0) cls += ' et-row--odd'
     if (selectedKeys.value.includes(rowData._origIndex))
       cls += ' et-row--selected'
     return cls
   }
+
+  // Watch for pending scroll-to-row requests from bell notifications.
+  // We watch both the store value and filteredSortedRows so that if the
+  // data hasn't loaded yet when the store is first set (timing issue on
+  // tab navigation), we retry automatically once rows populate.
+  watch(
+    [() => dataStore.pendingScrollRowId, filteredSortedRows],
+    async ([rowId]) => {
+      if (!rowId) return
+      const rowIndex = filteredSortedRows.value.findIndex((r) => r.id === rowId)
+      if (rowIndex === -1) return // data not loaded yet — wait for next tick
+      await nextTick()
+      // First scroll the page so the table is visible, then scroll within the table
+      containerRef.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      tableRef.value?.scrollToRow(rowIndex, 'smart')
+      highlightRowId.value = rowId
+      dataStore.setPendingScrollRowId(null)
+      setTimeout(() => {
+        highlightRowId.value = null
+      }, 5000)
+    },
+    { immediate: true }
+  )
 
   // --- Show More dialog ---
   const showMoreDialogVisible = ref(false)
@@ -1086,6 +1418,20 @@ export const Table = (props) => {
   const formatSplit = (s) =>
     `${formatUser(s.mobile, s.name)}: ${formatAmount(s.amount)}`
 
+  const formatSplitItem = (item) => {
+    const description = item?.description?.trim() || 'Item'
+    const amount =
+      item?.amount === undefined || item?.amount === null || item?.amount === ''
+        ? '-'
+        : formatAmount(item.amount)
+    const participants =
+      Array.isArray(item?.participants) && item.participants.length
+        ? item.participants.map((mobile) => formatUser(mobile)).join(', ')
+        : '-'
+
+    return `${description}: ${amount} [${participants}]`
+  }
+
   const formatReceipt = (url, i) => ({ label: `Receipt ${i + 1}`, href: url })
 
   function openShowMore(title, items) {
@@ -1097,7 +1443,7 @@ export const Table = (props) => {
   function doEdit(rowData) {
     deleteMode.value = false
     const { _origIndex, ...cleanRow } = rowData
-    handleClick(cleanRow, _origIndex)
+    openForEdit(cleanRow, _origIndex)
   }
 
   function doDelete(rowData) {
@@ -1106,7 +1452,7 @@ export const Table = (props) => {
   }
 
   function doInfo(rowData) {
-    handleDoubleClick(rowData)
+    showRowInfo(rowData)
   }
 
   function handleTableAction(command, rowData) {
@@ -1132,9 +1478,8 @@ export const Table = (props) => {
     update,
     remove,
     duplicate,
-    handleRowClick,
-    handleClick,
-    handleDoubleClick,
+    openForEdit,
+    showRowInfo,
     openForDelete,
     downloadExcelData,
     downloadPdfData,
@@ -1161,6 +1506,8 @@ export const Table = (props) => {
     handleColSettingsDrop,
     // Row handlers
     getRowClass,
+    tableRef,
+    highlightRowId,
     // Selection
     selectedKeys,
     selectedRows,
@@ -1182,8 +1529,11 @@ export const Table = (props) => {
     // Formatters
     formatUser,
     formatRecipient,
+    displayCellValue,
+    displayFormattedValue,
     formatPayer,
     formatSplit,
+    formatSplitItem,
     formatReceipt,
     openShowMore,
     handleTableAction

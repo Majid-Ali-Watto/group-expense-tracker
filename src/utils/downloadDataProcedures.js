@@ -1,6 +1,48 @@
 import html2pdf from 'html2pdf.js'
 import * as XLSX from 'xlsx'
 import { startLoading, stopLoading } from './loading'
+
+// html2canvas can't parse CSS Color Level 4 `color(srgb r g b)` values that
+// modern browsers emit for computed colors. Convert them to plain rgb() first.
+function normalizeCssColor(val) {
+  if (!val || !val.includes('color(')) return val
+  const m = val.match(
+    /color\(\S+\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)(?:\s*\/\s*([\d.]+))?\s*\)/
+  )
+  if (!m) return '#000000'
+  const r = Math.round(parseFloat(m[1]) * 255)
+  const g = Math.round(parseFloat(m[2]) * 255)
+  const b = Math.round(parseFloat(m[3]) * 255)
+  const a = m[4] !== undefined ? parseFloat(m[4]) : 1
+  return a < 1 ? `rgba(${r},${g},${b},${a})` : `rgb(${r},${g},${b})`
+}
+
+const COLOR_PROPS = [
+  'color',
+  'backgroundColor',
+  'borderTopColor',
+  'borderRightColor',
+  'borderBottomColor',
+  'borderLeftColor',
+  'outlineColor',
+  'textDecorationColor',
+  'caretColor',
+  'fill',
+  'stroke'
+]
+
+function fixUnsupportedColors(clonedDoc) {
+  clonedDoc.querySelectorAll('*').forEach((el) => {
+    const cs = window.getComputedStyle(el)
+    COLOR_PROPS.forEach((prop) => {
+      const val = cs[prop]
+      if (val && val.includes('color(')) {
+        el.style[prop] = normalizeCssColor(val)
+      }
+    })
+  })
+}
+
 async function downloadPDF(
   pdfContent,
   fileName = 'Details-Sheet',
@@ -15,7 +57,8 @@ async function downloadPDF(
     html2canvas: {
       scale: 5,
       logging: false,
-      backgroundColor: '#ffffff'
+      backgroundColor: '#ffffff',
+      onclone: (clonedDoc) => fixUnsupportedColors(clonedDoc)
     },
     jsPDF: {
       unit: 'in',

@@ -23,10 +23,17 @@ export function useApprovalRequests({
 }) {
   function summarizeChanges(changes) {
     if (!changes) return ''
-    const resolveUser = (mobile) => {
-      if (!mobile) return mobile
-      const name = userStore?.getUserByMobile?.(mobile)?.name
-      return name ? `${name} (${maskMobile(mobile)})` : maskMobile(mobile)
+    const resolveUser = (identity) => {
+      if (!identity) return identity
+      const user = userStore?.getUserByMobile?.(identity)
+      if (user) {
+        // Use the stored mobile for masking, not the identity (which may be a UID)
+        const maskedMobile =
+          user.maskedMobile || (user.mobile ? maskMobile(user.mobile) : null)
+        return maskedMobile ? `${user.name} (${maskedMobile})` : user.name
+      }
+      // identity is a plain name (non-self shared loan users) — return as-is
+      return identity
     }
     const parts = []
     if (changes.amount !== undefined) parts.push(`Amount: ${changes.amount}`)

@@ -94,8 +94,7 @@ export const Summary = (props) => {
     usersList.value.map((user) => ({
       name: formatUserDisplay(storeProxy, user.mobile, {
         name: user.name,
-        group: groupObj.value,
-        preferMasked: !groupObj.value
+        preferMasked: true
       }),
       total: filteredPayments.value.reduce((sum, payment) => {
         if (payment.payerMode === 'multiple' && payment.payers?.length) {

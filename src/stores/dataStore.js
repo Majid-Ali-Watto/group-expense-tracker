@@ -6,7 +6,8 @@ export const useDataStore = defineStore('data', {
     expenseRef: null,
     loansRef: null,
     salaryRef: null,
-    selectedMonth: getCurrentMonth()
+    selectedMonth: getCurrentMonth(),
+    pendingScrollRowId: null
   }),
   actions: {
     setExpenseRef(ref) {
@@ -20,6 +21,9 @@ export const useDataStore = defineStore('data', {
     },
     setCurrentMonth(month) {
       this.selectedMonth = month
+    },
+    setPendingScrollRowId(id) {
+      this.pendingScrollRowId = id
     }
   },
   getters: {

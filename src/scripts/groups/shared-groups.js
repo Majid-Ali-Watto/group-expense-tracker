@@ -42,17 +42,12 @@ export const SharedGroups = () => {
 
   const activeUser = computed(() => authStore.getActiveUser)
 
-  function displayMobileForGroup(targetMobile, group) {
+  function displayMobileForGroup(targetMobile) {
     if (!targetMobile) return ''
     const user = userStore.getUserByMobile(targetMobile)
     const resolvedMobile = user?.mobile || targetMobile
-    const isSelf = targetMobile === activeUser.value
-    const isMember = (group?.members || []).some(
-      (m) => m.mobile === activeUser.value
-    )
-
-    if (isSelf || isMember) return resolvedMobile
-
+    // Active user sees their own real mobile; everyone else is always masked
+    if (targetMobile === activeUser.value) return resolvedMobile
     return user?.maskedMobile || maskMobile(resolvedMobile)
   }
 

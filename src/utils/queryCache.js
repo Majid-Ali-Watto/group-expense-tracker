@@ -67,11 +67,9 @@ export function setCache(path, value) {
  */
 export function getCache(path) {
   if (!_cacheEnabled) {
-    console.log(`[cache] DISABLED — ${path}`)
     return null
   }
   const hit = _cache.has(path)
-  console.log(`[cache] ${hit ? 'HIT' : 'MISS'} — ${path}`)
   return hit ? _cache.get(path) : null
 }
 

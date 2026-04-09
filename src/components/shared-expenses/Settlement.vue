@@ -189,13 +189,13 @@ const {
 const formatUser = (mobile) =>
   formatUserDisplay(userStore, mobile, {
     group: group.value,
-    preferMasked: !group.value
+    preferMasked: true
   })
 
 const formatMember = (member) =>
   formatMemberDisplay(userStore, member, {
     group: group.value,
-    preferMasked: !group.value
+    preferMasked: true
   })
 
 const settlementColumns = computed(() => [

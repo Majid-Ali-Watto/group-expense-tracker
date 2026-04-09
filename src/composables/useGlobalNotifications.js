@@ -39,8 +39,10 @@ export function useGlobalNotifications() {
   function getUserMetaByIdentity(identity, fallbackName = '') {
     const storedUser = resolveUser(identity)
     const mobile = storedUser?.mobile || ''
+    // Prefer the stored user's name over fallbackName — the fallback may be a
+    // raw UID when the caller passes loan.giverName which was stored as a UID
     const name =
-      fallbackName || storedUser?.name || mobile || identity || 'User'
+      storedUser?.name || fallbackName || mobile || identity || 'User'
 
     return {
       name,
@@ -339,8 +341,13 @@ export function useGlobalNotifications() {
   // ─── Expense / Loan notifications ────────────────────────────────────────
   const expenseNotifs = ref({})
   const loanNotifs = ref({})
+  const newTxnNotifs = ref([]) // persistent — accumulates new-transaction bell notifications
   const listeners = [] // expense/loan unsubscribers — cleared on group change
   const bugListeners = [] // bug report unsubscribers — persistent, only cleared on cleanup
+
+  function dismissPersistentNotif(id) {
+    newTxnNotifs.value = newTxnNotifs.value.filter((n) => n.id !== id)
+  }
 
   function subscribeToExpensesAndLoans() {
     const me = activeUser.value
@@ -357,12 +364,46 @@ export function useGlobalNotifications() {
       const eRef = dbRef(
         `${DB_NODES.SHARED_EXPENSES}/${group.id}/months/${month}/payments`
       )
+      const knownExpenseIds = new Set()
+      let expInitialDone = false
       const eUnsub = onSnapshot(eRef, (snap) => {
         const notifs = []
         snap.docs.forEach((docSnap) => {
           const paymentId = docSnap.id
           const payment = docSnap.data()
-          if (!payment.amount) return
+          if (!payment.amount) {
+            knownExpenseIds.add(paymentId)
+            return
+          }
+          // Detect new expenses added by others (after initial load)
+          if (
+            expInitialDone &&
+            !knownExpenseIds.has(paymentId) &&
+            payment.whoAdded !== me
+          ) {
+            const notifId = `exp-new-${group.id}-${paymentId}`
+            if (!newTxnNotifs.value.find((n) => n.id === notifId)) {
+              const payer =
+                payment.payerMode === 'multiple'
+                  ? 'multiple payers'
+                  : formatUserWithMobile(payment.payer)
+              newTxnNotifs.value = [
+                ...newTxnNotifs.value,
+                {
+                  id: notifId,
+                  icon: '🆕',
+                  title: group.name,
+                  description: `New expense: ${payment.description || payment.amount} · paid by ${payer}`,
+                  tab: Tabs.SHARED_EXPENSES,
+                  groupId: group.id,
+                  rowId: paymentId,
+                  action: 'scroll-to-row',
+                  category: 'Shared Expenses'
+                }
+              ]
+            }
+          }
+          knownExpenseIds.add(paymentId)
           if (
             payment.deleteRequest &&
             !payment.deleteRequest.approvals?.some((a) => a.mobile === me)
@@ -425,6 +466,7 @@ export function useGlobalNotifications() {
             })
           })
         })
+        expInitialDone = true
         expenseNotifs.value = { ...expenseNotifs.value, [group.id]: notifs }
       })
       listeners.push(eUnsub)
@@ -433,12 +475,43 @@ export function useGlobalNotifications() {
       const lRef = dbRef(
         `${DB_NODES.SHARED_LOANS}/${group.id}/months/${month}/loans`
       )
+      const knownLoanIds = new Set()
+      let loanInitialDone = false
       const lUnsub = onSnapshot(lRef, (snap) => {
         const notifs = []
         snap.docs.forEach((docSnap) => {
           const loanId = docSnap.id
           const loan = docSnap.data()
-          if (!loan.amount) return
+          if (!loan.amount) {
+            knownLoanIds.add(loanId)
+            return
+          }
+          // Detect new loans added by others (after initial load)
+          if (
+            loanInitialDone &&
+            !knownLoanIds.has(loanId) &&
+            loan.whoAdded !== me
+          ) {
+            const notifId = `loan-new-${group.id}-${loanId}`
+            if (!newTxnNotifs.value.find((n) => n.id === notifId)) {
+              const giver = formatUserWithMobile(loan.giver, loan.giverName)
+              newTxnNotifs.value = [
+                ...newTxnNotifs.value,
+                {
+                  id: notifId,
+                  icon: '🆕',
+                  title: group.name,
+                  description: `New loan: ${loan.description || loan.amount} · by ${giver}`,
+                  tab: Tabs.SHARED_LOANS,
+                  groupId: group.id,
+                  rowId: loanId,
+                  action: 'scroll-to-row',
+                  category: 'Shared Loans'
+                }
+              ]
+            }
+          }
+          knownLoanIds.add(loanId)
           if (
             loan.deleteRequest &&
             !loan.deleteRequest.approvals?.some((a) => a.mobile === me)
@@ -467,9 +540,13 @@ export function useGlobalNotifications() {
             )
               diffParts.push(`Desc: "${loan.description}"→"${ch.description}"`)
             if (ch.giver !== undefined && ch.giver !== loan.giver)
-              diffParts.push(`Giver: ${loan.giver}→${ch.giver}`)
+              diffParts.push(
+                `Giver: ${formatUserWithMobile(loan.giver, loan.giverName)}→${formatUserWithMobile(ch.giver, ch.giverName)}`
+              )
             if (ch.receiver !== undefined && ch.receiver !== loan.receiver)
-              diffParts.push(`Receiver: ${loan.receiver}→${ch.receiver}`)
+              diffParts.push(
+                `Receiver: ${formatUserWithMobile(loan.receiver, loan.receiverName)}→${formatUserWithMobile(ch.receiver, ch.receiverName)}`
+              )
             const diffStr = diffParts.length
               ? ` [${diffParts.join(' | ')}]`
               : ''
@@ -501,6 +578,7 @@ export function useGlobalNotifications() {
             })
           })
         })
+        loanInitialDone = true
         loanNotifs.value = { ...loanNotifs.value, [group.id]: notifs }
       })
       listeners.push(lUnsub)
@@ -661,6 +739,7 @@ export function useGlobalNotifications() {
     groupsUnsubscribe()
     expenseNotifs.value = {}
     loanNotifs.value = {}
+    newTxnNotifs.value = []
     bugReportNotifs.value = []
     rawAdminBugReportNotifs.value = []
   }
@@ -671,12 +750,14 @@ export function useGlobalNotifications() {
     ...Object.values(expenseNotifs.value).flat(),
     ...Object.values(loanNotifs.value).flat(),
     ...bugReportNotifs.value,
-    ...adminBugReportNotifs.value
+    ...adminBugReportNotifs.value,
+    ...newTxnNotifs.value
   ])
 
   return {
     allNotifications,
     notificationCount: computed(() => allNotifications.value.length),
+    dismissPersistentNotif,
     cleanup
   }
 }

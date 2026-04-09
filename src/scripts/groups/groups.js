@@ -2146,18 +2146,12 @@ export const Groups = () => {
   }
 
   // ========== Mobile Display Helpers ==========
-  function displayMobileForGroup(targetMobile, group) {
+  function displayMobileForGroup(targetMobile) {
     if (!targetMobile) return ''
     const user = userStore.getUserByMobile(targetMobile)
     const resolvedMobile = user?.mobile || targetMobile
+    // Active user sees their own real mobile; everyone else is always masked
     if (targetMobile === authStore.getActiveUser) return resolvedMobile
-    const isActiveUserInGroup = (group?.members || []).some(
-      (m) => m.mobile === authStore.getActiveUser
-    )
-    const isTargetInGroup = (group?.members || []).some(
-      (m) => m.mobile === targetMobile
-    )
-    if (isActiveUserInGroup && isTargetInGroup) return resolvedMobile
     return user?.maskedMobile || maskMobile(resolvedMobile)
   }
 
@@ -2170,13 +2164,7 @@ export const Groups = () => {
     (userStore.getUsers || []).map((user) => ({
       label: formatUserDisplay(storeProxy, user.uid || user.mobile, {
         name: user.name,
-        group: groups.value.find((g) => g.id === editingGroupId.value),
-        preferMasked: !groups.value
-          .find((g) => g.id === editingGroupId.value)
-          ?.members?.some(
-            (member) =>
-              (member.uid || member.mobile) === (user.uid || user.mobile)
-          )
+        preferMasked: true
       }),
       value: user.uid || user.mobile
     }))

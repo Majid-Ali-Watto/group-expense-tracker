@@ -458,11 +458,13 @@ export const App = () => {
   const allNotifications = ref([])
   const notificationCount = computed(() => allNotifications.value.length)
   let notificationCleanup = null
+  let notifDismissPersistent = null
 
   function dismissNotification(notificationId) {
     allNotifications.value = allNotifications.value.filter(
       (notif) => notif.id !== notificationId
     )
+    notifDismissPersistent?.(notificationId)
   }
 
   // Watch for login state changes
@@ -472,7 +474,12 @@ export const App = () => {
       if (isLoggedIn) {
         // User logged in - initialize notifications in next tick to avoid blocking UI
         nextTick(() => {
-          const { allNotifications: notifs, cleanup } = useGlobalNotifications()
+          const {
+            allNotifications: notifs,
+            cleanup,
+            dismissPersistentNotif
+          } = useGlobalNotifications()
+          notifDismissPersistent = dismissPersistentNotif
 
           // Update refs reactively
           watch(
@@ -492,6 +499,7 @@ export const App = () => {
           notificationCleanup()
           notificationCleanup = null
         }
+        notifDismissPersistent = null
         allNotifications.value = []
       }
     },

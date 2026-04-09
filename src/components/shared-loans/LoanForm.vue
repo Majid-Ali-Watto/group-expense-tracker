@@ -133,6 +133,7 @@
                   />
                 </div>
                 <GenericInput
+                  v-if="!selectedGiverUser"
                   :rows="1"
                   v-model="formData.loanGiverMobile"
                   label="Loan Giver Mobile"
@@ -141,10 +142,11 @@
                   type="textarea"
                   placeholder="e.g. 03001234567"
                   :maxlength="15"
-                  :disabled="isMeGiver || !!selectedGiverUser"
+                  :disabled="isMeGiver"
                   @blur="onGiverMobileBlur"
                 />
                 <GenericInput
+                  v-if="!selectedGiverUser"
                   :rows="1"
                   :model-value="formData.loanGiver"
                   label="Loan Giver"
@@ -153,11 +155,23 @@
                   type="textarea"
                   placeholder="Loan Giver Name"
                   :maxlength="50"
-                  :disabled="isMeGiver || !!selectedGiverUser"
+                  :disabled="isMeGiver"
                   @update:modelValue="
                     formData.loanGiver = $event.toCapitalize()
                   "
                 />
+                <div
+                  v-if="selectedGiverUser"
+                  class="mt-1 flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300"
+                >
+                  <span class="font-medium">{{ formData.loanGiver }}</span>
+                  <span class="text-gray-400 text-xs">· {{ maskMobile(formData.loanGiverMobile) }}</span>
+                  <button
+                    type="button"
+                    class="ml-auto text-xs text-red-400 hover:text-red-500"
+                    @click="selectedGiverUser = ''"
+                  >✕ Change</button>
+                </div>
               </div>
             </el-col>
             <el-col :xs="24" :sm="12" :md="12" :lg="12">
@@ -209,6 +223,7 @@
                   />
                 </div>
                 <GenericInput
+                  v-if="!selectedReceiverUser"
                   :rows="1"
                   v-model="formData.loanReceiverMobile"
                   label="Loan Receiver Mobile"
@@ -217,10 +232,11 @@
                   type="textarea"
                   placeholder="e.g. 03001234567"
                   :maxlength="15"
-                  :disabled="isMeReceiver || !!selectedReceiverUser"
+                  :disabled="isMeReceiver"
                   @blur="onReceiverMobileBlur"
                 />
                 <GenericInput
+                  v-if="!selectedReceiverUser"
                   :rows="1"
                   :model-value="formData.loanReceiver"
                   label="Loan Receiver"
@@ -229,11 +245,23 @@
                   type="textarea"
                   placeholder="Loan Receiver Name"
                   :maxlength="50"
-                  :disabled="isMeReceiver || !!selectedReceiverUser"
+                  :disabled="isMeReceiver"
                   @update:modelValue="
                     formData.loanReceiver = $event.toCapitalize()
                   "
                 />
+                <div
+                  v-if="selectedReceiverUser"
+                  class="mt-1 flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300"
+                >
+                  <span class="font-medium">{{ formData.loanReceiver }}</span>
+                  <span class="text-gray-400 text-xs">· {{ maskMobile(formData.loanReceiverMobile) }}</span>
+                  <button
+                    type="button"
+                    class="ml-auto text-xs text-red-400 hover:text-red-500"
+                    @click="selectedReceiverUser = ''"
+                  >✕ Change</button>
+                </div>
               </div>
             </el-col>
           </el-row>
@@ -278,6 +306,7 @@
 <script setup>
 import { ref } from 'vue'
 import { rules } from '@/assets'
+import { maskMobile } from '@/utils'
 import {
   AmountInput,
   DataTimePicker,

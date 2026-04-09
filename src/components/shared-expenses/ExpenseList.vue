@@ -95,12 +95,16 @@
       <!-- Filters -->
       <FilterBar :fields="filterFields" @clear="clearFilters" />
       <div ref="pdfContent">
-        <Summary :payments="filteredPayments" />
-        <Settlement
-          :payments="filteredPayments"
-          :keys="paymentKeys"
-          :selectedMonth="selectedMonth"
-        />
+        <div class="pdf-summary-section">
+          <Summary :payments="filteredPayments" />
+        </div>
+        <div class="pdf-settlement-section">
+          <Settlement
+            :payments="filteredPayments"
+            :keys="paymentKeys"
+            :selectedMonth="selectedMonth"
+          />
+        </div>
         <el-divider />
         <div class="flex justify-between">
           <h2>Expense List</h2>

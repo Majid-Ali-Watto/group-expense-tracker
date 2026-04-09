@@ -3,6 +3,7 @@ import { ElMessageBox } from 'element-plus'
 import { database, doc, deleteDoc, updateDoc, deleteField } from '@/firebase'
 import { DB_NODES } from '@/constants'
 import { showError, showSuccess } from '@/utils'
+import { useDataStore } from '@/stores'
 
 export const Header = (props, emit) => {
   const notifVisible = ref(false)
@@ -126,6 +127,10 @@ export const Header = (props, emit) => {
     }
 
     if (!notif.tab) return
+    if (notif.action === 'scroll-to-row' && notif.rowId) {
+      props.dismissNotification(notif.id)
+      useDataStore().setPendingScrollRowId(notif.rowId)
+    }
     emit('navigate-to-tab', { tab: notif.tab, groupId: notif.groupId })
   }
 

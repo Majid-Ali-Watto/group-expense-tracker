@@ -1,0 +1,25 @@
+# Kharchafy — Codex Instructions
+
+## Stack
+Vue 3 (`<script setup>`) · Pinia · Element Plus · Tailwind CSS · Vite · Firebase Realtime Database · Cloudinary
+
+## Folder Layout
+- `src/components/` — Vue SFCs (auth, groups, users, shared-expenses, shared-loans, personal-expenses, personal-loans, generic-components, layout)
+- `src/scripts/` — composables backing each component, folder structure mirrors components/
+- `src/stores/` — Pinia: authStore, groupStore, userStore, dataStore, tabStore
+- `src/composables/` — useFirebase, useDebouncedRef, useApprovalRequests, useReceiptUpload, useGlobalNotifications, useLoginRateLimit, useUnsavedChangesGuard, useUsersOptions…
+- `src/utils/` — string-formatting, maskMobile, sessionCrypto, queryCache, cloudinaryUpload, showAlerts, notifications…
+- `src/helpers/` — approval checks, group membership tests
+- `src/constants/` — DB_NODES (all Firebase Realtime DB path strings)
+- `src/firebase.js` — Firebase init and re-exports
+
+## Conventions
+- Components are thin templates; state and handlers live in the paired script composable.
+- Use `@/` alias for all `src/` imports.
+- DB paths come from `DB_NODES` — never hardcoded.
+- `String.prototype.toCapitalize()` capitalises every word (patched in main.js).
+- `formatAmount` is injected via `provide/inject` — PKR currency formatter.
+- Multi-member approval flows guard all destructive DB operations.
+
+## Ignore
+`node_modules/`, `dist/`, `dev-dist/`, `dist-ssr/`, `test-results/`, `playwright-report/`, `package-lock.json`

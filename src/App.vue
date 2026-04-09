@@ -35,7 +35,7 @@
           :key="index"
           :label="tab"
           :name="tab"
-          class="py-2 px-3 sm:px-0"
+          class="px-3 sm:px-0"
         />
       </el-tabs>
     </div>
