@@ -44,6 +44,7 @@ npx -y gsutil cors set cors.json gs://<your-storage-bucket>
 - **Storage:** Cloudinary for receipts (images only, max 1 MB enforced client-side).
 - **PWA bits:** `src/service-worker.js` registers a service worker (basic; extend as needed).
 - **State & Security:** Active session kept in Pinia plus `sessionStorage`, both encrypted with different AES keys (see `src/utils/sessionCrypto.js`). Session re-verified every 5 minutes against Firebase and automatically logs out after inactivity.
+- **Analytics:** Firebase Analytics is enabled only in production, and only when `VITE_MEASUREMENT_ID` is configured and the browser supports it. The app logs page views plus login, signup, and logout events.
 
 ---
 

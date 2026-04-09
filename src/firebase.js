@@ -38,6 +38,7 @@ import {
   onAuthStateChanged,
   signOut
 } from 'firebase/auth'
+import { getAnalytics, isSupported } from 'firebase/analytics'
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_API_KEY,
@@ -45,9 +46,23 @@ const firebaseConfig = {
   projectId: import.meta.env.VITE_PROJECT_ID,
   storageBucket: import.meta.env.VITE_STORAGE_BUCKET,
   messagingSenderId: import.meta.env.VITE_MESSAGE_SENDER_ID,
-  appId: import.meta.env.VITE_APP_ID
+  appId: import.meta.env.VITE_APP_ID,
+  measurementId: import.meta.env.VITE_MEASUREMENT_ID
 }
+
+// Initialize Firebase
 const app = initializeApp(firebaseConfig)
+const analyticsReady =
+  import.meta.env.PROD &&
+  typeof window !== 'undefined' &&
+  import.meta.env.VITE_MEASUREMENT_ID
+    ? isSupported()
+        .then((supported) => (supported ? getAnalytics(app) : null))
+        .catch((error) => {
+          console.warn('Firebase Analytics is unavailable:', error)
+          return null
+        })
+    : Promise.resolve(null)
 
 // App Check — debug token in dev, reCAPTCHA in production.
 // The debug token is printed to the browser console on first load;
@@ -69,6 +84,7 @@ const auth = getAuth(app)
 
 export {
   app,
+  analyticsReady,
   appCheck,
   database,
   collection,

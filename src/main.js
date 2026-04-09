@@ -6,7 +6,7 @@ import App from './App.vue'
 import router from './router'
 import overflowPopup from '@/directives/overflow-popup'
 import './main.css'
-import { toCapitalize } from '@/utils'
+import { initializeAnalytics, toCapitalize, trackPageView } from '@/utils'
 const app = createApp(App)
 const PKR = new Intl.NumberFormat('en-PK', {
   style: 'currency',
@@ -25,3 +25,8 @@ app.use(ElementPlus)
 app.use(createPinia())
 app.use(router)
 app.mount('#app')
+
+initializeAnalytics(router)
+router.isReady().then(() => {
+  trackPageView(router.currentRoute.value)
+})

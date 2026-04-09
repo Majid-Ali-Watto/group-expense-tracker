@@ -20,6 +20,9 @@ import {
   showError,
   generateUUID,
   maskMobile,
+  setAnalyticsIdentity,
+  clearAnalyticsIdentity,
+  trackAnalyticsEvent,
   clearAllCache,
   decryptFromSession,
   decryptFromStore,
@@ -236,7 +239,7 @@ export const App = () => {
         `You were logged out after ${formatInactivityLabel(timeoutMs)} of inactivity.`,
         { duration: 0 }
       )
-      await logout()
+      await logout('inactivity')
     }
   })
 
@@ -324,11 +327,12 @@ export const App = () => {
   }
 
   let logoutPromise = null
-  async function logout() {
+  async function logout(reason = 'manual') {
     if (logoutPromise) return logoutPromise
 
     logoutPromise = (async () => {
       stopInactivityTracking()
+      await trackAnalyticsEvent('logout', { reason })
       clearAllCache()
       authStore.setActiveUser(null)
       groupStore.setActiveGroup(null)
@@ -409,7 +413,7 @@ export const App = () => {
     const verified = await verifyUser()
     if (!verified) {
       showError('Session expired. Please login again.')
-      logout()
+      logout('session_expired')
     }
   }
 
@@ -433,18 +437,20 @@ export const App = () => {
       const verified = await verifyUser(false)
       if (!verified) {
         showError('Session expired. Please login again.')
-        logout()
+        logout('session_expired')
         return
       }
+      await setAnalyticsIdentity(authStore.getActiveUser)
       startInactivityTracking()
       verifyInterval = setInterval(async () => {
         const verified = await verifyUser(false)
         if (!verified) {
           showError('Session expired. Please login again.')
-          logout()
+          logout('session_expired')
         }
       }, 5 * 60_000)
     } else {
+      clearAnalyticsIdentity()
       stopInactivityTracking()
       if (verifyInterval) {
         clearInterval(verifyInterval)

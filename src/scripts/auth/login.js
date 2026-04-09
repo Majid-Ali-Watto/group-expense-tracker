@@ -15,7 +15,8 @@ import {
   showSuccess,
   encryptForSession,
   encryptForStore,
-  generateUUID
+  generateUUID,
+  trackAnalyticsEvent
 } from '@/utils'
 import {
   auth,
@@ -144,6 +145,7 @@ export const Login = () => {
     authStore.setActivePassword(payload.password)
     activateUserGroup(payload.uid)
     loadAppConfig() // fire-and-forget: load remote config flags after login
+    trackAnalyticsEvent('login', { method: 'password' })
     showSuccess(message || 'Login successful!')
   }
 
@@ -242,6 +244,7 @@ export const Login = () => {
         userData,
         ''
       )
+      trackAnalyticsEvent('sign_up', { method: 'password' })
 
       // Handle remember me
       if (rememberMe) {
