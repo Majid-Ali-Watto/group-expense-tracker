@@ -18,6 +18,18 @@
       </div>
 
       <div class="flex items-center gap-2">
+        <nav v-if="isPublicPage" class="hidden lg:flex items-center gap-2 mr-2">
+          <button
+            v-for="link in publicNavLinks"
+            :key="link.to"
+            class="public-nav-link"
+            :class="{ 'public-nav-link--active': route.path === link.to }"
+            @click="navigateTo(link.to)"
+          >
+            {{ link.label }}
+          </button>
+        </nav>
+
         <!-- Notification Bell — shown when logged in -->
         <div v-if="loggedIn" class="relative">
           <el-popover
@@ -101,8 +113,28 @@
           </button>
 
           <!-- Help — always visible -->
-          <button class="theme-btn" @click="showHelp = true" title="Help">
+          <button
+            class="theme-btn"
+            @click="isPublicPage ? navigateTo('/help') : (showHelp = true)"
+            title="Help"
+          >
             <QuestionCircleIcon class="w-5 h-5" />
+          </button>
+
+          <button
+            v-if="isPublicPage"
+            class="guest-link-btn"
+            @click="navigateTo('/login')"
+          >
+            Login
+          </button>
+
+          <button
+            v-if="isPublicPage"
+            class="guest-cta-btn"
+            @click="navigateTo('/register')"
+          >
+            Create Account
           </button>
 
           <!-- Share current URL — always visible -->
@@ -180,8 +212,42 @@
                 </el-dropdown-item>
                 <div class="mobile-menu-divider" />
               </template>
+
+              <template v-if="isPublicPage">
+                <div class="mobile-menu-section-label">Explore</div>
+                <el-dropdown-item
+                  v-for="link in publicNavLinks"
+                  :key="link.to"
+                  @click="navigateTo(link.to)"
+                >
+                  <div
+                    class="flex items-center gap-3"
+                    :class="{ 'is-active-tab': route.path === link.to }"
+                  >
+                    <ChevronRightIcon class="w-5 h-5 menu-icon" />
+                    <span>{{ link.label }}</span>
+                  </div>
+                </el-dropdown-item>
+                <el-dropdown-item @click="navigateTo('/login')">
+                  <div class="flex items-center gap-3">
+                    <ChevronRightIcon class="w-5 h-5 menu-icon" />
+                    <span>Login</span>
+                  </div>
+                </el-dropdown-item>
+                <el-dropdown-item @click="navigateTo('/register')">
+                  <div class="flex items-center gap-3">
+                    <ChevronRightIcon class="w-5 h-5 menu-icon" />
+                    <span>Create Account</span>
+                  </div>
+                </el-dropdown-item>
+                <div class="mobile-menu-divider" />
+              </template>
+
               <!-- Help — always visible -->
-              <el-dropdown-item @click="showHelp = true">
+              <el-dropdown-item
+                v-if="!isPublicPage"
+                @click="showHelp = true"
+              >
                 <div class="flex items-center gap-3">
                   <QuestionCircleIcon class="w-5 h-5 menu-icon" />
                   <span>Help</span>
@@ -308,13 +374,17 @@ const emit = defineEmits([
 ])
 
 const {
+  route,
   notifVisible,
   showHelp,
   showBugReport,
   bugReportView,
   bugReportOpenId,
+  isPublicPage,
+  publicNavLinks,
   confirmLogout,
   handleNetPosition,
+  navigateTo,
   shareCurrentUrl,
   handleNavigate,
   notifsByCategory,
@@ -418,6 +488,35 @@ const {
   color: #ffffff;
   cursor: pointer;
   transition: background-color 0.2s ease;
+}
+
+.public-nav-link,
+.guest-link-btn,
+.guest-cta-btn {
+  min-height: 34px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  background: transparent;
+  color: #ffffff;
+  font-size: 0.92rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.public-nav-link--active,
+.guest-cta-btn {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.72);
+}
+
+.public-nav-link:hover,
+.guest-link-btn:hover,
+.guest-cta-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .theme-btn:hover {

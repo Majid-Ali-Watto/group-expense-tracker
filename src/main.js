@@ -6,7 +6,12 @@ import App from './App.vue'
 import router from './router'
 import overflowPopup from '@/directives/overflow-popup'
 import './main.css'
-import { initializeAnalytics, toCapitalize, trackPageView } from '@/utils'
+import {
+  applySeoForRoute,
+  initializeAnalytics,
+  toCapitalize,
+  trackPageView
+} from '@/utils'
 const app = createApp(App)
 const PKR = new Intl.NumberFormat('en-PK', {
   style: 'currency',
@@ -28,5 +33,9 @@ app.mount('#app')
 
 initializeAnalytics(router)
 router.isReady().then(() => {
+  applySeoForRoute(router.currentRoute.value)
   trackPageView(router.currentRoute.value)
+})
+router.afterEach((to) => {
+  applySeoForRoute(to)
 })

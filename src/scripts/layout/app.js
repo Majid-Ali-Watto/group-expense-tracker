@@ -270,6 +270,9 @@ export const App = () => {
   const activeGroup = computed(
     () => groupStore.getGroupById(groupStore.getActiveGroup)?.name
   )
+  const isPublicPage = computed(
+    () => !loggedIn.value && route.meta?.publicPage === true
+  )
 
   // Active tab derived from current route path; synced back to tabStore
   const activeTab = ref(
@@ -556,6 +559,7 @@ export const App = () => {
     tabs,
     displayName,
     activeGroup,
+    isPublicPage,
     activeTab,
     tabBarKey,
     tabTransitionName,

@@ -60,6 +60,8 @@
       </div>
     </div>
 
+    <PublicFooter v-if="isPublicPage" />
+
     <!-- Expenses Summary Dialog -->
     <NetPositionDialog
       v-if="loggedIn"
@@ -78,6 +80,9 @@ const Header = loadAsyncComponent(
 const WelcomeBanner = loadAsyncComponent(
   () => import('@/components/generic-components/WelcomeBanner.vue')
 )
+const PublicFooter = loadAsyncComponent(
+  () => import('@/components/public/PublicFooter.vue')
+)
 const NetPositionDialog = loadAsyncComponent(
   () => import('@/components/generic-components/NetPositionDialog.vue')
 )
@@ -89,6 +94,7 @@ const {
   activeTab,
   tabBarKey,
   tabTransitionName,
+  isPublicPage,
   setLoggedInStatus,
   handleActiveTab,
   isDarkTheme,

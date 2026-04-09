@@ -1,16 +1,25 @@
 import { ref, computed, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessageBox } from 'element-plus'
 import { database, doc, deleteDoc, updateDoc, deleteField } from '@/firebase'
 import { DB_NODES } from '@/constants'
+import { PUBLIC_NAV_LINKS } from '@/constants'
 import { showError, showSuccess } from '@/utils'
 import { useDataStore } from '@/stores'
 
 export const Header = (props, emit) => {
+  const route = useRoute()
+  const router = useRouter()
   const notifVisible = ref(false)
   const showHelp = ref(false)
   const showBugReport = ref(false)
   const bugReportView = ref('form') // 'form' | 'my-reports'
   const bugReportOpenId = ref(null)
+  const isPublicPage = computed(
+    () =>
+      !props.loggedIn &&
+      (route.meta?.publicPage === true || route.meta?.requiresGuest === true)
+  )
 
   // Reset to form view when dialog closes
   watch(showBugReport, (val) => {
@@ -145,15 +154,24 @@ export const Header = (props, emit) => {
 
   const notifCategories = computed(() => Object.keys(notifsByCategory.value))
 
+  function navigateTo(path) {
+    if (route.path === path) return
+    router.push(path)
+  }
+
   return {
+    route,
     notifVisible,
     showHelp,
     showBugReport,
     bugReportView,
     bugReportOpenId,
+    isPublicPage,
+    publicNavLinks: PUBLIC_NAV_LINKS,
     setLoggedInStatus,
     confirmLogout,
     handleNetPosition,
+    navigateTo,
     shareCurrentUrl,
     handleNavigate,
     notifsByCategory,

@@ -3,10 +3,19 @@ import { useGroupStore } from '../stores/groupStore'
 import { useAuthStore } from '../stores/authStore'
 import { useUserStore } from '../stores/userStore'
 import { Tabs } from '../assets/enums'
+import { SEO_PAGES } from '@/constants'
 
 // Standard dynamic imports — do NOT use loadAsyncComponent here.
 // loadAsyncComponent sets suspensible:false which conflicts with Vue Router's
 // internal async component handling and causes an infinite navigation loop.
+const LandingPage = () => import('@/components/public/LandingPage.vue')
+const FeaturesPage = () => import('@/components/public/FeaturesPage.vue')
+const GroupExpenseTrackerPage = () =>
+  import('@/components/public/GroupExpenseTrackerPage.vue')
+const HelpPage = () => import('@/components/public/HelpPage.vue')
+const PersonalBudgetTrackerPage = () =>
+  import('@/components/public/PersonalBudgetTrackerPage.vue')
+const FaqPage = () => import('@/components/public/FaqPage.vue')
 const Groups = () => import('@/components/groups/Groups.vue')
 const Login = () => import('@/components/auth/Login.vue')
 const SharedExpenses = () =>
@@ -54,42 +63,79 @@ function hasSession() {
 }
 
 const routes = [
-  // '/' and unknown paths → redirect based on session
-  { path: '/', redirect: () => (hasSession() ? '/groups' : '/login') },
+  // Public marketing pages
+  { path: '/', component: LandingPage, meta: { publicPage: true, seo: SEO_PAGES.home } },
+  {
+    path: '/features',
+    component: FeaturesPage,
+    meta: { publicPage: true, seo: SEO_PAGES.features }
+  },
+  {
+    path: '/group-expense-tracker',
+    component: GroupExpenseTrackerPage,
+    meta: { publicPage: true, seo: SEO_PAGES.groupExpenseTracker }
+  },
+  {
+    path: '/personal-budget-tracker',
+    component: PersonalBudgetTrackerPage,
+    meta: { publicPage: true, seo: SEO_PAGES.personalBudgetTracker }
+  },
+  {
+    path: '/help',
+    component: HelpPage,
+    meta: { publicPage: true, seo: SEO_PAGES.help }
+  },
+  {
+    path: '/faq',
+    component: FaqPage,
+    meta: { publicPage: true, seo: SEO_PAGES.faq }
+  },
   // Auth routes — Login.vue handles both modes; mode is derived from route path
-  { path: '/login', component: Login, meta: { requiresGuest: true } },
-  { path: '/register', component: Login, meta: { requiresGuest: true } },
+  {
+    path: '/login',
+    component: Login,
+    meta: { requiresGuest: true, seo: SEO_PAGES.login }
+  },
+  {
+    path: '/register',
+    component: Login,
+    meta: { requiresGuest: true, seo: SEO_PAGES.register }
+  },
   // App routes
   {
     path: '/groups',
     component: Groups,
-    meta: { tab: Tabs.GROUPS, requiresAuth: true }
+    meta: { tab: Tabs.GROUPS, requiresAuth: true, seo: SEO_PAGES.app }
   },
   {
     // groupId is part of the path so it survives page refresh and is shareable
     path: '/shared-expenses/:groupId',
     component: SharedExpenses,
-    meta: { tab: Tabs.SHARED_EXPENSES, requiresAuth: true }
+    meta: { tab: Tabs.SHARED_EXPENSES, requiresAuth: true, seo: SEO_PAGES.app }
   },
   {
     path: '/shared-loans/:groupId',
     component: SharedLoansGuard,
-    meta: { tab: Tabs.SHARED_LOANS, requiresAuth: true }
+    meta: { tab: Tabs.SHARED_LOANS, requiresAuth: true, seo: SEO_PAGES.app }
   },
   {
     path: '/users',
     component: Users,
-    meta: { tab: Tabs.USERS, requiresAuth: true }
+    meta: { tab: Tabs.USERS, requiresAuth: true, seo: SEO_PAGES.app }
   },
   {
     path: '/personal-expenses',
     component: PersonalExpenses,
-    meta: { tab: Tabs.PERSONAL_EXPENSES, requiresAuth: true }
+    meta: {
+      tab: Tabs.PERSONAL_EXPENSES,
+      requiresAuth: true,
+      seo: SEO_PAGES.app
+    }
   },
   {
     path: '/personal-loans',
     component: PersonalLoans,
-    meta: { tab: Tabs.PERSONAL_LOANS, requiresAuth: true }
+    meta: { tab: Tabs.PERSONAL_LOANS, requiresAuth: true, seo: SEO_PAGES.app }
   },
   {
     path: '/bug-reports',
@@ -97,18 +143,19 @@ const routes = [
     meta: {
       tab: Tabs.BUG_RESOLVER,
       requiresAuth: true,
-      requiresBugResolver: true
+      requiresBugResolver: true,
+      seo: SEO_PAGES.app
     }
   },
   {
     path: '/shared-groups',
     component: SharedGroups,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, seo: SEO_PAGES.app }
   },
   // Catch-all → redirect based on session
   {
     path: '/:pathMatch(.*)*',
-    redirect: () => (hasSession() ? '/groups' : '/login')
+    redirect: () => (hasSession() ? '/groups' : '/')
   }
 ]
 
@@ -124,6 +171,8 @@ const router = createRouter({
 
 router.beforeEach((to) => {
   const session = hasSession()
+
+  if (to.path === '/' && session) return '/groups'
 
   // Logged-in users hitting /login or /register → go to app
   if (to.meta.requiresGuest && session) return '/groups'
