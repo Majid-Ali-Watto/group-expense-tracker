@@ -19,6 +19,8 @@ Vue 3 (`<script setup>`) · Pinia · Element Plus · Tailwind CSS · Vite · Fir
 - Firebase DB paths always come from `DB_NODES`, never as raw strings.
 - `String.prototype.toCapitalize()` is globally available — capitalises every word.
 - `formatAmount` is available via `inject('formatAmount')` (PKR currency).
+- Session handling is centralized in `src/scripts/layout/app.js`; inactivity tracking belongs in `src/composables/useInactivityLogout.js`.
+- Automatic logout must only happen after true inactivity for `VITE_INACTIVITY_LOGOUT_MINUTES` minutes, falling back to 30 minutes if unset or invalid.
 - Destructive actions (delete, edit) require multi-member approval stored in Firebase.
 
 ## Ignore

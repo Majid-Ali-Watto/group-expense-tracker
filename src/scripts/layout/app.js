@@ -233,7 +233,8 @@ export const App = () => {
     isLoggedIn: loggedIn,
     onTimeout: async (timeoutMs) => {
       showError(
-        `You were logged out after ${formatInactivityLabel(timeoutMs)} of inactivity.`
+        `You were logged out after ${formatInactivityLabel(timeoutMs)} of inactivity.`,
+        { duration: 0 }
       )
       await logout()
     }

@@ -28,6 +28,8 @@ src/
 - `String.prototype.toCapitalize` is globally patched in `main.js` — capitalizes every word.
 - `formatAmount` is provided via `inject('formatAmount')` — PKR currency formatter.
 - DB paths come from `DB_NODES` constants, never hardcoded strings.
+- Session orchestration belongs in `src/scripts/layout/app.js`; the inactivity tracker lives in `src/composables/useInactivityLogout.js`.
+- Idle logout is required to be activity-based only: users are logged out after `VITE_INACTIVITY_LOGOUT_MINUTES` of no activity, with a 30-minute fallback if the env value is missing or invalid.
 - Destructive changes (delete, edit) require multi-member approval flows stored in Firebase.
 
 ## Ignored (never read these)

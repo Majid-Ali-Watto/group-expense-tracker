@@ -19,6 +19,8 @@ Vue 3 (Composition API, `<script setup>`) · Pinia · Element Plus · Tailwind C
 - DB path strings come from `DB_NODES` — never hardcode them.
 - `String.prototype.toCapitalize` capitalises every word (patched globally in `main.js`).
 - `formatAmount` is injected via Vue `provide/inject` — PKR currency.
+- Auth session state is centralized in `src/scripts/layout/app.js`; inactivity logout logic lives in `src/composables/useInactivityLogout.js`.
+- Auto logout must be inactivity-based only: logged-in users are signed out after no activity for `VITE_INACTIVITY_LOGOUT_MINUTES` minutes, defaulting to 30 when unset or invalid.
 - Multi-member approval flows guard all destructive operations.
 
 ## Never Read

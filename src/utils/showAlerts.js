@@ -9,7 +9,7 @@ const options = {
  * @param message - The `message` parameter is a string that represents the success message that you
  * want to display to the user.
  */
-async function showSuccess(message = '') {
+async function showSuccess(message = 'Operation successful') {
   return new Promise((resolve) => {
     ElMessage({
       message,
@@ -26,12 +26,13 @@ async function showSuccess(message = '') {
  * @param message - The `message` parameter is a string that represents the error message to be
  * displayed.
  */
-function showError(message = '') {
+function showError(message = 'Something went wrong', customOptions = {}) {
   // ElMessage.error(message);
   ElMessage({
     message,
     type: 'error',
-    ...options
+    ...options,
+    ...customOptions
   })
 }
 export { showError, showSuccess }
