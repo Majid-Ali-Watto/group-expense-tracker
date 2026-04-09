@@ -19,6 +19,7 @@ import {
   clearAnalyticsIdentity,
   trackAnalyticsEvent
 } from '@/utils/analytics'
+import { withTrace } from '@/utils/performance'
 import { maskMobile } from '@/utils/maskMobile'
 import { clearAllCache } from '@/utils/queryCache'
 import {
@@ -136,7 +137,7 @@ export const App = () => {
     authUnsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (!firebaseUser || !firebaseUser.emailVerified || loggedIn.value) return
 
-      try {
+      await withTrace('session_bootstrap', async () => {
         const userData = await findUserByEmail(firebaseUser.email)
         if (!userData?.emailVerified) return
 
@@ -210,9 +211,9 @@ export const App = () => {
             ? savedRoute
             : '/groups')
         router.replace(destination)
-      } catch (e) {
+      }).catch((e) => {
         console.error('Auto session restore failed:', e)
-      }
+      })
     })
   })
   onUnmounted(() => {

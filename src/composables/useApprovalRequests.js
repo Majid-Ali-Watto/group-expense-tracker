@@ -2,6 +2,7 @@ import { computed } from 'vue'
 import { ElMessageBox } from 'element-plus'
 import { appendNotificationForUser, maskMobile } from '@/utils'
 import { deleteField } from '@/firebase'
+import { withTrace } from '@/utils/performance'
 
 export function useApprovalRequests({
   rawItems,
@@ -178,6 +179,7 @@ export function useApprovalRequests({
   }
 
   async function executeRequest(request, groupId) {
+    return withTrace('approval_execute', async () => {
     const itemId = request[itemIdKey]
     const itemPath = buildItemPath({
       groupId,
@@ -224,10 +226,11 @@ export function useApprovalRequests({
     )
 
     await updateData(
-      itemPath,
-      () => updatedItem,
-      `${listLabel} has been updated (approved by all members).`
-    )
+        itemPath,
+        () => updatedItem,
+        `${listLabel} has been updated (approved by all members).`
+      )
+    })
   }
 
   const executeRequestManually = async (request) => {
@@ -261,6 +264,7 @@ export function useApprovalRequests({
   }
 
   const approveRequest = async (request) => {
+    return withTrace('approval_approve', async () => {
     const groupId = activeGroup.value || 'global'
     const itemPath = buildItemPath({
       groupId,
@@ -278,6 +282,7 @@ export function useApprovalRequests({
     if (updatedApprovals.length >= getTotalMembers()) {
       await executeRequest(request, groupId)
     }
+    })
   }
 
   const rejectRequest = async (request) => {

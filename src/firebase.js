@@ -65,6 +65,16 @@ const analyticsReady =
         })
     : Promise.resolve(null)
 
+const performanceReady =
+  import.meta.env.PROD && typeof window !== 'undefined'
+    ? import('firebase/performance')
+        .then(({ getPerformance }) => getPerformance(app))
+        .catch((error) => {
+          console.warn('Firebase Performance is unavailable:', error)
+          return null
+        })
+    : Promise.resolve(null)
+
 // App Check — debug token in dev, reCAPTCHA in production.
 // The debug token is printed to the browser console on first load;
 // register it once in Firebase Console → App Check → Manage debug tokens.
@@ -93,6 +103,7 @@ const auth = getAuth(app)
 export {
   app,
   analyticsReady,
+  performanceReady,
   database,
   collection,
   doc,

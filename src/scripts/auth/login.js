@@ -18,6 +18,7 @@ import {
   generateUUID,
   trackAnalyticsEvent
 } from '@/utils'
+import { withTrace } from '@/utils/performance'
 import {
   auth,
   sendPasswordResetEmail,
@@ -170,9 +171,9 @@ export const Login = () => {
     isSubmitting.value = true
     try {
       if (mode.value === 'register') {
-        await handleRegistration()
+        await withTrace('auth_register', handleRegistration)
       } else {
-        await handleLogin()
+        await withTrace('auth_login', handleLogin)
       }
     } finally {
       isSubmitting.value = false

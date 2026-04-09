@@ -12,6 +12,7 @@ import {
 } from 'firebase/firestore'
 import { database } from '@/firebase'
 import { startLoading, stopLoading, withLoading } from '@/utils/loading'
+import { withTrace } from '@/utils/performance'
 import getCurrentMonth, { dateToMonthNode } from '@/utils/getCurrentMonth'
 import { resetForm } from '@/utils/reset-form'
 import { showError, showSuccess } from '@/utils/showAlerts'
@@ -62,23 +63,27 @@ export default function useFireBase() {
    * @returns {Promise<Object|null>}
    */
   async function read(path, loading = true) {
-    return withLoading(async () => {
-      const segments = path.split('/')
-      if (segments.length % 2 === 0) {
-        // Even segments → document
-        const snap = await getDoc(doc(database, path))
-        return snap.exists() ? { id: snap.id, ...snap.data() } : null
-      } else {
-        // Odd segments → collection — return id-keyed map
-        const snap = await getDocs(collection(database, path))
-        if (snap.empty) return null
-        const result = {}
-        snap.docs.forEach((d) => {
-          result[d.id] = { id: d.id, ...d.data() }
-        })
-        return result
-      }
-    }, loading)
+    return withLoading(
+      () =>
+        withTrace('db_read', async () => {
+          const segments = path.split('/')
+          if (segments.length % 2 === 0) {
+            // Even segments → document
+            const snap = await getDoc(doc(database, path))
+            return snap.exists() ? { id: snap.id, ...snap.data() } : null
+          } else {
+            // Odd segments → collection — return id-keyed map
+            const snap = await getDocs(collection(database, path))
+            if (snap.empty) return null
+            const result = {}
+            snap.docs.forEach((d) => {
+              result[d.id] = { id: d.id, ...d.data() }
+            })
+            return result
+          }
+        }),
+      loading
+    )
   }
 
   /**
@@ -90,10 +95,14 @@ export default function useFireBase() {
    * @returns {Promise<string[]>}
    */
   async function readShallow(path, loading = true) {
-    return withLoading(async () => {
-      const snap = await getDocs(collection(database, path))
-      return snap.docs.map((d) => d.id)
-    }, loading)
+    return withLoading(
+      () =>
+        withTrace('db_read_shallow', async () => {
+          const snap = await getDocs(collection(database, path))
+          return snap.docs.map((d) => d.id)
+        }),
+      loading
+    )
   }
 
   /**
@@ -103,9 +112,10 @@ export default function useFireBase() {
    * @param {string} message - Success message shown after deletion.
    */
   async function deleteData(path, message) {
-    return runMutation(async () => {
-      await deleteDoc(doc(database, path))
-    }, message)
+    return runMutation(
+      () => withTrace('db_delete', () => deleteDoc(doc(database, path))),
+      message
+    )
   }
 
   /**
@@ -116,9 +126,10 @@ export default function useFireBase() {
    * @param {string} message - Success message shown after update.
    */
   async function updateData(path, getData, message) {
-    return runMutation(async () => {
-      await updateDoc(doc(database, path), getData())
-    }, message)
+    return runMutation(
+      () => withTrace('db_update', () => updateDoc(doc(database, path), getData())),
+      message
+    )
   }
 
   function getNewData(formData) {
@@ -146,9 +157,11 @@ export default function useFireBase() {
    * @param {() => void} [onSuccess] - Optional callback after save.
    */
   function saveData(collectionPath, getData, formRef, message, onSuccess) {
-    return runMutation(async () => {
-      const data = getData()
-      await addDoc(collection(database, collectionPath), data)
+    return runMutation(
+      () =>
+        withTrace('db_save', async () => {
+          const data = getData()
+          await addDoc(collection(database, collectionPath), data)
 
         // Ensure the parent "month" document exists so getDocs on the months
         // collection returns it. Firestore does not surface implicit documents
@@ -198,9 +211,11 @@ export default function useFireBase() {
             { merge: true }
           )
         }
-      resetForm(formRef)
-      onSuccess?.()
-    }, message)
+          resetForm(formRef)
+          onSuccess?.()
+        }),
+      message
+    )
   }
 
   /**
@@ -211,9 +226,10 @@ export default function useFireBase() {
    * @param {string} [message] - Optional success toast message.
    */
   async function setData(path, data, message) {
-    return runMutation(async () => {
-      await setDoc(doc(database, path), data)
-    }, message)
+    return runMutation(
+      () => withTrace('db_set', () => setDoc(doc(database, path), data)),
+      message
+    )
   }
 
   /**
