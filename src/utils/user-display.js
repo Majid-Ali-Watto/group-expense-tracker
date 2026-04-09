@@ -14,6 +14,16 @@ function getUserRecord(userStore, identity) {
   )
 }
 
+export function createUserDisplayStoreProxy(authStore, userStore) {
+  return {
+    get getActiveUser() {
+      return authStore.getActiveUser
+    },
+    getUserByUid: (identity) => userStore.getUserByUid?.(identity),
+    getUserByMobile: (identity) => userStore.getUserByMobile?.(identity)
+  }
+}
+
 export function getDisplayMobile(userStore, identity) {
   const userId = getIdentity(identity)
   if (!userId) return ''

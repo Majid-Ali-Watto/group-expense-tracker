@@ -1,35 +1,35 @@
 import { computed, onMounted, onUnmounted, ref, watch, inject } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import {
-  useUsersOptions,
-  useFireBase,
-  useApprovalRequests
-} from '@/composables'
+import { useApprovalRequests } from '@/composables/useApprovalRequests'
+import useFireBase from '@/composables/useFirebase'
+import { useLoadingTimeout } from '@/composables/useLoadingTimeout'
+import { loadMonthsList } from '@/composables/useMonthsLoader'
+import { useRouteQuerySync } from '@/composables/useRouteQuerySync'
+import { useUsersOptions } from '@/composables/useUsersOptions'
 import { useAuthStore, useGroupStore, useUserStore } from '@/stores'
 import { onSnapshot } from '@/firebase'
+import { buildCategoryFilterOptions } from '@/utils/category-options'
 import {
-  checkDaily,
-  getCurrentMonth,
-  showError,
-  appendNotificationForUser,
-  formatUserDisplay,
-  deleteReceipt,
-  cleanupOldReceipts,
-  getCache,
-  setCache,
-  buildCategoryFilterOptions
-} from '@/utils'
+  applyCollectionState,
+  buildEmptyCollectionState,
+  buildSnapshotCollectionState
+} from '@/utils/firestoreCollectionState'
+import getCurrentMonth from '@/utils/getCurrentMonth'
+import { checkDaily } from '@/utils/notifications'
+import { getCache, setCache } from '@/utils/queryCache'
+import { appendNotificationForUser } from '@/utils/recordNotifications'
+import { showError } from '@/utils/showAlerts'
+import {
+  createUserDisplayStoreProxy,
+  formatUserDisplay
+} from '@/utils/user-display'
+import { cleanupOldReceipts, deleteReceipt } from '@/utils/uploadReceipt'
 
 export const ExpenseList = (props) => {
   const authStore = useAuthStore()
   const groupStore = useGroupStore()
   const userStore = useUserStore()
-  const storeProxy = {
-    get getActiveUser() {
-      return authStore.getActiveUser
-    },
-    getUserByMobile: (m) => userStore.getUserByMobile(m)
-  }
+  const storeProxy = createUserDisplayStoreProxy(authStore, userStore)
   const route = useRoute()
   const router = useRouter()
   const { dbRef, read, readShallow, updateData, deleteData } = useFireBase()
@@ -54,9 +54,10 @@ export const ExpenseList = (props) => {
     route.query.participants ? route.query.participants.split(',') : []
   )
 
-  // Keep URL query params in sync with filter state so the URL is shareable
-  watch(
-    [
+  useRouteQuerySync({
+    route,
+    router,
+    sources: [
       selectedMonth,
       selectedFriend,
       selectedPayerMode,
@@ -64,7 +65,7 @@ export const ExpenseList = (props) => {
       selectedCategory,
       selectedParticipants
     ],
-    () => {
+    buildQuery: () => {
       const query = {}
       if (selectedMonth.value) query.month = selectedMonth.value
       if (selectedFriend.value && selectedFriend.value !== 'All')
@@ -76,10 +77,10 @@ export const ExpenseList = (props) => {
       if (selectedCategory.value) query.category = selectedCategory.value
       if (selectedParticipants.value?.length)
         query.participants = selectedParticipants.value.join(',')
-      router.replace({ path: route.path, query })
+      return query
     },
-    { deep: true }
-  )
+    deep: true
+  })
 
   const activeUser = computed(() => authStore.getActiveUser)
   const activeGroup = computed(() => groupStore.getActiveGroup)
@@ -91,6 +92,10 @@ export const ExpenseList = (props) => {
   const isContentLoading = computed(
     () => !monthsLoaded.value || !paymentsLoaded.value
   )
+  const { startLoadingTimeout, clearLoadingTimeout } = useLoadingTimeout([
+    monthsLoaded,
+    paymentsLoaded
+  ])
 
   // Watch active group and refetch when it changes
   watch(
@@ -105,56 +110,37 @@ export const ExpenseList = (props) => {
     }
   )
 
-  let loadingTimeout = null
   onMounted(() => {
     checkDaily(pdfContent)
     fetchMonths()
     fetchExpenses()
-    loadingTimeout = setTimeout(() => {
-      monthsLoaded.value = true
-      paymentsLoaded.value = true
-    }, 8000)
+    startLoadingTimeout()
   })
 
   // Clean up listeners on unmount
   onUnmounted(() => {
-    if (loadingTimeout) clearTimeout(loadingTimeout)
+    clearLoadingTimeout()
     if (paymentsListener) paymentsListener()
   })
 
   // Fetch available months
   const fetchMonths = async () => {
-    if (!authStore.getActiveUser) {
-      monthsLoaded.value = true
-      return
-    }
     const groupId = groupStore.getActiveGroup || 'global'
-    const monthsPath = `${props.dbRef}/${groupId}/months`
-    const cached = getCache(monthsPath)
-    if (cached) {
-      months.value = cached
-      monthsLoaded.value = true
-      return
-    }
-    monthsLoaded.value = false
-    try {
-      // Fast path: read months[] array recorded on the grandparent document
-      // (1 read instead of getDocs across the whole months sub-collection).
-      const parentDoc = await read(`${props.dbRef}/${groupId}`, false)
-      if (parentDoc?.months?.length) {
-        months.value = [...parentDoc.months].sort((a, b) => b.localeCompare(a))
-      } else {
-        // Backward-compat fallback for documents written before months[] was introduced
-        months.value = await readShallow(monthsPath, false)
+    return loadMonthsList({
+      isEnabled: () => !!authStore.getActiveUser,
+      parentPath: `${props.dbRef}/${groupId}`,
+      monthsPath: `${props.dbRef}/${groupId}/months`,
+      read,
+      readShallow,
+      monthsRef: months,
+      loadedRef: monthsLoaded,
+      errorHandler: () => {
+        showError('Failed to load months. Please try again.')
+      },
+      onResolved: (resolvedMonths) => {
+        if (resolvedMonths.length) selectedMonth.value = getCurrentMonth()
       }
-      setCache(monthsPath, months.value)
-      if (months.value.length) selectedMonth.value = getCurrentMonth()
-    } catch (error) {
-      if (error?.code === 'permission-denied') return
-      showError('Failed to load months. Please try again.')
-    } finally {
-      monthsLoaded.value = true
-    }
+    })
   }
 
   // Fetch expenses for the selected month
@@ -163,10 +149,12 @@ export const ExpenseList = (props) => {
     const paymentsPath = `${props.dbRef}/${groupId}/months/${selectedMonth.value}/payments`
     const cached = getCache(paymentsPath)
     if (cached) {
-      rawPaymentsData.value = cached.raw
-      payments.value = cached.list
-      paymentKeys.value = cached.keys
-      paymentsLoaded.value = true
+      applyCollectionState(cached, {
+        listRef: payments,
+        keysRef: paymentKeys,
+        rawRef: rawPaymentsData,
+        loadedRef: paymentsLoaded
+      })
     } else {
       paymentsLoaded.value = false
     }
@@ -176,35 +164,20 @@ export const ExpenseList = (props) => {
     paymentsListener = onSnapshot(
       paymentsRef,
       (snapshot) => {
-        paymentsLoaded.value = true
-        if (!snapshot.empty) {
-          const data = {}
-          const paymentsArray = []
-          const keysArray = []
+        const state = snapshot.empty
+          ? buildEmptyCollectionState(true)
+          : buildSnapshotCollectionState(snapshot, {
+              includeRaw: true,
+              includeItem: (item) => !!item.amount
+            })
 
-          snapshot.docs.forEach((docSnap) => {
-            const item = { id: docSnap.id, ...docSnap.data() }
-            data[docSnap.id] = item
-            if (item.amount) {
-              paymentsArray.push(item)
-              keysArray.push(docSnap.id)
-            }
-          })
-
-          rawPaymentsData.value = data
-          paymentKeys.value = keysArray
-          payments.value = paymentsArray
-          setCache(paymentsPath, {
-            raw: data,
-            list: paymentsArray,
-            keys: keysArray
-          })
-        } else {
-          paymentKeys.value = []
-          payments.value = []
-          rawPaymentsData.value = {}
-          setCache(paymentsPath, { raw: {}, list: [], keys: [] })
-        }
+        setCache(paymentsPath, state)
+        applyCollectionState(state, {
+          listRef: payments,
+          keysRef: paymentKeys,
+          rawRef: rawPaymentsData,
+          loadedRef: paymentsLoaded
+        })
       },
       () => {
         paymentsLoaded.value = true

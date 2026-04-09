@@ -1,7 +1,7 @@
 import { ref, computed } from 'vue'
 import { useAuthStore, useGroupStore } from '@/stores'
 import { useFireBase } from '@/composables'
-import { ElMessageBox } from 'element-plus'
+import { confirmAction } from '@/utils/confirmAction'
 import { showError, showSuccess } from '@/utils'
 import { DB_NODES } from '@/constants'
 
@@ -281,20 +281,13 @@ export const NetPosition = () => {
    * Show confirmation dialog before calculating
    */
   async function showNetPositionConfirmation() {
-    try {
-      await ElMessageBox.confirm(
+    return confirmAction({
+      message:
         'Calculating your net position across all groups, loans, and expenses may take some time. Do you want to continue?',
-        'View Expenses Summary',
-        {
-          confirmButtonText: 'Yes, Calculate',
-          cancelButtonText: 'Cancel',
-          type: 'info'
-        }
-      )
-      return true
-    } catch {
-      return false
-    }
+      title: 'View Expenses Summary',
+      confirmButtonText: 'Yes, Calculate',
+      type: 'info'
+    })
   }
 
   return {

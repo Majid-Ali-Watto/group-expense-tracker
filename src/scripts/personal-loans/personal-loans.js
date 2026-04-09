@@ -1,17 +1,25 @@
 import { ref, computed, onMounted, onUnmounted, inject, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { onSnapshot } from '@/firebase'
-import { useFireBase } from '@/composables'
+import { useLoadingTimeout } from '@/composables/useLoadingTimeout'
+import { loadMonthsList } from '@/composables/useMonthsLoader'
+import { useRouteQuerySync } from '@/composables/useRouteQuerySync'
+import useFireBase from '@/composables/useFirebase'
 import { useAuthStore, useUserStore, useDataStore } from '@/stores'
 import { DB_NODES } from '@/constants'
+import { buildCategoryFilterOptions } from '@/utils/category-options'
 import {
-  getCurrentMonth,
-  showError,
-  formatUserDisplay,
-  getCache,
-  setCache,
-  buildCategoryFilterOptions
-} from '@/utils'
+  applyCollectionState,
+  buildEmptyCollectionState,
+  buildSnapshotCollectionState
+} from '@/utils/firestoreCollectionState'
+import getCurrentMonth from '@/utils/getCurrentMonth'
+import { getCache, setCache } from '@/utils/queryCache'
+import { showError } from '@/utils/showAlerts'
+import {
+  createUserDisplayStoreProxy,
+  formatUserDisplay
+} from '@/utils/user-display'
 
 export const PersonalLoans = () => {
   const formatAmount = inject('formatAmount')
@@ -20,12 +28,7 @@ export const PersonalLoans = () => {
   const userStore = useUserStore()
   const dataStore = useDataStore()
 
-  const storeProxy = {
-    get getActiveUser() {
-      return authStore.getActiveUser
-    },
-    getUserByMobile: (m) => userStore.getUserByMobile(m)
-  }
+  const storeProxy = createUserDisplayStoreProxy(authStore, userStore)
   const route = useRoute()
   const router = useRouter()
   const loans = ref([])
@@ -39,15 +42,19 @@ export const PersonalLoans = () => {
   const monthsLoaded = ref(false)
   const loansLoaded = ref(false)
 
-  // Sync filters to URL so they are bookmarkable and shareable
-  watch([selectedMonth, selectedGiver, selectedCategory], () => {
-    const query = {}
-    if (selectedMonth.value && selectedMonth.value !== 'All')
-      query.month = selectedMonth.value
-    if (selectedGiver.value && selectedGiver.value !== 'All')
-      query.giver = selectedGiver.value
-    if (selectedCategory.value) query.category = selectedCategory.value
-    router.replace({ path: route.path, query })
+  useRouteQuerySync({
+    route,
+    router,
+    sources: [selectedMonth, selectedGiver, selectedCategory],
+    buildQuery: () => {
+      const query = {}
+      if (selectedMonth.value && selectedMonth.value !== 'All')
+        query.month = selectedMonth.value
+      if (selectedGiver.value && selectedGiver.value !== 'All')
+        query.giver = selectedGiver.value
+      if (selectedCategory.value) query.category = selectedCategory.value
+      return query
+    }
   })
 
   const closeLoanForm = () => {
@@ -60,49 +67,35 @@ export const PersonalLoans = () => {
   const isContentLoading = computed(
     () => !monthsLoaded.value || !loansLoaded.value
   )
+  const { startLoadingTimeout, clearLoadingTimeout } = useLoadingTimeout([
+    monthsLoaded,
+    loansLoaded
+  ])
 
   const activeUser = computed(() => authStore.getActiveUser)
 
   const fetchMonths = async () => {
-    if (!activeUser.value) {
-      monthsLoaded.value = true
-      return
-    }
-    const monthsPath = `${DB_NODES.PERSONAL_LOANS}/${activeUser.value}/months`
-    const cached = getCache(monthsPath)
-    if (cached) {
-      months.value = cached
-      monthsLoaded.value = true
-      return
-    }
-    monthsLoaded.value = false
-    try {
-      // Fast path: read months[] array recorded on the grandparent document
-      const parentDoc = await read(
-        `${DB_NODES.PERSONAL_LOANS}/${activeUser.value}`,
-        false
-      )
-      if (parentDoc?.months?.length) {
-        months.value = [...parentDoc.months].sort((a, b) => b.localeCompare(a))
-      } else {
-        const keys = await readShallow(monthsPath, false)
-        months.value = keys.sort((a, b) => b.localeCompare(a))
+    return loadMonthsList({
+      isEnabled: () => !!activeUser.value,
+      parentPath: `${DB_NODES.PERSONAL_LOANS}/${activeUser.value}`,
+      monthsPath: `${DB_NODES.PERSONAL_LOANS}/${activeUser.value}/months`,
+      read,
+      readShallow,
+      monthsRef: months,
+      loadedRef: monthsLoaded,
+      errorHandler: (error) => {
+        showError('Failed to load months. Please try again.')
+        console.error(error)
+      },
+      onResolved: (resolvedMonths) => {
+        if (resolvedMonths.length && selectedMonth.value === 'All') {
+          const currentMonthFormatted = getCurrentMonth()
+          selectedMonth.value = resolvedMonths.includes(currentMonthFormatted)
+            ? currentMonthFormatted
+            : resolvedMonths[0]
+        }
       }
-      setCache(monthsPath, months.value)
-
-      if (months.value.length && selectedMonth.value === 'All') {
-        const currentMonthFormatted = getCurrentMonth()
-        selectedMonth.value = months.value.includes(currentMonthFormatted)
-          ? currentMonthFormatted
-          : months.value[0]
-      }
-    } catch (error) {
-      if (error?.code === 'permission-denied') return
-      showError('Failed to load months. Please try again.')
-      console.error(error)
-    } finally {
-      monthsLoaded.value = true
-    }
+    })
   }
 
   const fetchLoans = () => {
@@ -142,9 +135,11 @@ export const PersonalLoans = () => {
       const monthPath = `${basePath}/months/${selectedMonth.value}/loans`
       const cached = getCache(monthPath)
       if (cached) {
-        loans.value = cached.list
-        loanKeys.value = cached.keys
-        loansLoaded.value = true
+        applyCollectionState(cached, {
+          listRef: loans,
+          keysRef: loanKeys,
+          loadedRef: loansLoaded
+        })
       } else {
         loansLoaded.value = false
       }
@@ -153,25 +148,18 @@ export const PersonalLoans = () => {
       const unsubscribe = onSnapshot(
         monthLoansRef,
         (snapshot) => {
-          loansLoaded.value = true
-          if (!snapshot.empty) {
-            const loansArray = []
-            const keysArray = []
-            snapshot.docs.forEach((docSnap) => {
-              const loan = { id: docSnap.id, ...docSnap.data() }
-              if (loan.amount) {
-                loansArray.push(loan)
-                keysArray.push(docSnap.id)
-              }
-            })
-            loans.value = loansArray
-            loanKeys.value = keysArray
-            setCache(monthPath, { list: loansArray, keys: keysArray })
-          } else {
-            loans.value = []
-            loanKeys.value = []
-            setCache(monthPath, { list: [], keys: [] })
-          }
+          const state = snapshot.empty
+            ? buildEmptyCollectionState()
+            : buildSnapshotCollectionState(snapshot, {
+                includeItem: (item) => !!item.amount
+              })
+
+          setCache(monthPath, state)
+          applyCollectionState(state, {
+            listRef: loans,
+            keysRef: loanKeys,
+            loadedRef: loansLoaded
+          })
         },
         () => {
           loansLoaded.value = true
@@ -200,7 +188,6 @@ export const PersonalLoans = () => {
       const allLoans = []
       const allKeys = []
       for (const monthId of monthIds) {
-        const { read } = useFireBase()
         const monthLoans = await read(
           `${basePath}/months/${monthId}/loans`,
           false
@@ -240,14 +227,10 @@ export const PersonalLoans = () => {
     fetchLoans()
   })
 
-  let loadingTimeout = null
   onMounted(() => {
     fetchMonths()
     fetchLoans()
-    loadingTimeout = setTimeout(() => {
-      monthsLoaded.value = true
-      loansLoaded.value = true
-    }, 8000)
+    startLoadingTimeout()
 
     setTimeout(() => {
       dataStore.setLoansRef(loanContent.value)
@@ -255,7 +238,7 @@ export const PersonalLoans = () => {
   })
 
   onUnmounted(() => {
-    if (loadingTimeout) clearTimeout(loadingTimeout)
+    clearLoadingTimeout()
     if (loansListener) loansListener()
   })
 

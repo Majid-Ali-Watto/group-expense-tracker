@@ -7,30 +7,33 @@ import {
   useUserStore,
   useDataStore
 } from '@/stores'
-import { useFireBase, useApprovalRequests } from '@/composables'
-import {
-  appendNotificationForUser,
-  formatUserDisplay,
-  deleteReceipt,
-  cleanupOldReceipts,
-  getCurrentMonth,
-  showError,
-  getCache,
-  setCache,
-  buildCategoryFilterOptions
-} from '@/utils'
+import { useApprovalRequests } from '@/composables/useApprovalRequests'
+import useFireBase from '@/composables/useFirebase'
+import { useLoadingTimeout } from '@/composables/useLoadingTimeout'
+import { loadMonthsList } from '@/composables/useMonthsLoader'
+import { useRouteQuerySync } from '@/composables/useRouteQuerySync'
+import { buildCategoryFilterOptions } from '@/utils/category-options'
 import { DB_NODES } from '@/constants'
+import {
+  applyCollectionState,
+  buildEmptyCollectionState,
+  buildSnapshotCollectionState
+} from '@/utils/firestoreCollectionState'
+import getCurrentMonth from '@/utils/getCurrentMonth'
+import { getCache, setCache } from '@/utils/queryCache'
+import { appendNotificationForUser } from '@/utils/recordNotifications'
+import { showError } from '@/utils/showAlerts'
+import {
+  createUserDisplayStoreProxy,
+  formatUserDisplay
+} from '@/utils/user-display'
+import { cleanupOldReceipts, deleteReceipt } from '@/utils/uploadReceipt'
 
 export const Loans = () => {
   const authStore = useAuthStore()
   const groupStore = useGroupStore()
   const userStore = useUserStore()
-  const storeProxy = {
-    get getActiveUser() {
-      return authStore.getActiveUser
-    },
-    getUserByMobile: (m) => userStore.getUserByMobile(m)
-  }
+  const storeProxy = createUserDisplayStoreProxy(authStore, userStore)
   const dataStore = useDataStore()
   const route = useRoute()
   const router = useRouter()
@@ -46,14 +49,18 @@ export const Loans = () => {
   const selectedGiver = ref(route.query.giver || 'All')
   const selectedCategory = ref(route.query.category || '')
 
-  // Keep URL query params in sync with filter state so the URL is shareable
-  watch([selectedMonth, selectedGiver, selectedCategory], () => {
-    const query = {}
-    if (selectedMonth.value) query.month = selectedMonth.value
-    if (selectedGiver.value && selectedGiver.value !== 'All')
-      query.giver = selectedGiver.value
-    if (selectedCategory.value) query.category = selectedCategory.value
-    router.replace({ path: route.path, query })
+  useRouteQuerySync({
+    route,
+    router,
+    sources: [selectedMonth, selectedGiver, selectedCategory],
+    buildQuery: () => {
+      const query = {}
+      if (selectedMonth.value) query.month = selectedMonth.value
+      if (selectedGiver.value && selectedGiver.value !== 'All')
+        query.giver = selectedGiver.value
+      if (selectedCategory.value) query.category = selectedCategory.value
+      return query
+    }
   })
   const months = ref([])
   const monthsLoaded = ref(false)
@@ -104,38 +111,29 @@ export const Loans = () => {
   const isContentLoading = computed(
     () => !monthsLoaded.value || !loansLoaded.value
   )
+  const { startLoadingTimeout, clearLoadingTimeout } = useLoadingTimeout([
+    monthsLoaded,
+    loansLoaded
+  ])
 
   // Fetch available months
   const fetchMonths = async () => {
-    if (!authStore.getActiveUser) {
-      monthsLoaded.value = true
-      return
-    }
     const groupId = groupStore.getActiveGroup || 'global'
-    const monthsPath = `${DB_NODES.SHARED_LOANS}/${groupId}/months`
-    const cached = getCache(monthsPath)
-    if (cached) {
-      months.value = cached
-      monthsLoaded.value = true
-      return
-    }
-    monthsLoaded.value = false
-    try {
-      // Fast path: read months[] array recorded on the grandparent document
-      const parentDoc = await read(`${DB_NODES.SHARED_LOANS}/${groupId}`, false)
-      if (parentDoc?.months?.length) {
-        months.value = [...parentDoc.months].sort((a, b) => b.localeCompare(a))
-      } else {
-        months.value = await readShallow(monthsPath, false)
+    return loadMonthsList({
+      isEnabled: () => !!authStore.getActiveUser,
+      parentPath: `${DB_NODES.SHARED_LOANS}/${groupId}`,
+      monthsPath: `${DB_NODES.SHARED_LOANS}/${groupId}/months`,
+      read,
+      readShallow,
+      monthsRef: months,
+      loadedRef: monthsLoaded,
+      errorHandler: () => {
+        showError('Failed to load months. Please try again.')
+      },
+      onResolved: (resolvedMonths) => {
+        if (resolvedMonths.length) selectedMonth.value = getCurrentMonth()
       }
-      setCache(monthsPath, months.value)
-      if (months.value.length) selectedMonth.value = getCurrentMonth()
-    } catch (error) {
-      if (error?.code === 'permission-denied') return
-      showError('Failed to load months. Please try again.')
-    } finally {
-      monthsLoaded.value = true
-    }
+    })
   }
   // Fetch loans for the selected month
 
@@ -144,10 +142,12 @@ export const Loans = () => {
     const loansPath = `${DB_NODES.SHARED_LOANS}/${groupId}/months/${selectedMonth.value}/loans`
     const cached = getCache(loansPath)
     if (cached) {
-      rawLoansData.value = cached.raw
-      loans.value = cached.list
-      loanKeys.value = cached.keys
-      loansLoaded.value = true
+      applyCollectionState(cached, {
+        listRef: loans,
+        keysRef: loanKeys,
+        rawRef: rawLoansData,
+        loadedRef: loansLoaded
+      })
     } else {
       loansLoaded.value = false
     }
@@ -158,31 +158,20 @@ export const Loans = () => {
     const unsubscribe = onSnapshot(
       loansRef,
       (snapshot) => {
-        loansLoaded.value = true
-        if (!snapshot.empty) {
-          const data = {}
-          const loansArray = []
-          const keysArray = []
+        const state = snapshot.empty
+          ? buildEmptyCollectionState(true)
+          : buildSnapshotCollectionState(snapshot, {
+              includeRaw: true,
+              includeItem: (item) => !!item.amount
+            })
 
-          snapshot.docs.forEach((docSnap) => {
-            const item = { id: docSnap.id, ...docSnap.data() }
-            data[docSnap.id] = item
-            if (item.amount) {
-              loansArray.push(item)
-              keysArray.push(docSnap.id)
-            }
-          })
-
-          rawLoansData.value = data
-          loanKeys.value = keysArray
-          loans.value = loansArray
-          setCache(loansPath, { raw: data, list: loansArray, keys: keysArray })
-        } else {
-          loanKeys.value = []
-          loans.value = []
-          rawLoansData.value = {}
-          setCache(loansPath, { raw: {}, list: [], keys: [] })
-        }
+        setCache(loansPath, state)
+        applyCollectionState(state, {
+          listRef: loans,
+          keysRef: loanKeys,
+          rawRef: rawLoansData,
+          loadedRef: loansLoaded
+        })
       },
       () => {
         loansLoaded.value = true
@@ -212,18 +201,14 @@ export const Loans = () => {
     fetchLoans()
   })
 
-  let loadingTimeout = null
   onMounted(() => {
     fetchMonths()
     fetchLoans()
-    loadingTimeout = setTimeout(() => {
-      monthsLoaded.value = true
-      loansLoaded.value = true
-    }, 8000)
+    startLoadingTimeout()
   })
 
   onUnmounted(() => {
-    if (loadingTimeout) clearTimeout(loadingTimeout)
+    clearLoadingTimeout()
     if (loansListener) loansListener()
   })
 

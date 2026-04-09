@@ -20,6 +20,26 @@ import { DB_NODES } from '@/constants'
 export default function useFireBase() {
   const isSubmitting = ref(false)
 
+  async function runMutation(task, successMessage) {
+    if (isSubmitting.value) return null
+
+    isSubmitting.value = true
+    const loading = startLoading()
+
+    try {
+      const result = await task()
+      if (successMessage) showSuccess(successMessage)
+      return result
+    } catch (error) {
+      console.error(error)
+      showError(error.message)
+      return null
+    } finally {
+      isSubmitting.value = false
+      stopLoading(loading)
+    }
+  }
+
   /**
    * Returns a Firestore collection or document reference based on path segment count.
    * Odd segment count → collection reference; even segment count → document reference.
@@ -83,18 +103,9 @@ export default function useFireBase() {
    * @param {string} message - Success message shown after deletion.
    */
   async function deleteData(path, message) {
-    if (isSubmitting.value) return
-    isSubmitting.value = true
-    const loading = startLoading()
-    try {
+    return runMutation(async () => {
       await deleteDoc(doc(database, path))
-      showSuccess(message)
-    } catch (error) {
-      showError(error.message)
-    } finally {
-      isSubmitting.value = false
-      stopLoading(loading)
-    }
+    }, message)
   }
 
   /**
@@ -105,18 +116,9 @@ export default function useFireBase() {
    * @param {string} message - Success message shown after update.
    */
   async function updateData(path, getData, message) {
-    if (isSubmitting.value) return
-    isSubmitting.value = true
-    const loading = startLoading()
-    try {
+    return runMutation(async () => {
       await updateDoc(doc(database, path), getData())
-      showSuccess(message)
-    } catch (error) {
-      showError(error.message)
-    } finally {
-      isSubmitting.value = false
-      stopLoading(loading)
-    }
+    }, message)
   }
 
   function getNewData(formData) {
@@ -144,12 +146,10 @@ export default function useFireBase() {
    * @param {() => void} [onSuccess] - Optional callback after save.
    */
   function saveData(collectionPath, getData, formRef, message, onSuccess) {
-    if (isSubmitting.value) return
-    isSubmitting.value = true
-    const loading = startLoading()
-    const data = getData()
-    addDoc(collection(database, collectionPath), data)
-      .then(async () => {
+    return runMutation(async () => {
+      const data = getData()
+      await addDoc(collection(database, collectionPath), data)
+
         // Ensure the parent "month" document exists so getDocs on the months
         // collection returns it. Firestore does not surface implicit documents
         // (those with sub-collections but no own fields) in getDocs results.
@@ -198,18 +198,9 @@ export default function useFireBase() {
             { merge: true }
           )
         }
-        showSuccess(message)
-        resetForm(formRef)
-        if (onSuccess) onSuccess()
-      })
-      .catch((error) => {
-        console.error(error)
-        showError(error.message)
-      })
-      .finally(() => {
-        isSubmitting.value = false
-        stopLoading(loading)
-      })
+      resetForm(formRef)
+      onSuccess?.()
+    }, message)
   }
 
   /**
@@ -220,18 +211,9 @@ export default function useFireBase() {
    * @param {string} [message] - Optional success toast message.
    */
   async function setData(path, data, message) {
-    if (isSubmitting.value) return
-    isSubmitting.value = true
-    const loading = startLoading()
-    try {
+    return runMutation(async () => {
       await setDoc(doc(database, path), data)
-      if (message) showSuccess(message)
-    } catch (error) {
-      showError(error.message)
-    } finally {
-      isSubmitting.value = false
-      stopLoading(loading)
-    }
+    }, message)
   }
 
   /**

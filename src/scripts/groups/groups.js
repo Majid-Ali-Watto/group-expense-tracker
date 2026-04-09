@@ -13,6 +13,10 @@ import {
   formatMemberDisplay,
   formatUserDisplay
 } from '@/utils'
+import {
+  createUserDisplayStoreProxy,
+  getDisplayMobile
+} from '@/utils/user-display'
 import { ElMessageBox } from 'element-plus'
 import {
   onSnapshot,
@@ -92,12 +96,7 @@ export const Groups = () => {
   const authStore = useAuthStore()
   const groupStore = useGroupStore()
   const userStore = useUserStore()
-  const storeProxy = {
-    get getActiveUser() {
-      return authStore.getActiveUser
-    },
-    getUserByMobile: (m) => userStore.getUserByMobile(m)
-  }
+  const storeProxy = createUserDisplayStoreProxy(authStore, userStore)
   const { read, readShallow, updateData, removeData, setData } = useFireBase()
 
   /**
@@ -2147,12 +2146,7 @@ export const Groups = () => {
 
   // ========== Mobile Display Helpers ==========
   function displayMobileForGroup(targetMobile) {
-    if (!targetMobile) return ''
-    const user = userStore.getUserByMobile(targetMobile)
-    const resolvedMobile = user?.mobile || targetMobile
-    // Active user sees their own real mobile; everyone else is always masked
-    if (targetMobile === authStore.getActiveUser) return resolvedMobile
-    return user?.maskedMobile || maskMobile(resolvedMobile)
+    return getDisplayMobile(storeProxy, targetMobile)
   }
 
   function displayMobileInEditDialog(targetMobile) {

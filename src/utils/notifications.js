@@ -1,4 +1,4 @@
-import { ElMessageBox } from 'element-plus'
+import { confirmAction } from './confirmAction'
 import { downloadPDF } from './downloadDataProcedures'
 import { showError, showSuccess } from './showAlerts'
 import getCurrentMonth from './getCurrentMonth'
@@ -25,17 +25,17 @@ export function checkLastDayOfMonth() {
 }
 
 async function confirmDownload(res, pdfContent) {
-  try {
-    await ElMessageBox.confirm(
-      `${res} Download Expenses PDF?`,
-      'Important Note',
-      {
-        confirmButtonText: 'OK',
-        cancelButtonText: 'Cancel',
-        type: 'info'
-      }
-    )
+  const confirmed = await confirmAction({
+    message: `${res} Download Expenses PDF?`,
+    title: 'Important Note',
+    type: 'info'
+  })
 
+  try {
+    if (!confirmed) {
+      localStorage.setItem('isDownloaded', true)
+      return
+    }
     const dataStore = useDataStore()
     await showSuccess('PDF downloading started')
     // Sequential downloads
@@ -47,9 +47,7 @@ async function confirmDownload(res, pdfContent) {
     )
     localStorage.setItem('isDownloaded', true)
   } catch (error) {
-    if (error !== 'cancel') {
-      showError(error.message || 'An unexpected error occurred.')
-    } else if (error === 'cancel') localStorage.setItem('isDownloaded', true)
+    showError(error.message || 'An unexpected error occurred.')
   }
 }
 

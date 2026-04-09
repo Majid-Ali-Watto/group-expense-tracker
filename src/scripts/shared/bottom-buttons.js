@@ -1,66 +1,34 @@
 import { markRaw } from 'vue'
-import { ElMessageBox } from 'element-plus'
 import { Delete } from '@element-plus/icons-vue'
+import { confirmAction } from '@/utils/confirmAction'
 
 export const BottomButtons = (emit) => {
   const confirmUpdate = async () => {
-    try {
-      await ElMessageBox.confirm(
-        'Are you sure you want to update this item?',
-        'Warning',
-        {
-          confirmButtonText: 'OK',
-          cancelButtonText: 'Cancel',
-          type: 'warning'
-        }
-      )
-      emit('update')
-    } catch (error) {
-      console.error(error)
-      if (error !== 'cancel') {
-        console.error('Update action cancelled')
-      }
-    }
+    const confirmed = await confirmAction({
+      message: 'Are you sure you want to update this item?',
+      title: 'Warning'
+    })
+    if (confirmed) emit('update')
   }
 
   const confirmDelete = async () => {
-    try {
-      await ElMessageBox.confirm(
-        'Are you sure you want to delete this item? This action cannot be undone.',
-        'Danger',
-        {
-          confirmButtonText: 'OK',
-          cancelButtonText: 'Cancel',
-          type: 'error',
-          icon: markRaw(Delete)
-        }
-      )
-      emit('delete')
-    } catch (error) {
-      console.error(error)
-      if (error !== 'cancel') {
-        console.error('Delete action cancelled')
-      }
-    }
+    const confirmed = await confirmAction({
+      message: 'Are you sure you want to delete this item? This action cannot be undone.',
+      title: 'Danger',
+      type: 'error',
+      icon: markRaw(Delete)
+    })
+    if (confirmed) emit('delete')
   }
 
   const confirmDuplicate = async () => {
-    try {
-      await ElMessageBox.confirm(
-        'Save the current values as a new record?',
-        'Duplicate',
-        {
-          confirmButtonText: 'Duplicate',
-          cancelButtonText: 'Cancel',
-          type: 'info'
-        }
-      )
-      emit('duplicate')
-    } catch (error) {
-      if (error !== 'cancel') {
-        console.error(error)
-      }
-    }
+    const confirmed = await confirmAction({
+      message: 'Save the current values as a new record?',
+      title: 'Duplicate',
+      confirmButtonText: 'Duplicate',
+      type: 'info'
+    })
+    if (confirmed) emit('duplicate')
   }
 
   return {

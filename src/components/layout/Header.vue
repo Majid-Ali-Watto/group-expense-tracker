@@ -112,10 +112,11 @@
             <AlertTriangleIcon class="w-5 h-5" />
           </button>
 
-          <!-- Help — always visible -->
+          <!-- Help — only when logged in (not public page, where nav link handles it) -->
           <button
+            v-if="!isPublicPage"
             class="theme-btn"
-            @click="isPublicPage ? navigateTo('/help') : (showHelp = true)"
+            @click="showHelp = true"
             title="Help"
           >
             <QuestionCircleIcon class="w-5 h-5" />

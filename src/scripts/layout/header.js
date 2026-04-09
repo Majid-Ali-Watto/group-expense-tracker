@@ -1,9 +1,9 @@
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ElMessageBox } from 'element-plus'
 import { database, doc, deleteDoc, updateDoc, deleteField } from '@/firebase'
 import { DB_NODES } from '@/constants'
 import { PUBLIC_NAV_LINKS } from '@/constants'
+import { confirmAction } from '@/utils/confirmAction'
 import { showError, showSuccess } from '@/utils/showAlerts'
 import { useDataStore } from '@/stores'
 
@@ -34,20 +34,14 @@ export const Header = (props, emit) => {
   }
 
   async function confirmLogout() {
-    try {
-      await ElMessageBox.confirm(
-        'Are you sure you want to logout?',
-        'Confirm Logout',
-        {
-          confirmButtonText: 'Logout',
-          cancelButtonText: 'Stay Logged In',
-          type: 'info'
-        }
-      )
-      setLoggedInStatus()
-    } catch {
-      /* user cancelled */
-    }
+    const confirmed = await confirmAction({
+      message: 'Are you sure you want to logout?',
+      title: 'Confirm Logout',
+      confirmButtonText: 'Logout',
+      cancelButtonText: 'Stay Logged In',
+      type: 'info'
+    })
+    if (confirmed) setLoggedInStatus()
   }
 
   function handleNetPosition() {

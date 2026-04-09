@@ -19,6 +19,10 @@ import {
   showError,
   showSuccess
 } from '@/utils'
+import {
+  createUserDisplayStoreProxy,
+  getDisplayMobile
+} from '@/utils/user-display'
 
 export const SharedGroups = () => {
   const route = useRoute()
@@ -26,6 +30,7 @@ export const SharedGroups = () => {
   const authStore = useAuthStore()
   const groupStore = useGroupStore()
   const userStore = useUserStore()
+  const storeProxy = createUserDisplayStoreProxy(authStore, userStore)
   const { read, updateData } = useFireBase()
 
   const loading = ref(true)
@@ -43,12 +48,7 @@ export const SharedGroups = () => {
   const activeUser = computed(() => authStore.getActiveUser)
 
   function displayMobileForGroup(targetMobile) {
-    if (!targetMobile) return ''
-    const user = userStore.getUserByMobile(targetMobile)
-    const resolvedMobile = user?.mobile || targetMobile
-    // Active user sees their own real mobile; everyone else is always masked
-    if (targetMobile === activeUser.value) return resolvedMobile
-    return user?.maskedMobile || maskMobile(resolvedMobile)
+    return getDisplayMobile(storeProxy, targetMobile)
   }
 
   function isMember(group) {

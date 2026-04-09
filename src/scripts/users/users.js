@@ -6,6 +6,10 @@ import { useAuthStore, useGroupStore, useUserStore } from '@/stores'
 import { DB_NODES } from '@/constants'
 import { showError, maskMobile, appendNotificationForUser } from '@/utils'
 import {
+  createUserDisplayStoreProxy,
+  getDisplayMobile
+} from '@/utils/user-display'
+import {
   auth,
   deleteUser,
   onSnapshot,
@@ -20,6 +24,7 @@ export const Users = () => {
   const authStore = useAuthStore()
   const groupStore = useGroupStore()
   const userStore = useUserStore()
+  const storeProxy = createUserDisplayStoreProxy(authStore, userStore)
   const { updateData, read, deleteData } = useFireBase()
 
   const editDialogVisible = ref(false)
@@ -128,12 +133,7 @@ export const Users = () => {
   }
 
   function displayMobile(targetUserId) {
-    if (!targetUserId) return ''
-    const user = userStore.getUserByMobile(targetUserId)
-    const mobile = user?.mobile || targetUserId
-    // Active user sees their own real mobile; everyone else is always masked
-    if (targetUserId === activeUser.value) return mobile
-    return user?.maskedMobile || maskMobile(mobile)
+    return getDisplayMobile(storeProxy, targetUserId)
   }
 
   function getUserGroups(userId) {

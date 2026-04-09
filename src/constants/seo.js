@@ -117,11 +117,6 @@ export const FAQ_ITEMS = [
     question: 'How does Kharchafy reduce disputes in shared spending?',
     answer:
       'It keeps calculations visible, stores receipts, and adds approval flows for sensitive or destructive actions.'
-  },
-  {
-    question: 'Is the logged-in dashboard meant for Google indexing?',
-    answer:
-      'No. Public marketing pages should be indexed, while private app routes should stay out of search results.'
   }
 ]
 

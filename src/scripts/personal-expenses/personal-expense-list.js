@@ -2,15 +2,20 @@ import { computed, inject, ref, onMounted, watch, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { onSnapshot, auth, onAuthStateChanged } from '@/firebase'
 import { useAuthStore, useDataStore } from '@/stores'
-import {
-  getCurrentMonth,
-  showError,
-  getCache,
-  setCache,
-  buildCategoryFilterOptions
-} from '@/utils'
-import { useFireBase } from '@/composables'
+import { useLoadingTimeout } from '@/composables/useLoadingTimeout'
+import { loadMonthsList } from '@/composables/useMonthsLoader'
+import { useRouteQuerySync } from '@/composables/useRouteQuerySync'
+import useFireBase from '@/composables/useFirebase'
 import { DB_NODES } from '@/constants'
+import { buildCategoryFilterOptions } from '@/utils/category-options'
+import {
+  applyCollectionState,
+  buildEmptyCollectionState,
+  buildSnapshotCollectionState
+} from '@/utils/firestoreCollectionState'
+import getCurrentMonth from '@/utils/getCurrentMonth'
+import { getCache, setCache } from '@/utils/queryCache'
+import { showError } from '@/utils/showAlerts'
 
 export const PersonalExpenseList = () => {
   const formatAmount = inject('formatAmount')
@@ -36,42 +41,29 @@ export const PersonalExpenseList = () => {
   const isContentLoading = computed(
     () => !monthsLoaded.value || !salaryLoaded.value || !expensesLoaded.value
   )
+  const { startLoadingTimeout, clearLoadingTimeout } = useLoadingTimeout([
+    monthsLoaded,
+    salaryLoaded,
+    expensesLoaded
+  ])
 
   let expensesListener = null
   let salaryListener = null
 
   const fetchMonths = async () => {
-    monthsLoaded.value = false
-    if (!activeUser.value) {
-      monthsLoaded.value = true
-      return
-    }
-    const monthsPath = `${DB_NODES.PERSONAL_EXPENSES}/${activeUser.value}/months`
-    const cached = getCache(monthsPath)
-    if (cached) {
-      months.value = cached
-      monthsLoaded.value = true
-      return
-    }
-    try {
-      // Fast path: read months[] array recorded on the grandparent document
-      const parentDoc = await read(
-        `${DB_NODES.PERSONAL_EXPENSES}/${activeUser.value}`,
-        false
-      )
-      if (parentDoc?.months?.length) {
-        months.value = [...parentDoc.months].sort((a, b) => b.localeCompare(a))
-      } else {
-        months.value = await readShallow(monthsPath, false)
+    return loadMonthsList({
+      isEnabled: () => !!activeUser.value,
+      parentPath: `${DB_NODES.PERSONAL_EXPENSES}/${activeUser.value}`,
+      monthsPath: `${DB_NODES.PERSONAL_EXPENSES}/${activeUser.value}/months`,
+      read,
+      readShallow,
+      monthsRef: months,
+      loadedRef: monthsLoaded,
+      errorHandler: (error) => {
+        showError('Failed to load months. Please try again.')
+        console.error(error)
       }
-      setCache(monthsPath, months.value)
-    } catch (error) {
-      if (error?.code === 'permission-denied') return
-      showError('Failed to load months. Please try again.')
-      console.error(error)
-    } finally {
-      monthsLoaded.value = true
-    }
+    })
   }
 
   const fetchSalary = () => {
@@ -122,11 +114,18 @@ export const PersonalExpenseList = () => {
     const expensesPath = `${DB_NODES.PERSONAL_EXPENSES}/${activeUser.value}/months/${selectedMonth.value}/expenses`
     const cached = getCache(expensesPath)
     if (cached) {
-      expenses.value = cached.list
-      keys.value = cached.keys
-      totalSpent.value = expenses.value.reduce((t, e) => t + (e.amount || 0), 0)
-      expensesLoaded.value = true
-      updateRemaining()
+      applyCollectionState(cached, {
+        listRef: expenses,
+        keysRef: keys,
+        loadedRef: expensesLoaded,
+        afterApply: () => {
+          totalSpent.value = expenses.value.reduce(
+            (total, expense) => total + (expense.amount || 0),
+            0
+          )
+          updateRemaining()
+        }
+      })
     } else {
       expensesLoaded.value = false
     }
@@ -139,22 +138,23 @@ export const PersonalExpenseList = () => {
     expensesListener = onSnapshot(
       expensesRef,
       (snapshot) => {
-        expensesLoaded.value = true
-        if (!snapshot.empty) {
-          expenses.value = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }))
-          keys.value = snapshot.docs.map((d) => d.id)
-          totalSpent.value = expenses.value.reduce(
-            (total, expense) => total + (expense.amount || 0),
-            0
-          )
-          setCache(expensesPath, { list: expenses.value, keys: keys.value })
-        } else {
-          expenses.value = []
-          keys.value = []
-          totalSpent.value = 0
-          setCache(expensesPath, { list: [], keys: [] })
-        }
-        updateRemaining()
+        const state = snapshot.empty
+          ? buildEmptyCollectionState()
+          : buildSnapshotCollectionState(snapshot)
+
+        setCache(expensesPath, state)
+        applyCollectionState(state, {
+          listRef: expenses,
+          keysRef: keys,
+          loadedRef: expensesLoaded,
+          afterApply: () => {
+            totalSpent.value = expenses.value.reduce(
+              (total, expense) => total + (expense.amount || 0),
+              0
+            )
+            updateRemaining()
+          }
+        })
       },
       (error) => {
         expensesLoaded.value = true
@@ -187,30 +187,29 @@ export const PersonalExpenseList = () => {
     fetchExpenses()
   })
 
-  watch([selectedMonth, selectedCategory], () => {
-    // Sync to URL so the selected month is bookmarkable
-    const query = {}
-    if (selectedMonth.value !== getCurrentMonth())
-      query.month = selectedMonth.value
-    if (selectedCategory.value) query.category = selectedCategory.value
-    router.replace({ path: route.path, query })
+  useRouteQuerySync({
+    route,
+    router,
+    sources: [selectedMonth, selectedCategory],
+    buildQuery: () => {
+      const query = {}
+      if (selectedMonth.value !== getCurrentMonth())
+        query.month = selectedMonth.value
+      if (selectedCategory.value) query.category = selectedCategory.value
+      return query
+    }
   })
 
   onUnmounted(() => {
     if (unsubscribeAuth) unsubscribeAuth()
-    if (loadingTimeout) clearTimeout(loadingTimeout)
+    clearLoadingTimeout()
     if (salaryListener) salaryListener()
     if (expensesListener) expensesListener()
   })
 
-  let loadingTimeout = null
   let unsubscribeAuth = null
   onMounted(() => {
-    loadingTimeout = setTimeout(() => {
-      monthsLoaded.value = true
-      salaryLoaded.value = true
-      expensesLoaded.value = true
-    }, 8000)
+    startLoadingTimeout()
 
     unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
       if (!firebaseUser) return

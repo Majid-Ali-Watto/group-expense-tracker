@@ -1,6 +1,6 @@
 import { onMounted, onUnmounted, computed, unref } from 'vue'
 import { onBeforeRouteLeave } from 'vue-router'
-import { ElMessageBox } from 'element-plus'
+import { confirmAction } from '@/utils/confirmAction'
 
 export function useUnsavedChangesGuard(isDirty, options = {}) {
   const {
@@ -15,16 +15,13 @@ export function useUnsavedChangesGuard(isDirty, options = {}) {
   async function confirmDiscardChanges() {
     if (!hasUnsavedChanges.value) return true
 
-    try {
-      await ElMessageBox.confirm(message, title, {
-        confirmButtonText,
-        cancelButtonText,
-        type: 'warning'
-      })
-      return true
-    } catch {
-      return false
-    }
+    return confirmAction({
+      message,
+      title,
+      confirmButtonText,
+      cancelButtonText,
+      type: 'warning'
+    })
   }
 
   function handleBeforeUnload(event) {
