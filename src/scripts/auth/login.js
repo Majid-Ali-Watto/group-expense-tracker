@@ -359,7 +359,8 @@ export const Login = () => {
         name: normalizedName,
         mobile: mobileValue,
         email: emailValue,
-        emailVerified: false // Will be set to true on first successful login
+        emailVerified: false, // Will be set to true on first successful login
+        blocked: false
       }
 
       await setData(

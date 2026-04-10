@@ -3,6 +3,13 @@
     <LoadingSkeleton v-if="loading" mode="page" />
 
     <template v-else>
+      <el-alert
+        v-if="activeUserIsBlocked"
+        title="Your account is blocked by admin. Shared groups are visible for reference only."
+        type="warning"
+        :closable="false"
+      />
+
       <div class="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 class="text-2xl font-semibold text-gray-900 dark:text-white">
@@ -44,56 +51,81 @@
           :key="group.id"
           class="rounded-xl border border-gray-200 p-4 shadow-sm transition-shadow hover:shadow-md dark:border-gray-700"
         >
-          <div class="mb-3 flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                {{ group.name }}
-              </h3>
-              <div class="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1">
-                <p class="text-xs text-gray-500 dark:text-gray-400">
-                  Owner:
-                  {{
-                    userStore.getUserByMobile(group.ownerMobile)?.name ||
-                    group.ownerMobile
-                  }}
-                  ({{ displayMobileForGroup(group.ownerMobile, group) }})
-                </p>
-                <p
-                  v-if="group.category"
-                  class="text-xs text-gray-500 dark:text-gray-400"
-                >
-                  Category: {{ group.category }}
-                </p>
+          <el-alert
+            v-if="activeUserIsBlocked || group.blocked"
+            :title="
+              group.blocked
+                ? 'This group is blocked by admin. Do not interact with it.'
+                : 'Your account is blocked by admin. Group actions are disabled.'
+            "
+            type="warning"
+            :closable="false"
+            class="mb-3"
+          />
+
+          <div
+            class="shared-group-card__body"
+            :class="{
+              'pointer-events-none opacity-60 select-none':
+                activeUserIsBlocked || group.blocked
+            }"
+          >
+            <div class="mb-3 flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                  {{ group.name }}
+                </h3>
+                <div class="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1">
+                  <p class="text-xs text-gray-500 dark:text-gray-400">
+                    Owner:
+                    {{
+                      userStore.getUserByMobile(group.ownerMobile)?.name ||
+                      group.ownerMobile
+                    }}
+                    ({{ displayMobileForGroup(group.ownerMobile, group) }})
+                  </p>
+                  <p
+                    v-if="group.category"
+                    class="text-xs text-gray-500 dark:text-gray-400"
+                  >
+                    Category: {{ group.category }}
+                  </p>
+                </div>
               </div>
+
+              <el-button
+                v-if="isMember(group)"
+                type="primary"
+                :loading="actioningGroupId === group.id"
+                :disabled="activeUserIsBlocked || group.blocked"
+                @click="selectSharedGroup(group)"
+              >
+                Select
+              </el-button>
+              <el-button
+                v-else
+                type="success"
+                :loading="actioningGroupId === group.id"
+                :disabled="
+                  hasPendingJoinRequest(group) ||
+                  activeUserIsBlocked ||
+                  group.blocked
+                "
+                @click="joinSharedGroup(group)"
+              >
+                {{
+                  hasPendingJoinRequest(group) ? 'Join Request Pending' : 'Join'
+                }}
+              </el-button>
             </div>
 
-            <el-button
-              v-if="isMember(group)"
-              type="primary"
-              :loading="actioningGroupId === group.id"
-              @click="selectSharedGroup(group)"
-            >
-              Select
-            </el-button>
-            <el-button
-              v-else
-              type="success"
-              :loading="actioningGroupId === group.id"
-              :disabled="hasPendingJoinRequest(group)"
-              @click="joinSharedGroup(group)"
-            >
-              {{
-                hasPendingJoinRequest(group) ? 'Join Request Pending' : 'Join'
-              }}
-            </el-button>
+            <GroupDetailsAccordion
+              :group="group"
+              group-type="other"
+              :load-group-balances="loadBalances"
+              :display-mobile-for-group="displayMobileForGroup"
+            />
           </div>
-
-          <GroupDetailsAccordion
-            :group="group"
-            group-type="other"
-            :load-group-balances="loadBalances"
-            :display-mobile-for-group="displayMobileForGroup"
-          />
         </div>
       </div>
     </template>
@@ -117,6 +149,13 @@ const {
   hasPendingJoinRequest,
   joinSharedGroup,
   loadBalances,
-  selectSharedGroup
+  selectSharedGroup,
+  activeUserIsBlocked
 } = SharedGroups()
 </script>
+
+<style scoped>
+.shared-group-card__body {
+  display: block;
+}
+</style>

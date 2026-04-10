@@ -3,7 +3,16 @@
   <div>
     <LoadingSkeleton v-if="isPageLoading" mode="page" />
     <template v-else>
+      <el-alert
+        v-if="activeUserIsBlocked"
+        title="Your account is blocked by admin. Users are visible for reference only."
+        type="warning"
+        :closable="false"
+        class="mb-4"
+      />
+
       <UserPendingApprovals
+        v-if="!activeUserIsBlocked"
         :approvals="myPendingApprovals"
         :display-mobile="displayMobile"
         @approve="approveRequest"
@@ -44,6 +53,11 @@
           >Shared groups only</el-checkbox
         >
       </div>
+      <div class="mb-3">
+        <el-checkbox v-model="hideBlockedUsers" size="small">
+          Hide blocked users
+        </el-checkbox>
+      </div>
 
       <!-- Header row — visible only on larger screens -->
       <div
@@ -63,6 +77,7 @@
           :groups="getUserGroups(row.uid)"
           :mobile="displayMobile(row.uid)"
           :can-manage="canManage(row)"
+          :active-user-blocked="activeUserIsBlocked"
           @edit="openEditUser(row)"
           @delete="requestDeleteUser"
           @create-group="openCreateGroup"
@@ -113,6 +128,7 @@ const {
   searchQuery,
   sortOrder,
   sharedGroupsOnly,
+  hideBlockedUsers,
   filteredUsers,
   editDialogVisible,
   editForm,
@@ -135,7 +151,8 @@ const {
   isPageLoading,
   openGroupsDialog,
   submitUpdateUser,
-  resetEditUserForm
+  resetEditUserForm,
+  activeUserIsBlocked
 } = Users()
 
 function handleSave(formData) {

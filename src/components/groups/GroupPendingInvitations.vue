@@ -9,8 +9,23 @@
       :key="group.id"
       class="border border-orange-200 dark:border-orange-800 rounded-lg p-4 mb-3 bg-orange-50 dark:bg-orange-900/10"
     >
+      <el-alert
+        v-if="activeUserBlocked || group.blocked"
+        :title="
+          group.blocked
+            ? 'This group is blocked by admin. Do not interact with it.'
+            : 'Your account is blocked by admin. Invitation actions are disabled.'
+        "
+        type="warning"
+        :closable="false"
+        class="mb-3"
+      />
       <div
         class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
+        :class="{
+          'pointer-events-none opacity-60 select-none':
+            activeUserBlocked || group.blocked
+        }"
       >
         <div>
           <div class="font-semibold text-gray-800 dark:text-gray-100">
@@ -42,6 +57,7 @@
           <el-button
             size="small"
             type="success"
+            :disabled="activeUserBlocked || group.blocked"
             @click="$emit('accept', group.id)"
           >
             Accept
@@ -50,6 +66,7 @@
             size="small"
             type="danger"
             plain
+            :disabled="activeUserBlocked || group.blocked"
             @click="$emit('reject', group.id)"
           >
             Decline
@@ -65,7 +82,8 @@ import { useUserStore } from '@/stores'
 
 defineProps({
   invitations: { type: Array, required: true },
-  displayMobileForGroup: { type: Function, required: true }
+  displayMobileForGroup: { type: Function, required: true },
+  activeUserBlocked: { type: Boolean, default: false }
 })
 
 defineEmits(['accept', 'reject'])

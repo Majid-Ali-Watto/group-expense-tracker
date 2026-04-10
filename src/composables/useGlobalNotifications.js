@@ -725,7 +725,8 @@ export function useGlobalNotifications() {
           deleteRequest: u.deleteRequest || null,
           updateRequest: u.updateRequest || null,
           bugResolver: u.bugResolver === true,
-          rejectionNotification: u.rejectionNotification || null
+          rejectionNotification: u.rejectionNotification || null,
+          blocked: u.blocked === true
         })
       })
     }

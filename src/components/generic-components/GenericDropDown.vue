@@ -20,6 +20,7 @@
         :key="opt.value"
         :label="opt.label"
         :value="opt.value"
+        :disabled="opt.disabled"
       />
     </el-select>
   </component>
@@ -114,6 +115,10 @@ const props = defineProps({
   valueKey: {
     type: String,
     default: 'value'
+  },
+  disabledKey: {
+    type: String,
+    default: 'disabled'
   }
 })
 
@@ -125,7 +130,8 @@ const mappedOptions = computed(() =>
   (props.options || [])
     .map((item) => ({
       label: String(getLabel(item) ?? ''),
-      value: getValue(item) ?? ''
+      value: getValue(item) ?? '',
+      disabled: item[props.disabledKey] === true
     }))
     .filter((item) => item.label !== '' || item.value !== '')
 )

@@ -258,7 +258,8 @@ export const App = () => {
           name: userData.name || '',
           email: userData.email || '',
           maskedMobile: maskMobile(userData.mobile || ''),
-          bugResolver: userData.bugResolver === true
+          bugResolver: userData.bugResolver === true,
+          blocked: userData.blocked === true
         })
 
         // Restore last route — this is a page-refresh, not a fresh login.

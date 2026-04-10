@@ -10,10 +10,17 @@ import {
   getDisplayMobile
 } from '@/utils/user-display'
 import {
+  ACTIVE_USER_BLOCKED_MESSAGE,
+  getBlockedEntityMessage,
+  isUserBlocked
+} from '@/helpers'
+import {
   auth,
   deleteUser,
   onSnapshot,
   collection,
+  doc,
+  updateDoc,
   query,
   where,
   database
@@ -30,8 +37,9 @@ export const Users = () => {
   const editDialogVisible = ref(false)
   const editForm = ref({ uid: '', name: '', mobile: '' })
   const initialEditForm = ref({ uid: '', name: '', mobile: '' })
+  const userRows = ref([])
 
-  const users = computed(() => userStore.getUsers || [])
+  const users = computed(() => userRows.value || [])
   const groups = computed(() => groupStore.getGroups || [])
   const activeUser = computed(() => authStore.getActiveUser)
 
@@ -40,15 +48,37 @@ export const Users = () => {
   const searchQuery = useDebouncedRef(route.query.q || '', 300)
   const sortOrder = ref(route.query.sort || '') // '' | 'asc' | 'desc'
   const sharedGroupsOnly = ref(route.query.shared === '1')
+  const hideBlockedUsers = ref(
+    userStore.getActiveUserTabConfig?.hideBlockedUsers ??
+    (route.query.hideBlocked === '1')
+  )
+  const activeUserIsBlocked = computed(() =>
+    isUserBlocked(userStore.getUserByUid(activeUser.value))
+  )
 
   // Sync filters to URL so they are bookmarkable and shareable
-  watch([searchQuery, sortOrder, sharedGroupsOnly], () => {
+  watch([searchQuery, sortOrder, sharedGroupsOnly, hideBlockedUsers], () => {
     const query = {}
     if (searchQuery.value) query.q = searchQuery.value
     if (sortOrder.value) query.sort = sortOrder.value
     if (sharedGroupsOnly.value) query.shared = '1'
+    if (hideBlockedUsers.value) query.hideBlocked = '1'
     router.replace({ path: route.path, query })
   })
+
+  function ensureUsersInteractionAllowed(user = null) {
+    if (activeUserIsBlocked.value) {
+      showError(ACTIVE_USER_BLOCKED_MESSAGE)
+      return false
+    }
+
+    if (user && isUserBlocked(user)) {
+      showError(getBlockedEntityMessage('user'))
+      return false
+    }
+
+    return true
+  }
 
   function getUserId(user) {
     return user?.uid || user?.mobile || ''
@@ -188,17 +218,29 @@ export const Users = () => {
   // Load full user data with real-time updates so delete/approve/reject
   // actions are reflected instantly on all connected sessions.
   let usersUnsubscribe = null
-  onMounted(() => {
+  function stopUsersListener() {
+    if (usersUnsubscribe) {
+      usersUnsubscribe()
+      usersUnsubscribe = null
+    }
+  }
+
+  function syncUsersListener() {
+    stopUsersListener()
+
+    const queryConstraints = [where('emailVerified', '==', true)]
+    if (hideBlockedUsers.value) {
+      queryConstraints.push(where('blocked', '==', false))
+    }
+
     usersUnsubscribe = onSnapshot(
-      query(
-        collection(database, DB_NODES.USERS),
-        where('emailVerified', '==', true)
-      ),
+      query(collection(database, DB_NODES.USERS), ...queryConstraints),
       (snap) => {
-        snap.docs.forEach((docSnap) => {
+        const nextUsers = snap.docs
+          .map((docSnap) => {
           const uid = docSnap.id
           const u = docSnap.data()
-          userStore.addUser({
+          const user = {
             uid,
             mobile: u.mobile || '',
             name: u.name || '',
@@ -207,19 +249,45 @@ export const Users = () => {
             maskedMobile: maskMobile(u.mobile || ''),
             deleteRequest: u.deleteRequest || null,
             updateRequest: u.updateRequest || null,
-            bugResolver: u.bugResolver === true
+            bugResolver: u.bugResolver === true,
+            blocked: u.blocked === true
+          }
+
+          userStore.addUser(user)
+          return user
           })
-        })
+        userRows.value = nextUsers
         isPageLoading.value = false
       },
       () => {
+        userRows.value = []
         isPageLoading.value = false
       }
     )
+  }
+
+  onMounted(() => {
+    syncUsersListener()
+  })
+
+  watch(hideBlockedUsers, async (newVal) => {
+    const uid = authStore.getActiveUser
+    if (uid) {
+      try {
+        await updateDoc(
+          doc(database, `${DB_NODES.USER_TAB_CONFIGS}/${uid}`),
+          { hideBlockedUsers: newVal }
+        )
+      } catch (err) {
+        console.error('Failed to save hideBlockedUsers preference:', err)
+      }
+    }
+    isPageLoading.value = true
+    syncUsersListener()
   })
 
   onUnmounted(() => {
-    if (usersUnsubscribe) usersUnsubscribe()
+    stopUsersListener()
   })
 
   // --- Permission helpers ---
@@ -227,6 +295,7 @@ export const Users = () => {
   function canManage(row) {
     const me = activeUser.value
     if (!me) return false
+    if (activeUserIsBlocked.value || isUserBlocked(row)) return false
     return row.uid === me || row.addedBy === me
   }
 
@@ -259,6 +328,7 @@ export const Users = () => {
   // --- Edit User ---
 
   function openEditUser(row) {
+    if (!ensureUsersInteractionAllowed(row)) return
     initialEditForm.value = {
       uid: row.uid,
       name: row.name,
@@ -327,6 +397,7 @@ export const Users = () => {
 
     const user = await read(`${DB_NODES.USERS}/${uid}`)
     if (!user) return showError('User not found')
+    if (!ensureUsersInteractionAllowed(user)) return
     if (user.deleteRequest)
       return showError('A delete request is pending for this user')
     if (user.updateRequest)
@@ -418,6 +489,9 @@ export const Users = () => {
 
   async function requestDeleteUser(uid, name) {
     try {
+      const targetUser = userStore.getUserByUid(uid)
+      if (!ensureUsersInteractionAllowed(targetUser)) return
+
       const ownerMobiles = getGroupOwnerMobiles(uid)
       await ElMessageBox.confirm(
         `Are you sure you want to delete <strong>${name}</strong>?${
@@ -495,6 +569,7 @@ export const Users = () => {
     const me = activeUser.value
     const user = await read(`${DB_NODES.USERS}/${userUid}`)
     if (!user) return showError('User not found')
+    if (!ensureUsersInteractionAllowed(user)) return
 
     const request = type === 'delete' ? user.deleteRequest : user.updateRequest
     if (!request) return showError('Request not found or already resolved')
@@ -550,6 +625,10 @@ export const Users = () => {
 
   async function rejectRequest(userUid, type, userName) {
     try {
+      const targetUser = await read(`${DB_NODES.USERS}/${userUid}`)
+      if (!targetUser) return showError('User not found')
+      if (!ensureUsersInteractionAllowed(targetUser)) return
+
       await ElMessageBox.confirm(
         `Reject the ${type} request for <strong>${userName}</strong>?`,
         'Reject Request',
@@ -560,9 +639,6 @@ export const Users = () => {
           dangerouslyUseHTMLString: true
         }
       )
-
-      const user = await read(`${DB_NODES.USERS}/${userUid}`)
-      if (!user) return showError('User not found')
 
       const field = type === 'delete' ? 'deleteRequest' : 'updateRequest'
       const rejectionData =
@@ -594,6 +670,8 @@ export const Users = () => {
   const createGroupForMobile = ref(null)
 
   function openCreateGroup(uid) {
+    const targetUser = userStore.getUserByUid(uid)
+    if (!ensureUsersInteractionAllowed(targetUser)) return
     createGroupForMobile.value = uid
     createGroupDialogVisible.value = true
   }
@@ -603,6 +681,7 @@ export const Users = () => {
   const selectedUserName = ref('')
 
   function openGroupsDialog(row) {
+    if (!ensureUsersInteractionAllowed(row)) return
     selectedUserGroups.value = getUserGroups(row.uid)
     selectedUserName.value = row.name
     groupsDialogVisible.value = true
@@ -613,6 +692,7 @@ export const Users = () => {
     isPageLoading,
     sortOrder,
     sharedGroupsOnly,
+    hideBlockedUsers,
     filteredUsers,
     editDialogVisible,
     editForm,
@@ -634,6 +714,7 @@ export const Users = () => {
     selectedUserGroups,
     selectedUserName,
     openGroupsDialog,
-    resetEditUserForm
+    resetEditUserForm,
+    activeUserIsBlocked
   }
 }

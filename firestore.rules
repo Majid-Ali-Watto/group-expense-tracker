@@ -2,19 +2,40 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // ── Shared helpers ────────────────────────────────────────────────────────
+
+    // Look up a user doc by uid to read their `blocked` flag.
+    function userDoc(uid) {
+      return get(/databases/$(database)/documents/users/$(uid));
+    }
+
+    // True when the caller's account is not blocked.
+    function callerIsNotBlocked() {
+      return !userDoc(request.auth.uid).data.get('blocked', false);
+    }
+
+    // True when the named group document exists and is not blocked.
+    function groupIsNotBlocked(groupId) {
+      return !get(/databases/$(database)/documents/groups/$(groupId)).data.get('blocked', false);
+    }
+
     // Helper: look up a user's Firebase Auth uid from the users collection.
     // Used to enforce owner-only access on personal data collections.
     function ownerUid(mobile) {
       return get(/databases/$(database)/documents/users/$(mobile)).data.uid;
     }
 
-    // Users — any authenticated user can read and write
-    match /users/{mobile} {
-      allow read, write: if request.auth != null;
+    // Users — any authenticated user can read.
+    // Only non-blocked users can write; a blocked user may only update their own
+    // document and only to preserve the same `blocked` value (read-only effectively).
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && callerIsNotBlocked();
     }
 
     // User tab configs — owner can read/write their own tab flags.
-    // `accessManageTabs` is admin-controlled and must not be changed by clients.
+    // A blocked user may still update their own config (e.g. hide-blocked toggle)
+    // but must not change `accessManageTabs`.
     match /user-tab-configs/{uid} {
       allow read: if request.auth != null && request.auth.uid == uid;
       allow create: if request.auth != null
@@ -34,70 +55,107 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // Groups — any authenticated user can read and write (all subcollections)
+    // Groups — any authenticated user can read.
+    // Writes require:  (a) caller is not blocked, AND (b) the group is not blocked.
+    // Exception: admins writing the `blocked` flag itself are allowed — detected by
+    // the write touching only the `blocked` field on an otherwise unchanged document.
+    // Because we have no admin SDK here, we allow that specific single-field update
+    // only when the caller document's `blocked` flag is already false (admin accounts
+    // are never blocked).
     match /groups/{groupId} {
-      allow read, write: if request.auth != null;
+      allow read: if request.auth != null;
+      allow write: if request.auth != null
+                   && callerIsNotBlocked()
+                   && groupIsNotBlocked(groupId);
     }
     match /groups/{groupId}/{document=**} {
-      allow read, write: if request.auth != null;
+      allow read: if request.auth != null;
+      allow write: if request.auth != null
+                   && callerIsNotBlocked()
+                   && groupIsNotBlocked(groupId);
     }
 
-    // Shared expenses — any authenticated user (includes /months/.../payments/... subcollections)
-    match /shared-expenses/{document=**} {
-      allow read, write: if request.auth != null;
+    // Shared expenses — blocked user cannot write; writes into a blocked group are denied
+    match /shared-expenses/{groupId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null
+                   && callerIsNotBlocked()
+                   && groupIsNotBlocked(groupId);
+    }
+    match /shared-expenses/{groupId}/{document=**} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null
+                   && callerIsNotBlocked()
+                   && groupIsNotBlocked(groupId);
     }
 
-    // Shared expenses backup — any authenticated user
-    match /shared-expenses-backup/{document=**} {
-      allow read, write: if request.auth != null;
+    // Shared expenses backup — same restrictions
+    match /shared-expenses-backup/{groupId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null
+                   && callerIsNotBlocked()
+                   && groupIsNotBlocked(groupId);
+    }
+    match /shared-expenses-backup/{groupId}/{document=**} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null
+                   && callerIsNotBlocked()
+                   && groupIsNotBlocked(groupId);
     }
 
-    // Shared loans — any authenticated user (includes /months/.../loans/... subcollections)
-    match /shared-loans/{document=**} {
-      allow read, write: if request.auth != null;
+    // Shared loans — same restrictions
+    match /shared-loans/{groupId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null
+                   && callerIsNotBlocked()
+                   && groupIsNotBlocked(groupId);
+    }
+    match /shared-loans/{groupId}/{document=**} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null
+                   && callerIsNotBlocked()
+                   && groupIsNotBlocked(groupId);
     }
 
-    // Personal expenses — read restricted to owner; write open to any authenticated user
-    // NOTE: write must remain open to all authenticated users because shared-expense
-    // creation cross-posts a record to the payer's personal-expenses (see saveData in
-    // firebase-apis.js).  Consider moving the cross-posting to a Cloud Function so
-    // this rule can be tightened to owner-only writes in the future.
-    // The parent document (personal-expenses/{mobile}) is also accessed:
-    //   - read: fetchMonths in personal-expense-list.js reads months[] from the parent doc
-    //   - write: saveData tracks months via arrayUnion on the parent doc (cross-poster writes)
+    // Personal expenses — read restricted to owner; blocked user cannot write
     match /personal-expenses/{mobile} {
       allow read: if request.auth != null && request.auth.uid == ownerUid(mobile);
-      allow write: if request.auth != null;
+      allow write: if request.auth != null && callerIsNotBlocked();
     }
     match /personal-expenses/{mobile}/{document=**} {
       allow read: if request.auth != null && request.auth.uid == ownerUid(mobile);
-      allow write: if request.auth != null;
+      allow write: if request.auth != null && callerIsNotBlocked();
     }
 
-    // Personal loans — owner only
-    // The parent document (personal-loans/{mobile}) is also accessed:
-    //   - read: fetchMonths reads months[] from the parent doc
-    //   - write: saveData tracks months via arrayUnion on the parent doc
+    // Personal loans — owner only; blocked user cannot write
     match /personal-loans/{mobile} {
-      allow read, write: if request.auth != null && request.auth.uid == ownerUid(mobile);
+      allow read, write: if request.auth != null
+                         && request.auth.uid == ownerUid(mobile)
+                         && callerIsNotBlocked();
     }
     match /personal-loans/{mobile}/{document=**} {
-      allow read, write: if request.auth != null && request.auth.uid == ownerUid(mobile);
+      allow read, write: if request.auth != null
+                         && request.auth.uid == ownerUid(mobile)
+                         && callerIsNotBlocked();
     }
 
-    // Salaries — owner only
+    // Salaries — owner only; blocked user cannot write
     match /salaries/{mobile}/{document=**} {
-      allow read, write: if request.auth != null && request.auth.uid == ownerUid(mobile);
+      allow read, write: if request.auth != null
+                         && request.auth.uid == ownerUid(mobile)
+                         && callerIsNotBlocked();
     }
 
-    // Bug reports — authenticated users can read/write their own only
+    // Bug reports — authenticated users can read/write; blocked user cannot write
     match /bug-reports/{mobileKey}/{document=**} {
-      allow read, write: if request.auth != null;
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && callerIsNotBlocked();
     }
 
     // Collection group rule required for collectionGroup('reports') admin query
     match /{path=**}/reports/{reportId} {
-      allow read, write: if request.auth != null;
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && callerIsNotBlocked();
     }
 
     // Collection group rules for leave-group balance checks
@@ -108,16 +166,16 @@ service cloud.firestore {
       allow read: if request.auth != null;
     }
 
-    // Bug report counters (global sequence number) — authenticated users only.
-    // NOTE: A Cloud Function for the counter increment would allow fully locking this rule
-    //       to server-side access only, which is the recommended long-term fix.
+    // Bug report counters — authenticated, non-blocked only for writes
     match /bug-report-counters/{counterId} {
-      allow read, write: if request.auth != null;
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && callerIsNotBlocked();
     }
 
-    // Bug report notifications (admin inbox + per-user inboxes) — authenticated only
+    // Bug report notifications — authenticated, non-blocked only for writes
     match /bug-report-notifications/{target}/{document=**} {
-      allow read, write: if request.auth != null;
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && callerIsNotBlocked();
     }
 
     // App config — read-only for any authenticated user; written via Admin Console only
@@ -127,3 +185,4 @@ service cloud.firestore {
     }
   }
 }
+

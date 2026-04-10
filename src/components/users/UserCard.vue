@@ -2,7 +2,18 @@
   <div
     class="user-card border border-gray-200 rounded-lg p-3 hover:shadow-sm transition-shadow"
   >
-    <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+    <el-alert
+      v-if="showBlockedWarning"
+      :title="blockedMessage"
+      type="warning"
+      :closable="false"
+      class="mb-3"
+    />
+
+    <div
+      class="flex flex-col sm:flex-row sm:items-center gap-3"
+      :class="{ 'pointer-events-none opacity-60 select-none': isInteractionBlocked }"
+    >
       <!-- Name & Mobile -->
       <div class="flex-1 min-w-0">
         <div
@@ -56,6 +67,7 @@
           size="small"
           type="success"
           plain
+          :disabled="isInteractionBlocked"
           @click="$emit('create-group', user.uid)"
         >
           Create Group
@@ -63,12 +75,18 @@
 
         <template v-if="canManage">
           <template v-if="!user.deleteRequest">
-            <el-button size="small" type="primary" @click="$emit('edit')">
+            <el-button
+              size="small"
+              type="primary"
+              :disabled="isInteractionBlocked"
+              @click="$emit('edit')"
+            >
               Edit
             </el-button>
             <el-button
               size="small"
               type="danger"
+              :disabled="isInteractionBlocked"
               @click="$emit('delete', user.uid, user.name)"
             >
               Delete
@@ -86,15 +104,32 @@
 </template>
 
 <script setup>
-defineProps({
+import { computed } from 'vue'
+
+const props = defineProps({
   user: { type: Object, required: true },
   activeUser: { type: String, default: null },
   groups: { type: Array, required: true },
   mobile: { type: String, required: true },
-  canManage: { type: Boolean, required: true }
+  canManage: { type: Boolean, required: true },
+  activeUserBlocked: { type: Boolean, default: false }
 })
 
 defineEmits(['edit', 'delete', 'create-group', 'open-groups'])
+
+const isInteractionBlocked = computed(
+  () => props.activeUserBlocked || props.user?.blocked === true
+)
+
+const showBlockedWarning = computed(
+  () => props.user?.blocked === true || (props.activeUserBlocked && props.user?.uid === props.activeUser)
+)
+
+const blockedMessage = computed(() =>
+  props.user?.blocked === true
+    ? 'This user is blocked by admin. Do not interact with this account.'
+    : 'Your account is blocked by admin. User actions are disabled.'
+)
 </script>
 
 <style scoped>

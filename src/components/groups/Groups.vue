@@ -3,13 +3,22 @@
   <div class="space-y-4">
     <LoadingSkeleton v-if="isPageLoading" mode="page" />
     <template v-else>
+      <el-alert
+        v-if="activeUserIsBlocked"
+        title="Your account is blocked by admin. Groups are visible for reference only."
+        type="warning"
+        :closable="false"
+      />
+
       <!-- Add Group Button / Create Group Form -->
       <Transition name="form-slide" mode="out-in">
         <div v-if="!showCreateGroup" key="btn">
-          <AddNewTransactionButton
-            text="Want to create a new group?"
-            @click="openCreateGroup"
-          />
+          <div :class="{ 'pointer-events-none opacity-60': activeUserIsBlocked }">
+            <AddNewTransactionButton
+              text="Want to create a new group?"
+              @click="openCreateGroup"
+            />
+          </div>
         </div>
         <div v-else key="form">
           <GroupsCreate @group-created="closeCreateGroup">
@@ -42,7 +51,7 @@
       </div>
 
       <!-- Sort & Filter controls -->
-      <div class="flex items-center gap-2 mb-4 min-w-0">
+      <div class="flex items-center gap-2 mb-2 min-w-0">
         <el-button-group size="small" class="flex-shrink-0">
           <el-button
             :type="sortOrder === '' ? 'primary' : ''"
@@ -79,10 +88,16 @@
           :wrap-form-item="false"
         />
       </div>
+      <div class="mb-4">
+        <el-checkbox v-model="hideBlockedEntities" size="small">
+          Hide blocked users and groups
+        </el-checkbox>
+      </div>
 
       <GroupPendingInvitations
         :invitations="pendingInvitations"
         :display-mobile-for-group="displayMobileForGroup"
+        :active-user-blocked="activeUserIsBlocked"
         @accept="acceptInvitation"
         @reject="rejectInvitation"
       />
@@ -144,6 +159,7 @@
           :finalize-add-member="finalizeAddMember"
           :approve-ownership-transfer="approveOwnershipTransfer"
           :reject-ownership-transfer="rejectOwnershipTransfer"
+          :active-user-blocked="activeUserIsBlocked"
           @toggle-pin="togglePin"
         />
       </div>
@@ -163,6 +179,7 @@
           :actions="getGroupActions(group)"
           :display-mobile-for-group="displayMobileForGroup"
           :load-group-balances="loadGroupBalances"
+          :active-user-blocked="activeUserIsBlocked"
         />
       </div>
       <div v-if="hasMoreAvailableGroups" class="mt-4 flex justify-center">
@@ -232,6 +249,7 @@ const {
   sortOrder,
   filterByUser,
   filterByCategory,
+  hideBlockedEntities,
   allGroupMemberOptions,
   allCategoryOptions,
   joinedGroups,
@@ -289,7 +307,8 @@ const {
   getGroupActions,
 
   isPageLoading,
-  updateGroup
+  updateGroup,
+  activeUserIsBlocked
 } = Groups()
 
 function handleEditSave(formData) {

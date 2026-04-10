@@ -1,7 +1,7 @@
 <template>
   <div v-bind="$attrs">
     <!-- Pass-through: render the slot when the user is a confirmed member -->
-    <slot v-if="isMember" />
+    <slot v-if="isMember && !isInteractionBlocked" />
 
     <!-- Loading state while group data is being fetched -->
     <div
@@ -21,6 +21,25 @@
       <p class="text-sm text-gray-500 max-w-xs">
         This group doesn't exist or has been deleted.
       </p>
+      <el-button type="primary" @click="router.push('/groups')">
+        Go to Groups
+      </el-button>
+    </div>
+
+    <div
+      v-else-if="isInteractionBlocked"
+      class="flex flex-col items-center justify-center py-16 gap-5 text-center px-4"
+    >
+      <div class="text-5xl">⛔</div>
+      <div>
+        <h2 class="text-xl font-semibold">
+          {{ group?.name || 'Blocked Access' }}
+        </h2>
+        <p class="text-sm text-gray-400 mt-1">
+          {{ blockedMessage }}
+        </p>
+      </div>
+
       <el-button type="primary" @click="router.push('/groups')">
         Go to Groups
       </el-button>
@@ -89,6 +108,12 @@ import { useAuthStore, useGroupStore, useUserStore } from '@/stores'
 import { useFireBase } from '@/composables'
 import { DB_NODES } from '@/constants'
 import { maskMobile, appendNotificationForUser, showError } from '@/utils'
+import {
+  ACTIVE_USER_BLOCKED_MESSAGE,
+  getBlockedEntityMessage,
+  isGroupBlocked,
+  isUserBlocked
+} from '@/helpers'
 import LoadingSkeleton from './LoadingSkeleton.vue'
 
 defineOptions({ inheritAttrs: false })
@@ -133,6 +158,19 @@ const effectiveLoading = computed(() => groupsLoading.value || props.isLoading)
 const actioning = ref(false)
 const me = computed(() => authStore.getActiveUser)
 const group = computed(() => groupStore.getGroupById(props.groupId))
+const activeUserRecord = computed(() => userStore.getUserByUid(me.value))
+const isGroupBlockedState = computed(() => isGroupBlocked(group.value))
+const isActiveUserBlocked = computed(() =>
+  isUserBlocked(activeUserRecord.value)
+)
+const isInteractionBlocked = computed(
+  () => isGroupBlockedState.value || isActiveUserBlocked.value
+)
+const blockedMessage = computed(() =>
+  isGroupBlockedState.value
+    ? getBlockedEntityMessage('group')
+    : ACTIVE_USER_BLOCKED_MESSAGE
+)
 
 const isMember = computed(() =>
   (group.value?.members || []).some((m) => m.mobile === me.value)
@@ -156,6 +194,10 @@ const joinRequestApprovals = computed(() => {
 // ── Accept invitation ────────────────────────────────────────────────────
 async function accept() {
   if (!group.value) return
+  if (isInteractionBlocked.value) {
+    showError(blockedMessage.value)
+    return
+  }
   actioning.value = true
   try {
     const myUser = userStore.getUserByUid(me.value)
@@ -205,6 +247,10 @@ async function accept() {
 // ── Decline invitation ───────────────────────────────────────────────────
 async function decline() {
   if (!group.value) return
+  if (isInteractionBlocked.value) {
+    showError(blockedMessage.value)
+    return
+  }
   actioning.value = true
   try {
     const myUser = userStore.getUserByUid(me.value)
@@ -246,6 +292,10 @@ async function decline() {
 // ── Send join request ────────────────────────────────────────────────────
 async function sendJoinRequest() {
   if (!group.value) return
+  if (isInteractionBlocked.value) {
+    showError(blockedMessage.value)
+    return
+  }
   actioning.value = true
   try {
     const myUser = userStore.getUserByUid(me.value)

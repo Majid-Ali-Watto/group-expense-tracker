@@ -3,6 +3,7 @@ import { useAuthStore, useGroupStore, useUserStore } from '@/stores'
 import { useFireBase } from '@/composables'
 import { showError, formatUserDisplay } from '@/utils'
 import { DB_NODES } from '@/constants'
+import { ACTIVE_USER_BLOCKED_MESSAGE, isUserBlocked } from '@/helpers'
 
 export const GroupsCreate = (emit, props) => {
   const authStore = useAuthStore()
@@ -27,10 +28,12 @@ export const GroupsCreate = (emit, props) => {
   const groupFormRef = ref(null)
 
   const usersOptions = computed(() =>
-    (userStore.getUsers || []).map((user) => ({
-      label: getUserLabel(user),
-      value: user.uid
-    }))
+    (userStore.getUsers || [])
+      .filter((user) => user?.blocked !== true)
+      .map((user) => ({
+        label: getUserLabel(user),
+        value: user.uid
+      }))
   )
 
   const activeUser = computed(() => authStore.getActiveUser)
@@ -61,6 +64,9 @@ export const GroupsCreate = (emit, props) => {
 
   async function doCreateGroup() {
     const creatorId = authStore.getActiveUser
+    if (isUserBlocked(userStore.getUserByUid(creatorId))) {
+      return showError(ACTIVE_USER_BLOCKED_MESSAGE)
+    }
 
     // Auto-include creator if not already selected
     if (!groupForm.value.members.includes(creatorId)) {
@@ -114,6 +120,7 @@ export const GroupsCreate = (emit, props) => {
       name: groupForm.value.name,
       description: groupForm.value.description || '',
       category: groupForm.value.category || '',
+      blocked: false,
       ownerMobile: authStore.getActiveUser,
       // Only the creator joins immediately; all others receive an invitation
       members: [buildMemberSnapshot(creatorId)],

@@ -20,6 +20,12 @@ import {
   showSuccess
 } from '@/utils'
 import {
+  ACTIVE_USER_BLOCKED_MESSAGE,
+  getBlockedEntityMessage,
+  isGroupBlocked,
+  isUserBlocked
+} from '@/helpers'
+import {
   createUserDisplayStoreProxy,
   getDisplayMobile
 } from '@/utils/user-display'
@@ -46,6 +52,10 @@ export const SharedGroups = () => {
   )
 
   const activeUser = computed(() => authStore.getActiveUser)
+  const activeUserRecord = computed(() => userStore.getUserByUid(activeUser.value))
+  const activeUserIsBlocked = computed(() =>
+    isUserBlocked(activeUserRecord.value)
+  )
 
   function displayMobileForGroup(targetMobile) {
     return getDisplayMobile(storeProxy, targetMobile)
@@ -91,7 +101,8 @@ export const SharedGroups = () => {
             name: user.name || '',
             email: user.email || '',
             maskedMobile: maskMobile(user.mobile || ''),
-            bugResolver: user.bugResolver === true
+            bugResolver: user.bugResolver === true,
+            blocked: user.blocked === true
           }
         })
         userStore.setUsers(users)
@@ -115,6 +126,15 @@ export const SharedGroups = () => {
   }
 
   async function selectSharedGroup(group) {
+    if (activeUserIsBlocked.value) {
+      showError(ACTIVE_USER_BLOCKED_MESSAGE)
+      return
+    }
+    if (isGroupBlocked(group)) {
+      showError(getBlockedEntityMessage('group'))
+      return
+    }
+
     actioningGroupId.value = group.id
     try {
       groupStore.setActiveGroup(group.id)
@@ -130,6 +150,15 @@ export const SharedGroups = () => {
   }
 
   async function requestJoin(group) {
+    if (activeUserIsBlocked.value) {
+      showError(ACTIVE_USER_BLOCKED_MESSAGE)
+      return
+    }
+    if (isGroupBlocked(group)) {
+      showError(getBlockedEntityMessage('group'))
+      return
+    }
+
     actioningGroupId.value = group.id
     try {
       const me = userStore.getUserByUid(activeUser.value)
@@ -173,6 +202,15 @@ export const SharedGroups = () => {
   }
 
   async function acceptInvitation(group) {
+    if (activeUserIsBlocked.value) {
+      showError(ACTIVE_USER_BLOCKED_MESSAGE)
+      return
+    }
+    if (isGroupBlocked(group)) {
+      showError(getBlockedEntityMessage('group'))
+      return
+    }
+
     actioningGroupId.value = group.id
     try {
       const me = userStore.getUserByUid(activeUser.value)
@@ -282,6 +320,7 @@ export const SharedGroups = () => {
     hasPendingJoinRequest,
     joinSharedGroup,
     loadBalances,
-    selectSharedGroup
+    selectSharedGroup,
+    activeUserIsBlocked
   }
 }

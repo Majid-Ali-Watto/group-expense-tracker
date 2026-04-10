@@ -3,7 +3,18 @@
     :id="`group-card-${group.id}`"
     class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
   >
-    <div class="mb-3">
+    <el-alert
+      v-if="isInteractionBlocked"
+      :title="blockedMessage"
+      type="warning"
+      :closable="false"
+      class="mb-3"
+    />
+
+    <div
+      class="mb-3"
+      :class="{ 'pointer-events-none opacity-60 select-none': isInteractionBlocked }"
+    >
       <div class="flex flex-col mb-2">
         <div class="flex items-center justify-between flex-wrap">
           <h3 class="font-semibold text-lg">{{ group.name }}</h3>
@@ -84,21 +95,23 @@
       <GroupActionButtons class="hidden sm:flex" :actions="actions" />
     </div>
 
-    <GroupRequestButtons
-      :group="group"
-      :get-join-requests="getJoinRequests"
-      :approve-member-join-request="approveMemberJoinRequest"
-      :reject-join-request="rejectJoinRequest"
-      :approve-group-deletion="approveGroupDeletion"
-      :reject-group-deletion="rejectGroupDeletion"
-      :approve-edit-request="approveEditRequest"
-      :reject-edit-request="rejectEditRequest"
-      :approve-add-member-request="approveAddMemberRequest"
-      :reject-add-member-request="rejectAddMemberRequest"
-      :finalize-add-member="finalizeAddMember"
-      :approve-ownership-transfer="approveOwnershipTransfer"
-      :reject-ownership-transfer="rejectOwnershipTransfer"
-    />
+    <div :class="{ 'pointer-events-none opacity-60 select-none': isInteractionBlocked }">
+      <GroupRequestButtons
+        :group="group"
+        :get-join-requests="getJoinRequests"
+        :approve-member-join-request="approveMemberJoinRequest"
+        :reject-join-request="rejectJoinRequest"
+        :approve-group-deletion="approveGroupDeletion"
+        :reject-group-deletion="rejectGroupDeletion"
+        :approve-edit-request="approveEditRequest"
+        :reject-edit-request="rejectEditRequest"
+        :approve-add-member-request="approveAddMemberRequest"
+        :reject-add-member-request="rejectAddMemberRequest"
+        :finalize-add-member="finalizeAddMember"
+        :approve-ownership-transfer="approveOwnershipTransfer"
+        :reject-ownership-transfer="rejectOwnershipTransfer"
+      />
+    </div>
   </div>
 </template>
 
@@ -133,7 +146,8 @@ const props = defineProps({
   rejectAddMemberRequest: { type: Function, required: true },
   finalizeAddMember: { type: Function, required: true },
   approveOwnershipTransfer: { type: Function, required: true },
-  rejectOwnershipTransfer: { type: Function, required: true }
+  rejectOwnershipTransfer: { type: Function, required: true },
+  activeUserBlocked: { type: Boolean, default: false }
 })
 
 defineEmits(['toggle-pin'])
@@ -144,6 +158,16 @@ const ownerName = computed(
   () =>
     userStore.getUserByMobile(props.group.ownerMobile)?.name ||
     props.group.ownerMobile
+)
+
+const isInteractionBlocked = computed(
+  () => props.activeUserBlocked || props.group?.blocked === true
+)
+
+const blockedMessage = computed(() =>
+  props.group?.blocked === true
+    ? 'This group is blocked by admin. Do not interact with it.'
+    : 'Your account is blocked by admin. Group actions are disabled.'
 )
 </script>
 
