@@ -33,6 +33,7 @@
               @submit="handleSubmit"
               @forgot-code="handleForgotCode"
               @resend-verification="handleResendVerification"
+              @google-sign-in="handleGoogleSignIn"
             />
           </div>
         </transition>
@@ -64,6 +65,45 @@
         @confirm="saveFeatureSelection"
         @cancel="cancelFeatureSelection"
       />
+
+      <el-dialog
+        v-model="googleMobileDialogVisible"
+        title="One more step"
+        width="320px"
+        :close-on-click-modal="false"
+        :close-on-press-escape="false"
+        :show-close="false"
+      >
+        <p class="text-sm text-gray-600 mb-4">
+          Please enter your mobile number to complete registration.
+        </p>
+        <el-input
+          v-model="googleMobileInput"
+          placeholder="Mobile number (10-11 digits)"
+          maxlength="11"
+          @input="googleMobileInput = googleMobileInput.replace(/\D/g, '')"
+          @keyup.enter="submitGoogleMobile"
+        />
+        <template #footer>
+          <GenericButton
+            type="default"
+            size="small"
+            :disabled="isGoogleMobileSubmitting"
+            @click="cancelGoogleMobileDialog"
+          >
+            Cancel
+          </GenericButton>
+          <GenericButton
+            type="success"
+            size="small"
+            :loading="isGoogleMobileSubmitting"
+            :disabled="isGoogleMobileSubmitting"
+            @click="submitGoogleMobile"
+          >
+            Continue
+          </GenericButton>
+        </template>
+      </el-dialog>
     </div>
   </div>
 </template>
@@ -72,6 +112,7 @@
 import { loginRules as rules } from '@/assets'
 import { Login } from '@/scripts/auth'
 import { loadAsyncComponent } from '@/utils/async-component'
+import { GenericButton } from '@/components/generic-components'
 import {
   AuthActions,
   AuthFormFields,
@@ -97,12 +138,18 @@ const {
   featureSelection,
   featureSelectionDialogVisible,
   isSavingFeatureSelection,
+  googleMobileDialogVisible,
+  googleMobileInput,
+  isGoogleMobileSubmitting,
   handleSubmit,
   handleForgotCode,
   sendResetEmail,
   handleResendVerification,
   saveFeatureSelection,
-  cancelFeatureSelection
+  cancelFeatureSelection,
+  handleGoogleSignIn,
+  submitGoogleMobile,
+  cancelGoogleMobileDialog
 } = Login()
 
 function updateRememberMe(value) {

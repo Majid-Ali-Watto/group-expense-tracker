@@ -45,7 +45,9 @@ import {
   setPersistence,
   browserLocalPersistence,
   browserSessionPersistence,
-  signOut
+  signOut,
+  GoogleAuthProvider,
+  signInWithPopup
 } from '@/firebase'
 
 export const Login = () => {
@@ -105,6 +107,12 @@ export const Login = () => {
   const isSavingFeatureSelection = ref(false)
   const featureSelection = ref(createUserTabSelection())
   const pendingLoginContext = ref(null)
+
+  // Google sign-in — mobile collection for new Google users
+  const googleMobileDialogVisible = ref(false)
+  const googleMobileInput = ref('')
+  const isGoogleMobileSubmitting = ref(false)
+  const googlePendingFirebaseUser = ref(null)
 
   onMounted(async () => {
     // Check for a new app version and notify the user if one is being applied
@@ -623,6 +631,7 @@ export const Login = () => {
   }
 
   function handleForgotCode() {
+    resetEmail.value = form.value.email?.trim() || ''
     emailResetDialogVisible.value = true
   }
 
@@ -640,16 +649,6 @@ export const Login = () => {
     isEmailResetLoading.value = true
 
     try {
-      // Find user by email
-      const user = await findUserByEmail(email)
-
-      if (!user) {
-        isEmailResetLoading.value = false
-        return showError(
-          'No account found with this email address. Please check and try again.'
-        )
-      }
-
       // Configure action code settings to redirect back to our app
       const actionCodeSettings = {
         // URL to redirect to after email link is clicked
@@ -691,6 +690,114 @@ export const Login = () => {
     }
   }
 
+  // ── Google Sign-In ────────────────────────────────────────────────────────
+
+  async function handleGoogleSignIn() {
+    if (isSubmitting.value) return
+    isSubmitting.value = true
+    try {
+      const provider = new GoogleAuthProvider()
+      const result = await signInWithPopup(auth, provider)
+      const firebaseUser = result.user
+
+      const email = firebaseUser.email?.trim().toLowerCase()
+      const existingUser = await findUserByEmail(email)
+
+      if (existingUser) {
+        // Returning user — run the normal post-auth flow
+        const tabConfigDoc = await findUserTabConfigByUid(existingUser.uid)
+        if (!hasSavedUserTabConfig(tabConfigDoc)) {
+          openFeatureSelectionDialog(existingUser, null, tabConfigDoc)
+          return
+        }
+        await completeLogin(
+          {
+            name: existingUser.name,
+            mobile: existingUser.mobile,
+            email: existingUser.email,
+            uid: existingUser.uid,
+            password: null,
+            userTabConfig: tabConfigDoc
+          },
+          'Login successful!'
+        )
+      } else {
+        // New Google user — collect mobile number before saving to DB
+        googlePendingFirebaseUser.value = firebaseUser
+        googleMobileInput.value = ''
+        googleMobileDialogVisible.value = true
+      }
+    } catch (error) {
+      if (
+        error.code === 'auth/popup-closed-by-user' ||
+        error.code === 'auth/cancelled-popup-request'
+      ) {
+        // User dismissed — do nothing
+        return
+      }
+      if (error.code === 'auth/account-exists-with-different-credential') {
+        showError(
+          'This email is already registered with email and password. Please login using your email and password instead.'
+        )
+        return
+      }
+      console.error('Google sign-in error:', error)
+      showError(error.message || 'Google sign-in failed. Please try again.')
+    } finally {
+      isSubmitting.value = false
+    }
+  }
+
+  async function submitGoogleMobile() {
+    if (!googlePendingFirebaseUser.value || isGoogleMobileSubmitting.value) return
+
+    const mobile = googleMobileInput.value.replace(/\D/g, '').trim()
+    if (!mobile) return showError('Please enter your mobile number.')
+    if (mobile.length < 10 || mobile.length > 11) {
+      return showError('Please enter a valid mobile number (10-11 digits).')
+    }
+
+    isGoogleMobileSubmitting.value = true
+    try {
+      const existingByMobile = await findUserByMobile(mobile)
+      if (existingByMobile) {
+        return showError('An account with this mobile number already exists.')
+      }
+
+      const firebaseUser = googlePendingFirebaseUser.value
+      const email = firebaseUser.email.trim().toLowerCase()
+      const name = (firebaseUser.displayName || email.split('@')[0]).trim()
+      const uid = firebaseUser.uid
+
+      const userData = {
+        uid,
+        name,
+        mobile,
+        email,
+        emailVerified: true,
+        blocked: false
+      }
+
+      await setDoc(doc(database, DB_NODES.USERS, uid), userData)
+      trackAnalyticsEvent('sign_up', { method: 'google' })
+
+      googleMobileDialogVisible.value = false
+      openFeatureSelectionDialog({ uid, name, mobile, email }, null, null)
+    } catch (error) {
+      console.error('Google mobile submit error:', error)
+      showError(error.message || 'Failed to save your details. Please try again.')
+    } finally {
+      isGoogleMobileSubmitting.value = false
+    }
+  }
+
+  function cancelGoogleMobileDialog() {
+    googleMobileDialogVisible.value = false
+    googleMobileInput.value = ''
+    googlePendingFirebaseUser.value = null
+    signOut(auth).catch(() => {})
+  }
+
   return {
     form,
     loginForm,
@@ -703,11 +810,17 @@ export const Login = () => {
     featureSelection,
     featureSelectionDialogVisible,
     isSavingFeatureSelection,
+    googleMobileDialogVisible,
+    googleMobileInput,
+    isGoogleMobileSubmitting,
     handleSubmit,
     handleForgotCode,
     sendResetEmail,
     handleResendVerification,
     saveFeatureSelection,
-    cancelFeatureSelection
+    cancelFeatureSelection,
+    handleGoogleSignIn,
+    submitGoogleMobile,
+    cancelGoogleMobileDialog
   }
 }

@@ -229,7 +229,14 @@ export const App = () => {
       // from an expired token, browser crash, or corrupted state. Clean it up so
       // the user is not permanently stuck on a protected route with no way out.
       if (!firebaseUser) {
-        if (sessionStorage.getItem('_session')) {
+        // Only clean up a stale _session when the user is not actively logged in.
+        // A spurious onAuthStateChanged(null) can fire mid-flow during a Google
+        // popup sign-in (COOP blocks window.closed polling, confusing Firebase's
+        // cancellation detector). Protecting an active session here is safe because
+        // legitimate token expiry is still caught by the 5-minute verifyInterval.
+        // When logout() runs it clears _session itself before calling signOut, so
+        // by the time this handler fires for a real sign-out, _session is already gone.
+        if (!loggedIn.value && sessionStorage.getItem('_session')) {
           sessionStorage.removeItem('_session')
           sessionStorage.removeItem('_lastRoute')
           sessionStorage.removeItem('_lastGroupId')

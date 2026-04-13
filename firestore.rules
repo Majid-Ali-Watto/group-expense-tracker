@@ -10,8 +10,11 @@ service cloud.firestore {
     }
 
     // True when the caller's account is not blocked.
+    // If the user doc doesn't exist yet (e.g. a brand-new Google sign-in before
+    // their document has been written), treat them as not blocked by default.
     function callerIsNotBlocked() {
-      return !userDoc(request.auth.uid).data.get('blocked', false);
+      return !exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        || !userDoc(request.auth.uid).data.get('blocked', false);
     }
 
     // True when the named group document exists and is not blocked.

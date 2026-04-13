@@ -11,7 +11,10 @@ export default defineConfig({
     }
   },
   server: {
-    host: '0.0.0.0' // Allow access from local network
+    host: '0.0.0.0', // Allow access from local network
+    headers: {
+      'Cross-Origin-Opener-Policy': 'same-origin-allow-popups'
+    }
   },
   build: {
     chunkSizeWarningLimit: 1600, // Increase chunk size warning limit

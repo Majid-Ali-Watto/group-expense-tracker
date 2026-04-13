@@ -34,7 +34,9 @@ import {
   browserLocalPersistence,
   browserSessionPersistence,
   onAuthStateChanged,
-  signOut
+  signOut,
+  GoogleAuthProvider,
+  signInWithPopup
 } from 'firebase/auth'
 import { app } from '@/helpers/firebase-app'
 import { analyticsReady } from '@/helpers/firebase-analytics'
@@ -81,5 +83,7 @@ export {
   browserLocalPersistence,
   browserSessionPersistence,
   onAuthStateChanged,
-  signOut
+  signOut,
+  GoogleAuthProvider,
+  signInWithPopup
 }
