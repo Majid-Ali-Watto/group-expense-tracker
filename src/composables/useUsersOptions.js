@@ -2,7 +2,7 @@ import { computed } from 'vue'
 import { useAuthStore, useGroupStore, useUserStore } from '@/stores'
 import { formatMemberDisplay, formatUserDisplay } from '@/utils'
 
-export function useUsersOptions() {
+export function useUsersOptions({ allUsers = false } = {}) {
   const authStore = useAuthStore()
   const groupStore = useGroupStore()
   const userStore = useUserStore()
@@ -14,20 +14,22 @@ export function useUsersOptions() {
   }
 
   const usersOptions = computed(() => {
-    const activeGroup = groupStore.getActiveGroup
-    const group = activeGroup ? groupStore.getGroupById(activeGroup) : null
-    if (group && group.members && group.members.length) {
-      return group.members.map((m) => {
-        const memberId = m.uid || m.mobile
-        const memberUser = userStore.getUserByMobile(memberId)
-        const isBlocked = memberUser?.blocked === true
-        const label = formatMemberDisplay(storeProxy, m, { group })
-        return {
-          label: isBlocked ? `${label} (blocked)` : label,
-          value: memberId,
-          disabled: isBlocked
-        }
-      })
+    if (!allUsers) {
+      const activeGroup = groupStore.getActiveGroup
+      const group = activeGroup ? groupStore.getGroupById(activeGroup) : null
+      if (group && group.members && group.members.length) {
+        return group.members.map((m) => {
+          const memberId = m.uid || m.mobile
+          const memberUser = userStore.getUserByMobile(memberId)
+          const isBlocked = memberUser?.blocked === true
+          const label = formatMemberDisplay(storeProxy, m, { group })
+          return {
+            label: isBlocked ? `${label} (blocked)` : label,
+            value: memberId,
+            disabled: isBlocked
+          }
+        })
+      }
     }
     const users = userStore.getUsers || []
     return users.map((u) => {

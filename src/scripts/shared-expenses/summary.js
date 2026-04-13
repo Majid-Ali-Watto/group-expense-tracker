@@ -42,7 +42,7 @@ export const Summary = (props) => {
     ) {
       return groupObj.value.members.map((m) => ({
         name: m.name,
-        mobile: m.mobile
+        mobile: m.uid || m.mobile
       }))
     }
     return userStore.getUsers && userStore.getUsers.length

@@ -2,6 +2,7 @@ import { computed, inject, ref } from 'vue'
 import { useAuthStore, useGroupStore, useUserStore } from '@/stores'
 import { useFireBase } from '@/composables'
 import { showError, showSuccess } from '@/utils'
+import { createUserDisplayStoreProxy } from '@/utils/user-display'
 import { ElMessageBox } from 'element-plus'
 import { DB_NODES } from '@/constants'
 import { database, writeBatch, doc, deleteField } from '@/firebase'
@@ -13,6 +14,7 @@ export const Settlement = (props) => {
   const groupStore = useGroupStore()
   const userStore = useUserStore()
 
+  const storeProxy = createUserDisplayStoreProxy(authStore, userStore)
   const user = ref(authStore.activeUser)
   const activeGroup = computed(() => groupStore.getActiveGroup)
   const group = computed(() =>
@@ -345,7 +347,7 @@ export const Settlement = (props) => {
 
   return {
     formatAmount,
-    userStore,
+    storeProxy,
     user,
     addPaymentsBatch,
     settlements,

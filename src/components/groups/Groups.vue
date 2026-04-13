@@ -21,7 +21,7 @@
           </div>
         </div>
         <div v-else key="form">
-          <GroupsCreate @group-created="closeCreateGroup">
+          <GroupsCreate @group-created="onGroupCreated">
             <template #clear>
               <el-button
                 type="info"
@@ -90,7 +90,7 @@
       </div>
       <div class="mb-4">
         <el-checkbox v-model="hideBlockedEntities" size="small">
-          Hide blocked users and groups
+          Hide blocked groups
         </el-checkbox>
       </div>
 
@@ -279,6 +279,7 @@ const {
 
   openCreateGroup,
   closeCreateGroup,
+  onGroupCreated,
   approveGroupDeletion,
   rejectGroupDeletion,
 

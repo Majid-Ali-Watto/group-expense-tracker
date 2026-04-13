@@ -1,4 +1,7 @@
-import { showError, showSuccess } from '@/utils'
+import { useClipboard } from '@/composables'
+import { showError } from '@/utils'
+
+const { copyTextWithFeedback } = useClipboard()
 
 /**
  * Safe markdown-to-HTML renderer.
@@ -115,10 +118,10 @@ export function formatDate(iso) {
  * @param {string} text
  */
 export function copyText(text) {
-  navigator.clipboard
-    ?.writeText(text)
-    .then(() => showSuccess('Copied!'))
-    .catch(() => showError('Failed to copy.'))
+  return copyTextWithFeedback(text, {
+    successMessage: 'Copied!',
+    errorMessage: 'Failed to copy.'
+  })
 }
 
 /**

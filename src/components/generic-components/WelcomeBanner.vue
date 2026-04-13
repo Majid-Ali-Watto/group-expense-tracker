@@ -27,7 +27,7 @@
         </div>
 
         <!-- Group Info -->
-        <div class="flex items-center gap-3 sm:ml-4">
+        <div class="flex items-center gap-3 sm:ml-4" v-if="sharedTab">
           <div class="flex-shrink-0">
             <div
               class="group-circle"
@@ -66,11 +66,13 @@ import { ref, computed, watch, nextTick } from 'vue'
 import { UserIcon, UsersIcon } from '@/components/icons'
 import GenericDropDown from './GenericDropDown.vue'
 import { useGroupStore, useAuthStore, useUserStore } from '@/stores'
+import { useJoinedGroups } from '@/composables'
+import { hasSharedFeatures } from '@/helpers'
 import { showSuccess } from '@/utils'
-import { isMemberOfGroup } from '@/helpers'
 
 defineProps({
-  displayName: String
+  displayName: String,
+  activeTab: String
 })
 
 const groupStore = useGroupStore()
@@ -82,10 +84,9 @@ const currentUserMobile = computed(
     userStore.getUserByUid(authStore.getActiveUser)?.mobile ??
     authStore.getActiveUser
 )
+const sharedTab = computed(() => hasSharedFeatures(userStore.getActiveUserTabConfig))
 
-const joinedGroups = computed(() =>
-  groupStore.getGroups.filter((g) => isMemberOfGroup(g))
-)
+const joinedGroups = useJoinedGroups(computed(() => groupStore.getGroups))
 
 const selectedGroupId = ref(groupStore.getActiveGroup)
 

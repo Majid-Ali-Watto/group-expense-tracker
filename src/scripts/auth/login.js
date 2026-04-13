@@ -18,7 +18,8 @@ import {
   hasEnabledUserTabs,
   findUserTabConfigByUid,
   buildUserTabConfigDocument,
-  canAccessManageTabs
+  canAccessManageTabs,
+  hasSharedFeatures
 } from '@/helpers'
 import { useAuthStore, useGroupStore, useUserStore } from '@/stores'
 import { DB_NODES } from '@/constants'
@@ -146,6 +147,7 @@ export const Login = () => {
   // ── helpers ──────────────────────────────────────────────────────────────
 
   function activateUserGroup(userId) {
+    if (!hasSharedFeatures(userStore.getActiveUserTabConfig)) return
     const groups = groupStore.getGroups || []
     const myGroup = groups.find((g) =>
       (g.members || []).some((m) => (m.uid || m.mobile) === userId)
@@ -205,6 +207,7 @@ export const Login = () => {
     (enabled) => {
       if (enabled) {
         featureSelection.value[USER_TAB_KEYS.GROUPS] = true
+        featureSelection.value[USER_TAB_KEYS.SHARED_EXPENSES] = true
         return
       }
 
@@ -218,7 +221,10 @@ export const Login = () => {
   watch(
     () => featureSelection.value.personal,
     (enabled) => {
-      if (enabled) return
+      if (enabled) {
+        featureSelection.value[USER_TAB_KEYS.PERSONAL_EXPENSES] = true
+        return
+      }
 
       featureSelection.value[USER_TAB_KEYS.PERSONAL_EXPENSES] = false
       featureSelection.value[USER_TAB_KEYS.PERSONAL_LOANS] = false
@@ -230,7 +236,26 @@ export const Login = () => {
 
     isSavingFeatureSelection.value = true
     try {
-      const userTabConfig = buildUserTabConfig(featureSelection.value)
+      const sel = featureSelection.value
+      if (!sel.shared && !sel.personal) {
+        return showError(
+          'Please select at least one feature group — Shared or Personal — to continue.',
+          { duration: 0 }
+        )
+      }
+      if (sel.shared && !sel[USER_TAB_KEYS.SHARED_EXPENSES] && !sel[USER_TAB_KEYS.SHARED_LOANS] && !sel[USER_TAB_KEYS.USERS]) {
+        return showError(
+          'You selected Shared features but no shared tabs are enabled. Please select at least one shared tab (Shared Expenses, Shared Loans, or Users).',
+          { duration: 0 }
+        )
+      }
+      if (sel.personal && !sel[USER_TAB_KEYS.PERSONAL_EXPENSES] && !sel[USER_TAB_KEYS.PERSONAL_LOANS]) {
+        return showError(
+          'You selected Personal features but no personal tabs are enabled. Please select at least one personal tab (Personal Expenses or Personal Loans).',
+          { duration: 0 }
+        )
+      }
+      const userTabConfig = buildUserTabConfig(sel)
       if (!hasEnabledUserTabs(userTabConfig)) {
         return showError('Select at least one actual tab to continue.')
       }
@@ -345,9 +370,10 @@ export const Login = () => {
         displayName: normalizedName
       })
 
-      // Send email verification
+      // Send email verification — always redirect to /login after verification,
+      // not the current path (which may be /register).
       const actionCodeSettings = {
-        url: `${window.location.origin}${window.location.pathname}`,
+        url: `${window.location.origin}/login`,
         handleCodeInApp: false
       }
 
@@ -567,7 +593,7 @@ export const Login = () => {
       )
 
       const actionCodeSettings = {
-        url: `${window.location.origin}${window.location.pathname}`,
+        url: `${window.location.origin}/login`,
         handleCodeInApp: false
       }
 

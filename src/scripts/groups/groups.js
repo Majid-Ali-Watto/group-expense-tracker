@@ -2,7 +2,13 @@ import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { GROUP_CATEGORIES } from '@/assets'
 import { useAuthStore, useGroupStore, useUserStore } from '@/stores'
-import { useFireBase, useDebouncedRef } from '@/composables'
+import {
+  useFireBase,
+  useDebouncedRef,
+  useJoinedGroups,
+  useUsersOptions,
+  useShare
+} from '@/composables'
 import {
   showError,
   showSuccess,
@@ -26,6 +32,7 @@ import {
   collection,
   collectionGroup,
   doc,
+  setDoc,
   updateDoc,
   query,
   where,
@@ -56,7 +63,10 @@ import {
   ACTIVE_USER_BLOCKED_MESSAGE,
   getBlockedEntityMessage,
   isGroupBlocked,
-  isUserBlocked
+  isUserBlocked,
+  needsSharedTabsUpgrade,
+  buildUpgradedSharedTabConfig,
+  findUserTabConfigByUid
 } from '@/helpers'
 
 export const Groups = () => {
@@ -66,6 +76,7 @@ export const Groups = () => {
   const showCreateGroup = ref(false)
   const route = useRoute()
   const router = useRouter()
+  const { share } = useShare()
   const searchQuery = useDebouncedRef(route.query.q || '', 300)
   const sortOrder = ref(route.query.sort || '') // '' | 'asc' | 'desc'
   const filterByUser = ref(route.query.user || '')
@@ -88,6 +99,17 @@ export const Groups = () => {
 
   const closeCreateGroup = () => {
     showCreateGroup.value = false
+  }
+
+  // Called by GroupsCreate when a group is successfully written to Firestore.
+  // Immediately adds the new group to memberGroups so it appears in the UI
+  // without waiting for the real-time listener to deliver it.
+  function onGroupCreated(group) {
+    if (!memberGroups.value.find((g) => g.id === group.id)) {
+      memberGroups.value = [...memberGroups.value, group]
+    }
+    groupStore.addGroup(group)
+    closeCreateGroup()
   }
 
   // Sync all filters to URL so they are bookmarkable and shareable
@@ -163,6 +185,14 @@ export const Groups = () => {
   const availableGroupsInitialized = ref(false)
   const groups = computed(() => {
     const merged = new Map()
+    // groupStore provides a baseline that includes groups added before the
+    // real-time listener fires (e.g. creator just created a group, or
+    // app.js one-time getDocs on page-refresh).  Filter blocked groups if
+    // the "hide blocked" toggle is on so we don't show them from stale data.
+    ;(groupStore.getGroups || [])
+      .filter((g) => !hideBlockedEntities.value || !isGroupBlocked(g))
+      .forEach((group) => merged.set(group.id, group))
+    // Real-time listener data overrides the store (always authoritative).
     memberGroups.value.forEach((group) => merged.set(group.id, group))
     availableGroups.value.forEach((group) => {
       if (!merged.has(group.id)) merged.set(group.id, group)
@@ -172,35 +202,7 @@ export const Groups = () => {
   const groupBalances = ref({})
   let groupsListener = null
 
-  // All unique members across all groups (excluding the current user), sorted by name
-  const allGroupMembers = computed(() => {
-    const me = authStore.getActiveUser
-    const seen = new Set()
-    const members = []
-    for (const g of groups.value) {
-      for (const m of g.members || []) {
-        const memberId = m.uid || m.mobile
-        if (memberId !== me && !seen.has(memberId)) {
-          seen.add(memberId)
-          members.push({
-            mobile: memberId,
-            name:
-              m.name || userStore.getUserByMobile(memberId)?.name || memberId
-          })
-        }
-      }
-    }
-    return members.sort((a, b) => a.name.localeCompare(b.name))
-  })
-
-  const allGroupMemberOptions = computed(() =>
-    allGroupMembers.value.map((member) => ({
-      label: formatUserDisplay(storeProxy, member.mobile, {
-        name: member.name
-      }),
-      value: member.mobile
-    }))
-  )
+  const { usersOptions: allGroupMemberOptions } = useUsersOptions({ allUsers: true })
 
   // All categories for the filter dropdown
   const allCategoryOptions = computed(() => [
@@ -256,8 +258,10 @@ export const Groups = () => {
     return result
   })
 
+  const memberFilteredGroups = useJoinedGroups(filteredGroups)
+
   const joinedGroups = computed(() => {
-    const filtered = filteredGroups.value.filter((g) => isMemberOfGroup(g))
+    const filtered = memberFilteredGroups.value
     const pinned = filtered.filter((g) => pinnedGroupIds.value.includes(g.id))
     const unpinned = filtered.filter(
       (g) => !pinnedGroupIds.value.includes(g.id)
@@ -285,7 +289,7 @@ export const Groups = () => {
     return filteredGroups.value.filter(
       (g) =>
         !isMemberOfGroup(g) &&
-        (g.pendingMembers || []).some((m) => m.mobile === me)
+        (g.pendingMembers || []).some((m) => (m.uid || m.mobile) === me)
     )
   })
 
@@ -400,9 +404,14 @@ export const Groups = () => {
     const myUser = userStore.getUserByMobile(me)
     const myName = myUser?.name || me
     const myMobile = myUser?.mobile || me
-    const newMembers = [...(group.members || []), { mobile: me }]
+    const newMembers = [...(group.members || []), {
+      uid: me,
+      mobile: myUser?.mobile || me,
+      name: myName,
+      phone: myUser?.mobile || ''
+    }]
     const newPending = (group.pendingMembers || []).filter(
-      (m) => m.mobile !== me
+      (m) => (m.uid || m.mobile) !== me
     )
     let updatedGroup = {
       ...group,
@@ -436,6 +445,21 @@ export const Groups = () => {
       'You have joined the group!'
     )
     groupStore.addGroup(updatedGroup)
+
+    // If the joining user only had personal tabs enabled, silently upgrade their
+    // tab config to include groups + sharedExpenses + sharedLoans (users stays off).
+    try {
+      const currentTabConfig = userStore.getActiveUserTabConfig
+      if (needsSharedTabsUpgrade(currentTabConfig)) {
+        const existingDoc = await findUserTabConfigByUid(me)
+        const upgraded = buildUpgradedSharedTabConfig(existingDoc || currentTabConfig)
+        const docPayload = { uid: me, ...upgraded }
+        await setDoc(doc(database, DB_NODES.USER_TAB_CONFIGS, me), docPayload, { merge: true })
+        userStore.setActiveUserTabAccess({ config: docPayload, accessManageTabs: upgraded.accessManageTabs !== false })
+      }
+    } catch {
+      // Non-fatal — tab config upgrade will be retried on next login.
+    }
   }
 
   async function rejectInvitation(groupId) {
@@ -447,7 +471,7 @@ export const Groups = () => {
     const myName = myUser?.name || me
     const myMobile = myUser?.mobile || me
     const newPending = (group.pendingMembers || []).filter(
-      (m) => m.mobile !== me
+      (m) => (m.uid || m.mobile) !== me
     )
     let updatedGroup = {
       ...group,
@@ -533,31 +557,6 @@ export const Groups = () => {
     return `${window.location.origin}${resolved.href}`
   }
 
-  async function copyShareLink(url) {
-    if (navigator.clipboard?.writeText) {
-      await navigator.clipboard.writeText(url)
-      return true
-    }
-
-    const textarea = document.createElement('textarea')
-    textarea.value = url
-    textarea.setAttribute('readonly', '')
-    textarea.style.position = 'fixed'
-    textarea.style.opacity = '0'
-    textarea.style.pointerEvents = 'none'
-    document.body.appendChild(textarea)
-    textarea.select()
-    textarea.setSelectionRange(0, textarea.value.length)
-
-    try {
-      const copied = document.execCommand('copy')
-      if (!copied) throw new Error('Copy command failed')
-      return true
-    } finally {
-      document.body.removeChild(textarea)
-    }
-  }
-
   async function shareGroups(groupList, label = 'groups') {
     if (activeUserIsBlocked.value) {
       showError(ACTIVE_USER_BLOCKED_MESSAGE)
@@ -588,22 +587,11 @@ export const Groups = () => {
       url
     }
 
-    try {
-      if (navigator.share) {
-        await navigator.share(sharePayload)
-        return
-      }
-    } catch (error) {
-      if (error?.name === 'AbortError') return
-    }
-
-    try {
-      await copyShareLink(url)
-      showSuccess('Share link copied to clipboard!')
-    } catch {
-      window.prompt('Copy this share link:', url)
-      showError('Failed to share group link.')
-    }
+    await share(sharePayload, {
+      copySuccessMessage: 'Share link copied to clipboard!',
+      manualPromptLabel: 'Copy this share link:',
+      manualPromptErrorMessage: 'Failed to share group link.'
+    })
   }
 
   function shareJoinedGroups() {
@@ -701,7 +689,7 @@ export const Groups = () => {
         if (!groupStore.getActiveGroup) {
           const mobile = authStore.getActiveUser
           const myGroup = groupList.find((g) =>
-            (g.members || []).some((m) => m.mobile === mobile)
+            (g.members || []).some((m) => (m.uid || m.mobile) === mobile)
           )
           if (myGroup) groupStore.setActiveGroup(myGroup.id)
         }
@@ -2416,7 +2404,6 @@ export const Groups = () => {
     filterByUser,
     filterByCategory,
     hideBlockedEntities,
-    allGroupMembers,
     allGroupMemberOptions,
     allCategoryOptions,
     filteredGroups,
@@ -2443,6 +2430,7 @@ export const Groups = () => {
     // Group actions
     openCreateGroup,
     closeCreateGroup,
+    onGroupCreated,
     selectGroup,
     editGroup,
     updateGroup,

@@ -169,7 +169,7 @@ const props = defineProps({
 
 const {
   formatAmount,
-  userStore,
+  storeProxy,
   user,
   addPaymentsBatch,
   settlements,
@@ -187,13 +187,13 @@ const {
 } = Settlement(props)
 
 const formatUser = (mobile) =>
-  formatUserDisplay(userStore, mobile, {
+  formatUserDisplay(storeProxy, mobile, {
     group: group.value,
     preferMasked: true
   })
 
 const formatMember = (member) =>
-  formatMemberDisplay(userStore, member, {
+  formatMemberDisplay(storeProxy, member, {
     group: group.value,
     preferMasked: true
   })

@@ -6,7 +6,7 @@
         db-ref="personal-loans"
         :isPersonal="true"
         :showForm="showLoanForm"
-        @close-form="closeLoanForm"
+        @close-form="onFormClose"
       />
 
       <div ref="loanContent">
@@ -133,6 +133,8 @@ const {
   filteredLoans,
   showLoanForm,
   closeLoanForm,
+  fetchMonths,
+  fetchLoans,
   totalLending,
   totalDebting,
   netPosition,
@@ -140,6 +142,12 @@ const {
   filterFields,
   clearFilters
 } = PersonalLoans()
+
+const onFormClose = () => {
+  closeLoanForm()
+  fetchMonths()
+  fetchLoans()
+}
 
 const openPanels = ref([])
 const { isMobileScreen } = useMobileScreen()

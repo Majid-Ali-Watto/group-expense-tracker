@@ -17,7 +17,10 @@ import {
   hasUserApprovedAddMemberRequest,
   hasUserApprovedDeletion,
   hasUserApprovedJoinRequest,
-  isCurrentUserPendingOwner
+  isCurrentUserPendingOwner,
+  hasSharedFeatures,
+  resolveUserTabConfig,
+  USER_TAB_KEYS
 } from '@/helpers'
 
 export function useGlobalNotifications() {
@@ -87,15 +90,26 @@ export function useGlobalNotifications() {
     }
   }
 
+  // When the user only has personal features, skip all group/shared computations
+  // and DB listeners — nothing shared needs to be read or watched.
+  // Symmetric: when the user only has shared features, personal data is never
+  // loaded globally — personal composables are on-demand and self-contained.
+  const tabConfig = userStore.getActiveUserTabConfig
+  const resolvedTabConfig = resolveUserTabConfig(tabConfig)
+  const userHasSharedFeatures = hasSharedFeatures(tabConfig)
+  // Users-tab notifications (approve/reject others' requests) only make sense
+  // when the user actually has access to the Users tab to act on them.
+  const userHasUsersTab = resolvedTabConfig[USER_TAB_KEYS.USERS] === true
+
   // ─── Group notifications ─────────────────────────────────────────────────
   const groupNotifications = computed(() => {
     const me = activeUser.value
-    if (!me) return []
+    if (!me || !userHasSharedFeatures) return []
     const result = []
 
     // Pending invitations
     groups.value
-      .filter((g) => (g.pendingMembers || []).some((m) => m.mobile === me))
+      .filter((g) => (g.pendingMembers || []).some((m) => (m.uid || m.mobile) === me))
       .forEach((group) => {
         result.push({
           id: `invite-${group.id}`,
@@ -279,33 +293,39 @@ export function useGlobalNotifications() {
   // ─── User notifications ──────────────────────────────────────────────────
   const userNotifications = computed(() => {
     const me = activeUser.value
-    if (!me) return []
+    if (!me || !userHasSharedFeatures) return []
     return users.value.flatMap((u) => {
       const result = []
-      const check = (req, type) => {
-        if (
-          req?.requiredApprovals?.includes(me) &&
-          !req.approvals?.some((a) => (a.uid || a.mobile) === me)
-        ) {
-          const { name, maskedMobile } = getUserNotificationMeta(u)
-          const userLabel = maskedMobile ? `${name} (${maskedMobile})` : name
-          result.push({
-            id: `user-${type}-${u.uid}`,
-            icon: type === 'delete' ? '🗑️' : '✏️',
-            title: 'Users',
-            description:
-              type === 'delete'
-                ? `Delete request for ${userLabel}`
-                : `Update request for ${userLabel}: Name → "${req.newName}"`,
-            tab: Tabs.USERS,
-            category: 'Users'
-          })
-        }
-      }
-      check(u.deleteRequest, 'delete')
-      check(u.updateRequest, 'update')
 
-      // Notify the requester themselves about the status of their own delete request
+      // Approval requests for OTHER users' delete/update — only actionable
+      // from the Users tab, so only surface them when the user has that tab.
+      if (userHasUsersTab) {
+        const check = (req, type) => {
+          if (
+            req?.requiredApprovals?.includes(me) &&
+            !req.approvals?.some((a) => (a.uid || a.mobile) === me)
+          ) {
+            const { name, maskedMobile } = getUserNotificationMeta(u)
+            const userLabel = maskedMobile ? `${name} (${maskedMobile})` : name
+            result.push({
+              id: `user-${type}-${u.uid}`,
+              icon: type === 'delete' ? '🗑️' : '✏️',
+              title: 'Users',
+              description:
+                type === 'delete'
+                  ? `Delete request for ${userLabel}`
+                  : `Update request for ${userLabel}: Name → "${req.newName}"`,
+              tab: Tabs.USERS,
+              category: 'Users'
+            })
+          }
+        }
+        check(u.deleteRequest, 'delete')
+        check(u.updateRequest, 'update')
+      }
+
+      // Self-referential notifications — always shown regardless of which tabs
+      // the user has, because they concern the user's own account status.
       if (u.uid === me && u.deleteRequest) {
         const approved = u.deleteRequest.approvals?.length || 0
         const required = u.deleteRequest.requiredApprovals?.length || 0
@@ -319,7 +339,6 @@ export function useGlobalNotifications() {
         })
       }
 
-      // Notify the requester when their request was rejected
       if (u.uid === me && u.rejectionNotification?.type === 'delete-rejected') {
         const n = u.rejectionNotification
         result.push({
@@ -352,7 +371,7 @@ export function useGlobalNotifications() {
 
   function subscribeToExpensesAndLoans() {
     const me = activeUser.value
-    if (!me) return
+    if (!me || !userHasSharedFeatures) return
 
     listeners.forEach((unsub) => unsub())
     listeners.length = 0
@@ -689,48 +708,51 @@ export function useGlobalNotifications() {
   )
 
   // ─── Real-time groups listener ────────────────────────────────────────────
-  // Keeps groupStore up-to-date from any tab so group notifications (e.g.
-  // member-renamed, join requests, delete requests) appear in the bell
-  // immediately without needing to open the Groups tab.
-  const groupsUnsubscribe = onSnapshot(
-    query(
-      collection(database, DB_NODES.GROUPS),
-      where('memberMobiles', 'array-contains', activeUser.value)
-    ),
-    (snap) => {
-      const groupList = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
-      groupStore.setGroups(groupList)
-    }
-  )
+  // Keeps groupStore up-to-date from any tab so group notifications appear
+  // immediately. Skipped entirely for personal-only users.
+  const groupsUnsubscribe = userHasSharedFeatures
+    ? onSnapshot(
+        query(
+          collection(database, DB_NODES.GROUPS),
+          where('memberMobiles', 'array-contains', activeUser.value)
+        ),
+        (snap) => {
+          const groupList = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+          groupStore.setGroups(groupList)
+        }
+      )
+    : () => {}
 
   // ─── Real-time users listener ─────────────────────────────────────────────
-  // Keeps userStore up-to-date from any tab so that delete/update request
-  // notifications appear in the bell immediately, without needing to open the Users tab.
-  const usersUnsubscribe = onSnapshot(
-    query(
-      collection(database, DB_NODES.USERS),
-      where('emailVerified', '==', true)
-    ),
-    (snap) => {
-      snap.docs.forEach((docSnap) => {
-        const uid = docSnap.id
-        const u = docSnap.data()
-        userStore.addUser({
-          uid,
-          mobile: u.mobile || '',
-          name: u.name || '',
-          email: u.email || '',
-          addedBy: u.addedBy || null,
-          maskedMobile: maskMobile(u.mobile || ''),
-          deleteRequest: u.deleteRequest || null,
-          updateRequest: u.updateRequest || null,
-          bugResolver: u.bugResolver === true,
-          rejectionNotification: u.rejectionNotification || null,
-          blocked: u.blocked === true
-        })
-      })
-    }
-  )
+  // Keeps userStore up-to-date so delete/update request notifications appear
+  // in the bell without opening the Users tab. Skipped for personal-only users.
+  const usersUnsubscribe = userHasSharedFeatures
+    ? onSnapshot(
+        query(
+          collection(database, DB_NODES.USERS),
+          where('emailVerified', '==', true)
+        ),
+        (snap) => {
+          snap.docs.forEach((docSnap) => {
+            const uid = docSnap.id
+            const u = docSnap.data()
+            userStore.addUser({
+              uid,
+              mobile: u.mobile || '',
+              name: u.name || '',
+              email: u.email || '',
+              addedBy: u.addedBy || null,
+              maskedMobile: maskMobile(u.mobile || ''),
+              deleteRequest: u.deleteRequest || null,
+              updateRequest: u.updateRequest || null,
+              bugResolver: u.bugResolver === true,
+              rejectionNotification: u.rejectionNotification || null,
+              blocked: u.blocked === true
+            })
+          })
+        }
+      )
+    : () => {}
 
   const cleanup = () => {
     listeners.forEach((unsub) => unsub())

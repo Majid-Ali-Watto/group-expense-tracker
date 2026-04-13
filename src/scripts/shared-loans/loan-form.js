@@ -8,7 +8,7 @@ import {
 import {
   getWhoAddedTransaction,
   showError,
-  maskMobile,
+
   buildRequestMeta,
   dateToMonthNode,
   getCurrentDateInputValue,
@@ -18,6 +18,7 @@ import {
 } from '@/utils'
 import { useAuthStore, useGroupStore, useUserStore } from '@/stores'
 import { DB_NODES } from '@/constants'
+import { invalidateByPrefix } from '@/utils/queryCache'
 
 export const LoanForm = (props, emit) => {
   const authStore = useAuthStore()
@@ -46,6 +47,7 @@ export const LoanForm = (props, emit) => {
   })
 
   const { usersOptions: options } = useUsersOptions()
+  const { usersOptions: usersForDropdown } = useUsersOptions({ allUsers: true })
   const groupCategory = computed(
     () => groupStore.getGroupById(groupStore.getActiveGroup)?.category || ''
   )
@@ -57,6 +59,7 @@ export const LoanForm = (props, emit) => {
   )
 
   const { deleteData, updateData, saveData, isSubmitting } = useFireBase()
+  const { saveData: saveExpenseCopy } = useFireBase()
 
   const loanForm = ref(null)
   const isVisible = ref(true)
@@ -80,20 +83,6 @@ export const LoanForm = (props, emit) => {
   // Real (unmasked) mobile when a user was picked from the dropdown
   const giverRealMobile = ref('')
   const receiverRealMobile = ref('')
-
-  const usersForDropdown = computed(() => {
-    const me = activeUser.value
-    return (userStore.getUsers || [])
-      .map((u) => ({
-        label: `${u.name || u.mobile || u.uid} (${
-          (u.uid || u.mobile) === me
-            ? u.mobile || u.uid
-            : u.maskedMobile || maskMobile(u.mobile || u.uid)
-        })`,
-        value: u.uid || u.mobile
-      }))
-      .sort((a, b) => a.label.localeCompare(b.label))
-  })
 
   const {
     receiptFiles,
@@ -461,14 +450,16 @@ export const LoanForm = (props, emit) => {
 
         if (whatTask == 'Save') {
           // Capture expense data before saveData resets the form
+          const expenseCopyMonth = dateToMonthNode(formData.value.date)
           const expenseCopy = copyToExpenses.value
             ? {
                 amount: formData.value.amount,
+                payer: activeUser.value,
                 category: formData.value.category || 'Finance',
                 description: formData.value.description,
                 location: 'Loan',
                 recipient: getOtherPartyName(),
-                month: dateToMonthNode(formData.value.date),
+                month: expenseCopyMonth,
                 whoAdded: getWhoAddedTransaction(),
                 date: formatDateForStorage(formData.value.date),
                 whenAdded: new Date().toLocaleString('en-PK')
@@ -483,12 +474,17 @@ export const LoanForm = (props, emit) => {
             async () => {
               if (expenseCopy) {
                 const mockFormRef = { value: { resetFields: () => {} } }
-                saveData(
-                  `${DB_NODES.PERSONAL_EXPENSES}/${activeUser.value}/months/${dateToMonthNode(expenseCopy.date)}/expenses`,
+                saveExpenseCopy(
+                  `${DB_NODES.PERSONAL_EXPENSES}/${expenseCopy.payer}/months/${expenseCopyMonth}/expenses`,
                   () => expenseCopy,
                   mockFormRef,
                   'Expense copy added to Personal Expenses.',
                   null
+                )
+              }
+              if (props.isPersonal) {
+                invalidateByPrefix(
+                  `${DB_NODES.PERSONAL_LOANS}/${activeUser.value}/months`
                 )
               }
               removeReceipt()

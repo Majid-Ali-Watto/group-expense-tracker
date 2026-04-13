@@ -1,13 +1,15 @@
 import { ref, computed } from 'vue'
-import { useAuthStore, useGroupStore } from '@/stores'
+import { useAuthStore, useGroupStore, useUserStore } from '@/stores'
 import { useFireBase } from '@/composables'
 import { confirmAction } from '@/utils/confirmAction'
 import { showError, showSuccess } from '@/utils'
 import { DB_NODES } from '@/constants'
+import { resolveUserTabConfig, USER_TAB_KEYS } from '@/helpers'
 
 export const NetPosition = () => {
   const authStore = useAuthStore()
   const groupStore = useGroupStore()
+  const userStore = useUserStore()
   const { read, readShallow } = useFireBase()
 
   const activeUser = computed(() => authStore.getActiveUser)
@@ -212,13 +214,20 @@ export const NetPosition = () => {
       'Calculating your net position... You will be notified when complete.'
     )
 
+    // Determine which feature sections to include based on the user's preferences
+    const config = resolveUserTabConfig(userStore.getActiveUserTabConfig)
+    const hasSharedExpenses = config[USER_TAB_KEYS.SHARED_EXPENSES]
+    const hasSharedLoans = config[USER_TAB_KEYS.SHARED_LOANS]
+    const hasPersonalLoans = config[USER_TAB_KEYS.PERSONAL_LOANS]
+
     const summary = {
       sharedExpenses: { lenderAmount: 0, debtorAmount: 0 },
       sharedLoans: { lenderAmount: 0, debtorAmount: 0 },
       personalLoans: { lenderAmount: 0, debtorAmount: 0 },
       totalLender: 0,
       totalDebtor: 0,
-      netPosition: 0
+      netPosition: 0,
+      includedSections: { sharedExpenses: hasSharedExpenses, sharedLoans: hasSharedLoans, personalLoans: hasPersonalLoans }
     }
 
     try {
@@ -229,33 +238,44 @@ export const NetPosition = () => {
         return summary
       }
 
-      // Get all groups the user is part of
-      const allGroups = groupStore.getGroups || []
-      const userGroups = allGroups.filter((group) => {
-        if (!group || !group.members) return false
-        return group.members.some((m) => m.mobile === userMobile)
-      })
+      // Calculate shared expenses / loans only when the user has those features
+      if (hasSharedExpenses || hasSharedLoans) {
+        const allGroups = groupStore.getGroups || []
+        const userGroups = allGroups.filter((group) => {
+          if (!group || !group.members) return false
+          return group.members.some((m) => m.mobile === userMobile)
+        })
 
-      // Calculate shared expenses and loans for each group in a single pass
-      for (const group of userGroups) {
-        const [expensesResult, loansResult] = await Promise.all([
-          calculateSharedExpensesPosition(group.id, userMobile),
-          calculateSharedLoansPosition(group.id, userMobile)
-        ])
+        for (const group of userGroups) {
+          const [expensesResult, loansResult] = await Promise.all([
+            hasSharedExpenses
+              ? calculateSharedExpensesPosition(group.id, userMobile)
+              : { lenderAmount: 0, debtorAmount: 0 },
+            hasSharedLoans
+              ? calculateSharedLoansPosition(group.id, userMobile)
+              : { lenderAmount: 0, debtorAmount: 0 }
+          ])
 
-        summary.sharedExpenses.lenderAmount += expensesResult.lenderAmount
-        summary.sharedExpenses.debtorAmount += expensesResult.debtorAmount
-        summary.sharedLoans.lenderAmount += loansResult.lenderAmount
-        summary.sharedLoans.debtorAmount += loansResult.debtorAmount
+          if (hasSharedExpenses) {
+            summary.sharedExpenses.lenderAmount += expensesResult.lenderAmount
+            summary.sharedExpenses.debtorAmount += expensesResult.debtorAmount
+          }
+          if (hasSharedLoans) {
+            summary.sharedLoans.lenderAmount += loansResult.lenderAmount
+            summary.sharedLoans.debtorAmount += loansResult.debtorAmount
+          }
 
-        // Yield to browser to keep UI responsive
-        await yieldToBrowser()
+          // Yield to browser to keep UI responsive
+          await yieldToBrowser()
+        }
       }
 
-      // Calculate personal loans
-      summary.personalLoans = await calculatePersonalLoansPosition(userMobile)
+      // Calculate personal loans only when the user has that feature
+      if (hasPersonalLoans) {
+        summary.personalLoans = await calculatePersonalLoansPosition(userMobile)
+      }
 
-      // Calculate totals
+      // Calculate totals from whichever sections were included
       summary.totalLender =
         summary.sharedExpenses.lenderAmount +
         summary.sharedLoans.lenderAmount +

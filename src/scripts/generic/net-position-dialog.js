@@ -68,38 +68,27 @@ export const NetPositionDialog = (props, emit, formatAmount) => {
   const categoryBarItems = computed(() => {
     if (!props.summary) return []
     const s = props.summary
-    return [
-      {
-        label: 'Shared Exp ↑',
-        value: s.sharedExpenses.lenderAmount,
-        formatted: formatAmount(s.sharedExpenses.lenderAmount)
-      },
-      {
-        label: 'Shared Exp ↓',
-        value: s.sharedExpenses.debtorAmount,
-        formatted: formatAmount(s.sharedExpenses.debtorAmount)
-      },
-      {
-        label: 'Shared Loan ↑',
-        value: s.sharedLoans.lenderAmount,
-        formatted: formatAmount(s.sharedLoans.lenderAmount)
-      },
-      {
-        label: 'Shared Loan ↓',
-        value: s.sharedLoans.debtorAmount,
-        formatted: formatAmount(s.sharedLoans.debtorAmount)
-      },
-      {
-        label: 'Personal Loan ↑',
-        value: s.personalLoans.lenderAmount,
-        formatted: formatAmount(s.personalLoans.lenderAmount)
-      },
-      {
-        label: 'Personal Loan ↓',
-        value: s.personalLoans.debtorAmount,
-        formatted: formatAmount(s.personalLoans.debtorAmount)
-      }
-    ]
+    const inc = s.includedSections ?? { sharedExpenses: true, sharedLoans: true, personalLoans: true }
+    const items = []
+    if (inc.sharedExpenses) {
+      items.push(
+        { label: 'Shared Exp ↑', value: s.sharedExpenses.lenderAmount, formatted: formatAmount(s.sharedExpenses.lenderAmount) },
+        { label: 'Shared Exp ↓', value: s.sharedExpenses.debtorAmount, formatted: formatAmount(s.sharedExpenses.debtorAmount) }
+      )
+    }
+    if (inc.sharedLoans) {
+      items.push(
+        { label: 'Shared Loan ↑', value: s.sharedLoans.lenderAmount, formatted: formatAmount(s.sharedLoans.lenderAmount) },
+        { label: 'Shared Loan ↓', value: s.sharedLoans.debtorAmount, formatted: formatAmount(s.sharedLoans.debtorAmount) }
+      )
+    }
+    if (inc.personalLoans) {
+      items.push(
+        { label: 'Personal Loan ↑', value: s.personalLoans.lenderAmount, formatted: formatAmount(s.personalLoans.lenderAmount) },
+        { label: 'Personal Loan ↓', value: s.personalLoans.debtorAmount, formatted: formatAmount(s.personalLoans.debtorAmount) }
+      )
+    }
+    return items
   })
 
   return {

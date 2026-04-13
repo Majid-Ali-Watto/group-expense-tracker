@@ -1,7 +1,7 @@
-import { ref, computed, watch } from 'vue'
+import { ref, watch } from 'vue'
 import { useAuthStore, useGroupStore, useUserStore } from '@/stores'
-import { useFireBase } from '@/composables'
-import { showError, formatUserDisplay } from '@/utils'
+import { useFireBase, useUsersOptions } from '@/composables'
+import { showError } from '@/utils'
 import { DB_NODES } from '@/constants'
 import { ACTIVE_USER_BLOCKED_MESSAGE, isUserBlocked } from '@/helpers'
 
@@ -9,13 +9,8 @@ export const GroupsCreate = (emit, props) => {
   const authStore = useAuthStore()
   const groupStore = useGroupStore()
   const userStore = useUserStore()
-  const storeProxy = {
-    get getActiveUser() {
-      return authStore.getActiveUser
-    },
-    getUserByMobile: (m) => userStore.getUserByMobile(m)
-  }
   const { setData, isSubmitting } = useFireBase()
+  const { usersOptions } = useUsersOptions({ allUsers: true })
 
   const createEmptyGroupForm = () => ({
     name: '',
@@ -27,29 +22,12 @@ export const GroupsCreate = (emit, props) => {
   const groupForm = ref(createEmptyGroupForm())
   const groupFormRef = ref(null)
 
-  const usersOptions = computed(() =>
-    (userStore.getUsers || [])
-      .filter((user) => user?.blocked !== true)
-      .map((user) => ({
-        label: getUserLabel(user),
-        value: user.uid
-      }))
-  )
-
-  const activeUser = computed(() => authStore.getActiveUser)
-
-  function getUserLabel(u) {
-    return formatUserDisplay(storeProxy, u.uid, {
-      name: u.name,
-      preferMasked: u.uid !== activeUser.value
-    })
-  }
 
   function buildMemberSnapshot(userId) {
-    const user = userStore.getUserByMobile(userId)
+    const user = userStore.getUserByUid(userId)
     return {
       uid: userId,
-      mobile: userId,
+      mobile: user?.mobile || userId,
       name: user?.name || '',
       phone: user?.mobile || ''
     }
@@ -98,11 +76,11 @@ export const GroupsCreate = (emit, props) => {
       (g) => g.name.trim().toLowerCase() === newName
     )
     const memberConflict = sameNameGroups.some((g) => {
-      const existingMobiles = [
+      const existingIds = [
         ...(g.members || []),
         ...(g.pendingMembers || [])
-      ].map((m) => m.mobile)
-      return otherMembers.some((m) => existingMobiles.includes(m))
+      ].map((m) => m.uid || m.mobile)
+      return otherMembers.some((m) => existingIds.includes(m))
     })
     if (memberConflict) {
       return showError(
@@ -125,10 +103,10 @@ export const GroupsCreate = (emit, props) => {
       // Only the creator joins immediately; all others receive an invitation
       members: [buildMemberSnapshot(creatorId)],
       pendingMembers,
-      // Flat array of all mobile numbers (members + pending) used for
+      // Flat array of UIDs (members + pending) used for
       // efficient per-user Firestore queries via array-contains.
       memberMobiles: [
-        ...new Set([creatorId, ...pendingMembers.map((m) => m.mobile)])
+        ...new Set([creatorId, ...pendingMembers.map((m) => m.uid || m.mobile)])
       ]
     }
     try {
@@ -137,9 +115,8 @@ export const GroupsCreate = (emit, props) => {
         payload,
         'Group created — invitations sent to selected members'
       )
-      groupStore.addGroup(payload)
       resetCreateForm()
-      if (emit) emit('groupCreated')
+      if (emit) emit('groupCreated', payload)
     } catch (err) {
       showError(err)
     }

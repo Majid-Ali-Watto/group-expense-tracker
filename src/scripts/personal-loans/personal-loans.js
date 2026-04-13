@@ -419,6 +419,7 @@ export const PersonalLoans = () => {
     isContentLoading,
     showLoanForm,
     closeLoanForm,
+    fetchMonths,
     fetchLoans,
     totalLending,
     totalDebting,

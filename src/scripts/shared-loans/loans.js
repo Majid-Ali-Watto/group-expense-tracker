@@ -9,6 +9,7 @@ import {
 } from '@/stores'
 import { useApprovalRequests } from '@/composables/useApprovalRequests'
 import useFireBase from '@/composables/useFirebase'
+import { useUsersOptions } from '@/composables'
 import { useLoadingTimeout } from '@/composables/useLoadingTimeout'
 import { loadMonthsList } from '@/composables/useMonthsLoader'
 import { useRouteQuerySync } from '@/composables/useRouteQuerySync'
@@ -79,8 +80,8 @@ export const Loans = () => {
       groupObj.value.members.length
     ) {
       return groupObj.value.members.map((m) => ({
-        mobile: m.mobile,
-        name: m.name || userStore.getUserByMobile(m.mobile)?.name || m.mobile
+        mobile: m.uid || m.mobile,
+        name: m.name || userStore.getUserByMobile(m.uid || m.mobile)?.name || m.mobile
       }))
     }
     return userStore.getUsers && userStore.getUsers.length
@@ -91,15 +92,7 @@ export const Loans = () => {
       : []
   })
 
-  const usersOptions = computed(() => {
-    return usersList.value.map((u) => ({
-      label: formatUserDisplay(storeProxy, u.mobile, {
-        name: u.name,
-        group: groupObj.value
-      }),
-      value: u.mobile
-    }))
-  })
+  const { usersOptions } = useUsersOptions()
 
   const loans = ref([])
   const loanKeys = ref([])
@@ -255,10 +248,12 @@ export const Loans = () => {
       }
     })
 
-    return Object.keys(balanceMap).map((mobile) => ({
-      name: formatUserDisplay(storeProxy, mobile, { group: groupObj.value }),
-      amount: balanceMap[mobile]
-    }))
+    return Object.keys(balanceMap)
+      .filter((mobile) => balanceMap[mobile] !== 0)
+      .map((mobile) => ({
+        name: formatUserDisplay(storeProxy, mobile, { group: groupObj.value }),
+        amount: balanceMap[mobile]
+      }))
   })
 
   const memberCount = computed(() => groupObj.value?.members?.length || 0)

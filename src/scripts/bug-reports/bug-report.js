@@ -23,6 +23,7 @@ import {
   generateUUID
 } from '@/utils'
 import { useAuthStore, useUserStore } from '@/stores'
+import { resolveUserTabConfig, USER_TAB_KEYS } from '@/helpers'
 import { NoteThread } from './note-thread'
 
 const MAX_SCREENSHOTS = 3
@@ -106,7 +107,35 @@ export const BugReport = (props) => {
     return mobile ? userStore.getUserByMobile(mobile) : null
   })
 
-  const categories = computed(() => ALL_CATEGORIES)
+  const categories = computed(() => {
+    const config = resolveUserTabConfig(userStore.getActiveUserTabConfig)
+    const hasShared =
+      config[USER_TAB_KEYS.GROUPS] ||
+      config[USER_TAB_KEYS.SHARED_EXPENSES] ||
+      config[USER_TAB_KEYS.SHARED_LOANS]
+    const hasPersonal =
+      config[USER_TAB_KEYS.PERSONAL_EXPENSES] ||
+      config[USER_TAB_KEYS.PERSONAL_LOANS]
+
+    return ALL_CATEGORIES.filter((cat) => {
+      switch (cat.value) {
+        case 'shared-expenses':
+          return hasShared && config[USER_TAB_KEYS.SHARED_EXPENSES]
+        case 'shared-loans':
+          return hasShared && config[USER_TAB_KEYS.SHARED_LOANS]
+        case 'groups':
+        case 'settlement':
+          return hasShared
+        case 'personal-expenses':
+          return hasPersonal && config[USER_TAB_KEYS.PERSONAL_EXPENSES]
+        case 'personal-loans':
+          return hasPersonal && config[USER_TAB_KEYS.PERSONAL_LOANS]
+        default:
+          // notifications, auth, export, charts, other — always visible
+          return true
+      }
+    })
+  })
 
   // ── Validation rules ─────────────────────────────────────────────────────
   const rules = computed(() => ({

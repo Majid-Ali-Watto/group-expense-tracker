@@ -19,7 +19,10 @@ import {
   getAccessibleTabs,
   getDefaultAccessibleTab,
   findUserTabConfigByUid,
-  canAccessManageTabs
+  canAccessManageTabs,
+  needsSharedTabsUpgrade,
+  buildUpgradedSharedTabConfig,
+  hasSharedFeatures
 } from '@/helpers'
 import {
   setAnalyticsIdentity,
@@ -41,6 +44,7 @@ import {
   auth,
   onAuthStateChanged,
   signOut,
+  setDoc,
   collection,
   doc,
   database,
@@ -221,7 +225,21 @@ export const App = () => {
     applyTheme()
 
     authUnsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (!firebaseUser || !firebaseUser.emailVerified || loggedIn.value) return
+      // Firebase has no authenticated user — check for a stale _session left over
+      // from an expired token, browser crash, or corrupted state. Clean it up so
+      // the user is not permanently stuck on a protected route with no way out.
+      if (!firebaseUser) {
+        if (sessionStorage.getItem('_session')) {
+          sessionStorage.removeItem('_session')
+          sessionStorage.removeItem('_lastRoute')
+          sessionStorage.removeItem('_lastGroupId')
+          if (route.meta?.requiresAuth) {
+            await router.replace('/login')
+          }
+        }
+        return
+      }
+      if (!firebaseUser.emailVerified || loggedIn.value) return
 
       await withTrace('session_bootstrap', async () => {
         const userData = await findUserByEmail(firebaseUser.email)
@@ -263,30 +281,47 @@ export const App = () => {
         })
 
         // Restore last route — this is a page-refresh, not a fresh login.
-        // Restore the active group first so group-gated route guards pass.
-        const savedGroupId = sessionStorage.getItem('_lastGroupId')
-        if (savedGroupId) groupStore.setActiveGroup(savedGroupId)
+        // Only restore group state and fetch groups when the user has shared features.
+        if (hasSharedFeatures(userTabConfig)) {
+          const savedGroupId = sessionStorage.getItem('_lastGroupId')
+          if (savedGroupId) groupStore.setActiveGroup(savedGroupId)
 
-        // Also fetch groups so getGroupById works on any tab (not just Groups tab).
-        // This is a one-time read — same cost as GroupAccessGuard.vue does on demand.
-        try {
-          const groupsSnapshot = await getDocs(
-            query(
-              collection(database, DB_NODES.GROUPS),
-              where('memberMobiles', 'array-contains', uid)
+          // Also fetch groups so getGroupById works on any tab (not just Groups tab).
+          // This is a one-time read — same cost as GroupAccessGuard.vue does on demand.
+          try {
+            const groupsSnapshot = await getDocs(
+              query(
+                collection(database, DB_NODES.GROUPS),
+                where('memberMobiles', 'array-contains', uid)
+              )
             )
-          )
-          if (!groupsSnapshot.empty) {
-            const groupList = groupsSnapshot.docs.map((docSnap) => ({
-              id: docSnap.id,
-              ...docSnap.data()
-            }))
-            groupStore.setGroups(groupList)
-          } else {
-            groupStore.setGroups([])
+            if (!groupsSnapshot.empty) {
+              const groupList = groupsSnapshot.docs.map((docSnap) => ({
+                id: docSnap.id,
+                ...docSnap.data()
+              }))
+              groupStore.setGroups(groupList)
+
+              // User is a member of at least one group — ensure their tab config
+              // includes shared tabs (groups, sharedExpenses, sharedLoans).
+              // This silently upgrades users who were added via join-request while
+              // they only had personal features enabled.
+              if (needsSharedTabsUpgrade(userTabConfig)) {
+                try {
+                  const upgraded = buildUpgradedSharedTabConfig(userTabConfig)
+                  const docPayload = { uid, ...upgraded }
+                  await setDoc(doc(database, DB_NODES.USER_TAB_CONFIGS, uid), docPayload, { merge: true })
+                  userStore.setActiveUserTabAccess({ config: docPayload, accessManageTabs: upgraded.accessManageTabs !== false })
+                } catch {
+                  // Non-fatal — will retry on next login
+                }
+              }
+            } else {
+              groupStore.setGroups([])
+            }
+          } catch {
+            // Non-fatal — Groups tab will load them when visited
           }
-        } catch {
-          // Non-fatal — Groups tab will load them when visited
         }
 
         const savedRoute = sessionStorage.getItem('_lastRoute')
@@ -359,9 +394,10 @@ export const App = () => {
   const activeUserTabConfig = computed(
     () => userStore.getActiveUserTabConfig
   )
-  const activeGroup = computed(
-    () => groupStore.getGroupById(groupStore.getActiveGroup)?.name
-  )
+  const activeGroup = computed(() => {
+    if (!hasSharedFeatures(userStore.getActiveUserTabConfig)) return null
+    return groupStore.getGroupById(groupStore.getActiveGroup)?.name
+  })
   const isPublicPage = computed(
     () => !loggedIn.value && route.meta?.publicPage === true
   )

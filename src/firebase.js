@@ -1,4 +1,3 @@
-import { initializeApp } from 'firebase/app'
 import {
   getFirestore,
   collection,
@@ -37,65 +36,10 @@ import {
   onAuthStateChanged,
   signOut
 } from 'firebase/auth'
-
-const firebaseConfig = {
-  apiKey: import.meta.env.VITE_API_KEY,
-  authDomain: import.meta.env.VITE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_MESSAGE_SENDER_ID,
-  appId: import.meta.env.VITE_APP_ID,
-  measurementId: import.meta.env.VITE_MEASUREMENT_ID
-}
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig)
-const analyticsReady =
-  import.meta.env.PROD &&
-  typeof window !== 'undefined' &&
-  import.meta.env.VITE_MEASUREMENT_ID
-    ? import('firebase/analytics')
-        .then(async ({ getAnalytics, isSupported }) => {
-          const supported = await isSupported()
-          return supported ? getAnalytics(app) : null
-        })
-        .catch((error) => {
-          console.warn('Firebase Analytics is unavailable:', error)
-          return null
-        })
-    : Promise.resolve(null)
-
-const performanceReady =
-  import.meta.env.PROD && typeof window !== 'undefined'
-    ? import('firebase/performance')
-        .then(({ getPerformance }) => getPerformance(app))
-        .catch((error) => {
-          console.warn('Firebase Performance is unavailable:', error)
-          return null
-        })
-    : Promise.resolve(null)
-
-// App Check — debug token in dev, reCAPTCHA in production.
-// The debug token is printed to the browser console on first load;
-// register it once in Firebase Console → App Check → Manage debug tokens.
-if (import.meta.env.DEV) {
-  self.FIREBASE_APPCHECK_DEBUG_TOKEN =
-    import.meta.env.VITE_APP_CHECK_DEBUG_TOKEN || true
-}
-if (typeof window !== 'undefined' && import.meta.env.VITE_RECAPTCHA_SITE_KEY) {
-  import('firebase/app-check')
-    .then(({ initializeAppCheck, ReCaptchaV3Provider }) => {
-      initializeAppCheck(app, {
-        provider: new ReCaptchaV3Provider(
-          import.meta.env.VITE_RECAPTCHA_SITE_KEY
-        ),
-        isTokenAutoRefreshEnabled: true
-      })
-    })
-    .catch((error) => {
-      console.warn('Firebase App Check is unavailable:', error)
-    })
-}
+import { app } from '@/helpers/firebase-app'
+import { analyticsReady } from '@/helpers/firebase-analytics'
+import { performanceReady } from '@/helpers/firebase-performance'
+import '@/helpers/firebase-app-check'
 
 const database = getFirestore(app)
 const auth = getAuth(app)

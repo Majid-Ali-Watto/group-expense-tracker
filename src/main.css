@@ -804,6 +804,14 @@ details {
     0 4px 10px rgba(0, 0, 0, 0.08) !important;
 }
 
+/* Responsive width for app-wide message toasts */
+@media (max-width: 640px) {
+  .app-message.el-message {
+    min-width: 80vw !important;
+    max-width: 92vw !important;
+  }
+}
+
 .table-toast .el-message__content {
   padding: 0.35rem 0;
 }

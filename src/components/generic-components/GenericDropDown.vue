@@ -133,7 +133,7 @@ const mappedOptions = computed(() =>
       value: getValue(item) ?? '',
       disabled: item[props.disabledKey] === true
     }))
-    .filter((item) => item.label !== '' || item.value !== '')
+    // .filter((item) => item.label !== '' || item.value !== '')
 )
 
 const wrapperProps = computed(() => {

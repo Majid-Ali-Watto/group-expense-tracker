@@ -161,6 +161,34 @@ export function hasEnabledUserTabs(config) {
   return Object.values(resolveUserTabConfig(config)).some(Boolean)
 }
 
+/**
+ * Returns true when the user's tab config has at least one shared feature
+ * enabled (Groups, Shared Expenses, Shared Loans, or Users).
+ * Returns true for null/unconfigured users (defaults to full access).
+ */
+export function hasSharedFeatures(config) {
+  const resolved = resolveUserTabConfig(config)
+  return (
+    resolved[USER_TAB_KEYS.GROUPS] ||
+    resolved[USER_TAB_KEYS.SHARED_EXPENSES] ||
+    resolved[USER_TAB_KEYS.SHARED_LOANS] ||
+    resolved[USER_TAB_KEYS.USERS]
+  )
+}
+
+/**
+ * Returns true when the user's tab config has at least one personal feature
+ * enabled (Personal Expenses or Personal Loans).
+ * Returns true for null/unconfigured users (defaults to full access).
+ */
+export function hasPersonalFeatures(config) {
+  const resolved = resolveUserTabConfig(config)
+  return (
+    resolved[USER_TAB_KEYS.PERSONAL_EXPENSES] ||
+    resolved[USER_TAB_KEYS.PERSONAL_LOANS]
+  )
+}
+
 export function canAccessManageTabs(config) {
   return config?.accessManageTabs !== false
 }
@@ -197,6 +225,41 @@ export async function findUserTabConfigByUid(uid) {
 
     throw error
   }
+}
+
+/**
+ * Returns true when the given config is missing any of the three shared-feature
+ * tabs (groups, sharedExpenses, sharedLoans).  Used to auto-upgrade a user who
+ * joined a group while only having personal-feature tabs enabled.
+ */
+export function needsSharedTabsUpgrade(config) {
+  // No saved config → resolves to FULL_USER_TAB_CONFIG; no upgrade required.
+  if (!hasSavedUserTabConfig(config)) return false
+  const resolved = resolveUserTabConfig(config)
+  return (
+    !resolved[USER_TAB_KEYS.GROUPS] ||
+    !resolved[USER_TAB_KEYS.SHARED_EXPENSES] ||
+    !resolved[USER_TAB_KEYS.SHARED_LOANS]
+  )
+}
+
+/**
+ * Merges shared-feature tabs (groups, sharedExpenses, sharedLoans) into an
+ * existing config, preserving all other flags (personal tabs, users, accessManageTabs).
+ */
+export function buildUpgradedSharedTabConfig(config) {
+  const resolved = resolveUserTabConfig(config)
+  const upgraded = {
+    ...resolved,
+    [USER_TAB_KEYS.GROUPS]: true,
+    [USER_TAB_KEYS.SHARED_EXPENSES]: true,
+    [USER_TAB_KEYS.SHARED_LOANS]: true
+    // users tab intentionally kept as-is
+  }
+  if (config && Object.prototype.hasOwnProperty.call(config, 'accessManageTabs')) {
+    upgraded.accessManageTabs = config.accessManageTabs
+  }
+  return upgraded
 }
 
 export function getAccessibleTabs(config, options = {}) {

@@ -1,7 +1,8 @@
 import { ElMessage } from 'element-plus'
 const options = {
   showClose: true,
-  center: true
+  center: true,
+  customClass: 'app-message'
   // plain: true
 }
 /**

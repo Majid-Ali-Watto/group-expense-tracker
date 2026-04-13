@@ -190,26 +190,36 @@ export default function useFireBase() {
         }
 
         if (collectionPath.includes(DB_NODES.SHARED_EXPENSES)) {
-          // Cross-post a simplified record to the payer's personal-expenses
-          const payerKey = data.payer || 'unknown'
+          // Cross-post a simplified record to each payer's personal-expenses.
+          // For multiple-payer expenses each payer gets their own record with
+          // their individual amount; single-payer uses the full expense amount.
           const monthYear = dateToMonthNode(data.date)
-          const personalPath = `${DB_NODES.PERSONAL_EXPENSES}/${payerKey}/months/${monthYear}/expenses`
-          await addDoc(collection(database, personalPath), getNewData(data))
-          // Ensure the personal-expenses month document also exists
-          await setDoc(
-            doc(
-              database,
-              `${DB_NODES.PERSONAL_EXPENSES}/${payerKey}/months/${monthYear}`
-            ),
-            {},
-            { merge: true }
-          )
-          // Track the month on the personal-expenses parent document
-          await setDoc(
-            doc(database, `${DB_NODES.PERSONAL_EXPENSES}/${payerKey}`),
-            { months: arrayUnion(monthYear) },
-            { merge: true }
-          )
+          const payerEntries =
+            data.payerMode === 'multiple' && data.payers?.length
+              ? data.payers
+                  .filter((p) => p.mobile)
+                  .map((p) => ({ key: p.mobile, amount: p.amount }))
+              : data.payer
+                ? [{ key: data.payer, amount: data.amount }]
+                : []
+
+          for (const { key, amount } of payerEntries) {
+            const personalPath = `${DB_NODES.PERSONAL_EXPENSES}/${key}/months/${monthYear}/expenses`
+            await addDoc(
+              collection(database, personalPath),
+              getNewData({ ...data, payer: key, amount })
+            )
+            await setDoc(
+              doc(database, `${DB_NODES.PERSONAL_EXPENSES}/${key}/months/${monthYear}`),
+              {},
+              { merge: true }
+            )
+            await setDoc(
+              doc(database, `${DB_NODES.PERSONAL_EXPENSES}/${key}`),
+              { months: arrayUnion(monthYear) },
+              { merge: true }
+            )
+          }
         }
           resetForm(formRef)
           onSuccess?.()

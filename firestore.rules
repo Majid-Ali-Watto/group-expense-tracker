@@ -26,11 +26,13 @@ service cloud.firestore {
     }
 
     // Users — any authenticated user can read.
-    // Only non-blocked users can write; a blocked user may only update their own
-    // document and only to preserve the same `blocked` value (read-only effectively).
+    // New users may create their own document (callerIsNotBlocked() would fail because
+    // the document doesn't exist yet when checked). Updates/deletes still require the
+    // caller not to be blocked.
     match /users/{userId} {
       allow read: if request.auth != null;
-      allow write: if request.auth != null && callerIsNotBlocked();
+      allow create: if request.auth != null && request.auth.uid == userId;
+      allow update, delete: if request.auth != null && callerIsNotBlocked();
     }
 
     // User tab configs — owner can read/write their own tab flags.
@@ -64,15 +66,18 @@ service cloud.firestore {
     // are never blocked).
     match /groups/{groupId} {
       allow read: if request.auth != null;
-      allow write: if request.auth != null
-                   && callerIsNotBlocked()
-                   && groupIsNotBlocked(groupId);
+      // create: group doesn't exist yet — groupIsNotBlocked() would fail on get() of missing doc.
+      allow create: if request.auth != null && callerIsNotBlocked();
+      allow update, delete: if request.auth != null
+                            && callerIsNotBlocked()
+                            && groupIsNotBlocked(groupId);
     }
     match /groups/{groupId}/{document=**} {
       allow read: if request.auth != null;
-      allow write: if request.auth != null
-                   && callerIsNotBlocked()
-                   && groupIsNotBlocked(groupId);
+      allow create: if request.auth != null && callerIsNotBlocked();
+      allow update, delete: if request.auth != null
+                            && callerIsNotBlocked()
+                            && groupIsNotBlocked(groupId);
     }
 
     // Shared expenses — blocked user cannot write; writes into a blocked group are denied
