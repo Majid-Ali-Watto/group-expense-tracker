@@ -15,6 +15,7 @@ import {
   runTransaction
 } from '@/firebase'
 import { DB_NODES } from '@/constants'
+import { useSharedActivityEmail } from '@/composables'
 import {
   uploadReceipt,
   cleanupOldReceipts,
@@ -99,6 +100,7 @@ function emptyForm() {
 export const BugReport = (props) => {
   const authStore = useAuthStore()
   const userStore = useUserStore()
+  const { sendBugReportEmail } = useSharedActivityEmail()
 
   const activeView = ref(props.view)
   const isLoggedIn = computed(() => !!authStore.getActiveUser)
@@ -313,6 +315,17 @@ export const BugReport = (props) => {
         collection(database, DB_NODES.BUG_REPORTS, mobileKey, 'reports'),
         report
       )
+
+      sendBugReportEmail({
+        bugNumber: report.bugNumber,
+        title: report.title,
+        category: report.category,
+        severity: report.severity,
+        description: report.description,
+        reporter,
+        screenshots: report.screenshots,
+        submittedAt: report.submittedAt
+      })
 
       try {
         await setDoc(

@@ -3,6 +3,7 @@ import {
   useUsersOptions,
   useFireBase,
   useReceiptUpload,
+  useSharedActivityEmail,
   useUnsavedChangesGuard
 } from '@/composables'
 import {
@@ -60,6 +61,7 @@ export const LoanForm = (props, emit) => {
 
   const { deleteData, updateData, saveData, isSubmitting } = useFireBase()
   const { saveData: saveExpenseCopy } = useFireBase()
+  const { sendSharedActivityEmail } = useSharedActivityEmail()
 
   const loanForm = ref(null)
   const isVisible = ref(true)
@@ -447,6 +449,7 @@ export const LoanForm = (props, emit) => {
 
         const receiptUrls = uploadedReceipts.receiptUrls
         const receiptMeta = uploadedReceipts.receiptMeta
+        const loanData = getLoanData(receiptUrls, receiptMeta)
 
         if (whatTask == 'Save') {
           // Capture expense data before saveData resets the form
@@ -468,10 +471,18 @@ export const LoanForm = (props, emit) => {
 
           saveData(
             loanPath,
-            () => getLoanData(receiptUrls, receiptMeta),
+            () => loanData,
             loanForm,
             'Loan added successfully.',
-            async () => {
+            async (createdDoc) => {
+              if (!props.isPersonal) {
+                sendSharedActivityEmail({
+                  type: 'shared-loan',
+                  entryId: createdDoc?.id || '',
+                  month: monthYear,
+                  data: loanData
+                })
+              }
               if (expenseCopy) {
                 const mockFormRef = { value: { resetFields: () => {} } }
                 saveExpenseCopy(

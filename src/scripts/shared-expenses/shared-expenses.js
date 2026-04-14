@@ -4,6 +4,7 @@ import {
   useUsersOptions,
   useFireBase,
   useReceiptUpload,
+  useSharedActivityEmail,
   useUnsavedChangesGuard
 } from '@/composables'
 import {
@@ -24,6 +25,7 @@ export const SharedExpenses = (props, emit) => {
   const authStore = useAuthStore()
   const groupStore = useGroupStore()
   const userStore = useUserStore()
+  const { sendSharedActivityEmail } = useSharedActivityEmail()
   const storeProxy = {
     get getActiveUser() {
       return authStore.getActiveUser
@@ -272,14 +274,21 @@ export const SharedExpenses = (props, emit) => {
 
         const receiptUrls = uploadedReceipts.receiptUrls
         const receiptMeta = uploadedReceipts.receiptMeta
+        const paymentData = getPaymentData(receiptUrls, receiptMeta)
 
         if (whatTask == 'Save') {
           saveData(
             `${DB_NODES.SHARED_EXPENSES}/${groupId}/months/${monthYear}/payments`,
-            () => getPaymentData(receiptUrls, receiptMeta),
+            () => paymentData,
             transactionForm,
             'Transaction successfully saved.',
-            () => {
+            (createdDoc) => {
+              sendSharedActivityEmail({
+                type: 'shared-expense',
+                entryId: createdDoc?.id || '',
+                month: monthYear,
+                data: paymentData
+              })
               if (isEditMode.value) {
                 emit('closeModal')
               } else {

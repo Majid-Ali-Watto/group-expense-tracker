@@ -104,6 +104,16 @@ export async function loadAppConfig() {
       onError: () => {
         _config.bugs = {}
       }
+    },
+    {
+      key: 'email',
+      ref: doc(database, DB_NODES.CONFIGS, 'email'),
+      onData: (snap) => {
+        _config.email = snap.exists() ? snap.data() : {}
+      },
+      onError: () => {
+        _config.email = {}
+      }
     }
   ]
 
@@ -170,5 +180,16 @@ export function getBugReportConfig() {
 
   return {
     report: cfg.report !== false
+  }
+}
+
+export function getEmailConfig() {
+  const cfg = _config.email
+  if (!cfg) {
+    return { send: true }
+  }
+
+  return {
+    send: cfg.send !== false
   }
 }

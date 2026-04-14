@@ -161,7 +161,7 @@ export default function useFireBase() {
       () =>
         withTrace('db_save', async () => {
           const data = getData()
-          await addDoc(collection(database, collectionPath), data)
+          const createdDoc = await addDoc(collection(database, collectionPath), data)
 
         // Ensure the parent "month" document exists so getDocs on the months
         // collection returns it. Firestore does not surface implicit documents
@@ -222,7 +222,7 @@ export default function useFireBase() {
           }
         }
           resetForm(formRef)
-          onSuccess?.()
+          onSuccess?.(createdDoc, data)
         }),
       message
     )
