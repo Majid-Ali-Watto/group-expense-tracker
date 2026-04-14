@@ -111,6 +111,13 @@
               <span>Manage Tabs</span>
             </div>
           </el-dropdown-item>
+
+          <el-dropdown-item v-if="loggedIn" @click="emit('change-password')">
+            <div class="flex items-center gap-3">
+              <el-icon class="menu-icon" :size="20"><Key /></el-icon>
+              <span>Change Password</span>
+            </div>
+          </el-dropdown-item>
           <div class="mobile-menu-divider" />
         </template>
 
@@ -135,7 +142,7 @@
 </template>
 
 <script setup>
-import { DataAnalysis, Setting, SwitchButton, Money, CreditCard, Wallet, Coin, UserFilled, Star, ChatDotRound } from '@element-plus/icons-vue'
+import { DataAnalysis, Key, Setting, SwitchButton, Money, CreditCard, Wallet, Coin, UserFilled, Star, ChatDotRound } from '@element-plus/icons-vue'
 import {
   AlertTriangleIcon,
   ChevronRightIcon,
@@ -188,6 +195,7 @@ const emit = defineEmits([
   'share',
   'show-net-position',
   'open-manage-tabs',
+  'change-password',
   'toggle-theme',
   'logout'
 ])

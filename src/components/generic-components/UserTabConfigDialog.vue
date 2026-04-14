@@ -81,8 +81,8 @@
 
     <template #footer>
       <div class="flex justify-end gap-2">
-        <el-button @click="$emit('cancel')">{{ cancelText }}</el-button>
-        <el-button type="primary" :loading="loading" @click="$emit('confirm')">
+        <el-button size="small" @click="$emit('cancel')">{{ cancelText }}</el-button>
+        <el-button type="primary" size="small" :loading="loading" @click="$emit('confirm')">
           {{ confirmText }}
         </el-button>
       </div>

@@ -36,6 +36,7 @@ import {
   auth,
   database,
   doc,
+  fetchSignInMethodsForEmail,
   sendPasswordResetEmail,
   sendEmailVerification,
   createUserWithEmailAndPassword,
@@ -113,6 +114,21 @@ export const Login = () => {
   const googleMobileInput = ref('')
   const isGoogleMobileSubmitting = ref(false)
   const googlePendingFirebaseUser = ref(null)
+
+  async function getSignInMethods(email) {
+    try {
+      return await fetchSignInMethodsForEmail(auth, email)
+    } catch {
+      return []
+    }
+  }
+
+  function isGoogleOnlyAccount(signInMethods = []) {
+    return (
+      signInMethods.includes('google.com') &&
+      !signInMethods.includes('password')
+    )
+  }
 
   onMounted(async () => {
     // Check for a new app version and notify the user if one is being applied
@@ -468,6 +484,13 @@ export const Login = () => {
 
     if (!validateEmail(emailValue)) {
       return showError('Please enter a valid email address')
+    }
+
+    const signInMethods = await getSignInMethods(emailValue)
+    if (isGoogleOnlyAccount(signInMethods)) {
+      return showError(
+        `This account was created with Continue with Google. Please sign in using Google instead of email and password.\nOR\n If you want to use email and password, please reset your password to set it up first.`
+      )
     }
 
     try {
