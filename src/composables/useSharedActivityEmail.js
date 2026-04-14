@@ -2,7 +2,7 @@ import { useAuthStore, useGroupStore, useUserStore } from '@/stores'
 import { getEmailConfig } from '@/composables'
 
 const EMAIL_API_URL = import.meta.env.VITE_NODE_BE_EMAIL_API_URL?.trim()
-const PRODUCTION = true //?? import.meta.env.PROD
+const PRODUCTION = import.meta.env.PROD
 const SEND_EMAILS = getEmailConfig().send
 const BUG_REPORT_RECIPIENT = 'majid.teresol@gmail.com'
 
@@ -23,7 +23,8 @@ export function useSharedActivityEmail() {
     fetch(EMAIL_API_URL, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'x-api-key': import.meta.env.VITE_X_API_KEY || '',
       },
       body: JSON.stringify(payload)
     }).catch(() => {})
