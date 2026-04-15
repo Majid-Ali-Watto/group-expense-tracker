@@ -95,6 +95,13 @@
 
         <template v-if="loggedIn || canShowManageTabs">
           <div class="mobile-menu-section-label">Workspace</div>
+          <el-dropdown-item v-if="loggedIn" @click="emit('open-profile')">
+            <div class="flex items-center gap-3">
+              <UserIcon class="w-5 h-5 menu-icon" />
+              <span>Profile</span>
+            </div>
+          </el-dropdown-item>
+
           <el-dropdown-item v-if="loggedIn" @click="emit('show-net-position')">
             <div class="flex items-center gap-3">
               <el-icon class="menu-icon" :size="20"><DataAnalysis /></el-icon>
@@ -151,6 +158,7 @@ import {
   QuestionCircleIcon,
   ShareIcon,
   SunIcon,
+  UserIcon,
   UsersIcon
 } from '@/components/icons'
 
@@ -193,6 +201,7 @@ const emit = defineEmits([
   'open-help',
   'open-bug-report',
   'share',
+  'open-profile',
   'show-net-position',
   'open-manage-tabs',
   'change-password',

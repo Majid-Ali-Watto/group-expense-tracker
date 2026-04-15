@@ -185,7 +185,9 @@ export const Login = () => {
       uid: payload.uid,
       name: payload.name || '',
       mobile: payload.mobile || '',
-      email: payload.email || ''
+      email: payload.email || '',
+      emailVerified: payload.emailVerified !== false,
+      blocked: payload.blocked === true
     })
     userStore.setActiveUserTabAccess({
       config: payload.userTabConfig || null,
@@ -575,6 +577,8 @@ export const Login = () => {
           mobile: resolvedUser.mobile,
           email: resolvedUser.email,
           uid: resolvedUser.uid,
+          emailVerified: true,
+          blocked: resolvedUser.blocked === true,
           password,
           userTabConfig: tabConfigDoc
         },

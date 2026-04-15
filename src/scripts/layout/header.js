@@ -5,14 +5,20 @@ import { getManageTabsConfig, getBugReportConfig, useShare } from '@/composables
 import { DB_NODES } from '@/constants'
 import { PUBLIC_NAV_LINKS } from '@/constants'
 import { confirmAction } from '@/utils/confirmAction'
-import { useDataStore, useUserStore } from '@/stores'
+import { useAuthStore, useDataStore, useUserStore } from '@/stores'
 
 export const Header = (props, emit, options = {}) => {
   const route = useRoute()
   const router = useRouter()
+  const authStore = useAuthStore()
   const userStore = useUserStore()
   const { share } = useShare()
   const notifVisible = ref(false)
+  const activeUserProfile = computed(() =>
+    authStore.getActiveUser
+      ? userStore.getUserByUid(authStore.getActiveUser)
+      : null
+  )
   const canShowManageTabs = computed(
     () =>
       props.loggedIn &&
@@ -115,6 +121,7 @@ export const Header = (props, emit, options = {}) => {
   return {
     route,
     notifVisible,
+    activeUserProfile,
     canShowBugReport,
     canShowManageTabs,
     isPublicPage,

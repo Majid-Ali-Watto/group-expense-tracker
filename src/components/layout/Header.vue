@@ -29,6 +29,7 @@
           :is-dark-theme="isDarkTheme"
           :can-show-bug-report="canShowBugReport"
           :can-show-manage-tabs="canShowManageTabs"
+          @open-profile="showProfile = true"
           @open-bug-report="showBugReport = true"
           @open-help="showHelp = true"
           @navigate="navigateTo"
@@ -52,6 +53,7 @@
           :can-show-manage-tabs="canShowManageTabs"
           :is-dark-theme="isDarkTheme"
           @tab-change="emit('tab-change', $event)"
+          @open-profile="showProfile = true"
           @navigate="navigateTo"
           @open-help="showHelp = true"
           @open-bug-report="showBugReport = true"
@@ -96,6 +98,13 @@
     @update:visible="showManageTabs = $event"
   />
 
+  <ProfileDialog
+    v-if="showProfile"
+    :visible="showProfile"
+    :user="activeUserProfile"
+    @update:visible="showProfile = $event"
+  />
+
   <ChangePasswordDialog v-if="showChangePassword" @close="showChangePassword = false" />
 </template>
 
@@ -106,6 +115,7 @@ import { loadAsyncComponent } from '@/utils/async-component'
 import DesktopHeaderActions from '../header/DesktopHeaderActions.vue'
 import MobileHeaderMenu from '../header/MobileHeaderMenu.vue'
 import NotificationBell from '../header/NotificationBell.vue'
+import ProfileDialog from '../header/ProfileDialog.vue'
 import PublicHeaderNav from '../header/PublicHeaderNav.vue'
 import TitleAndTagline from '../header/TitleAndTagline.vue'
 import ChangePasswordDialog from '../auth/ChangePasswordDialog.vue'
@@ -143,12 +153,14 @@ const showHelp = ref(false)
 const showBugReport = ref(false)
 const showManageTabs = ref(false)
 const showChangePassword = ref(false)
+const showProfile = ref(false)
 const bugReportView = ref('form')
 const bugReportOpenId = ref(null)
 
 const {
   route,
   notifVisible,
+  activeUserProfile,
   canShowBugReport,
   canShowManageTabs,
   isPublicPage,
@@ -201,22 +213,26 @@ function openManageTabs() {
 
 <style>
 :root.dark-theme .support-dialog .el-dialog,
-:root.dark-theme .bug-report-dialog .el-dialog {
+:root.dark-theme .bug-report-dialog .el-dialog,
+:root.dark-theme .profile-dialog .el-dialog {
   background-color: #1f2937 !important;
 }
 
 :root.dark-theme .support-dialog .el-dialog__title,
-:root.dark-theme .bug-report-dialog .el-dialog__title {
+:root.dark-theme .bug-report-dialog .el-dialog__title,
+:root.dark-theme .profile-dialog .el-dialog__title {
   color: #f9fafb !important;
 }
 
 :root.dark-theme .support-dialog .el-dialog__header,
-:root.dark-theme .bug-report-dialog .el-dialog__header {
+:root.dark-theme .bug-report-dialog .el-dialog__header,
+:root.dark-theme .profile-dialog .el-dialog__header {
   border-bottom-color: #374151 !important;
 }
 
 :root.dark-theme .support-dialog .el-dialog__headerbtn .el-dialog__close,
-:root.dark-theme .bug-report-dialog .el-dialog__headerbtn .el-dialog__close {
+:root.dark-theme .bug-report-dialog .el-dialog__headerbtn .el-dialog__close,
+:root.dark-theme .profile-dialog .el-dialog__headerbtn .el-dialog__close {
   color: #9ca3af !important;
 }
 

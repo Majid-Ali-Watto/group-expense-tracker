@@ -282,6 +282,7 @@ export const App = () => {
           mobile: userData.mobile || '',
           name: userData.name || '',
           email: userData.email || '',
+          emailVerified: userData.emailVerified !== false,
           maskedMobile: maskMobile(userData.mobile || ''),
           bugResolver: userData.bugResolver === true,
           blocked: userData.blocked === true

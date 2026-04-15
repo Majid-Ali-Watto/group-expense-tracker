@@ -62,6 +62,15 @@
     <button
       v-if="loggedIn"
       class="theme-btn"
+      title="Profile"
+      @click="emit('open-profile')"
+    >
+      <UserIcon class="w-5 h-5" />
+    </button>
+
+    <button
+      v-if="loggedIn"
+      class="theme-btn"
       title="Expenses Summary"
       @click="emit('show-net-position')"
     >
@@ -104,7 +113,8 @@ import {
   MoonIcon,
   QuestionCircleIcon,
   ShareIcon,
-  SunIcon
+  SunIcon,
+  UserIcon
 } from '@/components/icons'
 
 defineProps({
@@ -122,6 +132,7 @@ const emit = defineEmits([
   'navigate',
   'share',
   'toggle-theme',
+  'open-profile',
   'show-net-position',
   'open-manage-tabs',
   'change-password',

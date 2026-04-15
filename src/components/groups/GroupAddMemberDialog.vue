@@ -26,13 +26,13 @@
 
     <template #footer>
       <div class="flex justify-end gap-2">
-        <el-button
+        <!-- <el-button
           size="small"
           style="min-width: 100px"
           @click="$emit('reset')"
         >
           Reset
-        </el-button>
+        </el-button> -->
         <el-button
           size="small"
           style="min-width: 100px"

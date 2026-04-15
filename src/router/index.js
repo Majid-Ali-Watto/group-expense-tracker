@@ -233,8 +233,10 @@ async function getCurrentUserProfile() {
     mobile: user.mobile || '',
     name: user.name || '',
     email: user.email || '',
+    emailVerified: user.emailVerified !== false,
     maskedMobile: maskMobile(user.mobile || ''),
-    bugResolver: user.bugResolver === true
+    bugResolver: user.bugResolver === true,
+    blocked: user.blocked === true
   })
 
   return userStore.getUserByUid(user.uid) || user
