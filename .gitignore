@@ -14,9 +14,6 @@ dist-ssr
 .vscode
 *.local
 .env
-.env.e2e.local
-test-results
-playwright-report
 package-lock.json
 
 # Editor directories and files

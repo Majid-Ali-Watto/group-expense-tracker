@@ -36,7 +36,7 @@ export default defineConfig({
       },
       external: (id) => {
         // Exclude test files, test folders, and markdown files from the build
-        if (/\/(tests?|__tests?__|e2e|playwright)\//i.test(id)) return true
+        if (/\/(tests?|__tests?)\//i.test(id)) return true
         if (/\.(spec|test)\.[jt]sx?$/.test(id)) return true
         if (/\.md$/i.test(id)) return true
         return false

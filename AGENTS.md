@@ -28,4 +28,4 @@ Vue 3 (Composition API, `<script setup>`) · Pinia · Element Plus · Tailwind C
 - Multi-member approval flows guard all destructive operations.
 
 ## Never Read
-`node_modules/`, `dist/`, `dev-dist/`, `dist-ssr/`, `test-results/`, `playwright-report/`, `package-lock.json`
+`node_modules/`, `dist/`, `dev-dist/`, `dist-ssr/`, `package-lock.json`

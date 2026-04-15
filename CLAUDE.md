@@ -38,7 +38,6 @@ src/
 
 ## Ignored (never read these)
 - `node_modules/`, `dist/`, `dev-dist/`, `dist-ssr/`
-- `test-results/`, `playwright-report/`
 - `package-lock.json`
 
 ## Commands
@@ -46,4 +45,3 @@ src/
 - `npm run build` — production build
 - `npm run lint` — ESLint fix
 - `npm run format` — Prettier
-- `npm run test:e2e` — Playwright tests

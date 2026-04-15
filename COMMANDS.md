@@ -15,14 +15,6 @@
 | `npm run lint` | Run ESLint and auto-fix all violations |
 | `npm run format` | Run Prettier over `src/` |
 
-## Testing
-
-| Command | Description |
-|---|---|
-| `npm run test:e2e` | Run all Playwright end-to-end tests (headless) |
-| `npm run test:e2e:headed` | Run Playwright tests in a visible browser |
-| `npm run test:e2e:debug` | Run Playwright tests in debug / step mode |
-
 ## Firebase
 
 ### Firestore

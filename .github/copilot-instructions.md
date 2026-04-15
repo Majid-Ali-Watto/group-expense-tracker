@@ -28,4 +28,4 @@ Vue 3 (`<script setup>`) · Pinia · Element Plus · Tailwind CSS · Vite · Fir
 - Destructive actions (delete, edit) require multi-member approval stored in Firebase.
 
 ## Ignore
-`node_modules/`, `dist/`, `dev-dist/`, `dist-ssr/`, `test-results/`, `playwright-report/`, `package-lock.json`
+`node_modules/`, `dist/`, `dev-dist/`, `dist-ssr/`, `package-lock.json`
