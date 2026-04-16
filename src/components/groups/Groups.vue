@@ -13,7 +13,9 @@
       <!-- Add Group Button / Create Group Form -->
       <Transition name="form-slide" mode="out-in">
         <div v-if="!showCreateGroup" key="btn">
-          <div :class="{ 'pointer-events-none opacity-60': activeUserIsBlocked }">
+          <div
+            :class="{ 'pointer-events-none opacity-60': activeUserIsBlocked }"
+          >
             <AddNewTransactionButton
               text="Want to create a new group?"
               @click="openCreateGroup"
@@ -210,9 +212,9 @@
 
       <GroupTransferOwnershipDialog
         v-model="transferDialogVisible"
-        :new-owner="newOwnerMobile"
+        :new-owner="newOwnerUid"
         :owner-options="transferOwnershipOptions"
-        @update:newOwner="newOwnerMobile = $event"
+        @update:newOwner="newOwnerUid = $event"
         @submit="requestOwnershipTransfer"
       />
     </template>
@@ -264,7 +266,7 @@ const {
   editForm,
   editMemberOptions,
   transferDialogVisible,
-  newOwnerMobile,
+  newOwnerUid,
   transferOwnershipOptions,
   addMemberDialogVisible,
   selectedMemberToAdd,

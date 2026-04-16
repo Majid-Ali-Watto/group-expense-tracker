@@ -73,7 +73,7 @@ watch(
 )
 
 async function saveManageTabs() {
-  const uid = authStore.getActiveUser
+  const uid = authStore.getActiveUserUid
   if (!uid || isSavingTabs.value) return
 
   isSavingTabs.value = true
@@ -85,13 +85,22 @@ async function saveManageTabs() {
         { duration: 0 }
       )
     }
-    if (sel.shared && !sel[USER_TAB_KEYS.SHARED_EXPENSES] && !sel[USER_TAB_KEYS.SHARED_LOANS] && !sel[USER_TAB_KEYS.USERS]) {
+    if (
+      sel.shared &&
+      !sel[USER_TAB_KEYS.SHARED_EXPENSES] &&
+      !sel[USER_TAB_KEYS.SHARED_LOANS] &&
+      !sel[USER_TAB_KEYS.USERS]
+    ) {
       return showError(
         'You selected Shared features but no shared tabs are enabled. Please select at least one shared tab (Shared Expenses, Shared Loans, or Users).',
         { duration: 0 }
       )
     }
-    if (sel.personal && !sel[USER_TAB_KEYS.PERSONAL_EXPENSES] && !sel[USER_TAB_KEYS.PERSONAL_LOANS]) {
+    if (
+      sel.personal &&
+      !sel[USER_TAB_KEYS.PERSONAL_EXPENSES] &&
+      !sel[USER_TAB_KEYS.PERSONAL_LOANS]
+    ) {
       return showError(
         'You selected Personal features but no personal tabs are enabled. Please select at least one personal tab (Personal Expenses or Personal Loans).',
         { duration: 0 }

@@ -59,6 +59,6 @@ defineEmits(['approve', 'reject'])
 const userStore = useUserStore()
 
 function getRequesterName(requestedBy) {
-  return userStore.getUserByMobile(requestedBy)?.name || requestedBy
+  return userStore.getUserByUid(requestedBy)?.name || requestedBy
 }
 </script>

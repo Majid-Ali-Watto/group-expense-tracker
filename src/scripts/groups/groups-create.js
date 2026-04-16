@@ -1,4 +1,4 @@
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useAuthStore, useGroupStore, useUserStore } from '@/stores'
 import { useFireBase, useUsersOptions } from '@/composables'
 import { showError } from '@/utils'
@@ -6,22 +6,55 @@ import { DB_NODES } from '@/constants'
 import { ACTIVE_USER_BLOCKED_MESSAGE, isUserBlocked } from '@/helpers'
 
 export const GroupsCreate = (emit, props) => {
+  const MAX_GROUP_MEMBERS = 30
   const authStore = useAuthStore()
   const groupStore = useGroupStore()
   const userStore = useUserStore()
   const { setData, isSubmitting } = useFireBase()
   const { usersOptions } = useUsersOptions({ allUsers: true })
 
+  const areSameMembers = (a = [], b = []) =>
+    a.length === b.length && a.every((member, index) => member === b[index])
+
+  const ensureCreatorSelected = (members = []) => {
+    const creatorId = authStore.getActiveUserUid
+    const normalized = [...new Set((members || []).filter(Boolean))]
+
+    if (creatorId && !normalized.includes(creatorId)) {
+      normalized.unshift(creatorId)
+    }
+
+    return normalized
+  }
+
   const createEmptyGroupForm = () => ({
     name: '',
     description: '',
-    members: [],
+    members: ensureCreatorSelected([]),
     category: ''
   })
 
   const groupForm = ref(createEmptyGroupForm())
   const groupFormRef = ref(null)
 
+  const memberCount = computed(() => {
+    return (groupForm.value.members || []).length
+  })
+
+  const usersOptionsWithCap = computed(() => {
+    const selectedMembers = groupForm.value.members || []
+    const creatorId = authStore.getActiveUserUid
+    const selectedSet = new Set(selectedMembers)
+    const limitReached = memberCount.value >= MAX_GROUP_MEMBERS
+
+    return (usersOptions.value || []).map((option) => ({
+      ...option,
+      disabled:
+        option.disabled === true ||
+        option.value === creatorId ||
+        (limitReached && !selectedSet.has(option.value))
+    }))
+  })
 
   function buildMemberSnapshot(userId) {
     const user = userStore.getUserByUid(userId)
@@ -41,14 +74,17 @@ export const GroupsCreate = (emit, props) => {
   }
 
   async function doCreateGroup() {
-    const creatorId = authStore.getActiveUser
+    const creatorId = authStore.getActiveUserUid
     if (isUserBlocked(userStore.getUserByUid(creatorId))) {
       return showError(ACTIVE_USER_BLOCKED_MESSAGE)
     }
 
-    // Auto-include creator if not already selected
-    if (!groupForm.value.members.includes(creatorId)) {
-      groupForm.value.members = [creatorId, ...groupForm.value.members]
+    groupForm.value.members = ensureCreatorSelected(groupForm.value.members)
+
+    if (groupForm.value.members.length > MAX_GROUP_MEMBERS) {
+      return showError(
+        `A group can have a maximum of ${MAX_GROUP_MEMBERS} members`
+      )
     }
 
     if (groupForm.value.members.length < 2) {
@@ -60,8 +96,7 @@ export const GroupsCreate = (emit, props) => {
 
     // Rule 1: owner can never create two groups with the same name
     const ownerDuplicate = allGroups.some(
-      (g) =>
-        g.ownerMobile === creatorId && g.name.trim().toLowerCase() === newName
+      (g) => g.ownerUid === creatorId && g.name.trim().toLowerCase() === newName
     )
     if (ownerDuplicate) {
       return showError('You already have a group with this name')
@@ -79,7 +114,7 @@ export const GroupsCreate = (emit, props) => {
       const existingIds = [
         ...(g.members || []),
         ...(g.pendingMembers || [])
-      ].map((m) => m.uid || m.mobile)
+      ].map((m) => m.uid)
       return otherMembers.some((m) => existingIds.includes(m))
     })
     if (memberConflict) {
@@ -99,15 +134,13 @@ export const GroupsCreate = (emit, props) => {
       description: groupForm.value.description || '',
       category: groupForm.value.category || '',
       blocked: false,
-      ownerMobile: authStore.getActiveUser,
+      ownerUid: authStore.getActiveUserUid,
       // Only the creator joins immediately; all others receive an invitation
       members: [buildMemberSnapshot(creatorId)],
       pendingMembers,
       // Flat array of UIDs (members + pending) used for
       // efficient per-user Firestore queries via array-contains.
-      memberMobiles: [
-        ...new Set([creatorId, ...pendingMembers.map((m) => m.uid || m.mobile)])
-      ]
+      memberUids: [...new Set([creatorId, ...pendingMembers.map((m) => m.uid)])]
     }
     try {
       await setData(
@@ -128,19 +161,43 @@ export const GroupsCreate = (emit, props) => {
   }
 
   watch(
+    () => groupForm.value.members,
+    (members = []) => {
+      let normalizedMembers = ensureCreatorSelected(members)
+      let exceededLimit = false
+
+      if (normalizedMembers.length > MAX_GROUP_MEMBERS) {
+        normalizedMembers = normalizedMembers.slice(0, MAX_GROUP_MEMBERS)
+        exceededLimit = true
+      }
+
+      if (!areSameMembers(normalizedMembers, members)) {
+        groupForm.value.members = normalizedMembers
+      }
+
+      if (exceededLimit) {
+        showError(`Maximum ${MAX_GROUP_MEMBERS} members are allowed in a group`)
+      }
+    },
+    { deep: true }
+  )
+
+  watch(
     () => props?.preselectedMember,
     (val) => {
       if (val && !groupForm.value.members.includes(val)) {
-        groupForm.value.members = [val]
+        groupForm.value.members = ensureCreatorSelected([val])
       }
     },
     { immediate: true }
   )
 
   return {
+    MAX_GROUP_MEMBERS,
+    memberCount,
     groupForm,
     groupFormRef,
-    usersOptions,
+    usersOptions: usersOptionsWithCap,
     createGroup,
     resetCreateForm,
     isSubmitting

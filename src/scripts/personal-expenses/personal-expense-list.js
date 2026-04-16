@@ -23,7 +23,7 @@ export const PersonalExpenseList = () => {
   const authStore = useAuthStore()
   const dataStore = useDataStore()
 
-  const activeUser = computed(() => authStore.getActiveUser)
+  const activeUserUid = computed(() => authStore.getActiveUserUid)
   const route = useRoute()
   const router = useRouter()
   const selectedMonth = ref(route.query.month || getCurrentMonth())
@@ -52,9 +52,9 @@ export const PersonalExpenseList = () => {
 
   const fetchMonths = async () => {
     return loadMonthsList({
-      isEnabled: () => !!activeUser.value,
-      parentPath: `${DB_NODES.PERSONAL_EXPENSES}/${activeUser.value}`,
-      monthsPath: `${DB_NODES.PERSONAL_EXPENSES}/${activeUser.value}/months`,
+      isEnabled: () => !!activeUserUid.value,
+      parentPath: `${DB_NODES.PERSONAL_EXPENSES}/${activeUserUid.value}`,
+      monthsPath: `${DB_NODES.PERSONAL_EXPENSES}/${activeUserUid.value}/months`,
       read,
       readShallow,
       monthsRef: months,
@@ -68,11 +68,11 @@ export const PersonalExpenseList = () => {
 
   const fetchSalary = () => {
     salaryLoaded.value = false
-    if (!activeUser.value) {
+    if (!activeUserUid.value) {
       salaryLoaded.value = true
       return
     }
-    const salaryPath = `${DB_NODES.SALARIES}/${activeUser.value}/months/${selectedMonth.value}`
+    const salaryPath = `${DB_NODES.SALARIES}/${activeUserUid.value}/months/${selectedMonth.value}`
     const cached = getCache(salaryPath)
     if (cached !== null) {
       salary.value = cached
@@ -97,7 +97,7 @@ export const PersonalExpenseList = () => {
       },
       (error) => {
         salaryLoaded.value = true
-        if (activeUser.value) {
+        if (activeUserUid.value) {
           showError('Failed to load salary. Please try again.')
           console.error(error)
         }
@@ -107,11 +107,11 @@ export const PersonalExpenseList = () => {
 
   const fetchExpenses = () => {
     expensesLoaded.value = false
-    if (!activeUser.value) {
+    if (!activeUserUid.value) {
       expensesLoaded.value = true
       return
     }
-    const expensesPath = `${DB_NODES.PERSONAL_EXPENSES}/${activeUser.value}/months/${selectedMonth.value}/expenses`
+    const expensesPath = `${DB_NODES.PERSONAL_EXPENSES}/${activeUserUid.value}/months/${selectedMonth.value}/expenses`
     const cached = getCache(expensesPath)
     if (cached) {
       applyCollectionState(cached, {
@@ -158,7 +158,7 @@ export const PersonalExpenseList = () => {
       },
       (error) => {
         expensesLoaded.value = true
-        if (activeUser.value) {
+        if (activeUserUid.value) {
           showError('Failed to load expenses. Please try again.')
           console.error(error)
         }

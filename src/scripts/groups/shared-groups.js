@@ -25,10 +25,8 @@ import {
   isGroupBlocked,
   isUserBlocked
 } from '@/helpers'
-import {
-  createUserDisplayStoreProxy,
-  getDisplayMobile
-} from '@/utils/user-display'
+import { getDisplayMobile } from '@/utils/user-display'
+import { createUserDisplayStoreProxy } from '@/composables'
 
 export const SharedGroups = () => {
   const route = useRoute()
@@ -51,8 +49,10 @@ export const SharedGroups = () => {
     sharedIds.value.filter((id) => !groupStore.getGroupById(id))
   )
 
-  const activeUser = computed(() => authStore.getActiveUser)
-  const activeUserRecord = computed(() => userStore.getUserByUid(activeUser.value))
+  const activeUserUid = computed(() => authStore.getActiveUserUid)
+  const activeUserRecord = computed(() =>
+    userStore.getUserByUid(activeUserUid.value)
+  )
   const activeUserIsBlocked = computed(() =>
     isUserBlocked(activeUserRecord.value)
   )
@@ -63,19 +63,19 @@ export const SharedGroups = () => {
 
   function isMember(group) {
     return (group?.members || []).some(
-      (member) => member.mobile === activeUser.value
+      (member) => member.uid === activeUserUid.value
     )
   }
 
   function hasPendingJoinRequest(group) {
     return (group?.joinRequests || []).some(
-      (request) => request.mobile === activeUser.value
+      (request) => request.uid === activeUserUid.value
     )
   }
 
   function isInvited(group) {
     return (group?.pendingMembers || []).some(
-      (member) => member.mobile === activeUser.value
+      (member) => member.uid === activeUserUid.value
     )
   }
 
@@ -161,24 +161,24 @@ export const SharedGroups = () => {
 
     actioningGroupId.value = group.id
     try {
-      const me = userStore.getUserByUid(activeUser.value)
-      const myName = me?.name || activeUser.value
-      const myMobile = me?.mobile || activeUser.value
+      const me = userStore.getUserByUid(activeUserUid.value)
+      const myName = me?.name || activeUserUid.value
+      const myMobile = me?.mobile || activeUserUid.value
       const newRequests = [
         ...(group.joinRequests || []),
-        { uid: activeUser.value, mobile: myMobile, approvals: [] }
+        { uid: activeUserUid.value, mobile: myMobile, approvals: [] }
       ]
 
       let payload = { joinRequests: newRequests }
       let updatedGroup = { ...group, joinRequests: newRequests }
 
       for (const member of group.members || []) {
-        if (member.mobile === activeUser.value) continue
-        updatedGroup = appendNotificationForUser(updatedGroup, member.mobile, {
+        if (member.uid === activeUserUid.value) continue
+        updatedGroup = appendNotificationForUser(updatedGroup, member.uid, {
           id: `${Date.now()}-${Math.random()}`,
           type: 'join-request',
           message: `${myName} (${maskMobile(myMobile)}) wants to join "${group.name}"`,
-          updatedBy: activeUser.value,
+          updatedBy: activeUserUid.value,
           timestamp: Date.now()
         })
       }
@@ -213,24 +213,24 @@ export const SharedGroups = () => {
 
     actioningGroupId.value = group.id
     try {
-      const me = userStore.getUserByUid(activeUser.value)
-      const myName = me?.name || activeUser.value
-      const myMobile = me?.mobile || activeUser.value
+      const me = userStore.getUserByUid(activeUserUid.value)
+      const myName = me?.name || activeUserUid.value
+      const myMobile = me?.mobile || activeUserUid.value
       const newMembers = [
         ...(group.members || []),
-        { uid: activeUser.value, mobile: myMobile }
+        { uid: activeUserUid.value, mobile: myMobile }
       ]
       const newPending = (group.pendingMembers || []).filter(
-        (member) => member.mobile !== myMobile
+        (member) => member.uid !== activeUserUid.value
       )
 
       let payload = {
         members: newMembers,
         pendingMembers: newPending.length ? newPending : null,
-        memberMobiles: [
+        memberUids: [
           ...new Set([
-            ...newMembers.map((member) => member.uid || member.mobile),
-            ...newPending.map((member) => member.uid || member.mobile)
+            ...newMembers.map((member) => member.uid),
+            ...newPending.map((member) => member.uid)
           ])
         ]
       }
@@ -241,18 +241,14 @@ export const SharedGroups = () => {
         pendingMembers: newPending.length ? newPending : null
       }
 
-      if (group.ownerMobile && group.ownerMobile !== activeUser.value) {
-        updatedGroup = appendNotificationForUser(
-          updatedGroup,
-          group.ownerMobile,
-          {
-            id: `${Date.now()}-${Math.random()}`,
-            type: 'invitation-accepted',
-            message: `${myName} (${maskMobile(myMobile)}) accepted your invitation to join "${group.name}"`,
-            updatedBy: activeUser.value,
-            timestamp: Date.now()
-          }
-        )
+      if (group.ownerUid && group.ownerUid !== activeUserUid.value) {
+        updatedGroup = appendNotificationForUser(updatedGroup, group.ownerUid, {
+          id: `${Date.now()}-${Math.random()}`,
+          type: 'invitation-accepted',
+          message: `${myName} (${maskMobile(myMobile)}) accepted your invitation to join "${group.name}"`,
+          updatedBy: activeUserUid.value,
+          timestamp: Date.now()
+        })
       }
 
       if (updatedGroup.notifications) {

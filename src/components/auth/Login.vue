@@ -75,11 +75,12 @@
         :show-close="false"
       >
         <p class="text-sm text-gray-600 mb-4">
-          Please enter your mobile number to complete registration.
+          Please enter your mobile number to complete registration.<br />
+          <span>Priortize <b> (Easypaisa/Jazzcash)</b>, not mandatory </span>
         </p>
         <el-input
           v-model="googleMobileInput"
-          placeholder="Mobile number (10-11 digits)"
+          placeholder="Mobile number (11 digits)"
           maxlength="11"
           @input="googleMobileInput = googleMobileInput.replace(/\D/g, '')"
           @keyup.enter="submitGoogleMobile"

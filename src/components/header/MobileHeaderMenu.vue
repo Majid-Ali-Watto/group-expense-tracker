@@ -1,8 +1,5 @@
 <template>
-  <el-dropdown
-    trigger="click"
-    class="min-[768px]:hidden mobile-menu-dropdown"
-  >
+  <el-dropdown trigger="click" class="min-[768px]:hidden mobile-menu-dropdown">
     <button class="hamburger-btn">
       <MenuIcon class="w-6 h-6" />
     </button>
@@ -19,7 +16,9 @@
               class="flex items-center gap-3"
               :class="{ 'is-active-tab': tab === activeTab }"
             >
-              <el-icon class="menu-icon" :size="20"><component :is="TAB_ICONS[tab] || ChevronRightIcon" /></el-icon>
+              <el-icon class="menu-icon" :size="20"
+                ><component :is="TAB_ICONS[tab] || ChevronRightIcon"
+              /></el-icon>
               <span>{{ tab }}</span>
             </div>
           </el-dropdown-item>
@@ -37,7 +36,9 @@
               class="flex items-center gap-3"
               :class="{ 'is-active-tab': routePath === link.to }"
             >
-              <el-icon class="menu-icon" :size="20"><component :is="NAV_ICONS[link.to] || ChevronRightIcon" /></el-icon>
+              <el-icon class="menu-icon" :size="20"
+                ><component :is="NAV_ICONS[link.to] || ChevronRightIcon"
+              /></el-icon>
               <span>{{ link.label }}</span>
             </div>
           </el-dropdown-item>
@@ -149,7 +150,19 @@
 </template>
 
 <script setup>
-import { DataAnalysis, Key, Setting, SwitchButton, Money, CreditCard, Wallet, Coin, UserFilled, Star, ChatDotRound } from '@element-plus/icons-vue'
+import {
+  DataAnalysis,
+  Key,
+  Setting,
+  SwitchButton,
+  Money,
+  CreditCard,
+  Wallet,
+  Coin,
+  UserFilled,
+  Star,
+  ChatDotRound
+} from '@element-plus/icons-vue'
 import {
   AlertTriangleIcon,
   ChevronRightIcon,
@@ -168,8 +181,8 @@ const TAB_ICONS = {
   'Shared Loans': CreditCard,
   'Personal Expenses': Wallet,
   'Personal Loans': Coin,
-  'Users': UsersIcon,
-  'Groups': UserFilled,
+  Users: UsersIcon,
+  Groups: UserFilled,
   'Bug Reports': AlertTriangleIcon
 }
 
@@ -287,7 +300,9 @@ const emit = defineEmits([
   color: var(--el-color-primary);
 }
 
-.mobile-dropdown-menu .el-dropdown-menu__item:not(.is-disabled):hover .menu-icon {
+.mobile-dropdown-menu
+  .el-dropdown-menu__item:not(.is-disabled):hover
+  .menu-icon {
   color: var(--el-color-primary);
 }
 

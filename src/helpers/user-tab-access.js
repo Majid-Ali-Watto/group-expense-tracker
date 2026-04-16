@@ -193,7 +193,11 @@ export function canAccessManageTabs(config) {
   return config?.accessManageTabs !== false
 }
 
-export function buildUserTabConfigDocument(uid, userTabConfig, existingConfig = null) {
+export function buildUserTabConfigDocument(
+  uid,
+  userTabConfig,
+  existingConfig = null
+) {
   const payload = {
     uid,
     ...userTabConfig
@@ -256,7 +260,10 @@ export function buildUpgradedSharedTabConfig(config) {
     [USER_TAB_KEYS.SHARED_LOANS]: true
     // users tab intentionally kept as-is
   }
-  if (config && Object.prototype.hasOwnProperty.call(config, 'accessManageTabs')) {
+  if (
+    config &&
+    Object.prototype.hasOwnProperty.call(config, 'accessManageTabs')
+  ) {
     upgraded.accessManageTabs = config.accessManageTabs
   }
   return upgraded

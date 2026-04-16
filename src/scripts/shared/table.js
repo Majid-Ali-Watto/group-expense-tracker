@@ -10,11 +10,11 @@ import {
   watch
 } from 'vue'
 import {
-  useAuthStore,
   useTabStore,
   useGroupStore,
+  useDataStore,
   useUserStore,
-  useDataStore
+  useAuthStore
 } from '@/stores'
 import {
   getEditComponent,
@@ -31,7 +31,11 @@ import {
 import { Tabs } from '@/assets'
 import { database, writeBatch, doc } from '@/firebase'
 import { DB_NODES } from '@/constants'
-import { useDebouncedRef, getDownloadConfig } from '@/composables'
+import {
+  useDebouncedRef,
+  getDownloadConfig,
+  useStoreProxy
+} from '@/composables'
 import { useRoute, useRouter } from 'vue-router'
 
 const TABLE_HEADER_CONFIG = {
@@ -72,11 +76,11 @@ export const Table = (props) => {
   const deleteMode = ref(false)
   const state = reactive({ row: null })
   const screenWidth = ref(window.innerWidth)
-  const authStore = useAuthStore()
   const tabStore = useTabStore()
   const groupStore = useGroupStore()
-  const userStore = useUserStore()
   const dataStore = useDataStore()
+  const authStore = useAuthStore()
+  const userStore = useUserStore()
   const childRef = ref(null)
   const tableRef = ref(null)
   const highlightRowId = ref(null)
@@ -89,12 +93,7 @@ export const Table = (props) => {
   )
   const activeTabComponent = () => getEditComponent(activeTab.value)
 
-  const storeProxy = {
-    get getActiveUser() {
-      return authStore.getActiveUser
-    },
-    getUserByMobile: (m) => userStore.getUserByMobile(m)
-  }
+  const storeProxy = useStoreProxy()
   const formatUser = (mobile, name = null) =>
     formatUserDisplay(storeProxy, mobile, {
       name,
@@ -339,7 +338,7 @@ export const Table = (props) => {
       const requestType = rowS.deleteRequest ? 'delete' : 'update'
       const requester =
         rowS.deleteRequest?.requestedBy || rowS.updateRequest?.requestedBy
-      const currentUser = authStore.getActiveUser
+      const currentUser = authStore.getActiveUserUid
 
       if (requester === currentUser) {
         ElMessage.info(
@@ -389,7 +388,7 @@ export const Table = (props) => {
       const requestType = rowS.deleteRequest ? 'delete' : 'update'
       const requester =
         rowS.deleteRequest?.requestedBy || rowS.updateRequest?.requestedBy
-      const currentUser = authStore.getActiveUser
+      const currentUser = authStore.getActiveUserUid
       if (requester === currentUser) {
         ElMessage.info(
           `You have a pending ${requestType} request. Please wait for approval or cancel it from the pending requests section.`
@@ -479,7 +478,7 @@ export const Table = (props) => {
     // friendTotals
     const friendTotals = usersList
       .map((user) => {
-        const mobile = user.mobile || user.uid
+        const mobile = user.uid
         return {
           name: formatUser(mobile, user.name),
           total: rows.reduce((sum, payment) => {
@@ -529,13 +528,13 @@ export const Table = (props) => {
   function computeSettlements(rows) {
     const users = userStore.getUsers?.length ? userStore.getUsers : []
     const map = {}
-    users.forEach((u) => (map[u.uid || u.mobile] = 0))
+    users.forEach((u) => (map[u.uid] = 0))
 
     rows.forEach((payment) => {
       const amount = payment.amount || 0
       const participants = payment.participants?.length
         ? payment.participants
-        : users.map((u) => u.uid || u.mobile)
+        : users.map((u) => u.uid)
 
       let shares = []
       if (payment.split?.length) {
@@ -1088,7 +1087,7 @@ export const Table = (props) => {
     try {
       const groupId = groupStore.getActiveGroup
       const month = props.reportMonth
-      const user = authStore.getActiveUser
+      const user = authStore.getActiveUserUid
       const tab = activeTab.value
       const deleteRequestMeta = isShared ? buildRequestMeta(storeProxy) : null
 

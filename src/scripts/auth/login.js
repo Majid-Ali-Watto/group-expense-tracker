@@ -174,7 +174,7 @@ export const Login = () => {
     if (!hasSharedFeatures(userStore.getActiveUserTabConfig)) return
     const groups = groupStore.getGroups || []
     const myGroup = groups.find((g) =>
-      (g.members || []).some((m) => (m.uid || m.mobile) === userId)
+      (g.members || []).some((m) => m.uid === userId)
     )
     if (myGroup) groupStore.setActiveGroup(myGroup.id)
   }
@@ -200,7 +200,7 @@ export const Login = () => {
     ])
 
     sessionStorage.setItem('_session', encryptedSession)
-    authStore.setActiveUser(payload.uid)
+    authStore.setActiveUserUid(payload.uid)
     authStore.setSessionToken(encryptedStore)
     authStore.setActivePassword(payload.password)
     activateUserGroup(payload.uid)
@@ -215,7 +215,11 @@ export const Login = () => {
     featureSelectionDialogVisible.value = false
   }
 
-  function openFeatureSelectionDialog(user, password, existingTabConfig = null) {
+  function openFeatureSelectionDialog(
+    user,
+    password,
+    existingTabConfig = null
+  ) {
     featureSelection.value = createUserTabSelection()
     pendingLoginContext.value = {
       uid: user.uid,
@@ -269,13 +273,22 @@ export const Login = () => {
           { duration: 0 }
         )
       }
-      if (sel.shared && !sel[USER_TAB_KEYS.SHARED_EXPENSES] && !sel[USER_TAB_KEYS.SHARED_LOANS] && !sel[USER_TAB_KEYS.USERS]) {
+      if (
+        sel.shared &&
+        !sel[USER_TAB_KEYS.SHARED_EXPENSES] &&
+        !sel[USER_TAB_KEYS.SHARED_LOANS] &&
+        !sel[USER_TAB_KEYS.USERS]
+      ) {
         return showError(
           'You selected Shared features but no shared tabs are enabled. Please select at least one shared tab (Shared Expenses, Shared Loans, or Users).',
           { duration: 0 }
         )
       }
-      if (sel.personal && !sel[USER_TAB_KEYS.PERSONAL_EXPENSES] && !sel[USER_TAB_KEYS.PERSONAL_LOANS]) {
+      if (
+        sel.personal &&
+        !sel[USER_TAB_KEYS.PERSONAL_EXPENSES] &&
+        !sel[USER_TAB_KEYS.PERSONAL_LOANS]
+      ) {
         return showError(
           'You selected Personal features but no personal tabs are enabled. Please select at least one personal tab (Personal Expenses or Personal Loans).',
           { duration: 0 }
@@ -776,7 +789,8 @@ export const Login = () => {
   }
 
   async function submitGoogleMobile() {
-    if (!googlePendingFirebaseUser.value || isGoogleMobileSubmitting.value) return
+    if (!googlePendingFirebaseUser.value || isGoogleMobileSubmitting.value)
+      return
 
     const mobile = googleMobileInput.value.replace(/\D/g, '').trim()
     if (!mobile) return showError('Please enter your mobile number.')
@@ -812,7 +826,9 @@ export const Login = () => {
       openFeatureSelectionDialog({ uid, name, mobile, email }, null, null)
     } catch (error) {
       console.error('Google mobile submit error:', error)
-      showError(error.message || 'Failed to save your details. Please try again.')
+      showError(
+        error.message || 'Failed to save your details. Please try again.'
+      )
     } finally {
       isGoogleMobileSubmitting.value = false
     }

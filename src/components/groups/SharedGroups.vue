@@ -78,11 +78,8 @@
                 <div class="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1">
                   <p class="text-xs text-gray-500 dark:text-gray-400">
                     Owner:
-                    {{
-                      userStore.getUserByMobile(group.ownerMobile)?.name ||
-                      group.ownerMobile
-                    }}
-                    ({{ displayMobileForGroup(group.ownerMobile, group) }})
+                    {{ userStore.getUserByUid(group.ownerUid)?.name }}
+                    ({{ displayMobileForGroup(group.ownerUid, group) }})
                   </p>
                   <p
                     v-if="group.category"

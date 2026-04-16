@@ -15,7 +15,9 @@
         actually need.
       </p>
 
-      <section class="rounded-xl border border-gray-200 p-4 dark:border-gray-700">
+      <section
+        class="rounded-xl border border-gray-200 p-4 dark:border-gray-700"
+      >
         <el-checkbox
           :model-value="selection.shared"
           @update:model-value="updateSelection('shared', $event)"
@@ -51,7 +53,9 @@
         </div>
       </section>
 
-      <section class="rounded-xl border border-gray-200 p-4 dark:border-gray-700">
+      <section
+        class="rounded-xl border border-gray-200 p-4 dark:border-gray-700"
+      >
         <el-checkbox
           :model-value="selection.personal"
           @update:model-value="updateSelection('personal', $event)"
@@ -81,8 +85,15 @@
 
     <template #footer>
       <div class="flex justify-end gap-2">
-        <el-button size="small" @click="$emit('cancel')">{{ cancelText }}</el-button>
-        <el-button type="primary" size="small" :loading="loading" @click="$emit('confirm')">
+        <el-button size="small" @click="$emit('cancel')">{{
+          cancelText
+        }}</el-button>
+        <el-button
+          type="primary"
+          size="small"
+          :loading="loading"
+          @click="$emit('confirm')"
+        >
           {{ confirmText }}
         </el-button>
       </div>
@@ -103,7 +114,12 @@ const props = defineProps({
   showClose: { type: Boolean, default: false }
 })
 
-const emit = defineEmits(['update:visible', 'update:selection', 'confirm', 'cancel'])
+const emit = defineEmits([
+  'update:visible',
+  'update:selection',
+  'confirm',
+  'cancel'
+])
 
 function updateSelection(key, value) {
   emit('update:selection', {

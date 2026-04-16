@@ -26,7 +26,8 @@ export function useShare() {
       if (copySuccessMessage) showSuccess(copySuccessMessage)
       return true
     } catch {
-      if (manualPromptLabel) window.prompt(manualPromptLabel, payload?.url || '')
+      if (manualPromptLabel)
+        window.prompt(manualPromptLabel, payload?.url || '')
       if (manualPromptErrorMessage) showError(manualPromptErrorMessage)
       return false
     }

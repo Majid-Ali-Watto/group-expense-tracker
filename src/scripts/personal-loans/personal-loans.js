@@ -16,10 +16,8 @@ import {
 import getCurrentMonth from '@/utils/getCurrentMonth'
 import { getCache, setCache } from '@/utils/queryCache'
 import { showError } from '@/utils/showAlerts'
-import {
-  createUserDisplayStoreProxy,
-  formatUserDisplay
-} from '@/utils/user-display'
+import { formatUserDisplay } from '@/utils/user-display'
+import { createUserDisplayStoreProxy } from '@/composables'
 
 export const PersonalLoans = () => {
   const formatAmount = inject('formatAmount')
@@ -72,13 +70,13 @@ export const PersonalLoans = () => {
     loansLoaded
   ])
 
-  const activeUser = computed(() => authStore.getActiveUser)
+  const activeUserUid = computed(() => authStore.getActiveUserUid)
 
   const fetchMonths = async () => {
     return loadMonthsList({
-      isEnabled: () => !!activeUser.value,
-      parentPath: `${DB_NODES.PERSONAL_LOANS}/${activeUser.value}`,
-      monthsPath: `${DB_NODES.PERSONAL_LOANS}/${activeUser.value}/months`,
+      isEnabled: () => !!activeUserUid.value,
+      parentPath: `${DB_NODES.PERSONAL_LOANS}/${activeUserUid.value}`,
+      monthsPath: `${DB_NODES.PERSONAL_LOANS}/${activeUserUid.value}/months`,
       read,
       readShallow,
       monthsRef: months,
@@ -99,7 +97,7 @@ export const PersonalLoans = () => {
   }
 
   const fetchLoans = () => {
-    const basePath = `${DB_NODES.PERSONAL_LOANS}/${activeUser.value}`
+    const basePath = `${DB_NODES.PERSONAL_LOANS}/${activeUserUid.value}`
     loansLoaded.value = false
 
     if (loansListener && currentLoansRef) {
@@ -209,7 +207,7 @@ export const PersonalLoans = () => {
     } catch (error) {
       // Ignore permission errors that fire after logout — Firebase revokes the
       // auth token before reads complete (on component unmount).
-      if (authStore.getActiveUser) {
+      if (authStore.getActiveUserUid) {
         showError('Failed to load loans. Please try again.')
         console.error(error)
       }
@@ -222,7 +220,7 @@ export const PersonalLoans = () => {
     fetchLoans()
   })
 
-  watch(activeUser, () => {
+  watch(activeUserUid, () => {
     fetchMonths()
     fetchLoans()
   })
@@ -279,7 +277,7 @@ export const PersonalLoans = () => {
 
   const totalLending = computed(() => {
     return filteredLoans.value.reduce((total, loan) => {
-      if (loan.loanGiver === activeUser.value) {
+      if (loan.loanGiver === activeUserUid.value) {
         return total + Number(loan.amount || 0)
       }
       return total
@@ -288,7 +286,7 @@ export const PersonalLoans = () => {
 
   const totalDebting = computed(() => {
     return filteredLoans.value.reduce((total, loan) => {
-      if (loan.loanReceiver === activeUser.value) {
+      if (loan.loanReceiver === activeUserUid.value) {
         return total + Number(loan.amount || 0)
       }
       return total

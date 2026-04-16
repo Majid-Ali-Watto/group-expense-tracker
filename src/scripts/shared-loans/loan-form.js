@@ -4,12 +4,12 @@ import {
   useFireBase,
   useReceiptUpload,
   useSharedActivityEmail,
-  useUnsavedChangesGuard
+  useUnsavedChangesGuard,
+  useStoreProxy
 } from '@/composables'
 import {
   getWhoAddedTransaction,
   showError,
-
   buildRequestMeta,
   dateToMonthNode,
   getCurrentDateInputValue,
@@ -25,12 +25,7 @@ export const LoanForm = (props, emit) => {
   const authStore = useAuthStore()
   const groupStore = useGroupStore()
   const userStore = useUserStore()
-  const storeProxy = {
-    get getActiveUser() {
-      return authStore.getActiveUser
-    },
-    getUserByMobile: (m) => userStore.getUserByMobile(m)
-  }
+  const storeProxy = useStoreProxy()
 
   const openForm = () => {
     emit('closeForm')
@@ -71,12 +66,12 @@ export const LoanForm = (props, emit) => {
   const initialFormSnapshot = ref(JSON.stringify(createInitialFormData()))
   const existingMonth = ref(dateToMonthNode(formData.value.date))
 
-  const activeUser = computed(() => authStore.getActiveUser)
+  const activeUserUid = computed(() => authStore.getActiveUserUid)
   const activeUserName = computed(
-    () => userStore.getUserByMobile(activeUser.value)?.name || ''
+    () => userStore.getUserByUid(activeUserUid.value)?.name || ''
   )
   const activeUserMobile = computed(
-    () => userStore.getUserByMobile(activeUser.value)?.mobile || ''
+    () => userStore.getUserByUid(activeUserUid.value)?.mobile || ''
   )
 
   // ========== Select from Users (personal loans) ==========
@@ -122,17 +117,17 @@ export const LoanForm = (props, emit) => {
     if (isMeGiver.value) {
       return props.isPersonal
         ? formData.value.loanReceiver
-        : userStore.getUserByMobile(formData.value.loanReceiver)?.name ||
+        : userStore.getUserByUid(formData.value.loanReceiver)?.name ||
             formData.value.loanReceiver
     }
     return props.isPersonal
       ? formData.value.loanGiver
-      : userStore.getUserByMobile(formData.value.loanGiver)?.name ||
+      : userStore.getUserByUid(formData.value.loanGiver)?.name ||
           formData.value.loanGiver
   }
 
   const isCurrentUserIdentity = (value) =>
-    value === activeUser.value ||
+    value === activeUserUid.value ||
     (activeUserMobile.value && value === activeUserMobile.value)
 
   const getCurrentGiverIdentity = () =>
@@ -158,7 +153,7 @@ export const LoanForm = (props, emit) => {
         formData.value.loanGiverMobile = activeUserMobile.value
         formData.value.loanGiver = activeUserName.value
       } else {
-        formData.value.loanGiver = activeUser.value
+        formData.value.loanGiver = activeUserUid.value
       }
     } else {
       selectedGiverUser.value = ''
@@ -181,7 +176,7 @@ export const LoanForm = (props, emit) => {
         formData.value.loanReceiverMobile = activeUserMobile.value
         formData.value.loanReceiver = activeUserName.value
       } else {
-        formData.value.loanReceiver = activeUser.value
+        formData.value.loanReceiver = activeUserUid.value
       }
     } else {
       selectedReceiverUser.value = ''
@@ -205,7 +200,7 @@ export const LoanForm = (props, emit) => {
       showError('Giver and Receiver cannot be the same person.')
       return
     }
-    const user = userStore.getUserByMobile(uid) // getUserByMobile also resolves UIDs
+    const user = userStore.getUserByUid(uid)
     if (!user) return
     if (isCurrentUserIdentity(uid)) {
       if (props.isPersonal && isMeReceiver.value) {
@@ -238,7 +233,7 @@ export const LoanForm = (props, emit) => {
       showError('Giver and Receiver cannot be the same person.')
       return
     }
-    const user = userStore.getUserByMobile(uid) // getUserByMobile also resolves UIDs
+    const user = userStore.getUserByUid(uid)
     if (!user) return
     if (isCurrentUserIdentity(uid)) {
       if (props.isPersonal && isMeGiver.value) {
@@ -292,10 +287,10 @@ export const LoanForm = (props, emit) => {
           ? formData.value.loanReceiverMobile || formData.value.loanReceiver
           : formData.value.loanReceiver
         isMeGiver.value =
-          giverMobile === activeUser.value ||
+          giverMobile === activeUserUid.value ||
           (activeUserMobile.value && giverMobile === activeUserMobile.value)
         isMeReceiver.value =
-          receiverMobile === activeUser.value ||
+          receiverMobile === activeUserUid.value ||
           (activeUserMobile.value && receiverMobile === activeUserMobile.value)
       } else {
         isMeGiver.value = false
@@ -307,14 +302,12 @@ export const LoanForm = (props, emit) => {
         const giverMob = formData.value.loanGiverMobile
         if (giverMob && !isMeGiver.value) {
           const giverUser = userStore.getUserByMobile(giverMob)
-          if (giverUser)
-            selectedGiverUser.value = giverUser.uid || giverUser.mobile
+          if (giverUser) selectedGiverUser.value = giverUser.uid
         }
         const receiverMob = formData.value.loanReceiverMobile
         if (receiverMob && !isMeReceiver.value) {
           const receiverUser = userStore.getUserByMobile(receiverMob)
-          if (receiverUser)
-            selectedReceiverUser.value = receiverUser.uid || receiverUser.mobile
+          if (receiverUser) selectedReceiverUser.value = receiverUser.uid
         }
         // Wait for the selectedGiverUser / selectedReceiverUser watchers to
         // finish updating formData, then re-snapshot so the form isn't dirty
@@ -334,7 +327,7 @@ export const LoanForm = (props, emit) => {
   const onGiverMobileBlur = () => {
     if (
       formData.value.loanGiverMobile == activeUserMobile.value ||
-      formData.value.loanGiverMobile == activeUser.value
+      formData.value.loanGiverMobile == activeUserUid.value
     ) {
       formData.value.loanGiver =
         activeUserName.value || formData.value.loanGiver
@@ -344,7 +337,7 @@ export const LoanForm = (props, emit) => {
   const onReceiverMobileBlur = () => {
     if (
       formData.value.loanReceiverMobile == activeUserMobile.value ||
-      formData.value.loanReceiverMobile == activeUser.value
+      formData.value.loanReceiverMobile == activeUserUid.value
     ) {
       formData.value.loanReceiver =
         activeUserName.value || formData.value.loanReceiver
@@ -403,7 +396,7 @@ export const LoanForm = (props, emit) => {
             return
           }
           const isMe = (val) =>
-            val === activeUser.value ||
+            val === activeUserUid.value ||
             (activeUserMobile.value && val === activeUserMobile.value)
 
           if (!isMe(giverMobile) && !isMe(receiverMobile)) {
@@ -436,7 +429,7 @@ export const LoanForm = (props, emit) => {
           ? existingMonth.value
           : dateToMonthNode(formData.value.date)
         if (props.isPersonal) {
-          loanPath = `${props.dbRef}/${authStore.getActiveUser}/months/${monthYear}/loans`
+          loanPath = `${props.dbRef}/${authStore.getActiveUserUid}/months/${monthYear}/loans`
         } else {
           const groupId = groupStore.getActiveGroup || 'global'
           loanPath = `${props.dbRef}/${groupId}/months/${monthYear}/loans`
@@ -457,7 +450,7 @@ export const LoanForm = (props, emit) => {
           const expenseCopy = copyToExpenses.value
             ? {
                 amount: formData.value.amount,
-                payer: activeUser.value,
+                payer: activeUserUid.value,
                 category: formData.value.category || 'Finance',
                 description: formData.value.description,
                 location: 'Loan',
@@ -495,7 +488,7 @@ export const LoanForm = (props, emit) => {
               }
               if (props.isPersonal) {
                 invalidateByPrefix(
-                  `${DB_NODES.PERSONAL_LOANS}/${activeUser.value}/months`
+                  `${DB_NODES.PERSONAL_LOANS}/${activeUserUid.value}/months`
                 )
               }
               removeReceipt()
@@ -519,7 +512,7 @@ export const LoanForm = (props, emit) => {
             )
           } else {
             const updateMonth = props.row._month || monthYear
-            const personalUpdatePath = `${props.dbRef}/${authStore.getActiveUser}/months/${updateMonth}/loans`
+            const personalUpdatePath = `${props.dbRef}/${authStore.getActiveUserUid}/months/${updateMonth}/loans`
             updateData(
               `${personalUpdatePath}/${props.row.id}`,
               () => getLoanData(receiptUrls, receiptMeta),
@@ -535,7 +528,7 @@ export const LoanForm = (props, emit) => {
             )
           } else {
             const deleteMonth = props.row._month || monthYear
-            const personalDeletePath = `${props.dbRef}/${authStore.getActiveUser}/months/${deleteMonth}/loans`
+            const personalDeletePath = `${props.dbRef}/${authStore.getActiveUserUid}/months/${deleteMonth}/loans`
             deleteExistingReceipts()
             deleteData(
               `${personalDeletePath}/${props.row.id}`,
@@ -603,11 +596,10 @@ export const LoanForm = (props, emit) => {
       // For shared loans the giver/receiver field stores a UID (ME? case) or a
       // name (dropdown case). Always resolve to a human-readable name here.
       giverName: !props.isPersonal
-        ? userStore.getUserByMobile(giverMobile)?.name ||
-          formData.value.loanGiver
+        ? userStore.getUserByUid(giverMobile)?.name || formData.value.loanGiver
         : formData.value.loanGiver,
       receiverName: !props.isPersonal
-        ? userStore.getUserByMobile(receiverMobile)?.name ||
+        ? userStore.getUserByUid(receiverMobile)?.name ||
           formData.value.loanReceiver
         : formData.value.loanReceiver,
       ...(!props.isPersonal

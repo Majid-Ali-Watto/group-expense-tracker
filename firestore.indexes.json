@@ -12,7 +12,7 @@
       "collectionGroup": "groups",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "memberMobiles", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "memberUids", "arrayConfig": "CONTAINS" },
         { "fieldPath": "blocked", "order": "ASCENDING" }
       ]
     },
@@ -104,7 +104,7 @@
     },
     {
       "collectionGroup": "groups",
-      "fieldPath": "memberMobiles",
+      "fieldPath": "memberUids",
       "indexes": [
         {
           "arrayConfig": "CONTAINS",

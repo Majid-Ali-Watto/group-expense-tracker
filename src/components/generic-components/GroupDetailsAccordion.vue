@@ -20,27 +20,6 @@
           </div>
         </div>
 
-        <!-- Group Code -->
-        <!-- <div class="flex flex-row justify-between">
-          <div class="text-xs font-medium text-gray-500 mb-1">Group Code</div>
-          <div
-            class="text-sm font-mono bg-gray-100 px-2 py-1 rounded inline-block"
-          >
-            {{ group.id }}
-          </div>
-        </div> -->
-
-        <!-- Owner -->
-        <!-- <div class="flex flex-row justify-between">
-          <div class="text-xs font-medium text-gray-500 mb-1">Owner</div>
-          <div class="text-sm text-gray-700">
-            {{
-              userStore.getUserByMobile(group.ownerMobile)?.name +
-                ` (${displayMobileForGroup(group.ownerMobile, group)})` ||
-              group.ownerMobile
-            }}
-          </div>
-        </div> -->
         <slot name="your-position"></slot>
         <!-- Members List -->
         <div>
@@ -59,9 +38,7 @@
               size="small"
               type="info"
             >
-              {{
-                userStore.getUserByMobile(member.mobile)?.name || member.mobile
-              }}
+              {{ userStore.getUserByUid(member.uid)?.name }}
               ({{ displayMobileForGroup(member.mobile, group) }})
             </el-tag>
             <el-tag
@@ -100,19 +77,13 @@
                 class="w-7 h-7 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-semibold shrink-0"
               >
                 {{
-                  (
-                    userStore.getUserByMobile(member.mobile)?.name ||
-                    member.mobile
-                  )
+                  (userStore.getUserByUid(member.uid)?.name || member.mobile)
                     .charAt(0)
                     .toUpperCase()
                 }}
               </div>
               <div class="text-sm text-gray-700">
-                {{
-                  userStore.getUserByMobile(member.mobile)?.name ||
-                  member.mobile
-                }}
+                {{ userStore.getUserByUid(member.uid)?.name || member.mobile }}
                 <span class="text-gray-500 font-bold text-xs ml-1"
                   >({{ displayMobileForGroup(member.mobile, group) }})</span
                 >

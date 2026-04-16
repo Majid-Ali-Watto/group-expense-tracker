@@ -12,7 +12,7 @@ export const NetPosition = () => {
   const userStore = useUserStore()
   const { read, readShallow } = useFireBase()
 
-  const activeUser = computed(() => authStore.getActiveUser)
+  const activeUserUid = computed(() => authStore.getActiveUserUid)
   const isCalculating = ref(false)
 
   /**
@@ -227,11 +227,15 @@ export const NetPosition = () => {
       totalLender: 0,
       totalDebtor: 0,
       netPosition: 0,
-      includedSections: { sharedExpenses: hasSharedExpenses, sharedLoans: hasSharedLoans, personalLoans: hasPersonalLoans }
+      includedSections: {
+        sharedExpenses: hasSharedExpenses,
+        sharedLoans: hasSharedLoans,
+        personalLoans: hasPersonalLoans
+      }
     }
 
     try {
-      const userMobile = activeUser.value
+      const userMobile = activeUserUid.value
 
       if (!userMobile) {
         showError('Please log in to view your net position')
@@ -243,7 +247,7 @@ export const NetPosition = () => {
         const allGroups = groupStore.getGroups || []
         const userGroups = allGroups.filter((group) => {
           if (!group || !group.members) return false
-          return group.members.some((m) => m.mobile === userMobile)
+          return group.members.some((m) => m.uid === userMobile)
         })
 
         for (const group of userGroups) {

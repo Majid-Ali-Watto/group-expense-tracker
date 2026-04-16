@@ -22,7 +22,7 @@
         />
         <GenericDropDown
           v-model="groupForm.members"
-          label="Members"
+          label="Members (max. 30)"
           prop="members"
           label-position="top"
           :options="usersOptions"
@@ -31,6 +31,9 @@
           multiple
           required
         />
+        <p class="text-xs text-gray-500 -mt-2 mb-2">
+          Selected: {{ memberCount }}/{{ MAX_GROUP_MEMBERS }}
+        </p>
         <GenericDropDown
           v-model="groupForm.category"
           label="Category"
@@ -69,6 +72,8 @@ const props = defineProps({
 
 const categoryOptions = GROUP_CATEGORIES
 const {
+  MAX_GROUP_MEMBERS,
+  memberCount,
   groupForm,
   groupFormRef,
   usersOptions,

@@ -45,7 +45,7 @@
       :action-loading="actionLoading"
       :status-label="statusLabel"
       :notes-open="notesOpen"
-      :current-user-id="authStore.getActiveUser"
+      :current-user-id="authStore.getActiveUserUid"
       :reply-inputs="replyInputs"
       :reply-errors="replyErrors"
       :reply-saving-id="replySavingId"

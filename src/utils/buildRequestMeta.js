@@ -1,8 +1,8 @@
 export function buildRequestMeta(userStore) {
-  const activeUser = userStore.getActiveUser
+  const activeUserUid = userStore.getActiveUserUid
   return {
-    requestedBy: activeUser,
-    approvals: [activeUser],
+    requestedBy: activeUserUid,
+    approvals: [activeUserUid],
     requestedAt: new Date().toLocaleString('en-PK')
   }
 }

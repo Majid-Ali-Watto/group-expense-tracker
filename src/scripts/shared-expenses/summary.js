@@ -1,18 +1,13 @@
 import { computed, inject } from 'vue'
-import { useAuthStore, useGroupStore, useUserStore } from '@/stores'
+import { useGroupStore, useUserStore } from '@/stores'
+import { useStoreProxy } from '@/composables'
 import { formatUserDisplay } from '@/utils'
 
 export const Summary = (props) => {
   const formatAmount = inject('formatAmount')
-  const authStore = useAuthStore()
   const groupStore = useGroupStore()
   const userStore = useUserStore()
-  const storeProxy = {
-    get getActiveUser() {
-      return authStore.getActiveUser
-    },
-    getUserByMobile: (m) => userStore.getUserByMobile(m)
-  }
+  const storeProxy = useStoreProxy()
 
   const activeGroup = computed(() => groupStore.getActiveGroup)
   const groupObj = computed(() =>
@@ -42,7 +37,7 @@ export const Summary = (props) => {
     ) {
       return groupObj.value.members.map((m) => ({
         name: m.name,
-        mobile: m.uid || m.mobile
+        mobile: m.uid
       }))
     }
     return userStore.getUsers && userStore.getUsers.length

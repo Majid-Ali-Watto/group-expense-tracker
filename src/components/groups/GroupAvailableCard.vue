@@ -12,13 +12,15 @@
 
     <div
       class="mb-3"
-      :class="{ 'pointer-events-none opacity-60 select-none': isInteractionBlocked }"
+      :class="{
+        'pointer-events-none opacity-60 select-none': isInteractionBlocked
+      }"
     >
       <h3 class="font-semibold text-lg mb-0.5">{{ group.name }}</h3>
       <div class="flex flex-wrap items-center gap-x-4 gap-y-0.5 mb-2">
         <p class="text-xs text-gray-500 dark:text-gray-400">
           Owner: {{ ownerName }} ({{
-            displayMobileForGroup(group.ownerMobile, group)
+            displayMobileForGroup(group.ownerUid, group)
           }})
         </p>
         <p
@@ -59,8 +61,7 @@ const userStore = useUserStore()
 
 const ownerName = computed(
   () =>
-    userStore.getUserByMobile(props.group.ownerMobile)?.name ||
-    props.group.ownerMobile
+    userStore.getUserByUid(props.group.ownerUid)?.name || props.group.ownerUid
 )
 
 const isInteractionBlocked = computed(

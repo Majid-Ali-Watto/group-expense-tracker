@@ -27,7 +27,7 @@ export const SalaryForm = () => {
   const isSubmitting = ref(false)
   let salaryListener = null
 
-  const activeUser = computed(() => authStore.getActiveUser)
+  const activeUserUid = computed(() => authStore.getActiveUserUid)
   const isFormDirty = computed(
     () =>
       form.value.salary !== null &&
@@ -60,7 +60,7 @@ export const SalaryForm = () => {
     isSubmitting.value = true
     try {
       await setData(
-        `${DB_NODES.SALARIES}/${activeUser.value}/months/${selectedMonth.value}`,
+        `${DB_NODES.SALARIES}/${activeUserUid.value}/months/${selectedMonth.value}`,
         { salary: form.value.salary, month: getCurrentMonth() }
       )
       form.value.salary = null
@@ -90,12 +90,12 @@ export const SalaryForm = () => {
 
       isSubmitting.value = true
       const data = await read(
-        `${DB_NODES.SALARIES}/${activeUser.value}/months/${selectedMonth.value}`
+        `${DB_NODES.SALARIES}/${activeUserUid.value}/months/${selectedMonth.value}`
       )
 
       if (data) {
         await updateData(
-          `${DB_NODES.SALARIES}/${activeUser.value}/months/${selectedMonth.value}`,
+          `${DB_NODES.SALARIES}/${activeUserUid.value}/months/${selectedMonth.value}`,
           () => ({ salary: form.value.salary }),
           'Salary updated successfully!'
         )
@@ -117,9 +117,9 @@ export const SalaryForm = () => {
       salaryListener()
       salaryListener = null
     }
-    if (!activeUser.value) return
+    if (!activeUserUid.value) return
     const monthRef = dbRef(
-      `${DB_NODES.SALARIES}/${activeUser.value}/months/${selectedMonth.value}`
+      `${DB_NODES.SALARIES}/${activeUserUid.value}/months/${selectedMonth.value}`
     )
 
     salaryListener = onSnapshot(
@@ -172,7 +172,7 @@ export const SalaryForm = () => {
     listenForSalaryChanges()
   })
 
-  watch(activeUser, (user) => {
+  watch(activeUserUid, (user) => {
     if (user) listenForSalaryChanges()
   })
 

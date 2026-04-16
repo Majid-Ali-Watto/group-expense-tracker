@@ -35,7 +35,7 @@ export const useUserStore = defineStore('user', {
     getUserByUid: (state) => (uid) =>
       state.users.find((u) => u.uid === uid) || null,
     getUserByMobile: (state) => (value) =>
-      state.users.find((u) => u.uid === value || u.mobile === value) || null,
+      state.users.find((u) => u.mobile === value) || null,
     getUserByEmail: (state) => (email) =>
       state.users.find(
         (u) => u.email?.toLowerCase() === email?.toLowerCase()

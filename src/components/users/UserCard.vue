@@ -12,7 +12,9 @@
 
     <div
       class="flex flex-col sm:flex-row sm:items-center gap-3"
-      :class="{ 'pointer-events-none opacity-60 select-none': isInteractionBlocked }"
+      :class="{
+        'pointer-events-none opacity-60 select-none': isInteractionBlocked
+      }"
     >
       <!-- Name & Mobile -->
       <div class="flex-1 min-w-0">
@@ -33,23 +35,30 @@
           Groups
         </div>
         <template v-if="groups.length > 0">
-          <el-tag
-            v-for="group in groups.slice(0, 3)"
-            :key="group"
-            size="small"
-            type="success"
+          <button
+            v-for="group in groups.slice(0, 2)"
+            :key="group.id"
+            class="group-chip"
+            @click="$emit('select-group', group)"
           >
-            {{ group }}
-          </el-tag>
-          <el-tag
-            v-if="groups.length > 3"
-            size="small"
-            type="success"
-            class="cursor-pointer"
+            <span class="group-chip__name">{{ group.name }}</span>
+            <span
+              v-if="groupStatusLabel(group)"
+              :class="[
+                'group-chip__status',
+                `group-chip__status--${getGroupStatus(group)}`
+              ]"
+            >
+              {{ groupStatusLabel(group) }}
+            </span>
+          </button>
+          <button
+            v-if="groups.length > 2"
+            class="group-chip group-chip--more"
             @click="$emit('open-groups')"
           >
-            +{{ groups.length - 3 }} more
-          </el-tag>
+            <span class="group-chip__name">+{{ groups.length - 2 }} more</span>
+          </button>
         </template>
         <span v-else class="text-gray-400 text-xs">No groups</span>
       </div>
@@ -63,7 +72,7 @@
         </div>
 
         <el-button
-          v-if="user.uid !== activeUser"
+          v-if="user.uid !== activeUserUid"
           size="small"
           type="success"
           plain
@@ -108,21 +117,25 @@ import { computed } from 'vue'
 
 const props = defineProps({
   user: { type: Object, required: true },
-  activeUser: { type: String, default: null },
+  activeUserUid: { type: String, default: null },
   groups: { type: Array, required: true },
   mobile: { type: String, required: true },
   canManage: { type: Boolean, required: true },
-  activeUserBlocked: { type: Boolean, default: false }
+  activeUserBlocked: { type: Boolean, default: false },
+  isMember: { type: Function, default: () => false },
+  hasPendingJoinRequest: { type: Function, default: () => false }
 })
 
-defineEmits(['edit', 'delete', 'create-group', 'open-groups'])
+defineEmits(['edit', 'delete', 'create-group', 'open-groups', 'select-group'])
 
 const isInteractionBlocked = computed(
   () => props.activeUserBlocked || props.user?.blocked === true
 )
 
 const showBlockedWarning = computed(
-  () => props.user?.blocked === true || (props.activeUserBlocked && props.user?.uid === props.activeUser)
+  () =>
+    props.user?.blocked === true ||
+    (props.activeUserBlocked && props.user?.uid === props.activeUserUid)
 )
 
 const blockedMessage = computed(() =>
@@ -130,6 +143,19 @@ const blockedMessage = computed(() =>
     ? 'This user is blocked by admin. Do not interact with this account.'
     : 'Your account is blocked by admin. User actions are disabled.'
 )
+
+function getGroupStatus(group) {
+  if (props.isMember(group)) return 'member'
+  if (props.hasPendingJoinRequest(group)) return 'requested'
+  return 'none'
+}
+
+function groupStatusLabel(group) {
+  const status = getGroupStatus(group)
+  if (status === 'member') return 'Member'
+  if (status === 'requested') return 'Request Sent'
+  return ''
+}
 </script>
 
 <style scoped>
@@ -155,5 +181,75 @@ const blockedMessage = computed(() =>
 
 .dark-theme .user-card {
   background: rgba(17, 24, 39, 0.55);
+}
+
+.group-chip {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 0.2rem 0.5rem;
+  border-radius: 8px;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  background: rgba(34, 197, 94, 0.07);
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+  text-align: left;
+}
+
+.group-chip:hover {
+  background: rgba(34, 197, 94, 0.14);
+  border-color: rgba(34, 197, 94, 0.5);
+}
+
+.group-chip--more {
+  border-style: dashed;
+  background: transparent;
+}
+
+.group-chip__name {
+  font-size: 0.78rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-primary, #1e293b);
+}
+
+.group-chip__status {
+  font-size: 0.65rem;
+  font-weight: 500;
+  line-height: 1.3;
+  margin-top: 0.05rem;
+}
+
+.group-chip__status--member {
+  color: #16a34a;
+}
+
+.group-chip__status--requested {
+  color: #d97706;
+}
+
+.dark-theme .group-chip {
+  border-color: rgba(34, 197, 94, 0.2);
+  background: rgba(34, 197, 94, 0.06);
+}
+
+.dark-theme .group-chip:hover {
+  background: rgba(34, 197, 94, 0.12);
+}
+
+.dark-theme .group-chip__name {
+  color: #e2e8f0;
+}
+
+.dark-theme .group-chip__status--member {
+  color: #4ade80;
+}
+
+.dark-theme .group-chip__status--requested {
+  color: #fbbf24;
 }
 </style>

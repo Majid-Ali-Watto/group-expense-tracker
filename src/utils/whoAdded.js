@@ -20,5 +20,5 @@ export function removeUserFromStorage() {
 }
 export default function getWhoAddedTransaction() {
   const authStore = useAuthStore()
-  return authStore.getActiveUser
+  return authStore.getActiveUserUid
 }

@@ -6,7 +6,7 @@ import { withTrace } from '@/utils/performance'
 
 export function useApprovalRequests({
   rawItems,
-  activeUser,
+  activeUserUid,
   activeGroup,
   selectedMonth,
   userStore,
@@ -26,7 +26,7 @@ export function useApprovalRequests({
     if (!changes) return ''
     const resolveUser = (identity) => {
       if (!identity) return identity
-      const user = userStore?.getUserByMobile?.(identity)
+      const user = userStore?.getUserByUid?.(identity)
       if (user) {
         // Use the stored mobile for masking, not the identity (which may be a UID)
         const maskedMobile =
@@ -51,14 +51,14 @@ export function useApprovalRequests({
   }
 
   const userNotifications = computed(() => {
-    if (!rawItems.value || !activeUser.value) return []
+    if (!rawItems.value || !activeUserUid.value) return []
 
     const notifications = []
 
     Object.keys(rawItems.value).forEach((itemId) => {
       const item = rawItems.value[itemId]
 
-      item?.notifications?.[activeUser.value]?.forEach((notification) => {
+      item?.notifications?.[activeUserUid.value]?.forEach((notification) => {
         notifications.push({
           ...notification,
           [itemIdKey]: itemId,
@@ -117,7 +117,7 @@ export function useApprovalRequests({
   })
 
   const hasUserApproved = (request) => {
-    return request.approvals.includes(activeUser.value)
+    return request.approvals.includes(activeUserUid.value)
   }
 
   const isFullyApproved = (request) => {
@@ -129,7 +129,7 @@ export function useApprovalRequests({
 
     for (const itemId of Object.keys(rawItems.value || {})) {
       const item = rawItems.value[itemId]
-      const notifications = item?.notifications?.[activeUser.value] || []
+      const notifications = item?.notifications?.[activeUserUid.value] || []
       const filtered = notifications.filter(
         (notification) => notification.id !== notificationId
       )
@@ -147,13 +147,13 @@ export function useApprovalRequests({
       if (filtered.length === 0) {
         await updateData(
           itemPath,
-          () => ({ [`notifications.${activeUser.value}`]: deleteField() }),
+          () => ({ [`notifications.${activeUserUid.value}`]: deleteField() }),
           ''
         )
       } else {
         await updateData(
           itemPath,
-          () => ({ [`notifications.${activeUser.value}`]: filtered }),
+          () => ({ [`notifications.${activeUserUid.value}`]: filtered }),
           ''
         )
       }
@@ -180,52 +180,52 @@ export function useApprovalRequests({
 
   async function executeRequest(request, groupId) {
     return withTrace('approval_execute', async () => {
-    const itemId = request[itemIdKey]
-    const itemPath = buildItemPath({
-      groupId,
-      monthYear: request.monthYear,
-      itemId
-    })
+      const itemId = request[itemIdKey]
+      const itemPath = buildItemPath({
+        groupId,
+        monthYear: request.monthYear,
+        itemId
+      })
 
-    await updateData(
-      itemPath,
-      () => ({ [`${request.type}Request`]: deleteField() }),
-      ''
-    )
-
-    const changesSummary =
-      request.type === 'update' ? summarizeChanges(request.changes) : ''
-    const notification = {
-      id: Date.now().toString() + Math.random(),
-      type: 'approved',
-      message: `Your ${request.type} request for ${itemLabel} has been approved by all members${changesSummary}`,
-      timestamp: Date.now()
-    }
-
-    if (request.type === 'delete') {
-      await cleanupDeletedReceipts(rawItems.value[itemId], request)
-      await appendRequesterNotification(
-        itemId,
+      await updateData(
         itemPath,
-        request.requestedBy,
+        () => ({ [`${request.type}Request`]: deleteField() }),
+        ''
+      )
+
+      const changesSummary =
+        request.type === 'update' ? summarizeChanges(request.changes) : ''
+      const notification = {
+        id: Date.now().toString() + Math.random(),
+        type: 'approved',
+        message: `Your ${request.type} request for ${itemLabel} has been approved by all members${changesSummary}`,
+        timestamp: Date.now()
+      }
+
+      if (request.type === 'delete') {
+        await cleanupDeletedReceipts(rawItems.value[itemId], request)
+        await appendRequesterNotification(
+          itemId,
+          itemPath,
+          request.requestedBy,
+          notification
+        )
+
+        await new Promise((resolve) => setTimeout(resolve, 100))
+        await deleteData(
+          itemPath,
+          `${listLabel} has been deleted (approved by all members).`
+        )
+        return
+      }
+
+      const updatedItem = buildUpdatedItem(
+        rawItems.value[itemId],
+        request,
         notification
       )
 
-      await new Promise((resolve) => setTimeout(resolve, 100))
-      await deleteData(
-        itemPath,
-        `${listLabel} has been deleted (approved by all members).`
-      )
-      return
-    }
-
-    const updatedItem = buildUpdatedItem(
-      rawItems.value[itemId],
-      request,
-      notification
-    )
-
-    await updateData(
+      await updateData(
         itemPath,
         () => updatedItem,
         `${listLabel} has been updated (approved by all members).`
@@ -265,23 +265,23 @@ export function useApprovalRequests({
 
   const approveRequest = async (request) => {
     return withTrace('approval_approve', async () => {
-    const groupId = activeGroup.value || 'global'
-    const itemPath = buildItemPath({
-      groupId,
-      monthYear: request.monthYear,
-      itemId: request[itemIdKey]
-    })
-    const updatedApprovals = [...request.approvals, activeUser.value]
+      const groupId = activeGroup.value || 'global'
+      const itemPath = buildItemPath({
+        groupId,
+        monthYear: request.monthYear,
+        itemId: request[itemIdKey]
+      })
+      const updatedApprovals = [...request.approvals, activeUserUid.value]
 
-    await updateData(
-      itemPath,
-      () => ({ [`${request.type}Request.approvals`]: updatedApprovals }),
-      'Your approval has been recorded.'
-    )
+      await updateData(
+        itemPath,
+        () => ({ [`${request.type}Request.approvals`]: updatedApprovals }),
+        'Your approval has been recorded.'
+      )
 
-    if (updatedApprovals.length >= getTotalMembers()) {
-      await executeRequest(request, groupId)
-    }
+      if (updatedApprovals.length >= getTotalMembers()) {
+        await executeRequest(request, groupId)
+      }
     })
   }
 
@@ -305,12 +305,12 @@ export function useApprovalRequests({
     })
     const changesSummary =
       request.type === 'update' ? summarizeChanges(request.changes) : ''
-    const rejector = userStore.getUserByUid(activeUser.value)
+    const rejector = userStore.getUserByUid(activeUserUid.value)
     const notification = {
       id: Date.now().toString() + Math.random(),
       type: 'rejected',
       message: `Your ${request.type} request for ${itemLabel} was rejected${changesSummary}`,
-      byMobile: rejector?.mobile || activeUser.value,
+      byMobile: rejector?.mobile || activeUserUid.value,
       timestamp: Date.now()
     }
 

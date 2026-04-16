@@ -5,13 +5,13 @@ import { useFireBase, useDebouncedRef } from '@/composables'
 import { useAuthStore, useGroupStore, useUserStore } from '@/stores'
 import { DB_NODES } from '@/constants'
 import { showError, maskMobile, appendNotificationForUser } from '@/utils'
-import {
-  createUserDisplayStoreProxy,
-  getDisplayMobile
-} from '@/utils/user-display'
+import { confirmAction } from '@/utils/confirmAction'
+import { getDisplayMobile } from '@/utils/user-display'
+import { createUserDisplayStoreProxy } from '@/composables'
 import {
   ACTIVE_USER_BLOCKED_MESSAGE,
   getBlockedEntityMessage,
+  isGroupBlocked,
   isUserBlocked
 } from '@/helpers'
 import {
@@ -41,7 +41,7 @@ export const Users = () => {
 
   const users = computed(() => userRows.value || [])
   const groups = computed(() => groupStore.getGroups || [])
-  const activeUser = computed(() => authStore.getActiveUser)
+  const activeUserUid = computed(() => authStore.getActiveUserUid)
 
   const route = useRoute()
   const router = useRouter()
@@ -50,10 +50,10 @@ export const Users = () => {
   const sharedGroupsOnly = ref(route.query.shared === '1')
   const hideBlockedUsers = ref(
     userStore.getActiveUserTabConfig?.hideBlockedUsers ??
-    (route.query.hideBlocked === '1')
+      route.query.hideBlocked === '1'
   )
   const activeUserIsBlocked = computed(() =>
-    isUserBlocked(userStore.getUserByUid(activeUser.value))
+    isUserBlocked(userStore.getUserByUid(activeUserUid.value))
   )
 
   // Sync filters to URL so they are bookmarkable and shareable
@@ -81,7 +81,37 @@ export const Users = () => {
   }
 
   function getUserId(user) {
-    return user?.uid || user?.mobile || ''
+    return user?.uid || ''
+  }
+
+  function getUserIdentitySet(userId) {
+    return new Set([userId].filter(Boolean))
+  }
+
+  function matchesIdentity(entry, uid) {
+    if (!entry || !uid) return false
+    const entryUid = entry.uid || ''
+    return entryUid === uid
+  }
+
+  function memberMatchesUser(member, userId) {
+    if (!member || !userId) return false
+    const identities = getUserIdentitySet(userId)
+    return identities.has(member.uid)
+  }
+
+  function isCurrentUserInGroup(group) {
+    if (!group || !activeUserUid.value) return false
+    return (group.members || []).some((member) =>
+      matchesIdentity(member, activeUserUid.value)
+    )
+  }
+
+  function hasCurrentUserPendingJoinRequest(group) {
+    if (!group || !activeUserUid.value) return false
+    return (group.joinRequests || []).some((request) =>
+      matchesIdentity(request, activeUserUid.value)
+    )
   }
 
   function normalizeName(value = '') {
@@ -101,7 +131,7 @@ export const Users = () => {
   }
 
   function pinActiveUserFirst(rows) {
-    const activeUserId = activeUser.value
+    const activeUserId = activeUserUid.value
     if (!activeUserId) return rows
 
     const result = [...rows]
@@ -169,9 +199,80 @@ export const Users = () => {
   function getUserGroups(userId) {
     return groups.value
       .filter((g) =>
-        g.members?.some((member) => (member.uid || member.mobile) === userId)
+        g.members?.some((member) => memberMatchesUser(member, userId))
       )
-      .map((g) => g.name)
+      .map((g) => ({ ...g }))
+  }
+
+  function ensureGroupInteractionAllowed(group) {
+    if (activeUserIsBlocked.value) {
+      showError(ACTIVE_USER_BLOCKED_MESSAGE)
+      return false
+    }
+
+    if (group && isGroupBlocked(group)) {
+      showError(getBlockedEntityMessage('group'))
+      return false
+    }
+
+    return true
+  }
+
+  async function requestJoinFromUserGroup(group) {
+    if (!group || isCurrentUserInGroup(group)) return
+    if (!ensureGroupInteractionAllowed(group)) return
+
+    if (hasCurrentUserPendingJoinRequest(group)) {
+      showError('You already have a pending join request for this group.')
+      return
+    }
+
+    const confirmed = await confirmAction({
+      message: `Do you want to send a join request for "${group.name}"?`,
+      title: 'Join Group',
+      confirmButtonText: 'Send Request',
+      cancelButtonText: 'Cancel',
+      type: 'info'
+    })
+    if (!confirmed) return
+
+    try {
+      const me = userStore.getUserByUid(activeUserUid.value)
+      const myName = me?.name || activeUserUid.value
+      const myMobile = me?.mobile || activeUserUid.value
+      const newRequests = [
+        ...(group.joinRequests || []),
+        { uid: activeUserUid.value, mobile: myMobile, approvals: [] }
+      ]
+
+      let payload = { joinRequests: newRequests }
+      let updatedGroup = { ...group, joinRequests: newRequests }
+
+      for (const member of group.members || []) {
+        if (matchesIdentity(member, activeUserUid.value, myMobile)) continue
+        updatedGroup = appendNotificationForUser(updatedGroup, member.uid, {
+          id: `${Date.now()}-${Math.random()}`,
+          type: 'join-request',
+          message: `${myName} (${maskMobile(myMobile)}) wants to join "${group.name}"`,
+          updatedBy: activeUserUid.value,
+          timestamp: Date.now()
+        })
+      }
+
+      if (updatedGroup.notifications) {
+        payload = { ...payload, notifications: updatedGroup.notifications }
+      }
+
+      await updateData(
+        `${DB_NODES.GROUPS}/${group.id}`,
+        () => payload,
+        'Join request sent! Waiting for member approval.'
+      )
+
+      groupStore.updateGroup(updatedGroup)
+    } catch {
+      showError('Failed to send join request. Please try again.')
+    }
   }
 
   const filteredUsers = computed(() => {
@@ -183,27 +284,33 @@ export const Users = () => {
         return (
           u.name.toLowerCase().includes(query) ||
           displayMobile(getUserId(u)).toLowerCase().includes(query) ||
-          getUserGroups(getUserId(u)).some((g) =>
-            g.toLowerCase().includes(query)
+          getUserGroups(getUserId(u)).some((group) =>
+            group.name.toLowerCase().includes(query)
           )
         )
       })
     }
 
     if (sharedGroupsOnly.value) {
-      const me = activeUser.value
+      const me = activeUserUid.value
+      const myIdentitySet = getUserIdentitySet(me)
       const sharedUserIds = new Set(
         groups.value
           .filter((g) =>
-            g.members?.some((member) => (member.uid || member.mobile) === me)
+            g.members?.some((member) => memberMatchesUser(member, me))
           )
           .flatMap(
-            (g) => g.members?.map((member) => member.uid || member.mobile) || []
+            (g) =>
+              g.members?.flatMap((member) => [member.uid].filter(Boolean)) || []
           )
       )
-      result = result.filter(
-        (u) => getUserId(u) === me || sharedUserIds.has(getUserId(u))
-      )
+      result = result.filter((u) => {
+        const userIdentities = getUserIdentitySet(getUserId(u))
+        return (
+          [...userIdentities].some((identity) => myIdentitySet.has(identity)) ||
+          [...userIdentities].some((identity) => sharedUserIds.has(identity))
+        )
+      })
     }
 
     if (sortOrder.value === 'asc') {
@@ -236,8 +343,7 @@ export const Users = () => {
     usersUnsubscribe = onSnapshot(
       query(collection(database, DB_NODES.USERS), ...queryConstraints),
       (snap) => {
-        const nextUsers = snap.docs
-          .map((docSnap) => {
+        const nextUsers = snap.docs.map((docSnap) => {
           const uid = docSnap.id
           const u = docSnap.data()
           const user = {
@@ -255,7 +361,7 @@ export const Users = () => {
 
           userStore.addUser(user)
           return user
-          })
+        })
         userRows.value = nextUsers
         isPageLoading.value = false
       },
@@ -271,13 +377,12 @@ export const Users = () => {
   })
 
   watch(hideBlockedUsers, async (newVal) => {
-    const uid = authStore.getActiveUser
+    const uid = authStore.getActiveUserUid
     if (uid) {
       try {
-        await updateDoc(
-          doc(database, `${DB_NODES.USER_TAB_CONFIGS}/${uid}`),
-          { hideBlockedUsers: newVal }
-        )
+        await updateDoc(doc(database, `${DB_NODES.USER_TAB_CONFIGS}/${uid}`), {
+          hideBlockedUsers: newVal
+        })
       } catch (err) {
         console.error('Failed to save hideBlockedUsers preference:', err)
       }
@@ -293,23 +398,23 @@ export const Users = () => {
   // --- Permission helpers ---
 
   function canManage(row) {
-    const me = activeUser.value
+    const me = activeUserUid.value
     if (!me) return false
     if (activeUserIsBlocked.value || isUserBlocked(row)) return false
     return row.uid === me || row.addedBy === me
   }
 
-  // Unique group owner mobiles of all groups the user is a member of
-  function getGroupOwnerMobiles(userId) {
+  // Unique group owner UIDs of all groups the user is a member of
+  function getGroupOwnerUids(userId) {
     const memberGroups = groups.value.filter((g) =>
-      g.members?.some((member) => (member.uid || member.mobile) === userId)
+      g.members?.some((member) => memberMatchesUser(member, userId))
     )
-    return [...new Set(memberGroups.map((g) => g.ownerMobile).filter(Boolean))]
+    return [...new Set(memberGroups.map((g) => g.ownerUid).filter(Boolean))]
   }
 
   // Pending delete requests that the current user (as group owner) needs to approve
   const myPendingApprovals = computed(() => {
-    const me = activeUser.value
+    const me = activeUserUid.value
     if (!me) return []
     const result = []
     users.value.forEach((u) => {
@@ -317,7 +422,7 @@ export const Users = () => {
       if (
         req &&
         req.requiredApprovals?.includes(me) &&
-        !req.approvals?.some((a) => (a.uid || a.mobile) === me)
+        !req.approvals?.some((a) => a.uid === me)
       ) {
         result.push({ user: u, type: 'delete', request: req })
       }
@@ -345,18 +450,18 @@ export const Users = () => {
   async function syncUserProfileInGroups(userId, profile) {
     const relatedGroups = groups.value.filter((group) =>
       [...(group.members || []), ...(group.pendingMembers || [])].some(
-        (member) => (member.uid || member.mobile) === userId
+        (member) => memberMatchesUser(member, userId)
       )
     )
 
     for (const group of relatedGroups) {
       const members = (group.members || []).map((member) =>
-        (member.uid || member.mobile) === userId
+        memberMatchesUser(member, userId)
           ? { ...member, name: profile.name, phone: profile.mobile }
           : member
       )
       const pendingMembers = (group.pendingMembers || []).map((member) =>
-        (member.uid || member.mobile) === userId
+        memberMatchesUser(member, userId)
           ? { ...member, name: profile.name, phone: profile.mobile }
           : member
       )
@@ -442,11 +547,11 @@ export const Users = () => {
 
     // Notify each group the user belongs to so co-members are informed
     const memberGroups = groups.value.filter((g) =>
-      g.members?.some((member) => (member.uid || member.mobile) === uid)
+      g.members?.some((member) => memberMatchesUser(member, uid))
     )
     for (const group of memberGroups) {
       const coMembers = (group.members || []).filter(
-        (member) => (member.uid || member.mobile) !== uid
+        (member) => !memberMatchesUser(member, uid)
       )
       if (!coMembers.length) continue
 
@@ -460,19 +565,15 @@ export const Users = () => {
 
       let updatedGroup = { ...group }
       for (const member of coMembers) {
-        updatedGroup = appendNotificationForUser(
-          updatedGroup,
-          member.uid || member.mobile,
-          {
-            id: Date.now().toString() + Math.random(),
-            type: 'member-renamed',
-            message: `${newName} has ${changeParts.join(
-              ' and '
-            )} in group "${group.name}".`,
-            updatedBy: uid,
-            timestamp: Date.now()
-          }
-        )
+        updatedGroup = appendNotificationForUser(updatedGroup, member.uid, {
+          id: Date.now().toString() + Math.random(),
+          type: 'member-renamed',
+          message: `${newName} has ${changeParts.join(
+            ' and '
+          )} in group "${group.name}".`,
+          updatedBy: uid,
+          timestamp: Date.now()
+        })
       }
 
       await updateData(
@@ -492,10 +593,10 @@ export const Users = () => {
       const targetUser = userStore.getUserByUid(uid)
       if (!ensureUsersInteractionAllowed(targetUser)) return
 
-      const ownerMobiles = getGroupOwnerMobiles(uid)
+      const ownerUids = getGroupOwnerUids(uid)
       await ElMessageBox.confirm(
         `Are you sure you want to delete <strong>${name}</strong>?${
-          ownerMobiles.length > 0
+          ownerUids.length > 0
             ? '<br><br>This user is in one or more groups. All group owners must approve before deletion.'
             : ''
         }`,
@@ -517,9 +618,9 @@ export const Users = () => {
           'An update request is pending. Cancel it before deleting.'
         )
 
-      const me = activeUser.value
+      const me = activeUserUid.value
 
-      if (ownerMobiles.length === 0) {
+      if (ownerUids.length === 0) {
         // Delete from Realtime Database
         await deleteData(`${DB_NODES.USERS}/${uid}`, `User ${name} deleted`)
         userStore.setUsers([...userStore.getUsers].filter((u) => u.uid !== uid))
@@ -538,7 +639,7 @@ export const Users = () => {
             )
           }
 
-          authStore.setActiveUser(null)
+          authStore.setActiveUserUid(null)
           groupStore.setActiveGroup(null)
           authStore.setSessionToken(null)
           sessionStorage.removeItem('_session')
@@ -546,7 +647,7 @@ export const Users = () => {
       } else {
         const deleteRequest = {
           requestedBy: me,
-          requiredApprovals: ownerMobiles,
+          requiredApprovals: ownerUids,
           approvals: []
         }
         await updateData(
@@ -566,7 +667,7 @@ export const Users = () => {
   // --- Approve Request ---
 
   async function approveRequest(userUid, type) {
-    const me = activeUser.value
+    const me = activeUserUid.value
     const user = await read(`${DB_NODES.USERS}/${userUid}`)
     if (!user) return showError('User not found')
     if (!ensureUsersInteractionAllowed(user)) return
@@ -574,9 +675,9 @@ export const Users = () => {
     const request = type === 'delete' ? user.deleteRequest : user.updateRequest
     if (!request) return showError('Request not found or already resolved')
 
-    const newApprovals = [...(request.approvals || []), { uid: me, mobile: me }]
+    const newApprovals = [...(request.approvals || []), { uid: me }]
     const allApproved = request.requiredApprovals.every((r) =>
-      newApprovals.some((a) => (a.uid || a.mobile) === r)
+      newApprovals.some((a) => a.uid === r)
     )
 
     // Only delete requests go through approval; update requests are applied directly
@@ -604,7 +705,7 @@ export const Users = () => {
           )
         }
 
-        authStore.setActiveUser(null)
+        authStore.setActiveUserUid(null)
         groupStore.setActiveGroup(null)
         authStore.setSessionToken(null)
         sessionStorage.removeItem('_session')
@@ -647,10 +748,10 @@ export const Users = () => {
               rejectionNotification: {
                 type: 'delete-rejected',
                 message: `Your account deletion request was rejected by ${
-                  userStore.getUserByUid(activeUser.value)?.name ||
-                  activeUser.value
+                  userStore.getUserByUid(activeUserUid.value)?.name ||
+                  activeUserUid.value
                 }.`,
-                rejectedBy: activeUser.value,
+                rejectedBy: activeUserUid.value,
                 timestamp: Date.now()
               }
             }
@@ -699,8 +800,11 @@ export const Users = () => {
     myPendingApprovals,
     displayMobile,
     getUserGroups,
+    isCurrentUserInGroup,
+    hasCurrentUserPendingJoinRequest,
+    requestJoinFromUserGroup,
     canManage,
-    activeUser,
+    activeUserUid,
     openEditUser,
     submitUpdateUser,
     requestDeleteUser,

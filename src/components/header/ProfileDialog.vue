@@ -14,7 +14,9 @@
         </div>
 
         <div class="min-w-0 flex-1">
-          <p class="text-xs font-semibold tracking-[0.18em] text-emerald-700 uppercase">
+          <p
+            class="text-xs font-semibold tracking-[0.18em] text-emerald-700 uppercase"
+          >
             Account
           </p>
           <h3 class="mt-1 text-xl font-bold text-slate-900">
@@ -57,7 +59,11 @@
     </div>
 
     <template #footer>
-      <el-button size="small" type="primary" @click="emit('update:visible', false)">
+      <el-button
+        size="small"
+        type="primary"
+        @click="emit('update:visible', false)"
+      >
         Close
       </el-button>
     </template>
@@ -85,8 +91,16 @@ const isBlocked = computed(() => props.user?.blocked === true)
 <style scoped>
 .profile-hero {
   background:
-    radial-gradient(circle at top right, rgba(34, 197, 94, 0.14), transparent 45%),
-    linear-gradient(135deg, rgba(236, 253, 245, 0.95), rgba(240, 253, 244, 0.88));
+    radial-gradient(
+      circle at top right,
+      rgba(34, 197, 94, 0.14),
+      transparent 45%
+    ),
+    linear-gradient(
+      135deg,
+      rgba(236, 253, 245, 0.95),
+      rgba(240, 253, 244, 0.88)
+    );
   border: 1px solid rgba(16, 185, 129, 0.18);
 }
 
@@ -103,7 +117,11 @@ const isBlocked = computed(() => props.user?.blocked === true)
 
 :global(:root.dark-theme) .profile-hero {
   background:
-    radial-gradient(circle at top right, rgba(74, 222, 128, 0.2), transparent 45%),
+    radial-gradient(
+      circle at top right,
+      rgba(74, 222, 128, 0.2),
+      transparent 45%
+    ),
     linear-gradient(135deg, rgba(17, 24, 39, 0.96), rgba(31, 41, 55, 0.94));
   border-color: rgba(74, 222, 128, 0.2);
 }

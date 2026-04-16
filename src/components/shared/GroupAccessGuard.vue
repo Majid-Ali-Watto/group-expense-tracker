@@ -156,7 +156,7 @@ onMounted(async () => {
 const effectiveLoading = computed(() => groupsLoading.value || props.isLoading)
 
 const actioning = ref(false)
-const me = computed(() => authStore.getActiveUser)
+const me = computed(() => authStore.getActiveUserUid)
 const group = computed(() => groupStore.getGroupById(props.groupId))
 const activeUserRecord = computed(() => userStore.getUserByUid(me.value))
 const isGroupBlockedState = computed(() => isGroupBlocked(group.value))
@@ -173,21 +173,19 @@ const blockedMessage = computed(() =>
 )
 
 const isMember = computed(() =>
-  (group.value?.members || []).some((m) => m.mobile === me.value)
+  (group.value?.members || []).some((m) => m.uid === me.value)
 )
 
 const isInvited = computed(() =>
-  (group.value?.pendingMembers || []).some((m) => m.mobile === me.value)
+  (group.value?.pendingMembers || []).some((m) => m.uid === me.value)
 )
 
 const hasPendingJoinRequest = computed(() =>
-  (group.value?.joinRequests || []).some((r) => r.mobile === me.value)
+  (group.value?.joinRequests || []).some((r) => r.uid === me.value)
 )
 
 const joinRequestApprovals = computed(() => {
-  const req = (group.value?.joinRequests || []).find(
-    (r) => r.mobile === me.value
-  )
+  const req = (group.value?.joinRequests || []).find((r) => r.uid === me.value)
   return req?.approvals?.length ?? 0
 })
 
@@ -208,7 +206,7 @@ async function accept() {
       { uid: me.value, mobile: myMobile }
     ]
     const newPending = (group.value.pendingMembers || []).filter(
-      (m) => m.mobile !== myMobile && m.uid !== me.value
+      (m) => m.uid !== me.value
     )
 
     let payload = {
@@ -216,10 +214,10 @@ async function accept() {
       pendingMembers: newPending.length ? newPending : null
     }
 
-    if (group.value.ownerMobile && group.value.ownerMobile !== me.value) {
+    if (group.value.ownerUid && group.value.ownerUid !== me.value) {
       const withNotif = appendNotificationForUser(
         { ...group.value },
-        group.value.ownerMobile,
+        group.value.ownerUid,
         {
           id: `${Date.now()}-${Math.random()}`,
           type: 'invitation-accepted',
@@ -257,14 +255,14 @@ async function decline() {
     const myName = myUser?.name || me.value
     const myMobile = myUser?.mobile || me.value
     const newPending = (group.value.pendingMembers || []).filter(
-      (m) => m.mobile !== myMobile && m.uid !== me.value
+      (m) => m.uid !== me.value
     )
     let payload = { pendingMembers: newPending.length ? newPending : null }
 
-    if (group.value.ownerMobile && group.value.ownerMobile !== me.value) {
+    if (group.value.ownerUid && group.value.ownerUid !== me.value) {
       const withNotif = appendNotificationForUser(
         { ...group.value },
-        group.value.ownerMobile,
+        group.value.ownerUid,
         {
           id: `${Date.now()}-${Math.random()}`,
           type: 'invitation-declined',
@@ -302,7 +300,7 @@ async function sendJoinRequest() {
     const myName = myUser?.name || me.value
     const myMobile = myUser?.mobile || me.value
     const existing = group.value.joinRequests || []
-    if (existing.some((r) => r.mobile === myMobile || r.uid === me.value)) {
+    if (existing.some((r) => r.uid === me.value)) {
       showError('You already have a pending join request.')
       return
     }
@@ -317,7 +315,7 @@ async function sendJoinRequest() {
     let updatedGroup = { ...group.value }
     for (const member of group.value.members || []) {
       if (member.uid !== me.value) {
-        updatedGroup = appendNotificationForUser(updatedGroup, member.mobile, {
+        updatedGroup = appendNotificationForUser(updatedGroup, member.uid, {
           id: `${Date.now()}-${Math.random()}`,
           type: 'join-request',
           message: `${myName} (${maskMobile(myMobile)}) wants to join "${group.value.name}"`,

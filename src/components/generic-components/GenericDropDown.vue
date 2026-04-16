@@ -126,14 +126,14 @@ defineEmits(['update:modelValue'])
 
 const { internalValue, getLabel, getValue } = GenericDropDown(props)
 
-const mappedOptions = computed(() =>
-  (props.options || [])
-    .map((item) => ({
+const mappedOptions = computed(
+  () =>
+    (props.options || []).map((item) => ({
       label: String(getLabel(item) ?? ''),
       value: getValue(item) ?? '',
       disabled: item[props.disabledKey] === true
     }))
-    // .filter((item) => item.label !== '' || item.value !== '')
+  // .filter((item) => item.label !== '' || item.value !== '')
 )
 
 const wrapperProps = computed(() => {

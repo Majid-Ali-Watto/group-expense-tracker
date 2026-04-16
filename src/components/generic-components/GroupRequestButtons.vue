@@ -10,7 +10,7 @@
     <div class="space-y-2">
       <div
         v-for="request in getJoinRequests(group.id)"
-        :key="request.mobile"
+        :key="request.uid"
         class="bg-yellow-50 p-2 rounded"
       >
         <div class="flex items-center justify-between mb-2">
@@ -21,21 +21,21 @@
         <!-- Show approval progress -->
         <div class="text-xs text-gray-600 mb-1">
           Approvals:
-          {{ getJoinRequestApprovals(group, request.mobile).length }} /
+          {{ getJoinRequestApprovals(group, request.uid).length }} /
           {{ group.members.length }}
         </div>
         <div class="flex flex-wrap gap-1 mb-2">
           <el-tag
-            v-for="approval in getJoinRequestApprovals(group, request.mobile)"
-            :key="approval.mobile"
+            v-for="approval in getJoinRequestApprovals(group, request.uid)"
+            :key="approval.uid"
             size="small"
             type="success"
           >
             ✓ {{ formatMember(approval) }}
           </el-tag>
           <el-tag
-            v-for="member in getPendingJoinApprovals(group, request.mobile)"
-            :key="member.mobile"
+            v-for="member in getPendingJoinApprovals(group, request.uid)"
+            :key="member.uid"
             size="small"
             type="info"
           >
@@ -44,20 +44,20 @@
         </div>
         <!-- Member actions -->
         <div
-          v-if="!hasUserApprovedJoinRequest(group, request.mobile)"
+          v-if="!hasUserApprovedJoinRequest(group, request.uid)"
           class="flex gap-1"
         >
           <el-button
             size="small"
             type="success"
-            @click="approveMemberJoinRequest(group.id, request.mobile)"
+            @click="approveMemberJoinRequest(group.id, request.uid)"
           >
             Approve
           </el-button>
           <el-button
             size="small"
             type="danger"
-            @click="rejectJoinRequest(group.id, request.mobile)"
+            @click="rejectJoinRequest(group.id, request.uid)"
           >
             Reject
           </el-button>
@@ -66,8 +66,8 @@
           ✓ You have approved this request
           <span
             v-if="
-              group.ownerMobile === authStore.getActiveUser &&
-              !allMembersApprovedJoinRequest(group, request.mobile)
+              group.ownerUid === authStore.getActiveUserUid &&
+              !allMembersApprovedJoinRequest(group, request.uid)
             "
           >
             - Waiting for all members to approve
@@ -265,7 +265,7 @@
     <!-- Admin finalize button when all approved -->
     <div
       v-if="
-        group.ownerMobile === authStore.getActiveUser &&
+        group.ownerUid === authStore.getActiveUserUid &&
         allMembersApprovedAddMember(group)
       "
       class="mt-2"
@@ -336,17 +336,10 @@ import {
   hasUserApprovedAddMemberRequest,
   isCurrentUserPendingOwner
 } from '@/helpers'
-import { useAuthStore, useUserStore } from '@/stores'
 import { formatMemberDisplay, formatUserDisplay } from '@/utils'
+import { useStoreProxy } from '@/composables'
 
-const authStore = useAuthStore()
-const userStore = useUserStore()
-const storeProxy = {
-  get getActiveUser() {
-    return authStore.getActiveUser
-  },
-  getUserByMobile: (m) => userStore.getUserByMobile(m)
-}
+const storeProxy = useStoreProxy()
 
 const props = defineProps({
   group: {

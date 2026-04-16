@@ -24,10 +24,8 @@ import getCurrentMonth from '@/utils/getCurrentMonth'
 import { getCache, setCache } from '@/utils/queryCache'
 import { appendNotificationForUser } from '@/utils/recordNotifications'
 import { showError } from '@/utils/showAlerts'
-import {
-  createUserDisplayStoreProxy,
-  formatUserDisplay
-} from '@/utils/user-display'
+import { formatUserDisplay } from '@/utils/user-display'
+import { createUserDisplayStoreProxy } from '@/composables'
 import { cleanupOldReceipts, deleteReceipt } from '@/utils/uploadReceipt'
 
 export const Loans = () => {
@@ -68,7 +66,7 @@ export const Loans = () => {
   const loansLoaded = ref(false)
 
   const activeGroup = computed(() => groupStore.getActiveGroup)
-  const activeUser = computed(() => authStore.getActiveUser)
+  const activeUserUid = computed(() => authStore.getActiveUserUid)
   const groupObj = computed(() =>
     activeGroup.value ? groupStore.getGroupById(activeGroup.value) : null
   )
@@ -80,13 +78,13 @@ export const Loans = () => {
       groupObj.value.members.length
     ) {
       return groupObj.value.members.map((m) => ({
-        mobile: m.uid || m.mobile,
-        name: m.name || userStore.getUserByMobile(m.uid || m.mobile)?.name || m.mobile
+        mobile: m.uid,
+        name: m.name || userStore.getUserByUid(m.uid)?.name || m.mobile
       }))
     }
     return userStore.getUsers && userStore.getUsers.length
       ? userStore.getUsers.map((u) => ({
-          mobile: u.uid || u.mobile,
+          mobile: u.uid,
           name: u.name || u.mobile || u.uid
         }))
       : []
@@ -113,7 +111,7 @@ export const Loans = () => {
   const fetchMonths = async () => {
     const groupId = groupStore.getActiveGroup || 'global'
     return loadMonthsList({
-      isEnabled: () => !!authStore.getActiveUser,
+      isEnabled: () => !!authStore.getActiveUserUid,
       parentPath: `${DB_NODES.SHARED_LOANS}/${groupId}`,
       monthsPath: `${DB_NODES.SHARED_LOANS}/${groupId}/months`,
       read,
@@ -170,7 +168,7 @@ export const Loans = () => {
         loansLoaded.value = true
         // Ignore permission errors that fire after logout — Firebase revokes the
         // auth token before this listener is detached (on component unmount).
-        if (activeGroup.value && authStore.getActiveUser)
+        if (activeGroup.value && authStore.getActiveUserUid)
           showError('Failed to load loans. Please try again.')
       }
     )
@@ -278,7 +276,7 @@ export const Loans = () => {
     rejectRequest
   } = useApprovalRequests({
     rawItems: rawLoansData,
-    activeUser,
+    activeUserUid,
     activeGroup,
     selectedMonth,
     userStore,
@@ -400,7 +398,7 @@ export const Loans = () => {
     months,
     categoryOptions,
     isContentLoading,
-    activeUser,
+    activeUserUid,
     usersOptions,
     loans,
     loanKeys,

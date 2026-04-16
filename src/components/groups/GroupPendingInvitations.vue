@@ -36,7 +36,7 @@
               Invited by
               <span class="font-medium">
                 {{ getOwnerName(group) }}
-                ({{ displayMobileForGroup(group.ownerMobile, group) }})
+                ({{ displayMobileForGroup(group.ownerUid, group) }})
               </span>
             </div>
             <div
@@ -91,6 +91,6 @@ defineEmits(['accept', 'reject'])
 const userStore = useUserStore()
 
 function getOwnerName(group) {
-  return userStore.getUserByMobile(group.ownerMobile)?.name || group.ownerMobile
+  return userStore.getUserByUid(group.ownerUid)?.name || group.ownerUid
 }
 </script>

@@ -215,8 +215,8 @@ const router = createRouter({
 async function getCurrentUserProfile() {
   const authStore = useAuthStore()
   const userStore = useUserStore()
-  const cachedUser = authStore.getActiveUser
-    ? userStore.getUserByUid(authStore.getActiveUser)
+  const cachedUser = authStore.getActiveUserUid
+    ? userStore.getUserByUid(authStore.getActiveUserUid)
     : null
 
   if (cachedUser) return cachedUser
@@ -227,7 +227,7 @@ async function getCurrentUserProfile() {
   const user = await findUserByEmail(currentEmail)
   if (!user) return null
 
-  authStore.setActiveUser(user.uid)
+  authStore.setActiveUserUid(user.uid)
   userStore.addUser({
     uid: user.uid,
     mobile: user.mobile || '',
@@ -302,15 +302,11 @@ router.beforeEach(async (to) => {
     )
 
     if (to.meta.requiresUserTab) {
-      const allowed = canAccessTab(
-        to.meta.requiresUserTab,
-        tabConfig,
-        {
-          hasActiveGroup: GROUP_TABS.has(to.meta.requiresUserTab)
-            ? !!to.params.groupId
-            : true
-        }
-      )
+      const allowed = canAccessTab(to.meta.requiresUserTab, tabConfig, {
+        hasActiveGroup: GROUP_TABS.has(to.meta.requiresUserTab)
+          ? !!to.params.groupId
+          : true
+      })
       if (!allowed) return fallbackPath
     }
 

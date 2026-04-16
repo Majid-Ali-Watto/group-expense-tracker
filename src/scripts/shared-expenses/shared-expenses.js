@@ -5,7 +5,8 @@ import {
   useFireBase,
   useReceiptUpload,
   useSharedActivityEmail,
-  useUnsavedChangesGuard
+  useUnsavedChangesGuard,
+  useStoreProxy
 } from '@/composables'
 import {
   getWhoAddedTransaction,
@@ -26,12 +27,7 @@ export const SharedExpenses = (props, emit) => {
   const groupStore = useGroupStore()
   const userStore = useUserStore()
   const { sendSharedActivityEmail } = useSharedActivityEmail()
-  const storeProxy = {
-    get getActiveUser() {
-      return authStore.getActiveUser
-    },
-    getUserByMobile: (m) => userStore.getUserByMobile(m)
-  }
+  const storeProxy = useStoreProxy()
   const isEditMode = computed(() => !!props.row?.amount)
 
   const showTransactionForm = ref(false)
@@ -48,14 +44,14 @@ export const SharedExpenses = (props, emit) => {
     mergeCategoryOptions([activeGroupCategory.value, formData.value?.category])
   )
 
-  const activeUser = computed(() => authStore.getActiveUser)
+  const activeUserUid = computed(() => authStore.getActiveUserUid)
 
   // ========== ME? Checkbox (single payer) ==========
   const isMePayer = ref(false)
 
   watch(isMePayer, (val) => {
     if (val) {
-      formData.value.payer = activeUser.value
+      formData.value.payer = activeUserUid.value
     } else {
       formData.value.payer = ''
     }
@@ -130,7 +126,7 @@ export const SharedExpenses = (props, emit) => {
       removeReceipt()
       // Auto-tick ME? checkbox in edit mode (single payer only)
       if (newRow?.amount && newRow?.payerMode !== 'multiple') {
-        isMePayer.value = formData.value.payer === activeUser.value
+        isMePayer.value = formData.value.payer === activeUserUid.value
       } else {
         isMePayer.value = false
       }
@@ -347,7 +343,7 @@ export const SharedExpenses = (props, emit) => {
       formData.value.participants && formData.value.participants.length
         ? formData.value.participants
         : userStore.getUsers && userStore.getUsers.length
-          ? userStore.getUsers.map((u) => u.uid || u.mobile)
+          ? userStore.getUsers.map((u) => u.uid)
           : []
 
     // ---- compute split ----
@@ -380,7 +376,7 @@ export const SharedExpenses = (props, emit) => {
       }
       split = Object.keys(perPerson).map((mobile) => ({
         mobile,
-        name: userStore.getUserByMobile(mobile)?.name || mobile,
+        name: userStore.getUserByUid(mobile)?.name || mobile,
         amount: perPerson[mobile]
       }))
     } else {
@@ -398,7 +394,7 @@ export const SharedExpenses = (props, emit) => {
           }
           split.push({
             mobile,
-            name: userStore.getUserByMobile(mobile)?.name || mobile,
+            name: userStore.getUserByUid(mobile)?.name || mobile,
             amount: share
           })
         }
@@ -412,7 +408,7 @@ export const SharedExpenses = (props, emit) => {
           .filter((p) => p.mobile)
           .map((p) => ({
             mobile: p.mobile,
-            name: userStore.getUserByMobile(p.mobile)?.name || p.mobile,
+            name: userStore.getUserByUid(p.mobile)?.name || p.mobile,
             amount: parseFloat(p.amount || 0)
           }))
       : null

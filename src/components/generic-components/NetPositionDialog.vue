@@ -46,7 +46,10 @@
       </div>
 
       <!-- Shared Expenses -->
-      <div v-if="summary.includedSections?.sharedExpenses !== false" class="section-card">
+      <div
+        v-if="summary.includedSections?.sharedExpenses !== false"
+        class="section-card"
+      >
         <div class="section-header">Shared Expenses</div>
         <div class="summary-row">
           <span class="label">You Will Receive:</span>
@@ -94,7 +97,10 @@
       </div>
 
       <!-- Shared Loans -->
-      <div v-if="summary.includedSections?.sharedLoans !== false" class="section-card">
+      <div
+        v-if="summary.includedSections?.sharedLoans !== false"
+        class="section-card"
+      >
         <div class="section-header">Shared Loans</div>
         <div class="summary-row">
           <span class="label">You Lent:</span>
@@ -142,7 +148,10 @@
       </div>
 
       <!-- Personal Loans -->
-      <div v-if="summary.includedSections?.personalLoans !== false" class="section-card">
+      <div
+        v-if="summary.includedSections?.personalLoans !== false"
+        class="section-card"
+      >
         <div class="section-header">Personal Loans</div>
         <div class="summary-row">
           <span class="label">You Lent:</span>

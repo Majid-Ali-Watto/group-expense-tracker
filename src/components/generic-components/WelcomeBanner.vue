@@ -81,10 +81,12 @@ const userStore = useUserStore()
 
 const currentUserMobile = computed(
   () =>
-    userStore.getUserByUid(authStore.getActiveUser)?.mobile ??
-    authStore.getActiveUser
+    userStore.getUserByUid(authStore.getActiveUserUid)?.mobile ??
+    authStore.getActiveUserUid
 )
-const sharedTab = computed(() => hasSharedFeatures(userStore.getActiveUserTabConfig))
+const sharedTab = computed(() =>
+  hasSharedFeatures(userStore.getActiveUserTabConfig)
+)
 
 const joinedGroups = useJoinedGroups(computed(() => groupStore.getGroups))
 

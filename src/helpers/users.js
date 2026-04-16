@@ -1,14 +1,8 @@
 import { useAuthStore, useUserStore } from '@/stores'
 import { collection, database, getDocs, query, where } from '@/firebase'
 import { DB_NODES } from '@/constants'
-import { maskMobile } from '@/utils'
+import { getIdentity, maskMobile } from '@/utils'
 // Check if current user is a member of the group
-
-function getIdentity(value) {
-  if (!value) return ''
-  if (typeof value === 'string') return value
-  return value.uid || value.mobile || value.userId || ''
-}
 
 function hasApproval(approvals, identity) {
   return (approvals || []).some(
@@ -18,16 +12,15 @@ function hasApproval(approvals, identity) {
 
 export function isMemberOfGroup(group) {
   const authStore = useAuthStore()
-  const mobile = authStore.getActiveUser
-  return group.members && group.members.some((m) => getIdentity(m) === mobile)
+  const uid = authStore.getActiveUserUid
+  return group.members && group.members.some((m) => getIdentity(m) === uid)
 }
 // Check if current user has a pending join request
 export function hasPendingRequest(group) {
   const authStore = useAuthStore()
-  const mobile = authStore.getActiveUser
+  const uid = authStore.getActiveUserUid
   return (
-    group.joinRequests &&
-    group.joinRequests.some((r) => getIdentity(r) === mobile)
+    group.joinRequests && group.joinRequests.some((r) => getIdentity(r) === uid)
   )
 }
 
@@ -62,16 +55,14 @@ export function getPendingApprovals(group) {
 // Check if current user has approved deletion
 export function hasUserApprovedDeletion(group) {
   const authStore = useAuthStore()
-  const mobile = authStore.getActiveUser
+  const uid = authStore.getActiveUserUid
   const approvals = getDeleteApprovals(group)
-  return hasApproval(approvals, mobile)
+  return hasApproval(approvals, uid)
 }
 
 // ========== Join Request Helpers with Member Approval ==========
 export function getJoinRequestApprovals(group, requestMobile) {
-  const request = group.joinRequests?.find(
-    (r) => getIdentity(r) === requestMobile
-  )
+  const request = group.joinRequests?.find((r) => r.uid === requestMobile)
   return request?.approvals || []
 }
 
@@ -84,9 +75,9 @@ export function getPendingJoinApprovals(group, requestMobile) {
 
 export function hasUserApprovedJoinRequest(group, requestMobile) {
   const authStore = useAuthStore()
-  const mobile = authStore.getActiveUser
+  const uid = authStore.getActiveUserUid
   const approvals = getJoinRequestApprovals(group, requestMobile)
-  return hasApproval(approvals, mobile)
+  return hasApproval(approvals, uid)
 }
 
 export function allMembersApprovedJoinRequest(group, requestMobile) {
@@ -113,7 +104,7 @@ export function getAllAffectedMembers(group) {
   // Only existing and added members must approve — removed members are notified, not required
   const allMembers = [...existingMembers, ...(addedMembers || [])]
 
-  // Remove duplicates based on mobile
+  // Remove duplicates based on UID
   const uniqueMembers = allMembers.filter(
     (member, index, self) =>
       index === self.findIndex((m) => getIdentity(m) === getIdentity(member))
@@ -134,14 +125,14 @@ export function allAffectedMembersApprovedEdit(group) {
 
 export function hasUserApprovedEditRequest(group) {
   const authStore = useAuthStore()
-  const mobile = authStore.getActiveUser
-  return hasApproval(group.editRequest?.approvals, mobile)
+  const uid = authStore.getActiveUserUid
+  return hasApproval(group.editRequest?.approvals, uid)
 }
 
 export function isUserAffectedByEdit(group) {
   const authStore = useAuthStore()
-  const mobile = authStore.getActiveUser
-  return getAllAffectedMembers(group).some((m) => getIdentity(m) === mobile)
+  const uid = authStore.getActiveUserUid
+  return getAllAffectedMembers(group).some((m) => getIdentity(m) === uid)
 }
 
 // ========== Add Member Request Helpers ==========
@@ -165,22 +156,22 @@ export function allMembersApprovedAddMember(group) {
 
 export function hasUserApprovedAddMemberRequest(group) {
   const authStore = useAuthStore()
-  const mobile = authStore.getActiveUser
-  return hasApproval(getAddMemberRequestApprovals(group), mobile)
+  const uid = authStore.getActiveUserUid
+  return hasApproval(getAddMemberRequestApprovals(group), uid)
 }
 
 // ========== Ownership Transfer Helpers ==========
 export function isCurrentUserPendingOwner(group) {
   const authStore = useAuthStore()
-  const mobile = authStore.getActiveUser
-  return group.transferOwnershipRequest?.newOwner === mobile
+  const uid = authStore.getActiveUserUid
+  return group.transferOwnershipRequest?.newOwner === uid
 }
 
 // ========== Notification Helpers ==========
 export function getUserNotifications(group) {
   const authStore = useAuthStore()
-  const mobile = authStore.getActiveUser
-  return group.notifications?.[mobile] || []
+  const uid = authStore.getActiveUserUid
+  return group.notifications?.[uid] || []
 }
 
 // ========== Mobile Display Helpers ==========
@@ -188,7 +179,7 @@ export function displayMasked(targetMobile) {
   if (!targetMobile) return ''
   const userStore = useUserStore()
   return (
-    userStore.getUserByMobile(targetMobile)?.maskedMobile ||
+    userStore.getUserByUid(targetMobile)?.maskedMobile ||
     maskMobile(targetMobile)
   )
 }

@@ -17,6 +17,7 @@ export {
   normalizeDateInputValue,
   formatDateForStorage
 } from './getCurrentMonth'
+export * from './identity'
 export * from './loading'
 export * from './maskMobile'
 export * from './notifications'

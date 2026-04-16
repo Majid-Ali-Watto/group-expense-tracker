@@ -4,6 +4,7 @@ import { onSnapshot, collection, database, query, where } from '@/firebase'
 import useFireBase from './useFirebase'
 import { Tabs } from '@/assets'
 import getCurrentMonth from '@/utils/getCurrentMonth'
+import { getIdentity } from '@/utils'
 import { maskMobile } from '@/utils/maskMobile'
 import { DB_NODES } from '@/constants'
 import {
@@ -29,24 +30,49 @@ export function useGlobalNotifications() {
   const userStore = useUserStore()
   const { dbRef } = useFireBase()
 
-  const activeUser = computed(() => authStore.getActiveUser)
+  const activeUserUid = computed(() => authStore.getActiveUserUid)
   const groups = computed(() => groupStore.getGroups || [])
   const users = computed(() => userStore.getUsers || [])
 
+  function isSameIdentity(left, right) {
+    const leftIdentity = getIdentity(left)
+    const rightIdentity = getIdentity(right)
+    return Boolean(
+      leftIdentity && rightIdentity && leftIdentity === rightIdentity
+    )
+  }
+
+  function getNotificationKeysForUser(identity) {
+    const identityValue = getIdentity(identity)
+    return identityValue ? [identityValue] : []
+  }
+
+  function getScopedNotifications(notifications, identity) {
+    if (!notifications) return []
+    return getNotificationKeysForUser(identity).flatMap(
+      (key) => notifications[key] || []
+    )
+  }
+
+  function hasApproved(approvals, identity) {
+    return (approvals || []).some((approval) =>
+      isSameIdentity(approval, identity)
+    )
+  }
+
   function resolveUser(identity) {
     if (!identity) return null
-    return (
-      userStore.getUserByUid(identity) || userStore.getUserByMobile(identity)
-    )
+    return userStore.getUserByUid(identity)
   }
 
   function getUserMetaByIdentity(identity, fallbackName = '') {
     const storedUser = resolveUser(identity)
     const mobile = storedUser?.mobile || ''
+    const normalizedFallbackName =
+      fallbackName && fallbackName !== identity ? fallbackName : ''
     // Prefer the stored user's name over fallbackName — the fallback may be a
     // raw UID when the caller passes loan.giverName which was stored as a UID
-    const name =
-      storedUser?.name || fallbackName || mobile || identity || 'User'
+    const name = storedUser?.name || normalizedFallbackName || 'User'
 
     return {
       name,
@@ -56,22 +82,14 @@ export function useGlobalNotifications() {
   }
 
   function formatUserWithMobile(identity, fallbackName = '') {
-    const { name, maskedMobile } = getUserMetaByIdentity(identity, fallbackName)
-    return maskedMobile ? `${name} (${maskedMobile})` : name
+    const { name } = getUserMetaByIdentity(identity, fallbackName)
+    return name
   }
 
   function getUserNotificationMeta(user) {
-    const storedUser =
-      (user?.uid && resolveUser(user.uid)) ||
-      (user?.mobile && resolveUser(user.mobile)) ||
-      null
+    const storedUser = (user?.uid && resolveUser(user.uid)) || null
 
-    const name =
-      user?.name ||
-      storedUser?.name ||
-      user?.mobile ||
-      storedUser?.mobile ||
-      'User'
+    const name = user?.name || storedUser?.name || 'User'
     const mobile = user?.mobile || storedUser?.mobile || ''
 
     return {
@@ -82,7 +100,7 @@ export function useGlobalNotifications() {
   }
 
   // Early return if no active user - avoid expensive computations
-  if (!activeUser.value) {
+  if (!activeUserUid.value) {
     return {
       allNotifications: computed(() => []),
       notificationCount: computed(() => 0),
@@ -103,19 +121,21 @@ export function useGlobalNotifications() {
 
   // ─── Group notifications ─────────────────────────────────────────────────
   const groupNotifications = computed(() => {
-    const me = activeUser.value
+    const me = activeUserUid.value
     if (!me || !userHasSharedFeatures) return []
     const result = []
 
     // Pending invitations
     groups.value
-      .filter((g) => (g.pendingMembers || []).some((m) => (m.uid || m.mobile) === me))
+      .filter((g) =>
+        (g.pendingMembers || []).some((m) => isSameIdentity(m, me))
+      )
       .forEach((group) => {
         result.push({
           id: `invite-${group.id}`,
           icon: '📨',
           title: group.name,
-          description: `Invited by ${formatUserWithMobile(group.ownerMobile)}`,
+          description: `Invited by ${formatUserWithMobile(group.ownerUid)}`,
           tab: Tabs.GROUPS,
           groupId: group.id,
           category: 'Groups'
@@ -124,14 +144,14 @@ export function useGlobalNotifications() {
 
     // Pending invitations visible to the group creator
     groups.value
-      .filter((g) => g.ownerMobile === me && (g.pendingMembers || []).length)
+      .filter((g) => g.ownerUid === me && (g.pendingMembers || []).length)
       .forEach((group) => {
         ;(group.pendingMembers || []).forEach((member) => {
           result.push({
-            id: `pending-invite-${group.id}-${member.mobile}`,
+            id: `pending-invite-${group.id}-${member.uid}`,
             icon: '⏳',
             title: group.name,
-            description: `${formatUserWithMobile(member.mobile)} hasn't responded to your invitation`,
+            description: `${formatUserWithMobile(member.uid)} hasn't responded to your invitation`,
             tab: Tabs.GROUPS,
             groupId: group.id,
             category: 'Groups'
@@ -143,7 +163,9 @@ export function useGlobalNotifications() {
     groups.value
       .filter((g) => hasPendingRequest(g))
       .forEach((group) => {
-        const request = (group.joinRequests || []).find((r) => r.mobile === me)
+        const request = (group.joinRequests || []).find((r) =>
+          isSameIdentity(r, me)
+        )
         if (!request) return
         const approvedCount = (request.approvals || []).length
         const totalCount = (group.members || []).length
@@ -162,7 +184,7 @@ export function useGlobalNotifications() {
     groups.value
       .filter((g) => !isMemberOfGroup(g) && !hasPendingRequest(g))
       .forEach((group) => {
-        ;(group.notifications?.[me] || []).forEach((notif) => {
+        getScopedNotifications(group.notifications, me).forEach((notif) => {
           result.push({
             id: `group-notif-${group.id}-${notif.id}`,
             icon: '❌',
@@ -180,13 +202,13 @@ export function useGlobalNotifications() {
       .filter((g) => isMemberOfGroup(g))
       .forEach((group) => {
         ;(group.joinRequests || [])
-          .filter((req) => !hasUserApprovedJoinRequest(group, req.mobile))
+          .filter((req) => !hasUserApprovedJoinRequest(group, req.uid))
           .forEach((req) => {
             result.push({
-              id: `join-${group.id}-${req.mobile}`,
+              id: `join-${group.id}-${req.uid}`,
               icon: '👋',
               title: group.name,
-              description: `${formatUserWithMobile(req.mobile)} wants to join`,
+              description: `${formatUserWithMobile(req.uid)} wants to join`,
               tab: Tabs.GROUPS,
               groupId: group.id,
               category: 'Groups'
@@ -268,7 +290,7 @@ export function useGlobalNotifications() {
         }
 
         // In-group user-specific notifications (e.g. removal-pending, member-renamed, rejections)
-        ;(group.notifications?.[me] || []).forEach((notif) => {
+        getScopedNotifications(group.notifications, me).forEach((notif) => {
           const iconMap = {
             'removal-pending': '🚪',
             'member-renamed': '✏️',
@@ -292,7 +314,7 @@ export function useGlobalNotifications() {
 
   // ─── User notifications ──────────────────────────────────────────────────
   const userNotifications = computed(() => {
-    const me = activeUser.value
+    const me = activeUserUid.value
     if (!me || !userHasSharedFeatures) return []
     return users.value.flatMap((u) => {
       const result = []
@@ -302,11 +324,13 @@ export function useGlobalNotifications() {
       if (userHasUsersTab) {
         const check = (req, type) => {
           if (
-            req?.requiredApprovals?.includes(me) &&
-            !req.approvals?.some((a) => (a.uid || a.mobile) === me)
+            req?.requiredApprovals?.some((identity) =>
+              isSameIdentity(identity, me)
+            ) &&
+            !hasApproved(req.approvals, me)
           ) {
-            const { name, maskedMobile } = getUserNotificationMeta(u)
-            const userLabel = maskedMobile ? `${name} (${maskedMobile})` : name
+            const { name } = getUserNotificationMeta(u)
+            const userLabel = name
             result.push({
               id: `user-${type}-${u.uid}`,
               icon: type === 'delete' ? '🗑️' : '✏️',
@@ -370,7 +394,7 @@ export function useGlobalNotifications() {
   }
 
   function subscribeToExpensesAndLoans() {
-    const me = activeUser.value
+    const me = activeUserUid.value
     if (!me || !userHasSharedFeatures) return
 
     listeners.forEach((unsub) => unsub())
@@ -399,7 +423,7 @@ export function useGlobalNotifications() {
           if (
             expInitialDone &&
             !knownExpenseIds.has(paymentId) &&
-            payment.whoAdded !== me
+            !isSameIdentity(payment.whoAdded, me)
           ) {
             const notifId = `exp-new-${group.id}-${paymentId}`
             if (!newTxnNotifs.value.find((n) => n.id === notifId)) {
@@ -426,7 +450,7 @@ export function useGlobalNotifications() {
           knownExpenseIds.add(paymentId)
           if (
             payment.deleteRequest &&
-            !payment.deleteRequest.approvals?.some((a) => a.mobile === me)
+            !hasApproved(payment.deleteRequest.approvals, me)
           ) {
             notifs.push({
               id: `exp-del-${group.id}-${paymentId}`,
@@ -440,7 +464,7 @@ export function useGlobalNotifications() {
           }
           if (
             payment.updateRequest &&
-            !payment.updateRequest.approvals?.some((a) => a.mobile === me)
+            !hasApproved(payment.updateRequest.approvals, me)
           ) {
             const ch = payment.updateRequest.changes || {}
             const diffParts = []
@@ -469,7 +493,7 @@ export function useGlobalNotifications() {
             })
           }
           // Approval/rejection feedback notifications stored on the expense record
-          ;(payment.notifications?.[me] || []).forEach((notif) => {
+          getScopedNotifications(payment.notifications, me).forEach((notif) => {
             notifs.push({
               id: `exp-notif-${group.id}-${paymentId}-${notif.id || notif.timestamp}`,
               icon:
@@ -510,7 +534,7 @@ export function useGlobalNotifications() {
           if (
             loanInitialDone &&
             !knownLoanIds.has(loanId) &&
-            loan.whoAdded !== me
+            !isSameIdentity(loan.whoAdded, me)
           ) {
             const notifId = `loan-new-${group.id}-${loanId}`
             if (!newTxnNotifs.value.find((n) => n.id === notifId)) {
@@ -534,7 +558,7 @@ export function useGlobalNotifications() {
           knownLoanIds.add(loanId)
           if (
             loan.deleteRequest &&
-            !loan.deleteRequest.approvals?.some((a) => a.mobile === me)
+            !hasApproved(loan.deleteRequest.approvals, me)
           ) {
             notifs.push({
               id: `loan-del-${group.id}-${loanId}`,
@@ -548,7 +572,7 @@ export function useGlobalNotifications() {
           }
           if (
             loan.updateRequest &&
-            !loan.updateRequest.approvals?.some((a) => a.mobile === me)
+            !hasApproved(loan.updateRequest.approvals, me)
           ) {
             const ch = loan.updateRequest.changes || {}
             const diffParts = []
@@ -581,7 +605,7 @@ export function useGlobalNotifications() {
             })
           }
           // Approval/rejection feedback notifications stored on the loan record
-          ;(loan.notifications?.[me] || []).forEach((notif) => {
+          getScopedNotifications(loan.notifications, me).forEach((notif) => {
             notifs.push({
               id: `loan-notif-${group.id}-${loanId}-${notif.id || notif.timestamp}`,
               icon:
@@ -606,7 +630,7 @@ export function useGlobalNotifications() {
   }
 
   watch(
-    [activeUser, () => groups.value.map((g) => g.id).join(',')],
+    [activeUserUid, () => groups.value.map((g) => g.id).join(',')],
     () => subscribeToExpensesAndLoans(),
     { immediate: true }
   )
@@ -614,7 +638,7 @@ export function useGlobalNotifications() {
   // ─── Bug report status notifications (for the reporter) ─────────────────
   const bugReportNotifs = ref([])
   const brRef = dbRef(
-    `${DB_NODES.BUG_REPORT_NOTIFICATIONS}/${activeUser.value}/items`
+    `${DB_NODES.BUG_REPORT_NOTIFICATIONS}/${activeUserUid.value}/items`
   )
   const brUnsub = onSnapshot(brRef, (snap) => {
     if (snap.empty) {
@@ -662,7 +686,7 @@ export function useGlobalNotifications() {
 
   // Read bugResolver directly from Firestore to avoid user-store timing issues
   const isBugResolver = ref(false)
-  const bugResolverDocRef = dbRef(`${DB_NODES.USERS}/${activeUser.value}`)
+  const bugResolverDocRef = dbRef(`${DB_NODES.USERS}/${activeUserUid.value}`)
   const bugResolverUnsub = onSnapshot(bugResolverDocRef, (snap) => {
     isBugResolver.value = snap.exists() && snap.data().bugResolver === true
   })
@@ -714,7 +738,7 @@ export function useGlobalNotifications() {
     ? onSnapshot(
         query(
           collection(database, DB_NODES.GROUPS),
-          where('memberMobiles', 'array-contains', activeUser.value)
+          where('memberUids', 'array-contains', activeUserUid.value)
         ),
         (snap) => {
           const groupList = snap.docs.map((d) => ({ id: d.id, ...d.data() }))

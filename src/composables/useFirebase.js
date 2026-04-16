@@ -127,7 +127,8 @@ export default function useFireBase() {
    */
   async function updateData(path, getData, message) {
     return runMutation(
-      () => withTrace('db_update', () => updateDoc(doc(database, path), getData())),
+      () =>
+        withTrace('db_update', () => updateDoc(doc(database, path), getData())),
       message
     )
   }
@@ -161,66 +162,72 @@ export default function useFireBase() {
       () =>
         withTrace('db_save', async () => {
           const data = getData()
-          const createdDoc = await addDoc(collection(database, collectionPath), data)
-
-        // Ensure the parent "month" document exists so getDocs on the months
-        // collection returns it. Firestore does not surface implicit documents
-        // (those with sub-collections but no own fields) in getDocs results.
-        const parentPath = collectionPath.split('/').slice(0, -1).join('/')
-        if (
-          parentPath.split('/').length % 2 === 0 &&
-          parentPath.split('/').length >= 4
-        ) {
-          await setDoc(doc(database, parentPath), {}, { merge: true })
-        }
-
-        // Also record the month ID on the grandparent collection document so
-        // fetchMonths() can read one document instead of a full getDocs across
-        // the months sub-collection (saves N-1 reads per month list load where
-        // N is the number of months with data).
-        const segs = collectionPath.split('/')
-        if (segs.length >= 5 && segs[segs.length - 3] === 'months') {
-          const grandparentPath = segs.slice(0, 2).join('/')
-          const monthId = segs[segs.length - 2]
-          await setDoc(
-            doc(database, grandparentPath),
-            { months: arrayUnion(monthId) },
-            { merge: true }
+          const createdDoc = await addDoc(
+            collection(database, collectionPath),
+            data
           )
-        }
 
-        if (collectionPath.includes(DB_NODES.SHARED_EXPENSES)) {
-          // Cross-post a simplified record to each payer's personal-expenses.
-          // For multiple-payer expenses each payer gets their own record with
-          // their individual amount; single-payer uses the full expense amount.
-          const monthYear = dateToMonthNode(data.date)
-          const payerEntries =
-            data.payerMode === 'multiple' && data.payers?.length
-              ? data.payers
-                  .filter((p) => p.mobile)
-                  .map((p) => ({ key: p.mobile, amount: p.amount }))
-              : data.payer
-                ? [{ key: data.payer, amount: data.amount }]
-                : []
+          // Ensure the parent "month" document exists so getDocs on the months
+          // collection returns it. Firestore does not surface implicit documents
+          // (those with sub-collections but no own fields) in getDocs results.
+          const parentPath = collectionPath.split('/').slice(0, -1).join('/')
+          if (
+            parentPath.split('/').length % 2 === 0 &&
+            parentPath.split('/').length >= 4
+          ) {
+            await setDoc(doc(database, parentPath), {}, { merge: true })
+          }
 
-          for (const { key, amount } of payerEntries) {
-            const personalPath = `${DB_NODES.PERSONAL_EXPENSES}/${key}/months/${monthYear}/expenses`
-            await addDoc(
-              collection(database, personalPath),
-              getNewData({ ...data, payer: key, amount })
-            )
+          // Also record the month ID on the grandparent collection document so
+          // fetchMonths() can read one document instead of a full getDocs across
+          // the months sub-collection (saves N-1 reads per month list load where
+          // N is the number of months with data).
+          const segs = collectionPath.split('/')
+          if (segs.length >= 5 && segs[segs.length - 3] === 'months') {
+            const grandparentPath = segs.slice(0, 2).join('/')
+            const monthId = segs[segs.length - 2]
             await setDoc(
-              doc(database, `${DB_NODES.PERSONAL_EXPENSES}/${key}/months/${monthYear}`),
-              {},
-              { merge: true }
-            )
-            await setDoc(
-              doc(database, `${DB_NODES.PERSONAL_EXPENSES}/${key}`),
-              { months: arrayUnion(monthYear) },
+              doc(database, grandparentPath),
+              { months: arrayUnion(monthId) },
               { merge: true }
             )
           }
-        }
+
+          if (collectionPath.includes(DB_NODES.SHARED_EXPENSES)) {
+            // Cross-post a simplified record to each payer's personal-expenses.
+            // For multiple-payer expenses each payer gets their own record with
+            // their individual amount; single-payer uses the full expense amount.
+            const monthYear = dateToMonthNode(data.date)
+            const payerEntries =
+              data.payerMode === 'multiple' && data.payers?.length
+                ? data.payers
+                    .filter((p) => p.mobile)
+                    .map((p) => ({ key: p.mobile, amount: p.amount }))
+                : data.payer
+                  ? [{ key: data.payer, amount: data.amount }]
+                  : []
+
+            for (const { key, amount } of payerEntries) {
+              const personalPath = `${DB_NODES.PERSONAL_EXPENSES}/${key}/months/${monthYear}/expenses`
+              await addDoc(
+                collection(database, personalPath),
+                getNewData({ ...data, payer: key, amount })
+              )
+              await setDoc(
+                doc(
+                  database,
+                  `${DB_NODES.PERSONAL_EXPENSES}/${key}/months/${monthYear}`
+                ),
+                {},
+                { merge: true }
+              )
+              await setDoc(
+                doc(database, `${DB_NODES.PERSONAL_EXPENSES}/${key}`),
+                { months: arrayUnion(monthYear) },
+                { merge: true }
+              )
+            }
+          }
           resetForm(formRef)
           onSuccess?.(createdDoc, data)
         }),

@@ -176,7 +176,7 @@
             <!-- Approval buttons -->
             <div
               class="flex gap-2 mt-3"
-              v-if="request.requestedBy === activeUser"
+              v-if="request.requestedBy === activeUserUid"
             >
               <span class="text-blue-600 text-sm font-semibold">
                 ✓ You requested this {{ request.type }}
@@ -262,7 +262,7 @@ const {
   showLoanForm,
   selectedMonth,
   isContentLoading,
-  activeUser,
+  activeUserUid,
   loanKeys,
   loanContent,
   filteredLoans,

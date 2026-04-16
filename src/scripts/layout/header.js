@@ -1,7 +1,11 @@
 import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { database, doc, deleteDoc, updateDoc, deleteField } from '@/firebase'
-import { getManageTabsConfig, getBugReportConfig, useShare } from '@/composables'
+import {
+  getManageTabsConfig,
+  getBugReportConfig,
+  useShare
+} from '@/composables'
 import { DB_NODES } from '@/constants'
 import { PUBLIC_NAV_LINKS } from '@/constants'
 import { confirmAction } from '@/utils/confirmAction'
@@ -15,8 +19,8 @@ export const Header = (props, emit, options = {}) => {
   const { share } = useShare()
   const notifVisible = ref(false)
   const activeUserProfile = computed(() =>
-    authStore.getActiveUser
-      ? userStore.getUserByUid(authStore.getActiveUser)
+    authStore.getActiveUserUid
+      ? userStore.getUserByUid(authStore.getActiveUserUid)
       : null
   )
   const canShowManageTabs = computed(
@@ -36,9 +40,7 @@ export const Header = (props, emit, options = {}) => {
   // True when the user has a stale session: on a protected route but not logged in.
   // This can happen when a Firebase token expires mid-session or after a hard reload
   // with a corrupted auth state. We show a Sign In button so they aren't stuck.
-  const isStuckState = computed(
-    () => !props.loggedIn && !isPublicPage.value
-  )
+  const isStuckState = computed(() => !props.loggedIn && !isPublicPage.value)
 
   function setLoggedInStatus() {
     emit('click-log', false)

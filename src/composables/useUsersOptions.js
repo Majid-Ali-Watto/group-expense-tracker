@@ -1,17 +1,12 @@
 import { computed } from 'vue'
-import { useAuthStore, useGroupStore, useUserStore } from '@/stores'
+import { useGroupStore, useUserStore } from '@/stores'
+import { useStoreProxy } from '@/composables'
 import { formatMemberDisplay, formatUserDisplay } from '@/utils'
 
 export function useUsersOptions({ allUsers = false } = {}) {
-  const authStore = useAuthStore()
   const groupStore = useGroupStore()
   const userStore = useUserStore()
-  const storeProxy = {
-    get getActiveUser() {
-      return authStore.getActiveUser
-    },
-    getUserByMobile: (m) => userStore.getUserByMobile(m)
-  }
+  const storeProxy = useStoreProxy()
 
   const usersOptions = computed(() => {
     if (!allUsers) {
@@ -19,8 +14,8 @@ export function useUsersOptions({ allUsers = false } = {}) {
       const group = activeGroup ? groupStore.getGroupById(activeGroup) : null
       if (group && group.members && group.members.length) {
         return group.members.map((m) => {
-          const memberId = m.uid || m.mobile
-          const memberUser = userStore.getUserByMobile(memberId)
+          const memberId = m.uid
+          const memberUser = userStore.getUserByUid(memberId)
           const isBlocked = memberUser?.blocked === true
           const label = formatMemberDisplay(storeProxy, m, { group })
           return {

@@ -19,10 +19,8 @@ import {
   formatMemberDisplay,
   formatUserDisplay
 } from '@/utils'
-import {
-  createUserDisplayStoreProxy,
-  getDisplayMobile
-} from '@/utils/user-display'
+import { getDisplayMobile } from '@/utils/user-display'
+import { createUserDisplayStoreProxy } from '@/composables'
 import { ElMessageBox } from 'element-plus'
 import {
   onSnapshot,
@@ -83,10 +81,11 @@ export const Groups = () => {
   const filterByCategory = ref(route.query.category || '')
   const hideBlockedEntities = ref(
     useUserStore().getActiveUserTabConfig?.hideBlockedGroups ??
-    (route.query.hideBlocked === '1')
+      route.query.hideBlocked === '1'
   )
   const pinnedGroupIds = ref([])
   const memberGroups = ref([])
+  const memberGroupsHydrated = ref(false)
   const authReady = ref(false)
 
   const openCreateGroup = () => {
@@ -114,15 +113,21 @@ export const Groups = () => {
 
   // Sync all filters to URL so they are bookmarkable and shareable
   watch(
-    [searchQuery, sortOrder, filterByUser, filterByCategory, hideBlockedEntities],
+    [
+      searchQuery,
+      sortOrder,
+      filterByUser,
+      filterByCategory,
+      hideBlockedEntities
+    ],
     () => {
-    const query = {}
-    if (searchQuery.value) query.q = searchQuery.value
-    if (sortOrder.value) query.sort = sortOrder.value
-    if (filterByUser.value) query.user = filterByUser.value
-    if (filterByCategory.value) query.category = filterByCategory.value
-    if (hideBlockedEntities.value) query.hideBlocked = '1'
-    router.replace({ path: route.path, query })
+      const query = {}
+      if (searchQuery.value) query.q = searchQuery.value
+      if (sortOrder.value) query.sort = sortOrder.value
+      if (filterByUser.value) query.user = filterByUser.value
+      if (filterByCategory.value) query.category = filterByCategory.value
+      if (hideBlockedEntities.value) query.hideBlocked = '1'
+      router.replace({ path: route.path, query })
     }
   )
 
@@ -141,7 +146,7 @@ export const Groups = () => {
   const storeProxy = createUserDisplayStoreProxy(authStore, userStore)
   const { read, readShallow, updateData, removeData, setData } = useFireBase()
   const activeUserRecord = computed(() =>
-    userStore.getUserByUid(authStore.getActiveUser)
+    userStore.getUserByUid(authStore.getActiveUserUid)
   )
   const activeUserIsBlocked = computed(() =>
     isUserBlocked(activeUserRecord.value)
@@ -161,19 +166,41 @@ export const Groups = () => {
     return true
   }
 
+  function getActiveUserMobile() {
+    return userStore.getUserByUid(authStore.getActiveUserUid)?.mobile || ''
+  }
+
+  function matchesActiveUserIdentity(value) {
+    const activeUid = authStore.getActiveUserUid
+    return value === activeUid
+  }
+
+  function isActiveUserMember(member) {
+    if (!member) return false
+    return matchesActiveUserIdentity(member.uid)
+  }
+
+  function getMemberIdentitySet(member) {
+    return new Set([member?.uid].filter(Boolean))
+  }
+
+  function findActiveUserMemberRecord(group) {
+    return (group?.members || []).find((member) => isActiveUserMember(member))
+  }
+
   /**
-   * Returns a flat, deduplicated array of mobile numbers for all members
-   * (accepted) and pendingMembers (invited).  Stored as `memberMobiles` on
+   * Returns a flat, deduplicated array of UIDs for all members
+   * (accepted) and pendingMembers (invited). Stored as `memberUids` on
    * the group document so Firestore's array-contains query can scope the
    * groups listener to only the current user's relevant groups.
    */
-  function computeMemberMobiles(group) {
+  function computeMemberUids(group) {
     const set = new Set()
     ;(group.members || []).forEach((m) => {
-      if (m.uid || m.mobile) set.add(m.uid || m.mobile)
+      if (m.uid) set.add(m.uid)
     })
     ;(group.pendingMembers || []).forEach((m) => {
-      if (m.uid || m.mobile) set.add(m.uid || m.mobile)
+      if (m.uid) set.add(m.uid)
     })
     return [...set]
   }
@@ -202,7 +229,9 @@ export const Groups = () => {
   const groupBalances = ref({})
   let groupsListener = null
 
-  const { usersOptions: allGroupMemberOptions } = useUsersOptions({ allUsers: true })
+  const { usersOptions: allGroupMemberOptions } = useUsersOptions({
+    allUsers: true
+  })
 
   // All categories for the filter dropdown
   const allCategoryOptions = computed(() => [
@@ -219,12 +248,9 @@ export const Groups = () => {
       result = result.filter((group) => {
         if (group.name && group.name.toLowerCase().includes(query)) return true
         if (group.id && group.id.toLowerCase().includes(query)) return true
-        if (
-          group.ownerMobile &&
-          group.ownerMobile.toLowerCase().includes(query)
-        )
+        if (group.ownerUid && group.ownerUid.toLowerCase().includes(query))
           return true
-        const ownerName = userStore.getUserByMobile(group.ownerMobile)?.name
+        const ownerName = userStore.getUserByUid(group.ownerUid)?.name
         if (ownerName && ownerName.toLowerCase().includes(query)) return true
         if (
           group.members &&
@@ -285,11 +311,11 @@ export const Groups = () => {
 
   // Groups where the current user has a pending invitation (was added but hasn't accepted yet)
   const pendingInvitations = computed(() => {
-    const me = authStore.getActiveUser
+    const me = authStore.getActiveUserUid
     return filteredGroups.value.filter(
       (g) =>
         !isMemberOfGroup(g) &&
-        (g.pendingMembers || []).some((m) => (m.uid || m.mobile) === me)
+        (g.pendingMembers || []).some((m) => m.uid === me)
     )
   })
 
@@ -307,19 +333,48 @@ export const Groups = () => {
     return groups.value.find((group) => group.id === groupId)
   }
 
+  function syncGroupStoreCache(
+    memberList = memberGroups.value,
+    availableList = availableGroups.value
+  ) {
+    const merged = new Map()
+
+    // During initial page load, available groups can be fetched before the
+    // member listener returns its first snapshot. Preserve already-known joined
+    // groups from the store so they do not briefly disappear.
+    if (
+      !memberGroupsHydrated.value &&
+      (!memberList || memberList.length === 0)
+    ) {
+      ;(groupStore.getGroups || [])
+        .filter((group) => isMemberOfGroup(group))
+        .filter((group) => !hideBlockedEntities.value || !isGroupBlocked(group))
+        .forEach((group) => merged.set(group.id, group))
+    }
+
+    ;(memberList || []).forEach((group) => merged.set(group.id, group))
+    ;(availableList || []).forEach((group) => {
+      if (!merged.has(group.id)) merged.set(group.id, group)
+    })
+
+    groupStore.setGroups([...merged.values()])
+  }
+
   function upsertAvailableGroup(group) {
     const idx = availableGroups.value.findIndex((item) => item.id === group.id)
     if (idx === -1) {
       availableGroups.value = [...availableGroups.value, group]
+      syncGroupStoreCache()
       return
     }
     const next = [...availableGroups.value]
     next[idx] = group
     availableGroups.value = next
+    syncGroupStoreCache()
   }
 
   async function loadMoreAvailableGroups(reset = false) {
-    if (!authStore.getActiveUser) return
+    if (!authStore.getActiveUserUid) return
     if (availableGroupsLoading.value) return
     if (!reset && !hasMoreAvailableGroups.value) return
 
@@ -342,7 +397,8 @@ export const Groups = () => {
 
       while (loaded.length < AVAILABLE_GROUP_BATCH_SIZE && !exhausted) {
         const constraints = [orderBy('name'), limit(AVAILABLE_GROUP_QUERY_SIZE)]
-        if (hideBlockedEntities.value) constraints.unshift(where('blocked', '==', false))
+        if (hideBlockedEntities.value)
+          constraints.unshift(where('blocked', '==', false))
         if (cursor) constraints.push(startAfter(cursor))
 
         const snapshot = await getDocs(
@@ -361,9 +417,7 @@ export const Groups = () => {
 
           const group = { id: docSnap.id, ...docSnap.data() }
           const hasPendingInvitation = (group.pendingMembers || []).some(
-            (member) =>
-              (member.uid || member.mobile) === authStore.getActiveUser ||
-              member.mobile === authStore.getActiveUser
+            (member) => isActiveUserMember(member)
           )
 
           if (
@@ -388,6 +442,7 @@ export const Groups = () => {
       availableGroups.value = reset
         ? loaded
         : [...availableGroups.value, ...loaded]
+      syncGroupStoreCache()
     } catch (error) {
       showError('Failed to load available groups. Please try again.')
       console.error('Error loading available groups:', error)
@@ -400,42 +455,39 @@ export const Groups = () => {
     const group = findGroupById(groupId)
     if (!group) return
     if (!ensureGroupInteractionAllowed(group)) return
-    const me = authStore.getActiveUser
-    const myUser = userStore.getUserByMobile(me)
+    const me = authStore.getActiveUserUid
+    const myUser = userStore.getUserByUid(me)
     const myName = myUser?.name || me
     const myMobile = myUser?.mobile || me
-    const newMembers = [...(group.members || []), {
-      uid: me,
-      mobile: myUser?.mobile || me,
-      name: myName,
-      phone: myUser?.mobile || ''
-    }]
-    const newPending = (group.pendingMembers || []).filter(
-      (m) => (m.uid || m.mobile) !== me
-    )
+    const newMembers = [
+      ...(group.members || []),
+      {
+        uid: me,
+        mobile: myUser?.mobile || me,
+        name: myName,
+        phone: myUser?.mobile || ''
+      }
+    ]
+    const newPending = (group.pendingMembers || []).filter((m) => m.uid !== me)
     let updatedGroup = {
       ...group,
       members: newMembers,
       pendingMembers: newPending.length ? newPending : null
     }
     // Notify the group creator
-    if (group.ownerMobile && group.ownerMobile !== me) {
-      updatedGroup = appendNotificationForUser(
-        updatedGroup,
-        group.ownerMobile,
-        {
-          id: Date.now().toString() + Math.random(),
-          type: 'invitation-accepted',
-          message: `${myName} (${maskMobile(myMobile)}) accepted your invitation to join "${group.name}"`,
-          updatedBy: me,
-          timestamp: Date.now()
-        }
-      )
+    if (group.ownerUid && group.ownerUid !== me) {
+      updatedGroup = appendNotificationForUser(updatedGroup, group.ownerUid, {
+        id: Date.now().toString() + Math.random(),
+        type: 'invitation-accepted',
+        message: `${myName} (${maskMobile(myMobile)}) accepted your invitation to join "${group.name}"`,
+        updatedBy: me,
+        timestamp: Date.now()
+      })
     }
     const payload = {
       members: updatedGroup.members,
       pendingMembers: updatedGroup.pendingMembers,
-      memberMobiles: computeMemberMobiles(updatedGroup)
+      memberUids: computeMemberUids(updatedGroup)
     }
     if (updatedGroup.notifications)
       payload.notifications = updatedGroup.notifications
@@ -452,10 +504,17 @@ export const Groups = () => {
       const currentTabConfig = userStore.getActiveUserTabConfig
       if (needsSharedTabsUpgrade(currentTabConfig)) {
         const existingDoc = await findUserTabConfigByUid(me)
-        const upgraded = buildUpgradedSharedTabConfig(existingDoc || currentTabConfig)
+        const upgraded = buildUpgradedSharedTabConfig(
+          existingDoc || currentTabConfig
+        )
         const docPayload = { uid: me, ...upgraded }
-        await setDoc(doc(database, DB_NODES.USER_TAB_CONFIGS, me), docPayload, { merge: true })
-        userStore.setActiveUserTabAccess({ config: docPayload, accessManageTabs: upgraded.accessManageTabs !== false })
+        await setDoc(doc(database, DB_NODES.USER_TAB_CONFIGS, me), docPayload, {
+          merge: true
+        })
+        userStore.setActiveUserTabAccess({
+          config: docPayload,
+          accessManageTabs: upgraded.accessManageTabs !== false
+        })
       }
     } catch {
       // Non-fatal — tab config upgrade will be retried on next login.
@@ -466,34 +525,28 @@ export const Groups = () => {
     const group = findGroupById(groupId)
     if (!group) return
     if (!ensureGroupInteractionAllowed(group)) return
-    const me = authStore.getActiveUser
-    const myUser = userStore.getUserByMobile(me)
+    const me = authStore.getActiveUserUid
+    const myUser = userStore.getUserByUid(me)
     const myName = myUser?.name || me
     const myMobile = myUser?.mobile || me
-    const newPending = (group.pendingMembers || []).filter(
-      (m) => (m.uid || m.mobile) !== me
-    )
+    const newPending = (group.pendingMembers || []).filter((m) => m.uid !== me)
     let updatedGroup = {
       ...group,
       pendingMembers: newPending.length ? newPending : null
     }
     // Notify the group creator
-    if (group.ownerMobile && group.ownerMobile !== me) {
-      updatedGroup = appendNotificationForUser(
-        updatedGroup,
-        group.ownerMobile,
-        {
-          id: Date.now().toString() + Math.random(),
-          type: 'invitation-declined',
-          message: `${myName} (${maskMobile(myMobile)}) declined your invitation to join "${group.name}"`,
-          updatedBy: me,
-          timestamp: Date.now()
-        }
-      )
+    if (group.ownerUid && group.ownerUid !== me) {
+      updatedGroup = appendNotificationForUser(updatedGroup, group.ownerUid, {
+        id: Date.now().toString() + Math.random(),
+        type: 'invitation-declined',
+        message: `${myName} (${maskMobile(myMobile)}) declined your invitation to join "${group.name}"`,
+        updatedBy: me,
+        timestamp: Date.now()
+      })
     }
     const payload = {
       pendingMembers: updatedGroup.pendingMembers,
-      memberMobiles: computeMemberMobiles(updatedGroup)
+      memberUids: computeMemberUids(updatedGroup)
     }
     if (updatedGroup.notifications)
       payload.notifications = updatedGroup.notifications
@@ -522,7 +575,7 @@ export const Groups = () => {
 
   // ========== Pin Helpers ==========
   function getPinsKey() {
-    return `pinnedGroups_${authStore.getActiveUser}`
+    return `pinnedGroups_${authStore.getActiveUserUid}`
   }
 
   function loadPins() {
@@ -615,7 +668,10 @@ export const Groups = () => {
   async function loadGroupUsers() {
     try {
       const usersSnapshot = await getDocs(
-        query(collection(database, DB_NODES.USERS), where('emailVerified', '==', true))
+        query(
+          collection(database, DB_NODES.USERS),
+          where('emailVerified', '==', true)
+        )
       )
 
       usersSnapshot.docs.forEach((docSnap) => {
@@ -646,7 +702,7 @@ export const Groups = () => {
     stopGroupsListener()
 
     const groupConstraints = [
-      where('memberMobiles', 'array-contains', authStore.getActiveUser)
+      where('memberUids', 'array-contains', authStore.getActiveUserUid)
     ]
     if (hideBlockedEntities.value) {
       groupConstraints.push(where('blocked', '==', false))
@@ -662,19 +718,19 @@ export const Groups = () => {
         clearTimeout(loadingTimeout)
         isPageLoading.value = false
 
-        const groupList = snapshot.docs
-          .map((d) => ({
-            id: d.id,
-            ...d.data()
-          }))
+        const groupList = snapshot.docs.map((d) => ({
+          id: d.id,
+          ...d.data()
+        }))
 
+        memberGroupsHydrated.value = true
         memberGroups.value = groupList
-        groupStore.setGroups(groupList)
 
         const loadedIds = new Set(groupList.map((group) => group.id))
         availableGroups.value = availableGroups.value.filter(
           (group) => !loadedIds.has(group.id)
         )
+        syncGroupStoreCache(groupList, availableGroups.value)
 
         if (!availableGroupsInitialized.value) {
           availableGroupsInitialized.value = true
@@ -687,9 +743,9 @@ export const Groups = () => {
         }
 
         if (!groupStore.getActiveGroup) {
-          const mobile = authStore.getActiveUser
+          const uid = authStore.getActiveUserUid
           const myGroup = groupList.find((g) =>
-            (g.members || []).some((m) => (m.uid || m.mobile) === mobile)
+            (g.members || []).some((m) => m.uid === uid)
           )
           if (myGroup) groupStore.setActiveGroup(myGroup.id)
         }
@@ -697,7 +753,7 @@ export const Groups = () => {
       (error) => {
         clearTimeout(loadingTimeout)
         isPageLoading.value = false
-        if (authStore.getActiveUser) {
+        if (authStore.getActiveUserUid) {
           console.error('Error loading groups:', error)
         }
       }
@@ -728,25 +784,24 @@ export const Groups = () => {
       authReady.value = true
       await loadGroupUsers()
       availableGroupsInitialized.value = false
-      void loadMoreAvailableGroups(true)
       syncGroupsListener()
     }) // end onAuthStateChanged
   })
 
   watch(hideBlockedEntities, async (newVal) => {
-    if (!authReady.value || !authStore.getActiveUser) return
+    if (!authReady.value || !authStore.getActiveUserUid) return
 
-    const uid = authStore.getActiveUser
+    const uid = authStore.getActiveUserUid
     try {
-      await updateDoc(
-        doc(database, `${DB_NODES.USER_TAB_CONFIGS}/${uid}`),
-        { hideBlockedGroups: newVal }
-      )
+      await updateDoc(doc(database, `${DB_NODES.USER_TAB_CONFIGS}/${uid}`), {
+        hideBlockedGroups: newVal
+      })
     } catch (err) {
       console.error('Failed to save hideBlockedGroups preference:', err)
     }
 
     isPageLoading.value = true
+    memberGroupsHydrated.value = false
     availableGroupsInitialized.value = false
     availableGroups.value = []
     availableGroupsCursor.value = null
@@ -763,7 +818,7 @@ export const Groups = () => {
   // ========== Per-user financial position (expenses + loans) ==========
   async function loadGroupBalances(groupId, groupType = 'joined') {
     if (groupType !== 'joined') return
-    const currentUser = authStore.getActiveUser
+    const currentUser = authStore.getActiveUserUid
     if (!currentUser || !groupId) return
 
     const cached = groupBalances.value[groupId]
@@ -874,30 +929,27 @@ export const Groups = () => {
       if (!group) return
       if (!ensureGroupInteractionAllowed(group)) return
 
-      const mobile = authStore.getActiveUser
-      const { changed, record } = removeNotificationForUser(
-        group,
-        mobile,
-        notificationId
-      )
-      if (!changed) return
+      const uid = authStore.getActiveUserUid
+      const notificationKeys = [uid].filter(Boolean)
 
-      const remaining = record.notifications?.[mobile]
+      let changed = false
+      let record = group
+      const updates = {}
 
-      if (remaining && remaining.length) {
-        await updateData(
-          `${DB_NODES.GROUPS}/${groupId}`,
-          () => ({ [`notifications.${mobile}`]: remaining }),
-          ''
-        )
-      } else {
-        await updateData(
-          `${DB_NODES.GROUPS}/${groupId}`,
-          () => ({ [`notifications.${mobile}`]: deleteField() }),
-          ''
-        )
+      for (const key of notificationKeys) {
+        const removal = removeNotificationForUser(record, key, notificationId)
+        if (!removal.changed) continue
+
+        changed = true
+        record = removal.record
+        const remaining = record.notifications?.[key]
+        updates[`notifications.${key}`] =
+          remaining && remaining.length ? remaining : deleteField()
       }
 
+      if (!changed) return
+
+      await updateData(`${DB_NODES.GROUPS}/${groupId}`, () => updates, '')
       groupStore.updateGroup(record)
     } catch (err) {
       showError(err.message || err)
@@ -909,14 +961,14 @@ export const Groups = () => {
       id: Date.now().toString() + Math.random(),
       type,
       message,
-      rejectedBy: authStore.getActiveUser,
+      rejectedBy: authStore.getActiveUserUid,
       timestamp: Date.now()
     }
 
     // Notify all members except the one performing the action
     group.members.forEach((member) => {
-      if (member.mobile !== authStore.getActiveUser) {
-        appendNotificationForUser(group, member.mobile, notification)
+      if (member.uid !== authStore.getActiveUserUid) {
+        appendNotificationForUser(group, member.uid, notification)
       }
     })
   }
@@ -924,7 +976,7 @@ export const Groups = () => {
   // Transfer Ownership Dialog
   const transferDialogVisible = ref(false)
   const transferOwnershipGroupId = ref(null)
-  const newOwnerMobile = ref('')
+  const newOwnerUid = ref('')
 
   const transferOwnershipMembers = computed(() => {
     if (!transferOwnershipGroupId.value) return []
@@ -934,8 +986,8 @@ export const Groups = () => {
     if (!group) return []
     return group.members.filter(
       (m) =>
-        m.mobile !== authStore.getActiveUser &&
-        !isUserBlocked(userStore.getUserByMobile(m.uid || m.mobile))
+        m.uid !== authStore.getActiveUserUid &&
+        !isUserBlocked(userStore.getUserByUid(m.uid))
     )
   })
 
@@ -944,7 +996,7 @@ export const Groups = () => {
       label: formatMemberDisplay(storeProxy, member, {
         group: groups.value.find((g) => g.id === transferOwnershipGroupId.value)
       }),
-      value: member.uid || member.mobile
+      value: member.uid
     }))
   )
 
@@ -958,21 +1010,19 @@ export const Groups = () => {
     const group = groups.value.find((g) => g.id === addMemberGroupId.value)
     if (!group) return []
 
-    const currentMemberMobiles = group.members.map((m) => m.uid || m.mobile)
+    const currentMemberUids = group.members.map((m) => m.uid)
     return userStore.getUsers.filter(
-      (u) =>
-        !currentMemberMobiles.includes(u.uid || u.mobile) &&
-        !isUserBlocked(u)
+      (u) => !currentMemberUids.includes(u.uid) && !isUserBlocked(u)
     )
   })
 
   const availableUsersToAddOptions = computed(() =>
     availableUsersToAdd.value.map((user) => ({
-      label: formatUserDisplay(storeProxy, user.uid || user.mobile, {
+      label: formatUserDisplay(storeProxy, user.uid, {
         name: user.name,
         preferMasked: true
       }),
-      value: user.uid || user.mobile
+      value: user.uid
     }))
   )
 
@@ -993,7 +1043,7 @@ export const Groups = () => {
       return showError('Please select a member to add')
     }
 
-    const user = userStore.getUserByMobile(selectedMemberToAdd.value)
+    const user = userStore.getUserByUid(selectedMemberToAdd.value)
     if (!user) {
       return showError('User not found')
     }
@@ -1021,16 +1071,27 @@ export const Groups = () => {
       if (!group) return
       if (!ensureGroupInteractionAllowed(group)) return
 
-      const mobile = authStore.getActiveUser
+      const uid = authStore.getActiveUserUid
+      const mobile = getActiveUserMobile() || uid
 
       // Initialize joinRequests array if it doesn't exist
       if (!group.joinRequests) {
         group.joinRequests = []
       }
 
+      // Prevent duplicate requests for the same user identity.
+      const alreadyRequested = group.joinRequests.some(
+        (request) =>
+          matchesActiveUserIdentity(request.uid) ||
+          matchesActiveUserIdentity(request.mobile)
+      )
+      if (alreadyRequested) {
+        return showSuccess('Join request already pending')
+      }
+
       // Add request with empty approvals array
       group.joinRequests.push({
-        uid: mobile,
+        uid,
         mobile,
         approvals: [] // Initialize approvals for all members to vote
       })
@@ -1057,12 +1118,19 @@ export const Groups = () => {
       if (!group) return
       if (!ensureGroupInteractionAllowed(group)) return
 
-      const mobile = authStore.getActiveUser
+      const currentRequests = group.joinRequests || []
+      const nextRequests = currentRequests.filter(
+        (request) =>
+          !matchesActiveUserIdentity(request.uid) &&
+          !matchesActiveUserIdentity(request.mobile)
+      )
+
+      if (nextRequests.length === currentRequests.length) {
+        return showError('No pending join request found to cancel')
+      }
 
       // Remove from join requests
-      group.joinRequests = (group.joinRequests || []).filter(
-        (r) => r.mobile !== mobile
-      )
+      group.joinRequests = nextRequests
 
       await updateData(
         `${DB_NODES.GROUPS}/${groupId}`,
@@ -1073,7 +1141,7 @@ export const Groups = () => {
       groupStore.updateGroup(group)
       upsertAvailableGroup(group)
 
-      showSuccess('Join request cancelled')
+      // showSuccess('Join request cancelled')
     } catch (err) {
       showError(err.message || err)
     }
@@ -1086,10 +1154,10 @@ export const Groups = () => {
       if (!group) return
       if (!ensureGroupInteractionAllowed(group)) return
 
-      const mobile = authStore.getActiveUser
+      const uid = authStore.getActiveUserUid
 
       // Find the join request
-      const request = group.joinRequests.find((r) => r.mobile === requestMobile)
+      const request = group.joinRequests.find((r) => r.uid === requestMobile)
       if (!request) return
 
       // Initialize approvals if not exists
@@ -1098,25 +1166,23 @@ export const Groups = () => {
       }
 
       // Add approval
-      request.approvals.push({ uid: mobile, mobile })
+      request.approvals.push({ uid })
 
       // Auto-add member if all existing members have now approved
       if (allMembersApprovedJoinRequest(group, requestMobile)) {
-        if (!group.members.find((m) => m.mobile === requestMobile)) {
+        if (!group.members.find((m) => m.uid === requestMobile)) {
           group.members.push({ uid: requestMobile, mobile: requestMobile })
         }
 
-        const ownerExists = group.members.some(
-          (m) => m.mobile === group.ownerMobile
-        )
-        if (!group.ownerMobile || !ownerExists) {
-          group.ownerMobile = requestMobile
+        const ownerExists = group.members.some((m) => m.uid === group.ownerUid)
+        if (!group.ownerUid || !ownerExists) {
+          group.ownerUid = requestMobile
         }
 
         group.joinRequests = (group.joinRequests || []).filter(
-          (r) => r.mobile !== requestMobile
+          (r) => r.uid !== requestMobile
         )
-        group.memberMobiles = computeMemberMobiles(group)
+        group.memberUids = computeMemberUids(group)
 
         await updateData(
           `${DB_NODES.GROUPS}/${groupId}`,
@@ -1127,7 +1193,7 @@ export const Groups = () => {
         groupStore.updateGroup(group)
 
         showSuccess(
-          `${userStore.getUserByMobile(requestMobile)?.name || requestMobile} has been added to the group`
+          `${userStore.getUserByUid(requestMobile)?.name || requestMobile} has been added to the group`
         )
         return
       }
@@ -1155,31 +1221,29 @@ export const Groups = () => {
       if (!ensureGroupInteractionAllowed(group)) return
 
       // Verify all members have approved
-      if (!allMembersApprovedJoinRequest(group, request.mobile)) {
+      if (!allMembersApprovedJoinRequest(group, request.uid)) {
         return showError('All members must approve before adding to group')
       }
 
       // Add user to members
-      if (!group.members.find((m) => m.mobile === request.mobile)) {
+      if (!group.members.find((m) => m.uid === request.uid)) {
         group.members.push({
-          uid: request.uid || request.mobile,
-          mobile: request.uid || request.mobile
+          uid: request.uid,
+          mobile: request.uid
         })
       }
 
       // If group has no owner or owner is not a member, set the new member as owner
-      const ownerExists = group.members.some(
-        (m) => m.mobile === group.ownerMobile
-      )
-      if (!group.ownerMobile || !ownerExists) {
-        group.ownerMobile = request.mobile
+      const ownerExists = group.members.some((m) => m.uid === group.ownerUid)
+      if (!group.ownerUid || !ownerExists) {
+        group.ownerUid = request.uid
       }
 
       // Remove from join requests
       group.joinRequests = (group.joinRequests || []).filter(
-        (r) => r.mobile !== request.mobile
+        (r) => r.uid !== request.uid
       )
-      group.memberMobiles = computeMemberMobiles(group)
+      group.memberUids = computeMemberUids(group)
 
       await updateData(
         `${DB_NODES.GROUPS}/${groupId}`,
@@ -1190,7 +1254,7 @@ export const Groups = () => {
       groupStore.updateGroup(group)
 
       showSuccess(
-        `${userStore.getUserByMobile(request.mobile)?.name || request.mobile} has been added to the group`
+        `${userStore.getUserByUid(request.uid)?.name || request.mobile} has been added to the group`
       )
     } catch (err) {
       showError(err.message || err)
@@ -1198,31 +1262,31 @@ export const Groups = () => {
   }
 
   // Reject join request
-  async function rejectJoinRequest(groupId, mobile) {
+  async function rejectJoinRequest(groupId, uid) {
     try {
       const group = groups.value.find((g) => g.id === groupId)
       if (!group) return
       if (!ensureGroupInteractionAllowed(group)) return
 
-      const requestUserName = userStore.getUserByMobile(mobile)?.name || mobile
+      const requestUserName = userStore.getUserByUid(uid)?.name || uid
 
       // Remove from join requests
       group.joinRequests = (group.joinRequests || []).filter(
-        (r) => r.mobile !== mobile
+        (r) => r.uid !== uid
       )
 
       // Create notification for members
       createNotification(
         group,
-        `Join request from ${requestUserName} (${maskMobile(mobile)}) was rejected`
+        `Join request from ${requestUserName} (${maskMobile(userStore.getUserByUid(uid)?.mobile || '')}) was rejected`
       )
 
       // Notify the requester
-      appendNotificationForUser(group, mobile, {
+      appendNotificationForUser(group, uid, {
         id: Date.now().toString() + Math.random(),
         type: 'rejection',
         message: `Your request to join "${group.name}" was rejected`,
-        rejectedBy: authStore.getActiveUser,
+        rejectedBy: authStore.getActiveUserUid,
         timestamp: Date.now()
       })
 
@@ -1256,7 +1320,9 @@ export const Groups = () => {
 
   function removeGroupLocally(groupId) {
     memberGroups.value = memberGroups.value.filter((g) => g.id !== groupId)
-    availableGroups.value = availableGroups.value.filter((g) => g.id !== groupId)
+    availableGroups.value = availableGroups.value.filter(
+      (g) => g.id !== groupId
+    )
     groupStore.removeGroup(groupId)
 
     if (groupStore.getActiveGroup === groupId) {
@@ -1301,7 +1367,7 @@ export const Groups = () => {
       // Initialize deletion request
       group.deleteRequest = {
         requested: true,
-        requestedBy: authStore.getActiveUser,
+        requestedBy: authStore.getActiveUserUid,
         requestedAt: new Date().toISOString(),
         approvals: []
       }
@@ -1329,7 +1395,7 @@ export const Groups = () => {
       if (!group) return
       if (!ensureGroupInteractionAllowed(group)) return
 
-      const mobile = authStore.getActiveUser
+      const uid = authStore.getActiveUserUid
 
       // Add approval
       if (!group.deleteRequest.approvals) {
@@ -1337,8 +1403,8 @@ export const Groups = () => {
       }
 
       group.deleteRequest.approvals.push({
-        uid: mobile,
-        mobile,
+        uid,
+        mobile: uid,
         approvedAt: new Date().toISOString()
       })
 
@@ -1380,7 +1446,7 @@ export const Groups = () => {
           type: 'warning'
         }
       )
-      const me = authStore.getActiveUser
+      const me = authStore.getActiveUserUid
       const myUser = userStore.getUserByUid(me)
       const myName = myUser?.name || me
       const myMobile = myUser?.mobile || me
@@ -1457,17 +1523,17 @@ export const Groups = () => {
     if (!ensureGroupInteractionAllowed(group)) return
 
     // Only owner can edit
-    if (group.ownerMobile !== authStore.getActiveUser) {
+    if (group.ownerUid !== authStore.getActiveUserUid) {
       return showError('Only group owner can edit this group')
     }
 
     editingGroupId.value = groupId
-    originalMembers.value = [...group.members.map((m) => m.uid || m.mobile)]
+    originalMembers.value = [...group.members.map((m) => m.uid)]
 
     initialEditForm.value = {
       name: group.name,
       description: group.description || '',
-      members: group.members.map((m) => m.uid || m.mobile)
+      members: group.members.map((m) => m.uid)
     }
     editForm.value = {
       ...initialEditForm.value,
@@ -1530,7 +1596,7 @@ export const Groups = () => {
           id: Date.now().toString(),
           type: 'group_updated',
           message: `Group updated — ${changeParts.join(' | ')}`,
-          updatedBy: authStore.getActiveUser,
+          updatedBy: authStore.getActiveUserUid,
           timestamp: Date.now()
         }
 
@@ -1540,11 +1606,11 @@ export const Groups = () => {
         }
 
         group.members.forEach((member) => {
-          if (member.mobile !== authStore.getActiveUser) {
-            if (!updatedGroup.notifications[member.mobile]) {
-              updatedGroup.notifications[member.mobile] = []
+          if (member.uid !== authStore.getActiveUserUid) {
+            if (!updatedGroup.notifications[member.uid]) {
+              updatedGroup.notifications[member.uid] = []
             }
-            updatedGroup.notifications[member.mobile].push(notification)
+            updatedGroup.notifications[member.uid].push(notification)
           }
         })
 
@@ -1574,7 +1640,7 @@ export const Groups = () => {
 
         // Create edit request
         const editRequest = {
-          requestedBy: authStore.getActiveUser,
+          requestedBy: authStore.getActiveUserUid,
           name: editForm.value.name,
           newMembers: editForm.value.members.map((m) => ({
             uid: m,
@@ -1588,9 +1654,9 @@ export const Groups = () => {
         let updatedGroup = { ...group, editRequest }
 
         // Notify removed members — they are informed but not required to approve
-        const requestedBy = authStore.getActiveUser
-        for (const mobile of removedMembers) {
-          updatedGroup = appendNotificationForUser(updatedGroup, mobile, {
+        const requestedBy = authStore.getActiveUserUid
+        for (const uid of removedMembers) {
+          updatedGroup = appendNotificationForUser(updatedGroup, uid, {
             id: Date.now().toString() + Math.random(),
             type: 'removal-pending',
             message: `You have been proposed for removal from "${group.name}". This will take effect once existing members approve.`,
@@ -1643,18 +1709,17 @@ export const Groups = () => {
       if (!group || !hasEditRequest(group)) return
       if (!ensureGroupInteractionAllowed(group)) return
 
-      const mobile = authStore.getActiveUser
+      const uid = authStore.getActiveUserUid
 
       // Create new editRequest with added approval
       const currentApprovals = group.editRequest.approvals || []
 
       // Check if user already approved
-      if (currentApprovals.some((a) => a.mobile === mobile)) {
+      if (currentApprovals.some((a) => a.uid === uid)) {
         return showSuccess('You have already approved this request')
       }
 
-      const newApprovals = [...currentApprovals, { mobile }]
-      newApprovals[newApprovals.length - 1] = { uid: mobile, mobile }
+      const newApprovals = [...currentApprovals, { uid }]
 
       const updatedEditRequest = {
         ...group.editRequest,
@@ -1677,7 +1742,7 @@ export const Groups = () => {
         }
         // Remove editRequest from final group
         delete finalGroup.editRequest
-        finalGroup.memberMobiles = computeMemberMobiles(finalGroup)
+        finalGroup.memberUids = computeMemberUids(finalGroup)
 
         await setData(
           `${DB_NODES.GROUPS}/${groupId}`,
@@ -1714,7 +1779,7 @@ export const Groups = () => {
           type: 'warning'
         }
       )
-      const me = authStore.getActiveUser
+      const me = authStore.getActiveUserUid
       const myUser = userStore.getUserByUid(me)
       const myName = myUser?.name || me
       const myMobile = myUser?.mobile || me
@@ -1770,22 +1835,22 @@ export const Groups = () => {
       const group = groups.value.find((g) => g.id === groupId)
       if (!group) return showError('Group not found')
       if (!ensureGroupInteractionAllowed(group)) return
-      if (isUserBlocked(userStore.getUserByMobile(newMember.mobile))) {
+      if (isUserBlocked(userStore.getUserByUid(newMember.uid))) {
         return showError(getBlockedEntityMessage('user'))
       }
 
       // Check if member already exists
-      if (group.members.some((m) => m.mobile === newMember.mobile)) {
+      if (group.members.some((m) => m.uid === newMember.uid)) {
         return showError('This member is already in the group')
       }
 
-      const mobile = authStore.getActiveUser
+      const uid = authStore.getActiveUserUid
 
       const addMemberRequest = {
-        requestedBy: mobile,
+        requestedBy: uid,
         requestedAt: new Date().toISOString(),
         newMember: newMember,
-        approvals: [{ uid: mobile, mobile }]
+        approvals: [{ uid }]
       }
 
       await updateData(
@@ -1804,17 +1869,17 @@ export const Groups = () => {
       if (!group || !hasAddMemberRequest(group)) return
       if (!ensureGroupInteractionAllowed(group)) return
 
-      const mobile = authStore.getActiveUser
+      const uid = authStore.getActiveUserUid
 
       const currentApprovals = group.addMemberRequest.approvals || []
 
-      if (currentApprovals.some((a) => a.mobile === mobile)) {
+      if (currentApprovals.some((a) => a.uid === uid)) {
         return showSuccess('You have already approved this request')
       }
 
       const updatedRequest = {
         ...group.addMemberRequest,
-        approvals: [...currentApprovals, { uid: mobile, mobile }]
+        approvals: [...currentApprovals, { uid }]
       }
 
       await updateData(
@@ -1847,7 +1912,7 @@ export const Groups = () => {
         members: updatedMembers
       }
       delete updatedGroup.addMemberRequest
-      updatedGroup.memberMobiles = computeMemberMobiles(updatedGroup)
+      updatedGroup.memberUids = computeMemberUids(updatedGroup)
 
       await setData(
         `${DB_NODES.GROUPS}/${groupId}`,
@@ -2051,8 +2116,8 @@ export const Groups = () => {
       if (!group) return
       if (!ensureGroupInteractionAllowed(group)) return
 
-      const mobile = authStore.getActiveUser
-      const isOwner = group.ownerMobile === mobile
+      const uid = authStore.getActiveUserUid
+      const isOwner = matchesActiveUserIdentity(group.ownerUid)
       const memberCount = group.members.length
 
       if (memberCount === 1) {
@@ -2087,15 +2152,26 @@ export const Groups = () => {
       }
 
       // Check open requests and unsettled balance before allowing leave
-      const blockReason = await getLeaveBlockReason(group, mobile)
+      const blockReason = await getLeaveBlockReason(group, uid)
       if (blockReason) {
         return showError(blockReason)
       }
 
-      const otherMember = group.members.find((m) => m.mobile !== mobile)
+      const leavingMember = findActiveUserMemberRecord(group)
+      if (!leavingMember) {
+        return showError('Could not find your membership record in this group.')
+      }
+
+      const leavingIdentities = getMemberIdentitySet(leavingMember)
+      const otherMember = group.members.find((member) => {
+        const memberIdentities = getMemberIdentitySet(member)
+        return [...memberIdentities].every(
+          (identity) => !leavingIdentities.has(identity)
+        )
+      })
       const confirmMessage =
         isOwner && memberCount === 2
-          ? `You are the owner. Ownership will be transferred to ${userStore.getUserByMobile(otherMember.mobile)?.name || otherMember.mobile} when you leave.`
+          ? `You are the owner. Ownership will be transferred to ${userStore.getUserByUid(otherMember.uid)?.name || otherMember.mobile} when you leave.`
           : 'Are you sure you want to leave this group?'
 
       await ElMessageBox.confirm(confirmMessage, 'Leave Group', {
@@ -2107,21 +2183,35 @@ export const Groups = () => {
       // Transfer ownership if leaving owner with 2 members
       const updatedGroup = { ...group }
       if (isOwner && otherMember) {
-        updatedGroup.ownerMobile = otherMember.mobile
+        updatedGroup.ownerUid = otherMember.uid
       }
 
-      updatedGroup.members = updatedGroup.members.filter(
-        (m) => m.mobile !== mobile
-      )
-      updatedGroup.memberMobiles = computeMemberMobiles(updatedGroup)
+      updatedGroup.members = updatedGroup.members.filter((member) => {
+        const memberIdentities = getMemberIdentitySet(member)
+        return [...memberIdentities].every(
+          (identity) => !leavingIdentities.has(identity)
+        )
+      })
+      updatedGroup.memberUids = computeMemberUids(updatedGroup)
 
       await updateData(
         `${DB_NODES.GROUPS}/${groupId}`,
         () => updatedGroup,
         'You have left the group'
       )
-      groupStore.updateGroup(updatedGroup)
-      showSuccess('You have left the group')
+      removeGroupLocally(groupId)
+
+      if (!hideBlockedEntities.value || !isGroupBlocked(updatedGroup)) {
+        upsertAvailableGroup(updatedGroup)
+      }
+
+      if (
+        availableGroupsInitialized.value &&
+        availableGroups.value.length < AVAILABLE_GROUP_BATCH_SIZE &&
+        hasMoreAvailableGroups.value
+      ) {
+        void loadMoreAvailableGroups()
+      }
     } catch (err) {
       if (err !== 'cancel') {
         showError(err.message || err)
@@ -2134,13 +2224,13 @@ export const Groups = () => {
     const group = findGroupById(groupId)
     if (!ensureGroupInteractionAllowed(group)) return
     transferOwnershipGroupId.value = groupId
-    newOwnerMobile.value = ''
+    newOwnerUid.value = ''
     transferDialogVisible.value = true
   }
 
   async function requestOwnershipTransfer() {
     try {
-      if (!newOwnerMobile.value) {
+      if (!newOwnerUid.value) {
         return showError('Please select a new owner')
       }
 
@@ -2161,8 +2251,8 @@ export const Groups = () => {
       )
       // Add transfer request — only the new owner needs to accept
       group.transferOwnershipRequest = {
-        newOwner: newOwnerMobile.value,
-        requestedBy: authStore.getActiveUser
+        newOwner: newOwnerUid.value,
+        requestedBy: authStore.getActiveUserUid
       }
 
       await updateData(
@@ -2188,23 +2278,23 @@ export const Groups = () => {
       if (!group) return
       if (!ensureGroupInteractionAllowed(group)) return
 
-      const mobile = authStore.getActiveUser
+      const uid = authStore.getActiveUserUid
 
       // Only the designated new owner may accept
-      if (group.transferOwnershipRequest?.newOwner !== mobile) {
+      if (group.transferOwnershipRequest?.newOwner !== uid) {
         return showError(
           'Only the designated new owner can accept this transfer'
         )
       }
 
       // Transfer ownership immediately upon new owner's acceptance
-      group.ownerMobile = group.transferOwnershipRequest.newOwner
+      group.ownerUid = group.transferOwnershipRequest.newOwner
       delete group.transferOwnershipRequest
 
       await updateData(
         `${DB_NODES.GROUPS}/${groupId}`,
         () => ({
-          ownerMobile: group.ownerMobile,
+          ownerUid: group.ownerUid,
           transferOwnershipRequest: deleteField()
         }),
         ''
@@ -2232,14 +2322,14 @@ export const Groups = () => {
           type: 'warning'
         }
       )
-      const newOwnerMobile = group.transferOwnershipRequest?.newOwner
+      const newOwnerUid = group.transferOwnershipRequest?.newOwner
       const newOwnerName =
-        userStore.getUserByMobile(newOwnerMobile)?.name || newOwnerMobile
+        userStore.getUserByUid(newOwnerUid)?.name || newOwnerUid
 
       // Create notification for members
       createNotification(
         group,
-        `Ownership transfer request to ${newOwnerName} (${maskMobile(newOwnerMobile)}) was rejected`
+        `Ownership transfer request to ${newOwnerName} (${maskMobile(userStore.getUserByUid(newOwnerUid)?.mobile || '')}) was rejected`
       )
 
       // Remove transfer request from local object
@@ -2278,32 +2368,31 @@ export const Groups = () => {
   const editMemberOptions = computed(() => {
     const editingGroup = groups.value.find((g) => g.id === editingGroupId.value)
     const currentMemberIds = new Set(
-      (editingGroup?.members || []).map((member) => member.uid || member.mobile)
+      (editingGroup?.members || []).map((member) => member.uid)
     )
 
     return (userStore.getUsers || [])
-      .filter(
-        (user) =>
-          !isUserBlocked(user) || currentMemberIds.has(user.uid || user.mobile)
-      )
+      .filter((user) => !isUserBlocked(user) || currentMemberIds.has(user.uid))
       .map((user) => ({
-        label: `${formatUserDisplay(storeProxy, user.uid || user.mobile, {
+        label: `${formatUserDisplay(storeProxy, user.uid, {
           name: user.name,
           preferMasked: true
         })}${isUserBlocked(user) ? ' (Blocked)' : ''}`,
-        value: user.uid || user.mobile
+        value: user.uid
       }))
   })
 
   const groupNotifications = computed(() => {
-    const me = authStore.getActiveUser
+    const me = authStore.getActiveUserUid
     if (!me || activeUserIsBlocked.value) return []
     const result = []
 
-    for (const group of joinedGroups.value.filter((item) => !isGroupBlocked(item))) {
+    for (const group of joinedGroups.value.filter(
+      (item) => !isGroupBlocked(item)
+    )) {
       // Join requests needing my approval
       getJoinRequests(group.id).forEach((req) => {
-        if (!hasUserApprovedJoinRequest(group, req.mobile)) {
+        if (!hasUserApprovedJoinRequest(group, req.uid)) {
           result.push({
             groupId: group.id,
             groupName: group.name,
@@ -2418,7 +2507,7 @@ export const Groups = () => {
     editDialogVisible,
     editForm,
     transferDialogVisible,
-    newOwnerMobile,
+    newOwnerUid,
     transferOwnershipMembers,
     transferOwnershipOptions,
     addMemberDialogVisible,
@@ -2500,7 +2589,7 @@ export const Groups = () => {
 
   // Helper function to compute actions for a group
   function getGroupActions(group) {
-    const isOwner = group.ownerMobile === authStore?.getActiveUser
+    const isOwner = group.ownerUid === authStore?.getActiveUserUid
     const isMember = isMemberOfGroup(group)
     const hasJoinReq = hasPendingRequest(group)
     const interactionsBlocked =

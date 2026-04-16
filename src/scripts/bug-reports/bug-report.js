@@ -103,10 +103,10 @@ export const BugReport = (props) => {
   const { sendBugReportEmail } = useSharedActivityEmail()
 
   const activeView = ref(props.view)
-  const isLoggedIn = computed(() => !!authStore.getActiveUser)
+  const isLoggedIn = computed(() => !!authStore.getActiveUserUid)
   const loggedInUser = computed(() => {
-    const mobile = authStore.getActiveUser
-    return mobile ? userStore.getUserByMobile(mobile) : null
+    const uid = authStore.getActiveUserUid
+    return uid ? userStore.getUserByUid(uid) : null
   })
 
   const categories = computed(() => {
@@ -293,7 +293,7 @@ export const BugReport = (props) => {
       const reporter = {
         name: loggedInUser.value?.name || 'Unknown',
         email: auth.currentUser?.email || '',
-        mobile: authStore.getActiveUser
+        mobile: authStore.getActiveUserUid
       }
 
       const { bugNumber, bugSequence } = await reserveNextBugNumber()
@@ -387,19 +387,11 @@ export const BugReport = (props) => {
         }
       )
       actionLoading.value = r.id
-      const mobile = authStore.getActiveUser
-      await deleteDoc(
-        doc(database, DB_NODES.BUG_REPORTS, mobile, 'reports', r.id)
-      )
-      if (mobile)
+      const uid = authStore.getActiveUserUid
+      await deleteDoc(doc(database, DB_NODES.BUG_REPORTS, uid, 'reports', r.id))
+      if (uid)
         await deleteDoc(
-          doc(
-            database,
-            DB_NODES.BUG_REPORT_NOTIFICATIONS,
-            mobile,
-            'items',
-            r.id
-          )
+          doc(database, DB_NODES.BUG_REPORT_NOTIFICATIONS, uid, 'items', r.id)
         ).catch(() => {})
       if (r.screenshots?.length)
         r.screenshots.forEach((ss) => cleanupOldReceipts([ss], []))
@@ -413,10 +405,10 @@ export const BugReport = (props) => {
 
   async function reopenReport(r) {
     actionLoading.value = r.id
-    const mobile = authStore.getActiveUser
+    const uid = authStore.getActiveUserUid
     try {
       await updateDoc(
-        doc(database, DB_NODES.BUG_REPORTS, mobile, 'reports', r.id),
+        doc(database, DB_NODES.BUG_REPORTS, uid, 'reports', r.id),
         { status: 'open' }
       )
       await setDoc(
@@ -430,7 +422,7 @@ export const BugReport = (props) => {
         {
           title: r.title,
           action: 'reopened',
-          reporterName: loggedInUser.value?.name || mobile,
+          reporterName: loggedInUser.value?.name || uid,
           updatedAt: new Date().toISOString()
         }
       )
@@ -536,15 +528,9 @@ export const BugReport = (props) => {
       if (original?.screenshots?.length)
         cleanupOldReceipts(original.screenshots, allScreenshots)
 
-      const mobile = authStore.getActiveUser
+      const uid = authStore.getActiveUserUid
       await updateDoc(
-        doc(
-          database,
-          DB_NODES.BUG_REPORTS,
-          mobile,
-          'reports',
-          editForm.value.id
-        ),
+        doc(database, DB_NODES.BUG_REPORTS, uid, 'reports', editForm.value.id),
         {
           category: editForm.value.category,
           title: editForm.value.title,
@@ -564,7 +550,7 @@ export const BugReport = (props) => {
         {
           title: editForm.value.title,
           action: 'edited',
-          reporterName: loggedInUser.value?.name || mobile,
+          reporterName: loggedInUser.value?.name || uid,
           updatedAt: new Date().toISOString()
         }
       )
@@ -585,7 +571,7 @@ export const BugReport = (props) => {
   const replyEditorRefs = {}
 
   const noteThread = NoteThread({
-    actorKeyFn: () => authStore.getActiveUser,
+    actorKeyFn: () => authStore.getActiveUserUid,
     idPrefix: 'bug-mr-note',
     pickerWrapClass: 'nt-reaction-wrap'
   })
@@ -596,10 +582,10 @@ export const BugReport = (props) => {
       s.delete(id)
     } else {
       s.add(id)
-      const mobile = authStore.getActiveUser
-      if (mobile) {
+      const uid = authStore.getActiveUserUid
+      if (uid) {
         deleteDoc(
-          doc(database, DB_NODES.BUG_REPORT_NOTIFICATIONS, mobile, 'items', id)
+          doc(database, DB_NODES.BUG_REPORT_NOTIFICATIONS, uid, 'items', id)
         ).catch(() => {})
       }
     }
@@ -614,18 +600,18 @@ export const BugReport = (props) => {
       return
     }
     replySavingId.value = r.id
-    const mobile = authStore.getActiveUser
+    const uid = authStore.getActiveUserUid
     try {
       const uploadedImages = await noteThread.uploadNoteImages(editorImages)
 
       const noteId = generateUUID()
       await updateDoc(
-        doc(database, DB_NODES.BUG_REPORTS, mobile, 'reports', r.id),
+        doc(database, DB_NODES.BUG_REPORTS, uid, 'reports', r.id),
         {
           [`notes.${noteId}`]: {
             text,
             authorType: 'reporter',
-            authorName: loggedInUser.value?.name || mobile,
+            authorName: loggedInUser.value?.name || uid,
             createdAt: new Date().toISOString(),
             ...(uploadedImages.length ? { images: uploadedImages } : {}),
             ...noteThread.buildReplyTo(r.id)
@@ -646,7 +632,7 @@ export const BugReport = (props) => {
           title: r.title,
           status: r.status,
           hasReporterReply: true,
-          reporterName: loggedInUser.value?.name || mobile,
+          reporterName: loggedInUser.value?.name || uid,
           updatedAt: new Date().toISOString()
         }
       )
@@ -674,16 +660,10 @@ export const BugReport = (props) => {
         nSet.add(id)
         expandedIds.value = eSet
         notesOpen.value = nSet
-        const mobile = authStore.getActiveUser
-        if (mobile) {
+        const uid = authStore.getActiveUserUid
+        if (uid) {
           deleteDoc(
-            doc(
-              database,
-              DB_NODES.BUG_REPORT_NOTIFICATIONS,
-              mobile,
-              'items',
-              id
-            )
+            doc(database, DB_NODES.BUG_REPORT_NOTIFICATIONS, uid, 'items', id)
           ).catch(() => {})
         }
       })
@@ -693,12 +673,12 @@ export const BugReport = (props) => {
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
   onMounted(() => {
-    const mobile = authStore.getActiveUser
-    if (!mobile) return
+    const uid = authStore.getActiveUserUid
+    if (!uid) return
     myReportsLoading.value = true
     myReportsUnsubscribe = onSnapshot(
       query(
-        collection(database, DB_NODES.BUG_REPORTS, mobile, 'reports'),
+        collection(database, DB_NODES.BUG_REPORTS, uid, 'reports'),
         orderBy('submittedAt', 'desc')
       ),
       (snap) => {

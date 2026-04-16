@@ -24,14 +24,27 @@ export const ChangePassword = () => {
 
   const rules = {
     currentPassword: [
-      { required: true, message: 'Current password is required', trigger: 'blur' }
+      {
+        required: true,
+        message: 'Current password is required',
+        trigger: 'blur'
+      }
     ],
     newPassword: [
       { required: true, message: 'New password is required', trigger: 'blur' },
-      { min: 6, max: 15, message: 'Password must be between 6 and 15 characters', trigger: 'blur' }
+      {
+        min: 6,
+        max: 15,
+        message: 'Password must be between 6 and 15 characters',
+        trigger: 'blur'
+      }
     ],
     confirmPassword: [
-      { required: true, message: 'Please confirm your new password', trigger: 'blur' },
+      {
+        required: true,
+        message: 'Please confirm your new password',
+        trigger: 'blur'
+      },
       {
         validator: (_, value, callback) => {
           if (value !== form.value.newPassword) {
@@ -71,12 +84,17 @@ export const ChangePassword = () => {
     }
 
     if (form.value.newPassword === form.value.currentPassword) {
-      return showError('New password must be different from your current password.')
+      return showError(
+        'New password must be different from your current password.'
+      )
     }
 
     isSubmitting.value = true
     try {
-      const credential = EmailAuthProvider.credential(user.email, form.value.currentPassword)
+      const credential = EmailAuthProvider.credential(
+        user.email,
+        form.value.currentPassword
+      )
       await reauthenticateWithCredential(user, credential)
       await updatePassword(user, form.value.newPassword)
 
@@ -94,9 +112,13 @@ export const ChangePassword = () => {
       } else if (error.code === 'auth/too-many-requests') {
         showError('Too many attempts. Please try again later.')
       } else if (error.code === 'auth/requires-recent-login') {
-        showError('Session expired. Please log out and log back in before changing your password.')
+        showError(
+          'Session expired. Please log out and log back in before changing your password.'
+        )
       } else {
-        showError(error.message || 'Failed to change password. Please try again.')
+        showError(
+          error.message || 'Failed to change password. Please try again.'
+        )
       }
     } finally {
       isSubmitting.value = false

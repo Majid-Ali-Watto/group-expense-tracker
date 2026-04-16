@@ -1,39 +1,20 @@
 import { maskMobile } from './maskMobile'
-
-function getIdentity(memberOrId) {
-  if (!memberOrId) return ''
-  if (typeof memberOrId === 'string') return memberOrId
-  return memberOrId.uid || memberOrId.mobile || ''
-}
+import { getIdentity } from './identity'
 
 function getUserRecord(userStore, identity) {
-  return (
-    userStore.getUserByUid?.(identity) ||
-    userStore.getUserByMobile?.(identity) ||
-    null
-  )
-}
-
-export function createUserDisplayStoreProxy(authStore, userStore) {
-  return {
-    get getActiveUser() {
-      return authStore.getActiveUser
-    },
-    getUserByUid: (identity) => userStore.getUserByUid?.(identity),
-    getUserByMobile: (identity) => userStore.getUserByMobile?.(identity)
-  }
+  return userStore.getUserByUid?.(identity) || null
 }
 
 export function getDisplayMobile(userStore, identity) {
   const userId = getIdentity(identity)
   if (!userId) return ''
 
-  const activeUser = userStore.getActiveUser
+  const activeUserUid = userStore.getActiveUserUid
   const targetUser = getUserRecord(userStore, userId)
   const targetMobile = targetUser?.mobile || userId
 
   // Active user always sees their own real mobile; everyone else is always masked
-  if (userId === activeUser) {
+  if (userId === activeUserUid) {
     return targetMobile
   }
 

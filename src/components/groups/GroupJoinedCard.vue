@@ -13,7 +13,9 @@
 
     <div
       class="mb-3"
-      :class="{ 'pointer-events-none opacity-60 select-none': isInteractionBlocked }"
+      :class="{
+        'pointer-events-none opacity-60 select-none': isInteractionBlocked
+      }"
     >
       <div class="flex flex-col mb-2">
         <div class="flex items-center justify-between flex-wrap">
@@ -61,7 +63,7 @@
         >
           <p class="text-xs text-gray-500 dark:text-gray-400">
             Owner: {{ ownerName }} ({{
-              displayMobileForGroup(group.ownerMobile, group)
+              displayMobileForGroup(group.ownerUid, group)
             }})
           </p>
           <p
@@ -95,7 +97,11 @@
       <GroupActionButtons class="hidden sm:flex" :actions="actions" />
     </div>
 
-    <div :class="{ 'pointer-events-none opacity-60 select-none': isInteractionBlocked }">
+    <div
+      :class="{
+        'pointer-events-none opacity-60 select-none': isInteractionBlocked
+      }"
+    >
       <GroupRequestButtons
         :group="group"
         :get-join-requests="getJoinRequests"
@@ -155,9 +161,7 @@ defineEmits(['toggle-pin'])
 const userStore = useUserStore()
 
 const ownerName = computed(
-  () =>
-    userStore.getUserByMobile(props.group.ownerMobile)?.name ||
-    props.group.ownerMobile
+  () => userStore.getUserByUid(props.group.ownerUid)?.name
 )
 
 const isInteractionBlocked = computed(

@@ -25,17 +25,10 @@
 </template>
 <script setup>
 import { getUserNotifications } from '@/helpers'
-import { useUserStore, useAuthStore } from '@/stores'
 import { formatUserDisplay } from '@/utils'
+import { useStoreProxy } from '@/composables'
 
-const userStore = useUserStore()
-const authStore = useAuthStore()
-const storeProxy = {
-  get getActiveUser() {
-    return authStore.getActiveUser
-  },
-  getUserByMobile: (m) => userStore.getUserByMobile(m)
-}
+const storeProxy = useStoreProxy()
 
 const props = defineProps({
   group: {

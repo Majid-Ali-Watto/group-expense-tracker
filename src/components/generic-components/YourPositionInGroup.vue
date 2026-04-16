@@ -69,8 +69,8 @@ const authStore = useAuthStore()
 const userStore = useUserStore()
 
 const currentUserLabel = computed(() => {
-  const u = userStore.getUserByMobile(authStore.getActiveUser)
-  return u ? `${u.name} (${u.mobile})` : authStore.getActiveUser
+  const u = userStore.getUserByUid(authStore.getActiveUserUid)
+  return u ? `${u.name} (${u.mobile})` : authStore.getActiveUserUid
 })
 
 const props = defineProps({

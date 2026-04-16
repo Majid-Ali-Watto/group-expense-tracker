@@ -42,11 +42,7 @@
       Sign In
     </button>
 
-    <button
-      class="theme-btn"
-      title="Share current page"
-      @click="emit('share')"
-    >
+    <button class="theme-btn" title="Share current page" @click="emit('share')">
       <ShareIcon class="w-5 h-5" />
     </button>
 
@@ -107,7 +103,12 @@
 </template>
 
 <script setup>
-import { DataAnalysis, Key, Setting, SwitchButton } from '@element-plus/icons-vue'
+import {
+  DataAnalysis,
+  Key,
+  Setting,
+  SwitchButton
+} from '@element-plus/icons-vue'
 import {
   AlertTriangleIcon,
   MoonIcon,
@@ -184,5 +185,4 @@ const emit = defineEmits([
 .theme-btn:hover {
   background-color: rgba(255, 255, 255, 0.15);
 }
-
 </style>

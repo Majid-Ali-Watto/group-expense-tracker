@@ -105,7 +105,10 @@
     @update:visible="showProfile = $event"
   />
 
-  <ChangePasswordDialog v-if="showChangePassword" @close="showChangePassword = false" />
+  <ChangePasswordDialog
+    v-if="showChangePassword"
+    @close="showChangePassword = false"
+  />
 </template>
 
 <script setup>

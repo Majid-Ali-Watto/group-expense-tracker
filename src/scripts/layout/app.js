@@ -74,7 +74,7 @@ export const App = () => {
   }
 
   const getActiveUserProfile = () => {
-    const uid = authStore.getActiveUser
+    const uid = authStore.getActiveUserUid
     return uid ? userStore.getUserByUid(uid) : null
   }
   let activeUserTabConfigUnsubscribe = null
@@ -117,7 +117,11 @@ export const App = () => {
       : TAB_ROUTES[tab]
   }
 
-  function canAccessPath(path, userTabConfig, groupId = groupStore.getActiveGroup) {
+  function canAccessPath(
+    path,
+    userTabConfig,
+    groupId = groupStore.getActiveGroup
+  ) {
     if (!path || typeof path !== 'string' || !path.startsWith('/')) return false
 
     const basePath = '/' + path.split('/')[1].split('?')[0]
@@ -144,7 +148,11 @@ export const App = () => {
     return buildPathForTab(tab, groupId)
   }
 
-  function resolveAccessiblePath(path, userTabConfig, groupId = groupStore.getActiveGroup) {
+  function resolveAccessiblePath(
+    path,
+    userTabConfig,
+    groupId = groupStore.getActiveGroup
+  ) {
     return canAccessPath(path, userTabConfig, groupId)
       ? path
       : getDefaultAccessiblePath(userTabConfig, groupId)
@@ -267,7 +275,7 @@ export const App = () => {
         ])
 
         sessionStorage.setItem('_session', encryptedSession)
-        authStore.setActiveUser(uid)
+        authStore.setActiveUserUid(uid)
         authStore.setSessionToken(encryptedStore)
         authStore.setActivePassword('')
         loadAppConfig() // fire-and-forget: load remote config flags on auto-login
@@ -300,7 +308,7 @@ export const App = () => {
             const groupsSnapshot = await getDocs(
               query(
                 collection(database, DB_NODES.GROUPS),
-                where('memberMobiles', 'array-contains', uid)
+                where('memberUids', 'array-contains', uid)
               )
             )
             if (!groupsSnapshot.empty) {
@@ -318,8 +326,15 @@ export const App = () => {
                 try {
                   const upgraded = buildUpgradedSharedTabConfig(userTabConfig)
                   const docPayload = { uid, ...upgraded }
-                  await setDoc(doc(database, DB_NODES.USER_TAB_CONFIGS, uid), docPayload, { merge: true })
-                  userStore.setActiveUserTabAccess({ config: docPayload, accessManageTabs: upgraded.accessManageTabs !== false })
+                  await setDoc(
+                    doc(database, DB_NODES.USER_TAB_CONFIGS, uid),
+                    docPayload,
+                    { merge: true }
+                  )
+                  userStore.setActiveUserTabAccess({
+                    config: docPayload,
+                    accessManageTabs: upgraded.accessManageTabs !== false
+                  })
                 } catch {
                   // Non-fatal — will retry on next login
                 }
@@ -361,7 +376,7 @@ export const App = () => {
   // Checks presence only; the full crypto comparison happens in verifyUser().
   const loggedIn = computed(() => {
     return !!(
-      authStore.getActiveUser &&
+      authStore.getActiveUserUid &&
       authStore.getSessionToken &&
       sessionStorage.getItem('_session')
     )
@@ -397,11 +412,9 @@ export const App = () => {
 
   const { read } = useFireBase()
   const displayName = computed(
-    () => userStore.getUserByUid(authStore.getActiveUser)?.name || 'Guest'
+    () => userStore.getUserByUid(authStore.getActiveUserUid)?.name || 'Guest'
   )
-  const activeUserTabConfig = computed(
-    () => userStore.getActiveUserTabConfig
-  )
+  const activeUserTabConfig = computed(() => userStore.getActiveUserTabConfig)
   const activeGroup = computed(() => {
     if (!hasSharedFeatures(userStore.getActiveUserTabConfig)) return null
     return groupStore.getGroupById(groupStore.getActiveGroup)?.name
@@ -489,7 +502,7 @@ export const App = () => {
       stopAppConfigSync()
       await trackAnalyticsEvent('logout', { reason })
       clearAllCache()
-      authStore.setActiveUser(null)
+      authStore.setActiveUserUid(null)
       groupStore.setActiveGroup(null)
       authStore.setSessionToken(null)
       authStore.setActivePassword(null)
@@ -534,7 +547,7 @@ export const App = () => {
     )
       return false
 
-    const uid = authStore.getActiveUser
+    const uid = authStore.getActiveUserUid
     if (!uid) return false
 
     // Verify user exists in database
@@ -580,7 +593,7 @@ export const App = () => {
   let verifyInterval = null
   watch(loggedIn, async (isLoggedIn) => {
     if (isLoggedIn) {
-      startActiveUserTabConfigSync(authStore.getActiveUser)
+      startActiveUserTabConfigSync(authStore.getActiveUserUid)
       // Fresh login from /login or /register → navigate immediately so the
       // login form is replaced at once; verification runs in the background.
       if (route.path === '/login' || route.path === '/register') {
@@ -602,7 +615,7 @@ export const App = () => {
         logout('session_expired')
         return
       }
-      await setAnalyticsIdentity(authStore.getActiveUser)
+      await setAnalyticsIdentity(authStore.getActiveUserUid)
       startInactivityTracking()
       verifyInterval = setInterval(async () => {
         const verified = await verifyUser(false)

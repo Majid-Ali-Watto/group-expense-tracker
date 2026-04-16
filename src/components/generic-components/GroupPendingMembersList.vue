@@ -15,11 +15,7 @@
         size="small"
         type="warning"
       >
-        {{
-          userStore.getUserByMobile(member.mobile)?.name ||
-          member.name ||
-          member.mobile
-        }}
+        {{ userStore.getUserByUid(member.uid)?.name }}
         ({{ displayMobileForGroup(member.mobile, group) }})
       </el-tag>
       <el-tag
@@ -50,21 +46,11 @@
             class="w-7 h-7 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center text-xs font-semibold shrink-0"
           >
             {{
-              (
-                userStore.getUserByMobile(member.mobile)?.name ||
-                member.name ||
-                member.mobile
-              )
-                .charAt(0)
-                .toUpperCase()
+              userStore.getUserByUid(member.uid)?.name.charAt(0).toUpperCase()
             }}
           </div>
           <div class="text-sm text-gray-700">
-            {{
-              userStore.getUserByMobile(member.mobile)?.name ||
-              member.name ||
-              member.mobile
-            }}
+            {{ userStore.getUserByUid(member.uid)?.name }}
             <span class="text-gray-500 font-bold text-xs ml-1">
               ({{ displayMobileForGroup(member.mobile, group) }})
             </span>

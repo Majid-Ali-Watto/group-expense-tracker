@@ -2,7 +2,7 @@ import { computed, inject, ref } from 'vue'
 import { useAuthStore, useGroupStore, useUserStore } from '@/stores'
 import { useFireBase } from '@/composables'
 import { showError, showSuccess } from '@/utils'
-import { createUserDisplayStoreProxy } from '@/utils/user-display'
+import { createUserDisplayStoreProxy } from '@/composables'
 import { ElMessageBox } from 'element-plus'
 import { DB_NODES } from '@/constants'
 import { database, writeBatch, doc, deleteField } from '@/firebase'
@@ -15,7 +15,7 @@ export const Settlement = (props) => {
   const userStore = useUserStore()
 
   const storeProxy = createUserDisplayStoreProxy(authStore, userStore)
-  const user = ref(authStore.activeUser)
+  const user = ref(authStore.activeUserUid)
   const activeGroup = computed(() => groupStore.getActiveGroup)
   const group = computed(() =>
     activeGroup.value ? groupStore.getGroupById(activeGroup.value) : null
@@ -23,7 +23,7 @@ export const Settlement = (props) => {
 
   const isAdmin = computed(() => {
     if (!group.value) return false
-    return group.value.ownerMobile === authStore.getActiveUser
+    return group.value.ownerUid === authStore.getActiveUserUid
   })
 
   // Make settlementRequest reactive to group changes
@@ -41,10 +41,9 @@ export const Settlement = (props) => {
   // Check if current user has approved settlement request
   const hasUserApprovedSettlement = computed(() => {
     if (!hasSettlementRequest.value) return false
-    const mobile = authStore.getActiveUser
+    const uid = authStore.getActiveUserUid
     return (
-      settlementRequest.value.approvals?.some((a) => a.mobile === mobile) ||
-      false
+      settlementRequest.value.approvals?.some((a) => a.uid === uid) || false
     )
   })
 
@@ -88,14 +87,14 @@ export const Settlement = (props) => {
         return showError('No active group selected')
       }
 
-      const mobile = authStore.getActiveUser
+      const uid = authStore.getActiveUserUid
 
       const newSettlementRequest = {
         requested: true,
-        requestedBy: mobile,
+        requestedBy: uid,
         requestedAt: new Date().toISOString(),
         month: props.selectedMonth,
-        approvals: [{ mobile }]
+        approvals: [{ mobile: uid }]
       }
 
       const groupId = activeGroup.value
@@ -114,14 +113,14 @@ export const Settlement = (props) => {
     try {
       if (!hasSettlementRequest.value) return
 
-      const mobile = authStore.getActiveUser
+      const uid = authStore.getActiveUserUid
 
       const updatedRequest = { ...settlementRequest.value }
       if (!updatedRequest.approvals) {
         updatedRequest.approvals = []
       }
 
-      updatedRequest.approvals.push({ mobile })
+      updatedRequest.approvals.push({ mobile: uid })
 
       const groupId = activeGroup.value
       await updateData(
@@ -252,14 +251,14 @@ export const Settlement = (props) => {
     const map = {}
     const users =
       userStore.getUsers && userStore.getUsers.length ? userStore.getUsers : []
-    if (users.length) users.forEach((u) => (map[u.uid || u.mobile] = 0))
+    if (users.length) users.forEach((u) => (map[u.uid] = 0))
 
     props.payments.forEach((payment) => {
       const amount = payment.amount || 0
       const participants =
         payment.participants && payment.participants.length
           ? payment.participants
-          : users.map((u) => u.uid || u.mobile)
+          : users.map((u) => u.uid)
 
       let shares = []
       if (
@@ -306,7 +305,7 @@ export const Settlement = (props) => {
 
     return Object.keys(map).map((mobile) => ({
       mobile,
-      name: userStore.getUserByMobile(mobile)?.name || mobile,
+      name: userStore.getUserByUid(mobile)?.name || mobile,
       balance: map[mobile]
     }))
   })

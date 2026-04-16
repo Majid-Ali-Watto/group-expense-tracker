@@ -19,10 +19,8 @@ import { checkDaily } from '@/utils/notifications'
 import { getCache, setCache } from '@/utils/queryCache'
 import { appendNotificationForUser } from '@/utils/recordNotifications'
 import { showError } from '@/utils/showAlerts'
-import {
-  createUserDisplayStoreProxy,
-  formatUserDisplay
-} from '@/utils/user-display'
+import { formatUserDisplay } from '@/utils/user-display'
+import { createUserDisplayStoreProxy } from '@/composables'
 import { cleanupOldReceipts, deleteReceipt } from '@/utils/uploadReceipt'
 
 export const ExpenseList = (props) => {
@@ -82,7 +80,7 @@ export const ExpenseList = (props) => {
     deep: true
   })
 
-  const activeUser = computed(() => authStore.getActiveUser)
+  const activeUserUid = computed(() => authStore.getActiveUserUid)
   const activeGroup = computed(() => groupStore.getActiveGroup)
   const groupObj = computed(() =>
     activeGroup.value ? groupStore.getGroupById(activeGroup.value) : null
@@ -127,7 +125,7 @@ export const ExpenseList = (props) => {
   const fetchMonths = async () => {
     const groupId = groupStore.getActiveGroup || 'global'
     return loadMonthsList({
-      isEnabled: () => !!authStore.getActiveUser,
+      isEnabled: () => !!authStore.getActiveUserUid,
       parentPath: `${props.dbRef}/${groupId}`,
       monthsPath: `${props.dbRef}/${groupId}/months`,
       read,
@@ -262,7 +260,7 @@ export const ExpenseList = (props) => {
     rejectRequest
   } = useApprovalRequests({
     rawItems: rawPaymentsData,
-    activeUser,
+    activeUserUid,
     activeGroup,
     selectedMonth,
     userStore,
@@ -392,7 +390,7 @@ export const ExpenseList = (props) => {
     selectedCategory,
     categoryOptions,
     filteredPayments,
-    activeUser,
+    activeUserUid,
     userNotifications,
     dismissNotification,
     pendingRequests,

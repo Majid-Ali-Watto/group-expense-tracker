@@ -12,7 +12,8 @@ import {
 import {
   useFireBase,
   useReceiptUpload,
-  useUnsavedChangesGuard
+  useUnsavedChangesGuard,
+  useStoreProxy
 } from '@/composables'
 import { DB_NODES } from '@/constants'
 
@@ -55,13 +56,7 @@ export const PersonalExpenseForm = (props, emit) => {
   const dataStore = useDataStore()
   const userStore = useUserStore()
   const selectedMonth = ref(dataStore.selectedMonth)
-  const storeProxy = {
-    get getActiveUser() {
-      return authStore.getActiveUser
-    },
-    getUserByMobile: (value) => userStore.getUserByMobile(value),
-    getUserByUid: (uid) => userStore.getUserByUid(uid)
-  }
+  const storeProxy = useStoreProxy()
 
   const recipientOptions = computed(() =>
     (userStore.getUsers || []).map((user) => ({
@@ -73,7 +68,7 @@ export const PersonalExpenseForm = (props, emit) => {
     }))
   )
 
-  const activeUser = ref(authStore.activeUser)
+  const activeUserUid = ref(authStore.activeUserUid)
   watch(
     () => dataStore.selectedMonth,
     (newMonth) => {
@@ -151,7 +146,7 @@ export const PersonalExpenseForm = (props, emit) => {
 
         if (whatTask == 'Save') {
           saveData(
-            `${DB_NODES.PERSONAL_EXPENSES}/${activeUser.value}/months/${dateToMonthNode(form.value.date)}/expenses`,
+            `${DB_NODES.PERSONAL_EXPENSES}/${activeUserUid.value}/months/${dateToMonthNode(form.value.date)}/expenses`,
             () => getExpenseData(receiptUrls, receiptMeta),
             expenseForm,
             'Expense added successfully!',
@@ -166,7 +161,7 @@ export const PersonalExpenseForm = (props, emit) => {
           )
         } else if (whatTask == 'Update') {
           updateData(
-            `${DB_NODES.PERSONAL_EXPENSES}/${activeUser.value}/months/${existingMonth.value || selectedMonth.value}/expenses/${props.row.id}`,
+            `${DB_NODES.PERSONAL_EXPENSES}/${activeUserUid.value}/months/${existingMonth.value || selectedMonth.value}/expenses/${props.row.id}`,
             () => getExpenseData(receiptUrls, receiptMeta),
             'Expense updated successfully'
           )
@@ -174,7 +169,7 @@ export const PersonalExpenseForm = (props, emit) => {
         } else if (whatTask == 'Delete') {
           deleteExistingReceipts()
           deleteData(
-            `${DB_NODES.PERSONAL_EXPENSES}/${activeUser.value}/months/${existingMonth.value || selectedMonth.value}/expenses/${props.row.id}`,
+            `${DB_NODES.PERSONAL_EXPENSES}/${activeUserUid.value}/months/${existingMonth.value || selectedMonth.value}/expenses/${props.row.id}`,
             'Expense deleted successfully'
           )
           emit('closeModal')

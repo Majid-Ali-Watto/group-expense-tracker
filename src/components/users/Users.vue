@@ -73,14 +73,17 @@
           v-for="row in filteredUsers"
           :key="row.uid"
           :user="row"
-          :active-user="activeUser"
+          :active-user="activeUserUid"
           :groups="getUserGroups(row.uid)"
           :mobile="displayMobile(row.uid)"
           :can-manage="canManage(row)"
           :active-user-blocked="activeUserIsBlocked"
+          :is-member="isCurrentUserInGroup"
+          :has-pending-join-request="hasCurrentUserPendingJoinRequest"
           @edit="openEditUser(row)"
           @delete="requestDeleteUser"
           @create-group="openCreateGroup"
+          @select-group="requestJoinFromUserGroup"
           @open-groups="openGroupsDialog(row)"
         />
       </div>
@@ -96,6 +99,9 @@
         v-model="groupsDialogVisible"
         :user-name="selectedUserName"
         :groups="selectedUserGroups"
+        :is-member="isCurrentUserInGroup"
+        :has-pending-join-request="hasCurrentUserPendingJoinRequest"
+        @join-group="requestJoinFromUserGroup"
       />
 
       <UserCreateGroupDialog
@@ -135,8 +141,11 @@ const {
   myPendingApprovals,
   displayMobile,
   getUserGroups,
+  isCurrentUserInGroup,
+  hasCurrentUserPendingJoinRequest,
+  requestJoinFromUserGroup,
   canManage,
-  activeUser,
+  activeUserUid,
   openEditUser,
   requestDeleteUser,
   approveRequest,

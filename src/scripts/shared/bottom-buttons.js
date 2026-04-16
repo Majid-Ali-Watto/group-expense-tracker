@@ -13,7 +13,8 @@ export const BottomButtons = (emit) => {
 
   const confirmDelete = async () => {
     const confirmed = await confirmAction({
-      message: 'Are you sure you want to delete this item? This action cannot be undone.',
+      message:
+        'Are you sure you want to delete this item? This action cannot be undone.',
       title: 'Danger',
       type: 'error',
       icon: markRaw(Delete)
