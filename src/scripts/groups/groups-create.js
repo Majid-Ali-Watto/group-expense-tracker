@@ -57,13 +57,7 @@ export const GroupsCreate = (emit, props) => {
   })
 
   function buildMemberSnapshot(userId) {
-    const user = userStore.getUserByUid(userId)
-    return {
-      uid: userId,
-      mobile: user?.mobile || userId,
-      name: user?.name || '',
-      phone: user?.mobile || ''
-    }
+    return { uid: userId }
   }
 
   async function createGroup() {

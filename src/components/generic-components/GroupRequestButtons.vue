@@ -97,7 +97,7 @@
     <div class="flex flex-wrap gap-1 mb-2">
       <el-tag
         v-for="approval in getDeleteApprovals(group)"
-        :key="approval.mobile"
+        :key="approval.uid"
         size="small"
         type="success"
       >
@@ -105,7 +105,7 @@
       </el-tag>
       <el-tag
         v-for="member in getPendingApprovals(group)"
-        :key="member.mobile"
+        :key="member.uid"
         size="small"
         type="info"
       >
@@ -156,7 +156,7 @@
         <strong>Adding:</strong>
         <span
           v-for="(member, i) in group.editRequest.addedMembers"
-          :key="member.mobile"
+          :key="member.uid"
         >
           {{ formatMember(member)
           }}{{ i < group.editRequest.addedMembers.length - 1 ? ', ' : '' }}
@@ -166,7 +166,7 @@
         <strong>Removing:</strong>
         <span
           v-for="(member, i) in group.editRequest.removedMembers"
-          :key="member.mobile"
+          :key="member.uid"
         >
           {{ formatMember(member)
           }}{{ i < group.editRequest.removedMembers.length - 1 ? ', ' : '' }}
@@ -181,7 +181,7 @@
     <div class="flex flex-wrap gap-1 mb-2">
       <el-tag
         v-for="approval in getEditApprovals(group)"
-        :key="approval.mobile"
+        :key="approval.uid"
         size="small"
         type="success"
       >
@@ -233,7 +233,7 @@
     <div class="flex flex-wrap gap-1 mb-2">
       <el-tag
         v-for="approval in getAddMemberRequestApprovals(group)"
-        :key="approval.mobile"
+        :key="approval.uid"
         size="small"
         type="success"
       >
@@ -287,6 +287,10 @@
   >
     <div class="text-sm font-medium text-purple-800 mb-2">
       👑 Ownership Transfer Request
+    </div>
+    <div class="text-xs text-purple-700 mb-2">
+      Current ownership:
+      {{ formatUser(group.transferOwnershipRequest.requestedBy) }}
     </div>
     <div class="text-xs text-purple-700 mb-2">
       Transfer ownership to:

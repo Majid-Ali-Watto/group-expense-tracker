@@ -255,9 +255,13 @@ export const Groups = () => {
         if (
           group.members &&
           group.members.some(
-            (m) =>
-              (m.name && m.name.toLowerCase().includes(query)) ||
-              (m.mobile && m.mobile.toLowerCase().includes(query))
+            (m) => {
+              const memberUser = userStore.getUserByUid(m.uid)
+              return (
+                (memberUser?.name && memberUser.name.toLowerCase().includes(query)) ||
+                (memberUser?.mobile && memberUser.mobile.toLowerCase().includes(query))
+              )
+            }
           )
         )
           return true
@@ -266,9 +270,7 @@ export const Groups = () => {
     }
 
     if (filterByUser.value) {
-      result = result.filter((g) =>
-        g.members?.some((m) => m.mobile === filterByUser.value)
-      )
+      result = result.filter((g) => g.members?.some((m) => m.uid === filterByUser.value))
     }
 
     if (filterByCategory.value) {
@@ -461,12 +463,7 @@ export const Groups = () => {
     const myMobile = myUser?.mobile || me
     const newMembers = [
       ...(group.members || []),
-      {
-        uid: me,
-        mobile: myUser?.mobile || me,
-        name: myName,
-        phone: myUser?.mobile || ''
-      }
+      { uid: me }
     ]
     const newPending = (group.pendingMembers || []).filter((m) => m.uid !== me)
     let updatedGroup = {
@@ -846,7 +843,7 @@ export const Groups = () => {
         // User's share (debit)
         let share = 0
         if (Array.isArray(payment.split)) {
-          const selfSplit = payment.split.find((s) => s.mobile === currentUser)
+          const selfSplit = payment.split.find((s) => s.uid === currentUser)
           share = parseFloat(selfSplit?.amount) || 0
         } else if (Array.isArray(payment.participants)) {
           const isParticipant = payment.participants.some((p) => {
@@ -865,7 +862,7 @@ export const Groups = () => {
         // User's paid amount (credit)
         let credit = 0
         if (payment.payerMode === 'multiple' && Array.isArray(payment.payers)) {
-          const selfPayer = payment.payers.find((p) => p.mobile === currentUser)
+          const selfPayer = payment.payers.find((p) => p.uid === currentUser)
           credit = parseFloat(selfPayer?.amount) || 0
         } else if (payment.payer === currentUser) {
           credit = amount
@@ -1052,10 +1049,7 @@ export const Groups = () => {
     }
 
     const newMember = {
-      uid: user.uid || selectedMemberToAdd.value,
-      mobile: user.uid || selectedMemberToAdd.value,
-      phone: user.mobile || '',
-      name: user.name || ''
+      uid: user.uid || selectedMemberToAdd.value
     }
 
     await requestAddMember(addMemberGroupId.value, newMember)
@@ -1171,7 +1165,7 @@ export const Groups = () => {
       // Auto-add member if all existing members have now approved
       if (allMembersApprovedJoinRequest(group, requestMobile)) {
         if (!group.members.find((m) => m.uid === requestMobile)) {
-          group.members.push({ uid: requestMobile, mobile: requestMobile })
+          group.members.push({ uid: requestMobile })
         }
 
         const ownerExists = group.members.some((m) => m.uid === group.ownerUid)
@@ -1227,10 +1221,7 @@ export const Groups = () => {
 
       // Add user to members
       if (!group.members.find((m) => m.uid === request.uid)) {
-        group.members.push({
-          uid: request.uid,
-          mobile: request.uid
-        })
+        group.members.push({ uid: request.uid })
       }
 
       // If group has no owner or owner is not a member, set the new member as owner
@@ -1642,12 +1633,9 @@ export const Groups = () => {
         const editRequest = {
           requestedBy: authStore.getActiveUserUid,
           name: editForm.value.name,
-          newMembers: editForm.value.members.map((m) => ({
-            uid: m,
-            mobile: m
-          })),
-          addedMembers: addedMembers.map((m) => ({ uid: m, mobile: m })),
-          removedMembers: removedMembers.map((m) => ({ uid: m, mobile: m })),
+          newMembers: editForm.value.members.map((m) => ({ uid: m })),
+          addedMembers: addedMembers.map((m) => ({ uid: m })),
+          removedMembers: removedMembers.map((m) => ({ uid: m })),
           approvals: []
         }
 
@@ -1962,12 +1950,12 @@ export const Groups = () => {
       if (
         payment.payerMode === 'multiple' &&
         Array.isArray(payment.payers) &&
-        payment.payers.some((payer) => payer.mobile === mobile)
+        payment.payers.some((payer) => payer.uid === mobile)
       )
         return true
       if (
         Array.isArray(payment.split) &&
-        payment.split.some((split) => split.mobile === mobile)
+        payment.split.some((split) => split.uid === mobile)
       )
         return true
       if (
@@ -2022,7 +2010,7 @@ export const Groups = () => {
 
         let share = 0
         if (Array.isArray(payment.split)) {
-          const selfSplit = payment.split.find((s) => s.mobile === mobile)
+          const selfSplit = payment.split.find((s) => s.uid === mobile)
           share = parseFloat(selfSplit?.amount) || 0
         } else if (Array.isArray(payment.participants)) {
           const isParticipant = payment.participants.some((p) =>
@@ -2035,7 +2023,7 @@ export const Groups = () => {
 
         let credit = 0
         if (payment.payerMode === 'multiple' && Array.isArray(payment.payers)) {
-          const selfPayer = payment.payers.find((p) => p.mobile === mobile)
+          const selfPayer = payment.payers.find((p) => p.uid === mobile)
           credit = parseFloat(selfPayer?.amount) || 0
         } else if (payment.payer === mobile) {
           credit = amount
@@ -2171,7 +2159,7 @@ export const Groups = () => {
       })
       const confirmMessage =
         isOwner && memberCount === 2
-          ? `You are the owner. Ownership will be transferred to ${userStore.getUserByUid(otherMember.uid)?.name || otherMember.mobile} when you leave.`
+          ? `You are the owner. Ownership will be transferred to ${userStore.getUserByUid(otherMember.uid)?.name || otherMember.uid} when you leave.`
           : 'Are you sure you want to leave this group?'
 
       await ElMessageBox.confirm(confirmMessage, 'Leave Group', {
@@ -2438,7 +2426,7 @@ export const Groups = () => {
           groupId: group.id,
           groupName: group.name,
           icon: '➕',
-          label: `Add ${group.addMemberRequest.newMember.name}`
+          label: `Add ${userStore.getUserByUid(group.addMemberRequest.newMember.uid)?.name || group.addMemberRequest.newMember.uid}`
         })
       }
 

@@ -201,8 +201,8 @@ export default function useFireBase() {
             const payerEntries =
               data.payerMode === 'multiple' && data.payers?.length
                 ? data.payers
-                    .filter((p) => p.mobile)
-                    .map((p) => ({ key: p.mobile, amount: p.amount }))
+                    .filter((p) => p.uid)
+                    .map((p) => ({ key: p.uid, amount: p.amount }))
                 : data.payer
                   ? [{ key: data.payer, amount: data.amount }]
                   : []

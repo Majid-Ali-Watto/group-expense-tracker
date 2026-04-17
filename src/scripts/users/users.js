@@ -447,42 +447,6 @@ export const Users = () => {
     editForm.value = { ...initialEditForm.value }
   }
 
-  async function syncUserProfileInGroups(userId, profile) {
-    const relatedGroups = groups.value.filter((group) =>
-      [...(group.members || []), ...(group.pendingMembers || [])].some(
-        (member) => memberMatchesUser(member, userId)
-      )
-    )
-
-    for (const group of relatedGroups) {
-      const members = (group.members || []).map((member) =>
-        memberMatchesUser(member, userId)
-          ? { ...member, name: profile.name, phone: profile.mobile }
-          : member
-      )
-      const pendingMembers = (group.pendingMembers || []).map((member) =>
-        memberMatchesUser(member, userId)
-          ? { ...member, name: profile.name, phone: profile.mobile }
-          : member
-      )
-
-      await updateData(
-        `${DB_NODES.GROUPS}/${group.id}`,
-        () => ({
-          members,
-          pendingMembers: pendingMembers.length ? pendingMembers : null
-        }),
-        ''
-      )
-
-      groupStore.addGroup({
-        id: group.id,
-        members,
-        pendingMembers: pendingMembers.length ? pendingMembers : null
-      })
-    }
-  }
-
   async function submitUpdateUser() {
     const { uid } = editForm.value
     const newName = normalizeName(editForm.value.name)
@@ -542,8 +506,6 @@ export const Users = () => {
       mobile: newMobile,
       maskedMobile: maskMobile(newMobile)
     })
-
-    await syncUserProfileInGroups(uid, { name: newName, mobile: newMobile })
 
     // Notify each group the user belongs to so co-members are informed
     const memberGroups = groups.value.filter((g) =>

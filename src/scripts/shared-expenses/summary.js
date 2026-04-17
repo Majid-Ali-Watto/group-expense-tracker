@@ -36,8 +36,7 @@ export const Summary = (props) => {
       groupObj.value.members.length
     ) {
       return groupObj.value.members.map((m) => ({
-        name: m.name,
-        mobile: m.uid
+        uid: m.uid
       }))
     }
     return userStore.getUsers && userStore.getUsers.length
@@ -54,7 +53,7 @@ export const Summary = (props) => {
     filteredPayments.value.forEach((payment) => {
       if (payment.split?.length) {
         payment.split.forEach((s) => {
-          if (s.mobile && (s.amount || 0) > 0) participants.add(s.mobile)
+          if (s.uid && (s.amount || 0) > 0) participants.add(s.uid)
         })
       } else if (payment.participants?.length) {
         payment.participants.forEach((mobile) => participants.add(mobile))
@@ -69,17 +68,16 @@ export const Summary = (props) => {
     filteredPayments.value.forEach((payment) => {
       if (!payment.split?.length) return
       payment.split.forEach((s) => {
-        if (!s.mobile || !(s.amount > 0)) return
-        if (!totals[s.mobile]) {
-          totals[s.mobile] = {
-            name: formatUserDisplay(storeProxy, s.mobile, {
-              name: s.name,
+        if (!s.uid || !(s.amount > 0)) return
+        if (!totals[s.uid]) {
+          totals[s.uid] = {
+            name: formatUserDisplay(storeProxy, s.uid, {
               group: groupObj.value
             }),
             amount: 0
           }
         }
-        totals[s.mobile].amount += s.amount
+        totals[s.uid].amount += s.amount
       })
     })
     return Object.values(totals)
@@ -87,16 +85,15 @@ export const Summary = (props) => {
 
   const friendTotals = computed(() =>
     usersList.value.map((user) => ({
-      name: formatUserDisplay(storeProxy, user.mobile, {
-        name: user.name,
+      name: formatUserDisplay(storeProxy, user.uid, {
         preferMasked: true
       }),
       total: filteredPayments.value.reduce((sum, payment) => {
         if (payment.payerMode === 'multiple' && payment.payers?.length) {
-          const entry = payment.payers.find((p) => p.mobile === user.mobile)
+          const entry = payment.payers.find((p) => p.uid === user.uid)
           return sum + (entry?.amount || 0)
         }
-        if (payment.payer === user.mobile) return sum + (payment.amount || 0)
+        if (payment.payer === user.uid) return sum + (payment.amount || 0)
         return sum
       }, 0)
     }))

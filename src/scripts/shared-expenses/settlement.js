@@ -64,7 +64,7 @@ export const Settlement = (props) => {
     const approvals = getSettlementApprovals.value
     const allMembers = getAllSettlementMembers.value
     return allMembers.every((member) =>
-      approvals.some((approval) => approval.mobile === member.mobile)
+      approvals.some((approval) => approval.uid === member.uid)
     )
   })
 
@@ -94,7 +94,7 @@ export const Settlement = (props) => {
         requestedBy: uid,
         requestedAt: new Date().toISOString(),
         month: props.selectedMonth,
-        approvals: [{ mobile: uid }]
+        approvals: [{ uid }]
       }
 
       const groupId = activeGroup.value
@@ -120,7 +120,7 @@ export const Settlement = (props) => {
         updatedRequest.approvals = []
       }
 
-      updatedRequest.approvals.push({ mobile: uid })
+      updatedRequest.approvals.push({ uid })
 
       const groupId = activeGroup.value
       await updateData(
@@ -267,7 +267,7 @@ export const Settlement = (props) => {
         payment.split.length
       ) {
         shares = payment.split.map((s) => ({
-          id: s.mobile,
+          id: s.uid,
           share: s.amount
         }))
       } else if (
@@ -295,25 +295,25 @@ export const Settlement = (props) => {
 
       if (payment.payerMode === 'multiple' && payment.payers?.length) {
         payment.payers.forEach((p) => {
-          if (p.mobile)
-            map[p.mobile] = (map[p.mobile] || 0) + (parseFloat(p.amount) || 0)
+          if (p.uid)
+            map[p.uid] = (map[p.uid] || 0) + (parseFloat(p.amount) || 0)
         })
       } else if (payment.payer) {
         map[payment.payer] = (map[payment.payer] || 0) + amount
       }
     })
 
-    return Object.keys(map).map((mobile) => ({
-      mobile,
-      name: userStore.getUserByUid(mobile)?.name || mobile,
-      balance: map[mobile]
+    return Object.keys(map).map((uid) => ({
+      uid,
+      name: userStore.getUserByUid(uid)?.name || uid,
+      balance: map[uid]
     }))
   })
 
   // Pairwise settlements
   const settlements = computed(() => {
     const list = balances.value.map((b) => ({
-      mobile: b.mobile,
+      uid: b.uid,
       name: b.name,
       balance: Number(b.balance || 0)
     }))
@@ -331,8 +331,8 @@ export const Settlement = (props) => {
       const amt = Math.min(debtor.balance, creditor.balance)
       if (amt > 0) {
         result.push({
-          from: debtor.mobile,
-          to: creditor.mobile,
+          from: debtor.uid,
+          to: creditor.uid,
           amount: parseFloat(amt.toFixed(2))
         })
         debtor.balance = parseFloat((debtor.balance - amt).toFixed(2))

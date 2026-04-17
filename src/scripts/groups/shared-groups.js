@@ -218,7 +218,7 @@ export const SharedGroups = () => {
       const myMobile = me?.mobile || activeUserUid.value
       const newMembers = [
         ...(group.members || []),
-        { uid: activeUserUid.value, mobile: myMobile }
+        { uid: activeUserUid.value }
       ]
       const newPending = (group.pendingMembers || []).filter(
         (member) => member.uid !== activeUserUid.value

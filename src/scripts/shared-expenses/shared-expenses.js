@@ -218,7 +218,7 @@ export const SharedExpenses = (props, emit) => {
   )
 
   function addPayer() {
-    formData.value.payers.push({ mobile: '', amount: null })
+    formData.value.payers.push({ uid: '', amount: null })
   }
 
   function removePayer(index) {
@@ -228,7 +228,7 @@ export const SharedExpenses = (props, emit) => {
   const validateForm = (whatTask = 'Save') => {
     // --- Extra guards not covered by el-form rules ---
     if (formData.value.payerMode === 'multiple') {
-      const validPayers = formData.value.payers.filter((p) => p.mobile)
+      const validPayers = formData.value.payers.filter((p) => p.uid)
       if (validPayers.length === 0) {
         ElMessage.error(
           'Please add at least one payer when using Multiple payer mode.'
@@ -361,7 +361,7 @@ export const SharedExpenses = (props, emit) => {
         const equalShare =
           Math.floor((itemAmount / itemPeople.length) * 100) / 100
         let acc = 0
-        itemPeople.forEach((mobile, i) => {
+        itemPeople.forEach((uid, i) => {
           let share
           if (i === itemPeople.length - 1) {
             share = parseFloat((itemAmount - acc).toFixed(2))
@@ -369,15 +369,14 @@ export const SharedExpenses = (props, emit) => {
             share = equalShare
             acc += share
           }
-          perPerson[mobile] = parseFloat(
-            ((perPerson[mobile] || 0) + share).toFixed(2)
+          perPerson[uid] = parseFloat(
+            ((perPerson[uid] || 0) + share).toFixed(2)
           )
         })
       }
-      split = Object.keys(perPerson).map((mobile) => ({
-        mobile,
-        name: userStore.getUserByUid(mobile)?.name || mobile,
-        amount: perPerson[mobile]
+      split = Object.keys(perPerson).map((uid) => ({
+        uid,
+        amount: perPerson[uid]
       }))
     } else {
       // Equal split among all participants (existing logic — unchanged)
@@ -385,7 +384,7 @@ export const SharedExpenses = (props, emit) => {
         const equal = Math.floor((amount / participantsList.length) * 100) / 100
         let acc = 0
         for (let i = 0; i < participantsList.length; i++) {
-          const mobile = participantsList[i]
+          const uid = participantsList[i]
           let share = equal
           if (i === participantsList.length - 1) {
             share = parseFloat((amount - acc).toFixed(2))
@@ -393,8 +392,7 @@ export const SharedExpenses = (props, emit) => {
             acc += share
           }
           split.push({
-            mobile,
-            name: userStore.getUserByUid(mobile)?.name || mobile,
+            uid,
             amount: share
           })
         }
@@ -405,10 +403,9 @@ export const SharedExpenses = (props, emit) => {
     const isMultiPayer = formData.value.payerMode === 'multiple'
     const payersField = isMultiPayer
       ? formData.value.payers
-          .filter((p) => p.mobile)
+          .filter((p) => p.uid)
           .map((p) => ({
-            mobile: p.mobile,
-            name: userStore.getUserByUid(p.mobile)?.name || p.mobile,
+            uid: p.uid,
             amount: parseFloat(p.amount || 0)
           }))
       : null

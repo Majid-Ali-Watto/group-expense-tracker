@@ -44,8 +44,5 @@ export function formatMemberDisplay(userStore, member, options = {}) {
     return formatUserDisplay(userStore, member, options)
   }
 
-  return formatUserDisplay(userStore, getIdentity(member), {
-    ...options,
-    name: member.name
-  })
+  return formatUserDisplay(userStore, getIdentity(member), options)
 }

@@ -202,7 +202,7 @@ export const ExpenseList = (props) => {
       if (selected !== 'All') {
         if (Array.isArray(payment.payers) && payment.payers.length) {
           if (
-            !payment.payers.map((p) => normalize(p.mobile)).includes(selected)
+            !payment.payers.map((p) => normalize(p.uid)).includes(selected)
           )
             return false
         } else {

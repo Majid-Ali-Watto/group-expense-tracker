@@ -46,7 +46,7 @@
       <div class="flex flex-wrap gap-1 mb-2">
         <el-tag
           v-for="approval in getSettlementApprovals"
-          :key="approval.mobile"
+          :key="approval.uid"
           size="small"
           type="success"
         >
@@ -54,9 +54,9 @@
         </el-tag>
         <el-tag
           v-for="member in getAllSettlementMembers.filter(
-            (m) => !getSettlementApprovals.some((a) => a.mobile === m.mobile)
+            (m) => !getSettlementApprovals.some((a) => a.uid === m.uid)
           )"
-          :key="member.mobile"
+          :key="member.uid"
           size="small"
           type="info"
         >

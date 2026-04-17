@@ -15,8 +15,8 @@
         size="small"
         type="warning"
       >
-        {{ userStore.getUserByUid(member.uid)?.name }}
-        ({{ displayMobileForGroup(member.mobile, group) }})
+        {{ userStore.getUserByUid(member.uid)?.name || member.uid }}
+        ({{ displayMobileForGroup(member.uid, group) }})
       </el-tag>
       <el-tag
         v-if="pendingMemberCount > initialMemberLoadCount"
@@ -46,13 +46,13 @@
             class="w-7 h-7 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center text-xs font-semibold shrink-0"
           >
             {{
-              userStore.getUserByUid(member.uid)?.name.charAt(0).toUpperCase()
+              (userStore.getUserByUid(member.uid)?.name || member.uid).charAt(0).toUpperCase()
             }}
           </div>
           <div class="text-sm text-gray-700">
-            {{ userStore.getUserByUid(member.uid)?.name }}
+            {{ userStore.getUserByUid(member.uid)?.name || member.uid }}
             <span class="text-gray-500 font-bold text-xs ml-1">
-              ({{ displayMobileForGroup(member.mobile, group) }})
+              ({{ displayMobileForGroup(member.uid, group) }})
             </span>
           </div>
           <el-tag size="small" type="warning" class="ml-auto shrink-0"

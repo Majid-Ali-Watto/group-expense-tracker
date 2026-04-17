@@ -261,7 +261,7 @@ export function useGlobalNotifications() {
           hasAddMemberRequest(group) &&
           !hasUserApprovedAddMemberRequest(group)
         ) {
-          const nm = group.addMemberRequest.newMember.mobile
+          const nm = group.addMemberRequest.newMember.uid
           result.push({
             id: `addmem-${group.id}`,
             icon: '➕',

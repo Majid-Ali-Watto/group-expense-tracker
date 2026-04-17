@@ -93,7 +93,7 @@
                   >
                     <div class="flex-1 min-w-0">
                       <GenericDropDown
-                        v-model="p.mobile"
+                        v-model="p.uid"
                         :options="usersOptions"
                         placeholder="Select payer"
                         size="small"
