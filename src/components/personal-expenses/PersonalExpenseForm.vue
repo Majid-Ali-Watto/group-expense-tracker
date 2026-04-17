@@ -8,6 +8,41 @@
       ref="expenseForm"
       class="px-2"
     >
+      <div class="mb-4">
+        <ReceiptUploadField
+          :selected-files="receiptFiles"
+          :existing-urls="existingReceiptUrls"
+          :uploading="receiptUploading || receiptExtracting"
+          :multiple="false"
+          helper-text="Only image files (JPG, PNG, GIF, BMP, WEBP) are allowed. Max size: 1MB per file."
+          @files-selected="setSelectedFiles"
+          @remove="removeReceipt"
+        />
+        <div class="mt-3 flex justify-end">
+          <el-button
+            type="primary"
+            plain
+            size="small"
+            :loading="receiptExtracting"
+            :disabled="
+              receiptUploading ||
+              receiptExtracting ||
+              (!receiptFiles.length && !existingReceiptUrls.length)
+            "
+            @click="extractTextFromReceipt"
+          >
+            {{ receiptExtracting ? 'Extracting...' : 'Extract Text' }}
+          </el-button>
+        </div>
+        <p
+          v-if="receiptFiles.length || existingReceiptUrls.length"
+          class="mt-2 text-xs text-amber-600"
+        >
+          Verify the extracted data before saving. Receipt extraction can make
+          mistakes.
+        </p>
+      </div>
+
       <el-row :gutter="12">
         <el-col :xs="24" :sm="12" :md="12" :lg="12">
           <AmountInput v-model.number="form.amount" required />
@@ -67,15 +102,113 @@
           />
         </el-col>
       </el-row>
-      <ReceiptUploadField
-        :selected-files="receiptFiles"
-        :existing-urls="existingReceiptUrls"
-        :uploading="receiptUploading"
-        :multiple="false"
-        @files-selected="setSelectedFiles"
-        @remove="removeReceipt"
-      />
-      <div class="flex justify-end gap-2" v-if="!isEditMode">
+      <!-- Optional Line Items -->
+      <div class="mt-2 space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-sm font-semibold text-gray-700">
+            Line Items
+            <span class="text-gray-400 font-normal text-xs ml-1">(optional)</span>
+          </span>
+          <el-button size="small" type="primary" plain @click="addSplitItem">
+            + Add Item
+          </el-button>
+        </div>
+
+        <template v-if="form.splitItems.length > 0 || receiptTax != null">
+          <div
+            v-for="(item, index) in form.splitItems"
+            :key="index"
+            class="flex gap-2 items-end border border-gray-200 rounded-lg p-2 bg-gray-50"
+          >
+            <el-form-item label="Description" class="mb-0 flex-1 min-w-0">
+              <GenericInputField
+                v-model="item.description"
+                placeholder="e.g. Burger, Coffee..."
+                :maxlength="100"
+                :wrap-form-item="false"
+              />
+            </el-form-item>
+            <el-form-item
+              label="Amount"
+              class="mb-0"
+              style="width: 120px; flex-shrink: 0"
+            >
+              <GenericInputNumber
+                v-model="item.amount"
+                :min="0"
+                :precision="2"
+                :wrap-form-item="false"
+                input-class="w-full"
+              />
+            </el-form-item>
+            <el-button
+              size="small"
+              type="danger"
+              text
+              style="flex-shrink: 0; margin-bottom: 2px"
+              @click="removeSplitItem(index)"
+            >
+              ✕
+            </el-button>
+          </div>
+
+          <!-- Tax row -->
+          <div
+            v-show="receiptTax != null"
+            class="flex items-center gap-2 border border-dashed border-gray-300 rounded-lg px-3 py-2 bg-gray-50"
+          >
+            <span class="text-sm text-gray-600 flex-1">Tax</span>
+            <GenericInputNumber
+              v-model="receiptTax"
+              :min="0"
+              :precision="2"
+              :wrap-form-item="false"
+              input-class="w-full"
+              style="width: 120px; flex-shrink: 0"
+            />
+            <el-button
+              size="small"
+              type="danger"
+              text
+              style="flex-shrink: 0"
+              title="Remove tax"
+              @click="receiptTax = null"
+            >
+              ✕
+            </el-button>
+          </div>
+
+          <!-- Balance check -->
+          <div
+            v-if="form.splitItems.length > 0"
+            class="flex items-center gap-2 text-sm"
+          >
+            <span class="text-gray-600">
+              Items total{{ receiptTax != null && receiptTax > 0 ? ' + tax' : '' }}:
+            </span>
+            <span
+              :class="
+                splitItemsTotal === parseFloat(form.amount || 0)
+                  ? 'text-green-600 font-semibold'
+                  : 'text-orange-500 font-semibold'
+              "
+            >
+              {{ splitItemsTotal.toFixed(2) }} /
+              {{ parseFloat(form.amount || 0).toFixed(2) }}
+            </span>
+            <el-tag
+              v-if="splitItemsTotal === parseFloat(form.amount || 0)"
+              type="success"
+              size="small"
+            >
+              Balanced
+            </el-tag>
+            <el-tag v-else type="warning" size="small">Mismatch</el-tag>
+          </div>
+        </template>
+      </div>
+
+      <div class="flex justify-end gap-2 mt-3" v-if="!isEditMode">
         <el-button type="default" size="small" @click="resetForm">
           Reset
         </el-button>
@@ -88,8 +221,8 @@
         >
         <el-button
           type="success"
-          :loading="receiptUploading || isSubmitting"
-          :disabled="receiptUploading || isSubmitting"
+          :loading="receiptUploading || receiptExtracting || isSubmitting"
+          :disabled="receiptUploading || receiptExtracting || isSubmitting"
           @click="() => validateForm()"
           size="small"
         >
@@ -108,6 +241,8 @@ import {
   DataTimePicker,
   GenericDropDown,
   GenericInput,
+  GenericInputField,
+  GenericInputNumber,
   ReceiptUploadField
 } from '@/components/generic-components'
 import { PersonalExpenseForm } from '@/scripts/personal-expenses'
@@ -128,10 +263,16 @@ const {
   resetForm,
   requestClose,
   receiptFiles,
+  receiptExtracting,
+  receiptTax,
   receiptUploading,
   existingReceiptUrls,
   setSelectedFiles,
   removeReceipt,
+  extractTextFromReceipt,
+  splitItemsTotal,
+  addSplitItem,
+  removeSplitItem,
   isSubmitting
 } = PersonalExpenseForm(props, emit)
 

@@ -1,6 +1,6 @@
 import { computed, inject, ref, onMounted, watch, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { onSnapshot, auth, onAuthStateChanged } from '@/firebase'
+import { onSnapshot } from '@/firebase'
 import { useAuthStore, useDataStore } from '@/stores'
 import { useLoadingTimeout } from '@/composables/useLoadingTimeout'
 import { loadMonthsList } from '@/composables/useMonthsLoader'
@@ -50,6 +50,30 @@ export const PersonalExpenseList = () => {
   let expensesListener = null
   let salaryListener = null
 
+  const stopDataListeners = () => {
+    if (salaryListener) {
+      salaryListener()
+      salaryListener = null
+    }
+    if (expensesListener) {
+      expensesListener()
+      expensesListener = null
+    }
+  }
+
+  const resetPersonalExpenseState = () => {
+    stopDataListeners()
+    months.value = []
+    expenses.value = []
+    keys.value = []
+    totalSpent.value = 0
+    remaining.value = 0
+    salary.value = 0
+    monthsLoaded.value = true
+    salaryLoaded.value = true
+    expensesLoaded.value = true
+  }
+
   const fetchMonths = async () => {
     return loadMonthsList({
       isEnabled: () => !!activeUserUid.value,
@@ -62,6 +86,16 @@ export const PersonalExpenseList = () => {
       errorHandler: (error) => {
         showError('Failed to load months. Please try again.')
         console.error(error)
+      },
+      onResolved: (resolvedMonths) => {
+        if (!resolvedMonths.length) return
+
+        const currentMonthFormatted = getCurrentMonth()
+        if (!resolvedMonths.includes(selectedMonth.value)) {
+          selectedMonth.value = resolvedMonths.includes(currentMonthFormatted)
+            ? currentMonthFormatted
+            : resolvedMonths[0]
+        }
       }
     })
   }
@@ -82,10 +116,7 @@ export const PersonalExpenseList = () => {
       salaryLoaded.value = false
     }
     const salaryRef = dbRef(salaryPath)
-    if (salaryListener) {
-      salaryListener()
-      salaryListener = null
-    }
+    if (salaryListener) salaryListener()
 
     salaryListener = onSnapshot(
       salaryRef,
@@ -130,10 +161,7 @@ export const PersonalExpenseList = () => {
       expensesLoaded.value = false
     }
     const expensesRef = dbRef(expensesPath)
-    if (expensesListener) {
-      expensesListener()
-      expensesListener = null
-    }
+    if (expensesListener) expensesListener()
 
     expensesListener = onSnapshot(
       expensesRef,
@@ -187,6 +215,22 @@ export const PersonalExpenseList = () => {
     fetchExpenses()
   })
 
+  watch(
+    activeUserUid,
+    async (userUid) => {
+      if (!userUid) {
+        resetPersonalExpenseState()
+        return
+      }
+
+      await fetchMonths()
+      dataStore.setCurrentMonth(selectedMonth.value)
+      fetchSalary()
+      fetchExpenses()
+    },
+    { immediate: true }
+  )
+
   useRouteQuerySync({
     route,
     router,
@@ -201,24 +245,12 @@ export const PersonalExpenseList = () => {
   })
 
   onUnmounted(() => {
-    if (unsubscribeAuth) unsubscribeAuth()
     clearLoadingTimeout()
-    if (salaryListener) salaryListener()
-    if (expensesListener) expensesListener()
+    stopDataListeners()
   })
 
-  let unsubscribeAuth = null
   onMounted(() => {
     startLoadingTimeout()
-
-    unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
-      if (!firebaseUser) return
-      unsubscribeAuth?.()
-      unsubscribeAuth = null
-      fetchMonths()
-      fetchSalary()
-      fetchExpenses()
-    })
 
     setTimeout(() => {
       dataStore.setSalaryRef(content.value)

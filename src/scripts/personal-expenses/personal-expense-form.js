@@ -1,4 +1,4 @@
-import { ref, watch, computed } from 'vue'
+import { ref, watch, computed, nextTick } from 'vue'
 import { useAuthStore, useDataStore, useUserStore } from '@/stores'
 import {
   getWhoAddedTransaction,
@@ -7,10 +7,12 @@ import {
   normalizeDateInputValue,
   formatDateForStorage,
   mergeCategoryOptions,
-  formatUserDisplay
+  formatUserDisplay,
+  showSuccess
 } from '@/utils'
 import {
   useFireBase,
+  useReceiptOcr,
   useReceiptUpload,
   useUnsavedChangesGuard,
   useStoreProxy
@@ -28,7 +30,8 @@ export const PersonalExpenseForm = (props, emit) => {
     description: '',
     location: '',
     recipient: '',
-    date: getCurrentDateInputValue()
+    date: getCurrentDateInputValue(),
+    splitItems: []
   })
   const form = ref(createInitialForm())
   const initialFormSnapshot = ref(JSON.stringify(createInitialForm()))
@@ -50,6 +53,66 @@ export const PersonalExpenseForm = (props, emit) => {
     existingUrls: computed(() => props.row?.receiptUrls ?? null),
     existingMeta: computed(() => props.row?.receiptMeta ?? null)
   })
+
+  const { receiptExtracting, extractAndStructure } = useReceiptOcr({
+    receiptFiles,
+    existingReceiptUrls,
+    type: 'personal-expense'
+  })
+
+  const receiptTax = ref(null)
+
+  const PERSONAL_EXPENSE_JSON_SHAPE = JSON.stringify({
+    amount: 0,
+    description: '',
+    category: '',
+    date: 'YYYY-MM-DD',
+    location: '',
+    recipient: '',
+    tax: 0,
+    splitItems: [{ description: '', amount: 0 }]
+  })
+
+  async function extractTextFromReceipt() {
+    const { data } = await extractAndStructure(PERSONAL_EXPENSE_JSON_SHAPE)
+    if (!data) return
+
+    if (data.amount != null) form.value.amount = data.amount
+    if (data.description) form.value.description = data.description
+    if (data.category) form.value.category = data.category
+    if (data.date) form.value.date = data.date
+    if (data.location) form.value.location = data.location
+    if (data.recipient) form.value.recipient = data.recipient
+
+    if (data.splitItems?.length) {
+      await nextTick()
+      form.value.splitItems = data.splitItems.map((item) => ({
+        description: item.description || '',
+        amount: item.amount ?? null
+      }))
+    }
+
+    receiptTax.value = data.tax != null && data.tax > 0 ? data.tax : null
+
+    await nextTick()
+    showSuccess('Receipt data extracted and filled into the form.')
+  }
+
+  const splitItemsTotal = computed(
+    () =>
+      form.value.splitItems.reduce(
+        (sum, item) => sum + (parseFloat(item.amount) || 0),
+        0
+      ) + (parseFloat(receiptTax.value) || 0)
+  )
+
+  function addSplitItem() {
+    form.value.splitItems.push({ description: '', amount: null })
+  }
+
+  function removeSplitItem(index) {
+    form.value.splitItems.splice(index, 1)
+  }
 
   const expenseForm = ref(null)
   const authStore = useAuthStore()
@@ -86,7 +149,8 @@ export const PersonalExpenseForm = (props, emit) => {
         description: newRow?.description ?? '',
         location: newRow?.location ?? '',
         recipient: newRow?.recipient ?? '',
-        date: normalizeDateInputValue(newRow?.date)
+        date: normalizeDateInputValue(newRow?.date),
+        splitItems: newRow?.splitItems ?? []
       }
       initialFormSnapshot.value = JSON.stringify(form.value)
       existingMonth.value = dateToMonthNode(newRow?.date || form.value.date)
@@ -98,6 +162,7 @@ export const PersonalExpenseForm = (props, emit) => {
   function resetForm() {
     form.value = createInitialForm()
     initialFormSnapshot.value = JSON.stringify(form.value)
+    receiptTax.value = null
     removeReceipt()
     expenseForm.value?.clearValidate()
   }
@@ -189,7 +254,14 @@ export const PersonalExpenseForm = (props, emit) => {
       whoAdded: getWhoAddedTransaction(),
       date: formatDateForStorage(form.value?.date),
       whenAdded: new Date().toLocaleString('en-PK'),
-      ...(receiptUrls?.length ? { receiptUrls, receiptMeta } : {})
+      ...(receiptUrls?.length ? { receiptUrls, receiptMeta } : {}),
+      ...(form.value.splitItems?.length
+        ? {
+            splitItems: form.value.splitItems.filter(
+              (i) => i.description || i.amount
+            )
+          }
+        : {})
     }
   }
 
@@ -204,10 +276,16 @@ export const PersonalExpenseForm = (props, emit) => {
     resetForm,
     requestClose,
     receiptFiles,
+    receiptExtracting,
+    receiptTax,
     receiptUploading,
     existingReceiptUrls,
     setSelectedFiles,
     removeReceipt,
+    extractTextFromReceipt,
+    splitItemsTotal,
+    addSplitItem,
+    removeSplitItem,
     isSubmitting
   }
 }

@@ -3,6 +3,7 @@ import { ElMessage } from 'element-plus'
 import {
   useUsersOptions,
   useFireBase,
+  useReceiptOcr,
   useReceiptUpload,
   useSharedActivityEmail,
   useUnsavedChangesGuard,
@@ -15,7 +16,8 @@ import {
   getCurrentDateInputValue,
   normalizeDateInputValue,
   formatDateForStorage,
-  mergeCategoryOptions
+  mergeCategoryOptions,
+  showSuccess
 } from '@/utils'
 import { useAuthStore, useGroupStore, useUserStore } from '@/stores'
 import { DB_NODES } from '@/constants'
@@ -74,7 +76,6 @@ export const SharedExpenses = (props, emit) => {
   const formData = ref(createInitialFormData())
   const initialFormSnapshot = ref(JSON.stringify(createInitialFormData()))
   const existingMonth = ref(dateToMonthNode(formData.value.date))
-
   const {
     receiptFiles,
     receiptUploading,
@@ -95,6 +96,12 @@ export const SharedExpenses = (props, emit) => {
     maxFiles: computed(() =>
       formData.value.payerMode === 'single' ? 1 : Infinity
     )
+  })
+
+  const { receiptExtracting, extractAndStructure } = useReceiptOcr({
+    receiptFiles,
+    existingReceiptUrls,
+    type: 'shared-expense'
   })
 
   watch(usersOptions, (newOptions) => {
@@ -151,11 +158,13 @@ export const SharedExpenses = (props, emit) => {
   })
 
   const transactionForm = ref(null)
+  const receiptTax = ref(null)
 
   const resetForm = async ({ close = false } = {}) => {
     formData.value = createInitialFormData()
     initialFormSnapshot.value = JSON.stringify(formData.value)
     isMePayer.value = false
+    receiptTax.value = null
     removeReceipt()
     await nextTick()
     transactionForm.value?.clearValidate()
@@ -190,11 +199,12 @@ export const SharedExpenses = (props, emit) => {
   }
 
   // ========== Custom Split Helpers ==========
-  const splitItemsTotal = computed(() =>
-    formData.value.splitItems.reduce(
-      (sum, item) => sum + (parseFloat(item.amount) || 0),
-      0
-    )
+  const splitItemsTotal = computed(
+    () =>
+      formData.value.splitItems.reduce(
+        (sum, item) => sum + (parseFloat(item.amount) || 0),
+        0
+      ) + (parseFloat(receiptTax.value) || 0)
   )
 
   function addSplitItem() {
@@ -305,6 +315,45 @@ export const SharedExpenses = (props, emit) => {
         }
       }
     })
+  }
+
+  const SHARED_EXPENSE_JSON_SHAPE = JSON.stringify({
+    amount: 0,
+    description: '',
+    category: '',
+    date: 'YYYY-MM-DD',
+    location: '',
+    tax: 0,
+    splitItems: [{ description: '', amount: 0 }]
+  })
+
+  async function extractTextFromReceipt() {
+    const { data } = await extractAndStructure(SHARED_EXPENSE_JSON_SHAPE)
+    if (!data) return
+
+    if (data.amount != null) formData.value.amount = data.amount
+    if (data.description) formData.value.description = data.description
+    if (data.category) formData.value.category = data.category
+    if (data.date) formData.value.date = data.date
+    if (data.location) formData.value.location = data.location
+
+    if (data.splitItems?.length) {
+      formData.value.splitMode = 'custom'
+      // Let Vue render the empty custom-split container before populating items,
+      // otherwise el-select / el-input-number mount before their parent is in the
+      // DOM and throw offsetHeight / nextSibling null errors.
+      await nextTick()
+      formData.value.splitItems = data.splitItems.map((item) => ({
+        description: item.description || '',
+        amount: item.amount ?? null,
+        participants: [...formData.value.participants]
+      }))
+    }
+
+    receiptTax.value = data.tax != null && data.tax > 0 ? data.tax : null
+
+    await nextTick()
+    showSuccess('Receipt data extracted and filled into the form.')
   }
 
   const createDeleteRequest = (paymentPath) => {
@@ -455,10 +504,13 @@ export const SharedExpenses = (props, emit) => {
     addPayer,
     removePayer,
     receiptFiles,
+    receiptExtracting,
+    receiptTax,
     receiptUploading,
     allowsMultiple,
     existingReceiptUrls,
     existingReceiptMeta,
+    extractTextFromReceipt,
     setSelectedFiles,
     removeReceipt,
     isSubmitting

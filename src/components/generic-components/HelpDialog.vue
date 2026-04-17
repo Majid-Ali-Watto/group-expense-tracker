@@ -43,12 +43,12 @@
         <div class="help-footer-row2">
           <span class="help-email-label">Need help?</span>
           <a
-            href="mailto:majid.teresol@gmail.com"
+            :href="`mailto:${supportEmail}`"
             class="help-email-link"
             title="Email support"
           >
             <EmailIcon class="w-4 h-4" />
-            majid.teresol@gmail.com
+            {{ supportEmail }}
           </a>
         </div>
       </div>
@@ -71,6 +71,8 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'logout'])
 
 const { isMobile, visible, handleClose, handleLogout } = HelpDialog(props, emit)
+
+const supportEmail = import.meta.env.VITE_BUG_REPORT_HELP_EMAIL
 </script>
 
 <style scoped>

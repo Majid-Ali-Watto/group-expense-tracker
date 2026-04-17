@@ -40,6 +40,42 @@
           label-position="top"
           class="space-y-4"
         >
+          <!-- Receipt upload at top -->
+          <div>
+            <ReceiptUploadField
+              :selected-files="receiptFiles"
+              :existing-urls="existingReceiptUrls"
+              :uploading="receiptUploading || receiptExtracting"
+              :multiple="false"
+              helper-text="Only image files (JPG, PNG, GIF, BMP, WEBP) are allowed. Max size: 1MB per file."
+              @files-selected="setSelectedFiles"
+              @remove="removeReceipt"
+            />
+            <div class="mt-3 flex justify-end">
+              <el-button
+                type="primary"
+                plain
+                size="small"
+                :loading="receiptExtracting"
+                :disabled="
+                  receiptUploading ||
+                  receiptExtracting ||
+                  (!receiptFiles.length && !existingReceiptUrls.length)
+                "
+                @click="extractTextFromReceipt"
+              >
+                {{ receiptExtracting ? 'Extracting...' : 'Extract Text' }}
+              </el-button>
+            </div>
+            <p
+              v-if="receiptFiles.length || existingReceiptUrls.length"
+              class="mt-2 text-xs text-amber-600"
+            >
+              Verify the extracted data before saving. Receipt extraction can
+              make mistakes.
+            </p>
+          </div>
+
           <el-row :gutter="12">
             <el-col :xs="24" :sm="12" :md="12" :lg="12">
               <AmountInput v-model="formData.amount" required />
@@ -274,14 +310,6 @@
             </el-col>
           </el-row>
 
-          <ReceiptUploadField
-            :selected-files="receiptFiles"
-            :existing-urls="existingReceiptUrls"
-            :uploading="receiptUploading"
-            :multiple="false"
-            @files-selected="setSelectedFiles"
-            @remove="removeReceipt"
-          />
           <div v-if="!isEditMode" class="mb-3">
             <el-checkbox v-model="copyToExpenses" size="small">
               Also add a copy to Personal Expenses
@@ -298,8 +326,8 @@
               v-if="isVisible"
               type="success"
               size="small"
-              :loading="receiptUploading || isSubmitting"
-              :disabled="receiptUploading || isSubmitting"
+              :loading="receiptUploading || receiptExtracting || isSubmitting"
+              :disabled="receiptUploading || receiptExtracting || isSubmitting"
               @click="() => validateForm()"
             >
               {{ receiptUploading ? 'Uploading...' : 'Add Loan' }}
@@ -346,11 +374,13 @@ const {
   requestClose,
   validateForm,
   receiptFiles,
+  receiptExtracting,
   receiptUploading,
   categoryOptions,
   existingReceiptUrls,
   setSelectedFiles,
   removeReceipt,
+  extractTextFromReceipt,
   onGiverMobileBlur,
   onReceiverMobileBlur,
   isMeGiver,

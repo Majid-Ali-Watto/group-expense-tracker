@@ -85,15 +85,6 @@
     <button
       v-if="loggedIn"
       class="theme-btn"
-      title="Change Password"
-      @click="emit('change-password')"
-    >
-      <el-icon :size="18"><Key /></el-icon>
-    </button>
-
-    <button
-      v-if="loggedIn"
-      class="theme-btn"
       title="Logout"
       @click="emit('logout')"
     >
@@ -103,12 +94,7 @@
 </template>
 
 <script setup>
-import {
-  DataAnalysis,
-  Key,
-  Setting,
-  SwitchButton
-} from '@element-plus/icons-vue'
+import { DataAnalysis, Setting, SwitchButton } from '@element-plus/icons-vue'
 import {
   AlertTriangleIcon,
   MoonIcon,
@@ -136,7 +122,6 @@ const emit = defineEmits([
   'open-profile',
   'show-net-position',
   'open-manage-tabs',
-  'change-password',
   'logout'
 ])
 </script>

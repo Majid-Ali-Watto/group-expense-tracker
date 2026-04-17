@@ -37,7 +37,6 @@
           @toggle-theme="toggleTheme"
           @show-net-position="handleNetPosition"
           @open-manage-tabs="openManageTabs"
-          @change-password="showChangePassword = true"
           @logout="confirmLogout"
         />
 
@@ -60,7 +59,6 @@
           @share="shareCurrentUrl"
           @show-net-position="handleNetPosition"
           @open-manage-tabs="openManageTabs"
-          @change-password="showChangePassword = true"
           @toggle-theme="toggleTheme"
           @logout="confirmLogout"
         />
@@ -104,11 +102,6 @@
     :user="activeUserProfile"
     @update:visible="showProfile = $event"
   />
-
-  <ChangePasswordDialog
-    v-if="showChangePassword"
-    @close="showChangePassword = false"
-  />
 </template>
 
 <script setup>
@@ -121,7 +114,6 @@ import NotificationBell from '../header/NotificationBell.vue'
 import ProfileDialog from '../header/ProfileDialog.vue'
 import PublicHeaderNav from '../header/PublicHeaderNav.vue'
 import TitleAndTagline from '../header/TitleAndTagline.vue'
-import ChangePasswordDialog from '../auth/ChangePasswordDialog.vue'
 
 defineOptions({ inheritAttrs: false })
 const HelpDialog = loadAsyncComponent(
@@ -155,7 +147,6 @@ const emit = defineEmits([
 const showHelp = ref(false)
 const showBugReport = ref(false)
 const showManageTabs = ref(false)
-const showChangePassword = ref(false)
 const showProfile = ref(false)
 const bugReportView = ref('form')
 const bugReportOpenId = ref(null)

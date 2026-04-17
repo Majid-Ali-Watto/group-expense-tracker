@@ -41,6 +41,46 @@
             label-position="top"
             class="space-y-4"
           >
+            <div>
+              <ReceiptUploadField
+                :selected-files="receiptFiles"
+                :existing-urls="existingReceiptUrls"
+                :uploading="receiptUploading || receiptExtracting"
+                :multiple="allowsMultiple"
+                :helper-text="
+                  allowsMultiple
+                    ? 'Only image files (JPG, PNG, GIF, BMP, WEBP) are allowed. Max size: 1MB per file. You can upload multiple files.'
+                    : 'Only image files (JPG, PNG, GIF, BMP, WEBP) are allowed. Max size: 1MB per file. Single file only.'
+                "
+                @files-selected="setSelectedFiles"
+                @remove="removeReceipt"
+              />
+
+              <div class="mt-3 flex justify-end">
+                <el-button
+                  type="primary"
+                  plain
+                  size="small"
+                  :loading="receiptExtracting"
+                  :disabled="
+                    receiptUploading ||
+                    receiptExtracting ||
+                    (!receiptFiles.length && !existingReceiptUrls.length)
+                  "
+                  @click="extractTextFromReceipt"
+                >
+                  {{ receiptExtracting ? 'Extracting...' : 'Extract Text' }}
+                </el-button>
+              </div>
+              <p
+                v-if="receiptFiles.length || existingReceiptUrls.length"
+                class="mt-2 text-xs text-amber-600"
+              >
+                Verify the extracted data before saving. Receipt extraction can
+                make mistakes.
+              </p>
+            </div>
+
             <el-row :gutter="12">
               <el-col :xs="24" :sm="12" :md="12" :lg="12">
                 <AmountInput v-model="formData.amount" required />
@@ -199,19 +239,6 @@
               </el-col>
             </el-row>
 
-            <ReceiptUploadField
-              :selected-files="receiptFiles"
-              :existing-urls="existingReceiptUrls"
-              :uploading="receiptUploading"
-              :multiple="allowsMultiple"
-              :helper-text="
-                allowsMultiple
-                  ? 'Only image files (JPG, PNG, GIF, BMP, WEBP) are allowed. Max size: 1MB per file. You can upload multiple files.'
-                  : 'Only image files (JPG, PNG, GIF, BMP, WEBP) are allowed. Max size: 1MB per file. Single file only.'
-              "
-              @files-selected="setSelectedFiles"
-              @remove="removeReceipt"
-            />
             <!-- Split Mode -->
             <div class="flex items-center justify-between mb-4">
               <span class="text-sm font-medium text-gray-700">Split Mode</span>
@@ -277,12 +304,38 @@
                 </el-form-item>
               </div>
 
+              <!-- Tax row (only shown when AI extracted a tax value) -->
+              <div
+                v-show="receiptTax != null"
+                class="flex items-center gap-2 border border-dashed border-gray-300 rounded-lg px-3 py-2 bg-gray-50"
+              >
+                <span class="text-sm text-gray-600 flex-1">Tax</span>
+                <GenericInputNumber
+                  v-model="receiptTax"
+                  :min="0"
+                  :precision="2"
+                  :wrap-form-item="false"
+                  input-class="w-full"
+                  style="width: 120px; flex-shrink: 0"
+                />
+                <el-button
+                  size="small"
+                  type="danger"
+                  text
+                  style="flex-shrink: 0"
+                  title="Remove tax"
+                  @click="receiptTax = null"
+                >
+                  ✕
+                </el-button>
+              </div>
+
               <!-- Balance check -->
               <div
                 v-if="formData.splitItems.length > 0"
                 class="flex items-center gap-2 text-sm"
               >
-                <span class="text-gray-600">Items total:</span>
+                <span class="text-gray-600">Items total{{ receiptTax != null && receiptTax > 0 ? ' + tax' : '' }}:</span>
                 <span
                   :class="
                     splitItemsTotal === parseFloat(formData.amount || 0)
@@ -384,9 +437,12 @@ const {
   addPayer,
   removePayer,
   receiptFiles,
+  receiptExtracting,
+  receiptTax,
   receiptUploading,
   allowsMultiple,
   existingReceiptUrls,
+  extractTextFromReceipt,
   setSelectedFiles,
   removeReceipt,
   isMePayer,

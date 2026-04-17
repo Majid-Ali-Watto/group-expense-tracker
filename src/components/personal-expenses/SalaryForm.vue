@@ -21,6 +21,22 @@
         ref="salaryForm"
         class="space-y-4 px-3 pt-3 pb-1"
       >
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <GenericDropDown
+            v-model="selectedMonthValue"
+            label="Month"
+            placeholder="Select month"
+            :options="monthOptions"
+          />
+          <GenericDropDown
+            v-model="selectedYear"
+            label="Year"
+            placeholder="Select year"
+            :options="yearOptions"
+            :filterable="false"
+          />
+        </div>
+
         <GenericInputNumber
           v-model="form.salary"
           label="Monthly Salary"
@@ -59,7 +75,10 @@ import { ref } from 'vue'
 import { rules } from '@/assets'
 import { GenericButton } from '@/components/generic-components'
 import { SalaryForm } from '@/scripts/personal-expenses'
-import { GenericInputNumber } from '@/components/generic-components'
+import {
+  GenericDropDown,
+  GenericInputNumber
+} from '@/components/generic-components'
 
 const activePanel = ref([])
 
@@ -68,6 +87,10 @@ const {
   salaryData,
   form,
   salaryForm,
+  selectedYear,
+  selectedMonthValue,
+  monthOptions,
+  yearOptions,
   isSaveEnbl,
   isUpdateEnbl,
   addSalary,

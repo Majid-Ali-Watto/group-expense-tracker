@@ -6,12 +6,37 @@ import { useFireBase, useUnsavedChangesGuard } from '@/composables'
 import { useAuthStore, useDataStore } from '@/stores'
 import { DB_NODES } from '@/constants'
 
+const MONTH_OPTIONS = [
+  { label: 'January', value: '01' },
+  { label: 'February', value: '02' },
+  { label: 'March', value: '03' },
+  { label: 'April', value: '04' },
+  { label: 'May', value: '05' },
+  { label: 'June', value: '06' },
+  { label: 'July', value: '07' },
+  { label: 'August', value: '08' },
+  { label: 'September', value: '09' },
+  { label: 'October', value: '10' },
+  { label: 'November', value: '11' },
+  { label: 'December', value: '12' }
+]
+
+function parseMonthKey(monthKey) {
+  const [year, month] = String(monthKey || getCurrentMonth()).split('-')
+  return {
+    year: year || String(new Date().getFullYear()),
+    month: month || String(new Date().getMonth() + 1).padStart(2, '0')
+  }
+}
+
 export const SalaryForm = () => {
   const formatAmount = inject('formatAmount')
   const authStore = useAuthStore()
   const dataStore = useDataStore()
   const { read, dbRef, setData, updateData } = useFireBase()
-  const selectedMonth = ref(dataStore.selectedMonth)
+  const initialMonth = parseMonthKey(dataStore.selectedMonth || getCurrentMonth())
+  const selectedYear = ref(initialMonth.year)
+  const selectedMonthValue = ref(initialMonth.month)
 
   const salaryData = ref({
     month: null,
@@ -28,6 +53,24 @@ export const SalaryForm = () => {
   let salaryListener = null
 
   const activeUserUid = computed(() => authStore.getActiveUserUid)
+  const selectedMonth = computed(
+    () => `${selectedYear.value}-${selectedMonthValue.value}`
+  )
+  const monthOptions = MONTH_OPTIONS
+  const yearOptions = computed(() => {
+    const currentYear = new Date().getFullYear()
+    const years = []
+    for (let year = currentYear + 5; year >= currentYear - 10; year -= 1) {
+      years.push({ label: String(year), value: String(year) })
+    }
+    if (!years.some((option) => option.value === selectedYear.value)) {
+      years.unshift({
+        label: selectedYear.value,
+        value: selectedYear.value
+      })
+    }
+    return years
+  })
   const isFormDirty = computed(
     () =>
       form.value.salary !== null &&
@@ -36,13 +79,11 @@ export const SalaryForm = () => {
 
   useUnsavedChangesGuard(isFormDirty)
 
-  watch(
-    () => dataStore.selectedMonth,
-    (newMonth) => {
-      selectedMonth.value = newMonth
-      listenForSalaryChanges()
-    }
-  )
+  const syncSelectorsFromMonth = (monthKey) => {
+    const parsed = parseMonthKey(monthKey)
+    selectedYear.value = parsed.year
+    selectedMonthValue.value = parsed.month
+  }
 
   watch(
     () => salaryData.value.salary,
@@ -61,7 +102,7 @@ export const SalaryForm = () => {
     try {
       await setData(
         `${DB_NODES.SALARIES}/${activeUserUid.value}/months/${selectedMonth.value}`,
-        { salary: form.value.salary, month: getCurrentMonth() }
+        { salary: form.value.salary, month: selectedMonth.value }
       )
       form.value.salary = null
       showSuccess('Salary added successfully!')
@@ -96,7 +137,7 @@ export const SalaryForm = () => {
       if (data) {
         await updateData(
           `${DB_NODES.SALARIES}/${activeUserUid.value}/months/${selectedMonth.value}`,
-          () => ({ salary: form.value.salary }),
+          () => ({ salary: form.value.salary, month: selectedMonth.value }),
           'Salary updated successfully!'
         )
         form.value.salary = null
@@ -145,6 +186,24 @@ export const SalaryForm = () => {
     )
   }
 
+  watch(
+    () => dataStore.selectedMonth,
+    (newMonth) => {
+      const targetMonth = newMonth || getCurrentMonth()
+      if (targetMonth !== selectedMonth.value) {
+        syncSelectorsFromMonth(targetMonth)
+      }
+    },
+    { immediate: true }
+  )
+
+  watch(selectedMonth, (newMonth) => {
+    if (dataStore.selectedMonth !== newMonth) {
+      dataStore.setCurrentMonth(newMonth)
+    }
+    listenForSalaryChanges()
+  })
+
   const validateForm = async () => {
     // Wait for form ref to be available with retries
     let retries = 0
@@ -185,6 +244,10 @@ export const SalaryForm = () => {
     salaryData,
     form,
     salaryForm,
+    selectedYear,
+    selectedMonthValue,
+    monthOptions,
+    yearOptions,
     isSaveEnbl,
     isUpdateEnbl,
     addSalary,

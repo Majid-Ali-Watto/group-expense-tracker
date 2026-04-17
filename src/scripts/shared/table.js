@@ -451,13 +451,13 @@ export const Table = (props) => {
     rows.forEach((payment) => {
       if (!payment.split?.length) return
       payment.split.forEach((s) => {
-        if (!s.mobile || !(s.amount > 0)) return
-        if (!perPersonMap[s.mobile])
-          perPersonMap[s.mobile] = {
-            name: formatUser(s.mobile, s.name),
+        if (!s.uid || !(s.amount > 0)) return
+        if (!perPersonMap[s.uid])
+          perPersonMap[s.uid] = {
+            name: formatUser(s.uid, s.name),
             amount: 0
           }
-        perPersonMap[s.mobile].amount += s.amount
+        perPersonMap[s.uid].amount += s.amount
       })
     })
     const perPersonOwed = Object.values(perPersonMap)
@@ -467,7 +467,7 @@ export const Table = (props) => {
     rows.forEach((payment) => {
       if (payment.split?.length) {
         payment.split.forEach((s) => {
-          if (s.mobile && (s.amount || 0) > 0) participants.add(s.mobile)
+          if (s.uid && (s.amount || 0) > 0) participants.add(s.uid)
         })
       } else if (payment.participants?.length) {
         payment.participants.forEach((m) => participants.add(m))
@@ -483,7 +483,7 @@ export const Table = (props) => {
           name: formatUser(mobile, user.name),
           total: rows.reduce((sum, payment) => {
             if (payment.payerMode === 'multiple' && payment.payers?.length) {
-              const entry = payment.payers.find((p) => p.mobile === mobile)
+              const entry = payment.payers.find((p) => p.uid === mobile)
               return sum + (entry?.amount || 0)
             }
             if (payment.payer === mobile) return sum + (payment.amount || 0)
@@ -538,7 +538,7 @@ export const Table = (props) => {
 
       let shares = []
       if (payment.split?.length) {
-        shares = payment.split.map((s) => ({ id: s.mobile, share: s.amount }))
+        shares = payment.split.map((s) => ({ id: s.uid, share: s.amount }))
       } else if (
         participants.length &&
         typeof participants[0] === 'object' &&
@@ -563,8 +563,8 @@ export const Table = (props) => {
 
       if (payment.payerMode === 'multiple' && payment.payers?.length) {
         payment.payers.forEach((p) => {
-          if (p.mobile)
-            map[p.mobile] = (map[p.mobile] || 0) + (parseFloat(p.amount) || 0)
+          if (p.uid)
+            map[p.uid] = (map[p.uid] || 0) + (parseFloat(p.amount) || 0)
         })
       } else if (payment.payer) {
         map[payment.payer] = (map[payment.payer] || 0) + amount
@@ -572,7 +572,7 @@ export const Table = (props) => {
     })
 
     const list = Object.keys(map).map((m) => ({
-      mobile: m,
+      uid: m,
       balance: Number(map[m] || 0)
     }))
     const creditors = list.filter((l) => l.balance > 0).map((c) => ({ ...c }))
@@ -589,8 +589,8 @@ export const Table = (props) => {
       const amt = Math.min(debtor.balance, creditor.balance)
       if (amt > 0) {
         result.push({
-          from: debtor.mobile,
-          to: creditor.mobile,
+          from: debtor.uid,
+          to: creditor.uid,
           amount: parseFloat(amt.toFixed(2))
         })
         debtor.balance = parseFloat((debtor.balance - amt).toFixed(2))
@@ -762,7 +762,7 @@ export const Table = (props) => {
           if (row.payerMode === 'multiple' && row.payers?.length) {
             td.textContent = row.payers
               .map((p) => {
-                return `${formatUser(p.mobile)}: ${formatAmount(p.amount)}`
+                return `${formatUser(p.uid)}: ${formatAmount(p.amount)}`
               })
               .join('\n')
           } else {
@@ -772,7 +772,7 @@ export const Table = (props) => {
           if (Array.isArray(row.split)) {
             td.textContent = row.split
               .map((s) => {
-                return `${formatUser(s.mobile, s.name)}: ${formatAmount(s.amount)}`
+                return `${formatUser(s.uid, s.name)}: ${formatAmount(s.amount)}`
               })
               .join('\n')
           } else {
@@ -1428,10 +1428,10 @@ export const Table = (props) => {
   const showMoreItems = ref([])
 
   const formatPayer = (p) =>
-    `${formatUser(p.mobile)}: ${formatAmount(p.amount)}`
+    `${formatUser(p.uid)}: ${formatAmount(p.amount)}`
 
   const formatSplit = (s) =>
-    `${formatUser(s.mobile, s.name)}: ${formatAmount(s.amount)}`
+    `${formatUser(s.uid, s.name)}: ${formatAmount(s.amount)}`
 
   const formatSplitItem = (item) => {
     const description = item?.description?.trim() || 'Item'

@@ -120,12 +120,6 @@
             </div>
           </el-dropdown-item>
 
-          <el-dropdown-item v-if="loggedIn" @click="emit('change-password')">
-            <div class="flex items-center gap-3">
-              <el-icon class="menu-icon" :size="20"><Key /></el-icon>
-              <span>Change Password</span>
-            </div>
-          </el-dropdown-item>
           <div class="mobile-menu-divider" />
         </template>
 
@@ -152,7 +146,6 @@
 <script setup>
 import {
   DataAnalysis,
-  Key,
   Setting,
   SwitchButton,
   Money,
@@ -217,7 +210,6 @@ const emit = defineEmits([
   'open-profile',
   'show-net-position',
   'open-manage-tabs',
-  'change-password',
   'toggle-theme',
   'logout'
 ])

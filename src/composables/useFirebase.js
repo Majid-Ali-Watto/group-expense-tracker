@@ -11,15 +11,21 @@ import {
   arrayUnion
 } from 'firebase/firestore'
 import { database } from '@/firebase'
+import { useAuthStore, useUserStore } from '@/stores'
+import { formatUserDisplay, maskMobile } from '@/utils'
 import { startLoading, stopLoading, withLoading } from '@/utils/loading'
 import { withTrace } from '@/utils/performance'
 import getCurrentMonth, { dateToMonthNode } from '@/utils/getCurrentMonth'
 import { resetForm } from '@/utils/reset-form'
 import { showError, showSuccess } from '@/utils/showAlerts'
 import { DB_NODES } from '@/constants'
+import { createUserDisplayStoreProxy } from './useStoreProxy'
 
 export default function useFireBase() {
   const isSubmitting = ref(false)
+  const authStore = useAuthStore()
+  const userStore = useUserStore()
+  const storeProxy = createUserDisplayStoreProxy(authStore, userStore)
 
   async function runMutation(task, successMessage) {
     if (isSubmitting.value) return null
@@ -133,13 +139,30 @@ export default function useFireBase() {
     )
   }
 
+  function formatAutoAddedRecipient(payerIdentity) {
+    if (!payerIdentity) return 'Expenses-Auto-Add'
+
+    const payerUser = userStore.getUserByUid?.(payerIdentity)
+    const payerName = payerUser?.name || ''
+    const payerMobile =
+      payerUser?.maskedMobile ||
+      (payerUser?.mobile ? maskMobile(payerUser.mobile) : '')
+
+    const payerDisplay =
+      payerName && payerMobile
+        ? `${payerName} (${payerMobile})`
+        : formatUserDisplay(storeProxy, payerIdentity, { name: payerName })
+
+    return `Expenses-Auto-Add, Paid by ${payerDisplay || payerIdentity}`
+  }
+
   function getNewData(formData) {
     return {
       amount: formData.amount,
       category: formData.category || 'Other',
       description: formData.description,
       location: 'Islamabad',
-      recipient: 'Expenses-Auto-Add, Paid by ' + formData.payer,
+      recipient: formatAutoAddedRecipient(formData.payer),
       month: getCurrentMonth(),
       whoAdded: formData.whoAdded,
       date: formData.date,

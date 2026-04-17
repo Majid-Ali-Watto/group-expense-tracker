@@ -2,10 +2,10 @@ import { useAuthStore, useGroupStore, useUserStore } from '@/stores'
 import { getEmailConfig } from '@/composables'
 import { getIdentity } from '@/utils'
 
-const EMAIL_API_URL = import.meta.env.VITE_NODE_BE_EMAIL_API_URL?.trim()
+const API_BASE_URL = import.meta.env.VITE_NODE_BE_API_URL?.trim()
 const PRODUCTION = import.meta.env.PROD
 const SEND_EMAILS = getEmailConfig().send
-const BUG_REPORT_RECIPIENT = 'majid.teresol@gmail.com'
+const BUG_REPORT_RECIPIENT = import.meta.env.VITE_BUG_REPORT_HELP_EMAIL?.trim()
 
 export function useSharedActivityEmail() {
   const authStore = useAuthStore()
@@ -13,9 +13,9 @@ export function useSharedActivityEmail() {
   const userStore = useUserStore()
 
   function postEmailNotification(payload) {
-    if (!EMAIL_API_URL || !PRODUCTION || !SEND_EMAILS) return
+    if (!API_BASE_URL || !PRODUCTION || !SEND_EMAILS) return
 
-    fetch(EMAIL_API_URL, {
+    fetch(API_BASE_URL+'/send-email', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -96,7 +96,7 @@ export function useSharedActivityEmail() {
       recipients: [
         {
           email: BUG_REPORT_RECIPIENT,
-          name: 'Majid'
+          name: import.meta.env.VITE_BUG_RESOLVER || 'Support Team'
         }
       ],
       report: {

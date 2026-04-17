@@ -2,6 +2,7 @@ import { ref, watch, computed, nextTick } from 'vue'
 import {
   useUsersOptions,
   useFireBase,
+  useReceiptOcr,
   useReceiptUpload,
   useSharedActivityEmail,
   useUnsavedChangesGuard,
@@ -10,6 +11,7 @@ import {
 import {
   getWhoAddedTransaction,
   showError,
+  showSuccess,
   buildRequestMeta,
   dateToMonthNode,
   getCurrentDateInputValue,
@@ -94,6 +96,32 @@ export const LoanForm = (props, emit) => {
     existingUrls: computed(() => props.row?.receiptUrls ?? null),
     existingMeta: computed(() => props.row?.receiptMeta ?? null)
   })
+
+  const { receiptExtracting, extractAndStructure } = useReceiptOcr({
+    receiptFiles,
+    existingReceiptUrls,
+    type: 'shared-loan'
+  })
+
+  const SHARED_LOAN_JSON_SHAPE = JSON.stringify({
+    amount: 0,
+    description: '',
+    category: '',
+    date: 'YYYY-MM-DD'
+  })
+
+  async function extractTextFromReceipt() {
+    const { data } = await extractAndStructure(SHARED_LOAN_JSON_SHAPE)
+    if (!data) return
+
+    if (data.amount != null) formData.value.amount = data.amount
+    if (data.description) formData.value.description = data.description
+    if (data.category) formData.value.category = data.category
+    if (data.date) formData.value.date = data.date
+
+    await nextTick()
+    showSuccess('Receipt data extracted and filled into the form.')
+  }
 
   // ========== Copy to Personal Expenses ==========
   const copyToExpenses = ref(false)
@@ -625,11 +653,13 @@ export const LoanForm = (props, emit) => {
     resetForm,
     validateForm,
     receiptFiles,
+    receiptExtracting,
     receiptUploading,
     categoryOptions,
     existingReceiptUrls,
     setSelectedFiles,
     removeReceipt,
+    extractTextFromReceipt,
     onGiverMobileBlur,
     onReceiverMobileBlur,
     isMeGiver,
