@@ -48,7 +48,7 @@ export function useReceiptOcr({ receiptFiles, existingReceiptUrls, type }) {
       const API_BASE_URL = import.meta.env.VITE_NODE_BE_API_URL?.trim()
       const headers = await getApiAuthHeaders({
         'Content-Type': 'application/json',
-          'x-api-key': import.meta.env.VITE_X_API_KEY || ''
+        'x-api-key': import.meta.env.VITE_X_API_KEY || ''
       })
       const response = await fetch(`${API_BASE_URL}/structure-ocr`, {
         method: 'POST',

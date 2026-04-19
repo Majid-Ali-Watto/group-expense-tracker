@@ -3,7 +3,15 @@ import { database, doc, setDoc, onSnapshot } from '@/firebase'
 import { DB_NODES } from '@/constants'
 import { showError, showSuccess } from '@/utils'
 
-const CONFIG_DOCS = ['storage', 'cache', 'downloads', 'manage-tabs', 'bugs', 'email', 'ocr']
+const CONFIG_DOCS = [
+  'storage',
+  'cache',
+  'downloads',
+  'manage-tabs',
+  'bugs',
+  'email',
+  'ocr'
+]
 
 export function AdminConfig() {
   const configs = reactive(

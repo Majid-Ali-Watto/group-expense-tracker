@@ -97,8 +97,7 @@ export function buildUserTabConfig(selection = {}) {
       personalEnabled && selection[USER_TAB_KEYS.PERSONAL_LOANS] === true,
     emailSharedExpenses:
       sharedExpensesEnabled && selection.emailSharedExpenses !== false,
-    emailSharedLoans:
-      sharedLoansEnabled && selection.emailSharedLoans !== false
+    emailSharedLoans: sharedLoansEnabled && selection.emailSharedLoans !== false
   }
 }
 

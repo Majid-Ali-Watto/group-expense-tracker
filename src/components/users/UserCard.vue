@@ -44,7 +44,9 @@
           </div>
         </div>
       </div>
-      <div class="max-[640px]:flex max-[640px]:w-full max-[640px]:flex-wrap max-[640px]:justify-between min-[641px]:contents">
+      <div
+        class="max-[640px]:flex max-[640px]:w-full max-[640px]:flex-wrap max-[640px]:justify-between min-[641px]:contents"
+      >
         <!-- Groups -->
         <div class="flex flex-wrap gap-1 sm:flex-1">
           <div
@@ -152,12 +154,10 @@ const isInteractionBlocked = computed(
   () => props.activeUserBlocked || props.user?.blocked === true
 )
 
-const showBlockedWarning = computed(
-  () => props.user?.blocked === true
-)
+const showBlockedWarning = computed(() => props.user?.blocked === true)
 
-const blockedMessage = computed(() =>
-  'This user is blocked by admin. Do not interact with this account.'
+const blockedMessage = computed(
+  () => 'This user is blocked by admin. Do not interact with this account.'
 )
 
 function getGroupStatus(group) {

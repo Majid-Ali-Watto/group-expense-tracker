@@ -224,7 +224,10 @@ async function syncFirestoreUserFromAuth(user, firebaseUser) {
   const nextEmailVerified = firebaseUser.emailVerified === true
   const updates = {}
 
-  if (normalizedAuthEmail && user.email?.trim()?.toLowerCase() !== normalizedAuthEmail) {
+  if (
+    normalizedAuthEmail &&
+    user.email?.trim()?.toLowerCase() !== normalizedAuthEmail
+  ) {
     updates.email = normalizedAuthEmail
   }
 

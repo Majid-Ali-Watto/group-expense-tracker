@@ -287,11 +287,11 @@ export const LoanForm = (props, emit) => {
     async (newRow) => {
       formData.value.amount = newRow?.amount ?? null
       formData.value.loanGiver = props.isPersonal
-        ? newRow?.loanGiver ?? ''
-        : newRow?.giver ?? ''
+        ? (newRow?.loanGiver ?? '')
+        : (newRow?.giver ?? '')
       formData.value.loanReceiver = props.isPersonal
-        ? newRow?.loanReceiver ?? ''
-        : newRow?.receiver ?? ''
+        ? (newRow?.loanReceiver ?? '')
+        : (newRow?.receiver ?? '')
       formData.value.loanGiverMobile =
         newRow?.giverMobile ?? newRow?.giver ?? newRow?.loanGiverMobile ?? ''
       formData.value.loanReceiverMobile =

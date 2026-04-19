@@ -201,9 +201,7 @@ export const ExpenseList = (props) => {
       // Payer filter (supports single and multiple payers)
       if (selected !== 'All') {
         if (Array.isArray(payment.payers) && payment.payers.length) {
-          if (
-            !payment.payers.map((p) => normalize(p.uid)).includes(selected)
-          )
+          if (!payment.payers.map((p) => normalize(p.uid)).includes(selected))
             return false
         } else {
           if (normalize(payment?.payer) !== selected) return false

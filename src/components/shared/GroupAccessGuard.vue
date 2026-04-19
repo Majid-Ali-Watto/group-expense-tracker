@@ -201,10 +201,7 @@ async function accept() {
     const myUser = userStore.getUserByUid(me.value)
     const myName = myUser?.name || me.value
     const myMobile = myUser?.mobile || me.value
-    const newMembers = [
-      ...(group.value.members || []),
-      { uid: me.value }
-    ]
+    const newMembers = [...(group.value.members || []), { uid: me.value }]
     const newPending = (group.value.pendingMembers || []).filter(
       (m) => m.uid !== me.value
     )
@@ -212,7 +209,12 @@ async function accept() {
     let payload = {
       members: newMembers,
       pendingMembers: newPending.length ? newPending : null,
-      memberUids: [...new Set([...newMembers.map((member) => member.uid), ...newPending.map((member) => member.uid)])]
+      memberUids: [
+        ...new Set([
+          ...newMembers.map((member) => member.uid),
+          ...newPending.map((member) => member.uid)
+        ])
+      ]
     }
 
     if (group.value.ownerUid && group.value.ownerUid !== me.value) {

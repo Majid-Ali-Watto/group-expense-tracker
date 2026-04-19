@@ -198,7 +198,11 @@ export function getBugReportConfig() {
 export function getEmailConfig() {
   const cfg = _config.email
   if (!cfg) {
-    return { send: true, free_email_limit_per_month: null, paid_emails_limit_per_month: null }
+    return {
+      send: true,
+      free_email_limit_per_month: null,
+      paid_emails_limit_per_month: null
+    }
   }
 
   return {
@@ -211,12 +215,17 @@ export function getEmailConfig() {
 export function getOcrConfig() {
   const cfg = _config.ocr
   if (!cfg) {
-    return { extract_allowed: true, free_extraction_limit_per_month: null, paid_extraction_limit_per_month: null }
+    return {
+      extract_allowed: true,
+      free_extraction_limit_per_month: null,
+      paid_extraction_limit_per_month: null
+    }
   }
 
   return {
     extract_allowed: cfg.extract_allowed !== false,
-    free_extraction_limit_per_month: cfg.free_extraction_limit_per_month ?? null,
+    free_extraction_limit_per_month:
+      cfg.free_extraction_limit_per_month ?? null,
     paid_extraction_limit_per_month: cfg.paid_extraction_limit_per_month ?? null
   }
 }

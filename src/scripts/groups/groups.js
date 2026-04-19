@@ -254,15 +254,15 @@ export const Groups = () => {
         if (ownerName && ownerName.toLowerCase().includes(query)) return true
         if (
           group.members &&
-          group.members.some(
-            (m) => {
-              const memberUser = userStore.getUserByUid(m.uid)
-              return (
-                (memberUser?.name && memberUser.name.toLowerCase().includes(query)) ||
-                (memberUser?.mobile && memberUser.mobile.toLowerCase().includes(query))
-              )
-            }
-          )
+          group.members.some((m) => {
+            const memberUser = userStore.getUserByUid(m.uid)
+            return (
+              (memberUser?.name &&
+                memberUser.name.toLowerCase().includes(query)) ||
+              (memberUser?.mobile &&
+                memberUser.mobile.toLowerCase().includes(query))
+            )
+          })
         )
           return true
         return false
@@ -270,7 +270,9 @@ export const Groups = () => {
     }
 
     if (filterByUser.value) {
-      result = result.filter((g) => g.members?.some((m) => m.uid === filterByUser.value))
+      result = result.filter((g) =>
+        g.members?.some((m) => m.uid === filterByUser.value)
+      )
     }
 
     if (filterByCategory.value) {
@@ -461,10 +463,7 @@ export const Groups = () => {
     const myUser = userStore.getUserByUid(me)
     const myName = myUser?.name || me
     const myMobile = myUser?.mobile || me
-    const newMembers = [
-      ...(group.members || []),
-      { uid: me }
-    ]
+    const newMembers = [...(group.members || []), { uid: me }]
     const newPending = (group.pendingMembers || []).filter((m) => m.uid !== me)
     let updatedGroup = {
       ...group,

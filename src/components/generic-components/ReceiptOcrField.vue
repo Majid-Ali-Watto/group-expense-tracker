@@ -18,7 +18,11 @@
             plain
             size="small"
             :loading="extracting"
-            :disabled="uploading || extracting || (!selectedFiles.length && !existingUrls.length)"
+            :disabled="
+              uploading ||
+              extracting ||
+              (!selectedFiles.length && !existingUrls.length)
+            "
             @click="$emit('extract')"
           >
             {{ extracting ? 'Extracting...' : 'Extract Text' }}
@@ -28,7 +32,8 @@
           v-if="selectedFiles.length || existingUrls.length"
           class="mt-2 text-xs text-amber-600"
         >
-          Verify the extracted data before saving. Receipt extraction can make mistakes.
+          Verify the extracted data before saving. Receipt extraction can make
+          mistakes.
         </p>
       </template>
       <p v-else class="mt-2 text-xs text-orange-500 text-right">

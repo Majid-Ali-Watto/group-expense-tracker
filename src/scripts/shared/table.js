@@ -1427,8 +1427,7 @@ export const Table = (props) => {
   const showMoreTitle = ref('')
   const showMoreItems = ref([])
 
-  const formatPayer = (p) =>
-    `${formatUser(p.uid)}: ${formatAmount(p.amount)}`
+  const formatPayer = (p) => `${formatUser(p.uid)}: ${formatAmount(p.amount)}`
 
   const formatSplit = (s) =>
     `${formatUser(s.uid, s.name)}: ${formatAmount(s.amount)}`

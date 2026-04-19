@@ -2,12 +2,16 @@
   <el-card shadow="never" class="sm:col-span-2">
     <template #header>
       <div class="flex items-baseline gap-2">
-        <span class="font-semibold text-gray-800 dark:text-gray-100">Users</span>
+        <span class="font-semibold text-gray-800 dark:text-gray-100"
+          >Users</span
+        >
         <span class="text-xs text-gray-400">users/{uid}</span>
       </div>
     </template>
 
-    <div v-if="loading" class="py-6 text-center text-sm text-gray-400">Loading users…</div>
+    <div v-if="loading" class="py-6 text-center text-sm text-gray-400">
+      Loading users…
+    </div>
 
     <template v-else>
       <!-- Search -->
@@ -19,7 +23,9 @@
       />
 
       <!-- Column headers — hidden on mobile -->
-      <div class="hidden sm:grid sm:grid-cols-[1fr_1fr_repeat(4,6rem)_8.5rem] gap-x-3 px-2 mb-1 text-xs font-semibold text-gray-400 uppercase tracking-wide">
+      <div
+        class="hidden sm:grid sm:grid-cols-[1fr_1fr_repeat(4,6rem)_8.5rem] gap-x-3 px-2 mb-1 text-xs font-semibold text-gray-400 uppercase tracking-wide"
+      >
         <span>Name</span>
         <span>Email</span>
         <span class="text-center">Blocked</span>
@@ -36,7 +42,9 @@
           class="grid sm:grid-cols-[1fr_1fr_repeat(4,6rem)_8.5rem] gap-x-3 gap-y-2 items-center px-2 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
         >
           <!-- Name -->
-          <div class="font-medium text-sm text-gray-800 dark:text-gray-100 truncate">
+          <div
+            class="font-medium text-sm text-gray-800 dark:text-gray-100 truncate"
+          >
             {{ user.name || '—' }}
           </div>
 
@@ -46,7 +54,9 @@
           </div>
 
           <!-- Flags — on mobile shown as labeled rows -->
-          <div class="sm:contents flex flex-wrap gap-4 col-span-full sm:col-span-1">
+          <div
+            class="sm:contents flex flex-wrap gap-4 col-span-full sm:col-span-1"
+          >
             <FlagToggle
               label="Blocked"
               :value="user.blocked === true"
@@ -68,12 +78,18 @@
               :value="user.billedUser === true"
               @change="updateUserFlag(user.uid, 'billedUser', $event)"
             />
-            <div class="flex flex-col items-center gap-1 sm:justify-self-center">
+            <div
+              class="flex flex-col items-center gap-1 sm:justify-self-center"
+            >
               <span class="text-xs text-gray-400 sm:hidden">Tab Config</span>
               <el-button
                 size="small"
                 plain
-                :loading="saving && selectedUser?.uid === user.uid && tabConfigDialogVisible"
+                :loading="
+                  saving &&
+                  selectedUser?.uid === user.uid &&
+                  tabConfigDialogVisible
+                "
                 @click="openTabConfigDialog(user)"
               >
                 {{ getUserTabConfig(user.uid) ? 'Edit' : 'Create' }}
@@ -82,7 +98,10 @@
           </div>
         </div>
 
-        <div v-if="filteredUsers.length === 0" class="py-4 text-center text-sm text-gray-400">
+        <div
+          v-if="filteredUsers.length === 0"
+          class="py-4 text-center text-sm text-gray-400"
+        >
           No users match your search.
         </div>
       </div>
@@ -121,8 +140,7 @@ const filteredUsers = computed(() => {
   if (!q) return users.value
   return users.value.filter(
     (u) =>
-      u.name?.toLowerCase().includes(q) ||
-      u.email?.toLowerCase().includes(q)
+      u.name?.toLowerCase().includes(q) || u.email?.toLowerCase().includes(q)
   )
 })
 
@@ -153,14 +171,18 @@ const FlagToggle = defineComponent({
   emits: ['change'],
   setup(props, { emit }) {
     return () =>
-      h('div', { class: 'flex flex-col items-center gap-0.5 sm:justify-self-center' }, [
-        h('span', { class: 'text-xs text-gray-400 sm:hidden' }, props.label),
-        h(resolveComponent('el-switch'), {
-          modelValue: props.value,
-          activeColor: props.danger ? '#ef4444' : undefined,
-          'onUpdate:modelValue': (v) => emit('change', v)
-        })
-      ])
+      h(
+        'div',
+        { class: 'flex flex-col items-center gap-0.5 sm:justify-self-center' },
+        [
+          h('span', { class: 'text-xs text-gray-400 sm:hidden' }, props.label),
+          h(resolveComponent('el-switch'), {
+            modelValue: props.value,
+            activeColor: props.danger ? '#ef4444' : undefined,
+            'onUpdate:modelValue': (v) => emit('change', v)
+          })
+        ]
+      )
   }
 })
 </script>

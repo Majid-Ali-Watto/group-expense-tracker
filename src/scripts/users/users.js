@@ -620,7 +620,6 @@ export const Users = () => {
       userStore.setUsers(
         [...userStore.getUsers].filter((u) => u.uid !== userUid)
       )
-
     } else {
       const field = type === 'delete' ? 'deleteRequest' : 'updateRequest'
       const updatedRequest = { ...request, approvals: newApprovals }

@@ -110,7 +110,12 @@
 </template>
 
 <script setup>
-import { DataAnalysis, Setting, SwitchButton, Tools } from '@element-plus/icons-vue'
+import {
+  DataAnalysis,
+  Setting,
+  SwitchButton,
+  Tools
+} from '@element-plus/icons-vue'
 import { UserAvatar } from '@/components/generic-components'
 import {
   AlertTriangleIcon,
@@ -188,5 +193,4 @@ const emit = defineEmits([
 .theme-btn:hover {
   background-color: rgba(255, 255, 255, 0.15);
 }
-
 </style>

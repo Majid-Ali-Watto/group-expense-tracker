@@ -67,9 +67,13 @@ const props = defineProps({
 
 const previewVisible = ref(false)
 
-const resolvedPreviewUrl = computed(() => props.previewUrl || props.imageUrl || '')
+const resolvedPreviewUrl = computed(
+  () => props.previewUrl || props.imageUrl || ''
+)
 const canPreview = computed(() => !!resolvedPreviewUrl.value && !props.disabled)
-const canPreviewOnClick = computed(() => props.previewOnClick && canPreview.value)
+const canPreviewOnClick = computed(
+  () => props.previewOnClick && canPreview.value
+)
 const avatarTag = computed(() => (canPreviewOnClick.value ? 'button' : 'div'))
 const previewImages = computed(() =>
   resolvedPreviewUrl.value

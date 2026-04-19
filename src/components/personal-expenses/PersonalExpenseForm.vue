@@ -86,7 +86,9 @@
         <div class="flex items-center justify-between">
           <span class="text-sm font-semibold text-gray-700">
             Line Items
-            <span class="text-gray-400 font-normal text-xs ml-1">(optional)</span>
+            <span class="text-gray-400 font-normal text-xs ml-1"
+              >(optional)</span
+            >
           </span>
           <el-button size="small" type="primary" plain @click="addSplitItem">
             + Add Item
@@ -163,7 +165,9 @@
             class="flex items-center gap-2 text-sm"
           >
             <span class="text-gray-600">
-              Items total{{ receiptTax != null && receiptTax > 0 ? ' + tax' : '' }}:
+              Items total{{
+                receiptTax != null && receiptTax > 0 ? ' + tax' : ''
+              }}:
             </span>
             <span
               :class="

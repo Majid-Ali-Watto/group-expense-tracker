@@ -308,7 +308,11 @@ router.beforeEach(async (to) => {
     groupStore.setActiveGroup(to.params.groupId)
   }
 
-  if (to.meta.requiresBugResolver || to.meta.requiresUserTab || to.meta.requiresAdmin) {
+  if (
+    to.meta.requiresBugResolver ||
+    to.meta.requiresUserTab ||
+    to.meta.requiresAdmin
+  ) {
     const user = await getCurrentUserProfile()
     const tabConfig = await getCurrentUserTabConfig(user?.uid)
     const fallbackPath = getFallbackPath(

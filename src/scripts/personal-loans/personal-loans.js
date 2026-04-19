@@ -87,7 +87,7 @@ export const PersonalLoans = () => {
   function isActiveUserIdentity(value) {
     return Boolean(
       value &&
-        (value === activeUserMobile.value || value === activeUserUid.value)
+      (value === activeUserMobile.value || value === activeUserUid.value)
     )
   }
 

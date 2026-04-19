@@ -20,12 +20,10 @@ export function useSharedActivityEmail() {
 
   function postEmailNotification(payload) {
     if (!API_BASE_URL || !PRODUCTION || !getEmailConfig().send) return
-
     ;(async () => {
       const headers = await getApiAuthHeaders({
         'Content-Type': 'application/json',
         'x-api-key': import.meta.env.VITE_X_API_KEY || ''
-
       })
 
       await fetch(API_BASE_URL + '/send-email', {

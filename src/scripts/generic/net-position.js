@@ -286,9 +286,8 @@ export const NetPosition = () => {
 
       // Calculate personal loans only when the user has that feature
       if (hasPersonalLoans) {
-        summary.personalLoans = await calculatePersonalLoansPosition(
-          personalLoanIdentity
-        )
+        summary.personalLoans =
+          await calculatePersonalLoansPosition(personalLoanIdentity)
       }
 
       // Calculate totals from whichever sections were included

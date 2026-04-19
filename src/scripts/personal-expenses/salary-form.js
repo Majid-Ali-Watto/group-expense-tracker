@@ -34,7 +34,9 @@ export const SalaryForm = () => {
   const authStore = useAuthStore()
   const dataStore = useDataStore()
   const { read, dbRef, setData, updateData } = useFireBase()
-  const initialMonth = parseMonthKey(dataStore.selectedMonth || getCurrentMonth())
+  const initialMonth = parseMonthKey(
+    dataStore.selectedMonth || getCurrentMonth()
+  )
   const selectedYear = ref(initialMonth.year)
   const selectedMonthValue = ref(initialMonth.month)
 

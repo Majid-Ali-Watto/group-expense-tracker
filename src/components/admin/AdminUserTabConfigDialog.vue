@@ -25,7 +25,9 @@
           </div>
           <div class="text-right text-xs text-gray-500 dark:text-gray-400">
             <p>`user-tab-configs/{{ user.uid }}`</p>
-            <p>{{ config ? 'Existing config document' : 'No saved config yet' }}</p>
+            <p>
+              {{ config ? 'Existing config document' : 'No saved config yet' }}
+            </p>
           </div>
         </div>
       </section>
@@ -191,7 +193,7 @@
               v-model="ocrExtractionsInput"
               type="textarea"
               :rows="8"
-              placeholder="{\n  &quot;2026-04&quot;: 3\n}"
+              placeholder='{\n  "2026-04": 3\n}'
             />
           </div>
 
@@ -203,7 +205,7 @@
               v-model="emailsSentInput"
               type="textarea"
               :rows="8"
-              placeholder="{\n  &quot;2026-04&quot;: 7\n}"
+              placeholder='{\n  "2026-04": 7\n}'
             />
           </div>
         </div>
@@ -305,7 +307,10 @@ function normalizeUsageMap(value = {}) {
   return Object.fromEntries(
     Object.entries(value)
       .filter(([key]) => typeof key === 'string' && key.trim())
-      .map(([key, rawValue]) => [key, Math.max(0, Math.trunc(Number(rawValue) || 0))])
+      .map(([key, rawValue]) => [
+        key,
+        Math.max(0, Math.trunc(Number(rawValue) || 0))
+      ])
   )
 }
 

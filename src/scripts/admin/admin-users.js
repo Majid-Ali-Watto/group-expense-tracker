@@ -1,11 +1,5 @@
 import { computed, ref, onUnmounted } from 'vue'
-import {
-  database,
-  collection,
-  doc,
-  setDoc,
-  onSnapshot
-} from '@/firebase'
+import { database, collection, doc, setDoc, onSnapshot } from '@/firebase'
 import { DB_NODES } from '@/constants'
 import { showError, showSuccess } from '@/utils'
 
@@ -54,7 +48,11 @@ export function AdminUsers() {
     if (saving.value) return
     saving.value = true
     try {
-      await setDoc(doc(database, DB_NODES.USERS, uid), { [field]: value }, { merge: true })
+      await setDoc(
+        doc(database, DB_NODES.USERS, uid),
+        { [field]: value },
+        { merge: true }
+      )
       const idx = users.value.findIndex((u) => u.uid === uid)
       if (idx !== -1) users.value[idx] = { ...users.value[idx], [field]: value }
       showSuccess('User updated.')

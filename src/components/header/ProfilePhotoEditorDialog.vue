@@ -67,8 +67,8 @@
         </div>
 
         <p class="profile-photo-editor__hint">
-          Drag the image to reposition it inside the crop area, then use zoom
-          or rotate before uploading.
+          Drag the image to reposition it inside the crop area, then use zoom or
+          rotate before uploading.
         </p>
       </div>
     </div>
@@ -374,10 +374,11 @@ onBeforeUnmount(() => {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0)),
     repeating-conic-gradient(
-      from 45deg,
-      rgba(148, 163, 184, 0.1) 0deg 90deg,
-      rgba(148, 163, 184, 0.18) 90deg 180deg
-    ) 50% / 18px 18px;
+        from 45deg,
+        rgba(148, 163, 184, 0.1) 0deg 90deg,
+        rgba(148, 163, 184, 0.18) 90deg 180deg
+      )
+      50% / 18px 18px;
   justify-self: center;
   touch-action: none;
   cursor: grab;
@@ -490,10 +491,11 @@ onBeforeUnmount(() => {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0)),
     repeating-conic-gradient(
-      from 45deg,
-      rgba(51, 65, 85, 0.55) 0deg 90deg,
-      rgba(71, 85, 105, 0.48) 90deg 180deg
-    ) 50% / 18px 18px;
+        from 45deg,
+        rgba(51, 65, 85, 0.55) 0deg 90deg,
+        rgba(71, 85, 105, 0.48) 90deg 180deg
+      )
+      50% / 18px 18px;
 }
 
 @media (min-width: 768px) {

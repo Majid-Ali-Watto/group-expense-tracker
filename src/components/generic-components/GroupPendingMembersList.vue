@@ -46,7 +46,9 @@
             class="w-7 h-7 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center text-xs font-semibold shrink-0"
           >
             {{
-              (userStore.getUserByUid(member.uid)?.name || member.uid).charAt(0).toUpperCase()
+              (userStore.getUserByUid(member.uid)?.name || member.uid)
+                .charAt(0)
+                .toUpperCase()
             }}
           </div>
           <div class="text-sm text-gray-700">

@@ -21,7 +21,11 @@
       class="container mx-auto mt-20"
       style="max-width: 980px"
     >
-      <WelcomeBanner :displayName="displayName" :activeTab="activeTab" :isAdminActive="isAdminActive" />
+      <WelcomeBanner
+        :displayName="displayName"
+        :activeTab="activeTab"
+        :isAdminActive="isAdminActive"
+      />
       <el-tabs
         v-if="!isAdminActive"
         :key="tabBarKey"

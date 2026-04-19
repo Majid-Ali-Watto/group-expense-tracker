@@ -35,7 +35,10 @@
         </div>
 
         <!-- Group Info -->
-        <div class="flex items-center gap-3 sm:ml-4" v-if="sharedTab && !isAdminActive">
+        <div
+          class="flex items-center gap-3 sm:ml-4"
+          v-if="sharedTab && !isAdminActive"
+        >
           <div class="flex-shrink-0">
             <div
               class="group-circle"

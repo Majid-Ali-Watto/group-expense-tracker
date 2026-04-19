@@ -313,7 +313,11 @@
                 v-if="formData.splitItems.length > 0"
                 class="flex items-center gap-2 text-sm"
               >
-                <span class="text-gray-600">Items total{{ receiptTax != null && receiptTax > 0 ? ' + tax' : '' }}:</span>
+                <span class="text-gray-600"
+                  >Items total{{
+                    receiptTax != null && receiptTax > 0 ? ' + tax' : ''
+                  }}:</span
+                >
                 <span
                   :class="
                     splitItemsTotal === parseFloat(formData.amount || 0)

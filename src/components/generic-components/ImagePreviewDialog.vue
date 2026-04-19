@@ -8,10 +8,7 @@
     @closed="resetViewer"
   >
     <div class="ipd-shell">
-      <div
-        v-if="hasMultiple"
-        class="ipd-toolbar ipd-toolbar--top"
-      >
+      <div v-if="hasMultiple" class="ipd-toolbar ipd-toolbar--top">
         <el-button size="small" :disabled="currentIndex <= 0" @click="previous">
           Previous
         </el-button>
