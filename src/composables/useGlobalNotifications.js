@@ -70,8 +70,6 @@ export function useGlobalNotifications() {
     const mobile = storedUser?.mobile || ''
     const normalizedFallbackName =
       fallbackName && fallbackName !== identity ? fallbackName : ''
-    // Prefer the stored user's name over fallbackName — the fallback may be a
-    // raw UID when the caller passes loan.giverName which was stored as a UID
     const name = storedUser?.name || normalizedFallbackName || 'User'
 
     return {
@@ -538,7 +536,7 @@ export function useGlobalNotifications() {
           ) {
             const notifId = `loan-new-${group.id}-${loanId}`
             if (!newTxnNotifs.value.find((n) => n.id === notifId)) {
-              const giver = formatUserWithMobile(loan.giver, loan.giverName)
+              const giver = formatUserWithMobile(loan.giver)
               newTxnNotifs.value = [
                 ...newTxnNotifs.value,
                 {
@@ -585,11 +583,11 @@ export function useGlobalNotifications() {
               diffParts.push(`Desc: "${loan.description}"→"${ch.description}"`)
             if (ch.giver !== undefined && ch.giver !== loan.giver)
               diffParts.push(
-                `Giver: ${formatUserWithMobile(loan.giver, loan.giverName)}→${formatUserWithMobile(ch.giver, ch.giverName)}`
+                `Giver: ${formatUserWithMobile(loan.giver)}→${formatUserWithMobile(ch.giver)}`
               )
             if (ch.receiver !== undefined && ch.receiver !== loan.receiver)
               diffParts.push(
-                `Receiver: ${formatUserWithMobile(loan.receiver, loan.receiverName)}→${formatUserWithMobile(ch.receiver, ch.receiverName)}`
+                `Receiver: ${formatUserWithMobile(loan.receiver)}→${formatUserWithMobile(ch.receiver)}`
               )
             const diffStr = diffParts.length
               ? ` [${diffParts.join(' | ')}]`
@@ -769,9 +767,11 @@ export function useGlobalNotifications() {
               maskedMobile: maskMobile(u.mobile || ''),
               deleteRequest: u.deleteRequest || null,
               updateRequest: u.updateRequest || null,
+              billedUser: u.billedUser === true,
               bugResolver: u.bugResolver === true,
               rejectionNotification: u.rejectionNotification || null,
-              blocked: u.blocked === true
+              blocked: u.blocked === true,
+              isAdmin: u.isAdmin === true
             })
           })
         }

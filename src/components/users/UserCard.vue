@@ -1,6 +1,6 @@
 <template>
   <div
-    class="user-card border border-gray-200 rounded-lg p-3 hover:shadow-sm transition-shadow"
+    class="user-card border border-gray-200 p-3 hover:shadow-sm transition-shadow"
   >
     <el-alert
       v-if="showBlockedWarning"
@@ -17,96 +17,116 @@
       }"
     >
       <!-- Name & Mobile -->
-      <div class="flex-1 min-w-0">
-        <div
-          class="text-xs font-semibold text-gray-400 uppercase tracking-wide sm:hidden mb-1"
-        >
-          Name / Mobile
-        </div>
-        <div class="font-semibold text-gray-800">{{ user.name }}</div>
-        <div class="text-sm text-gray-500">{{ mobile }}</div>
-      </div>
-
-      <!-- Groups -->
-      <div class="flex flex-wrap gap-1 sm:flex-1">
-        <div
-          class="w-full text-xs font-semibold text-gray-400 uppercase tracking-wide sm:hidden mb-1"
-        >
-          Groups
-        </div>
-        <template v-if="groups.length > 0">
-          <button
-            v-for="group in groups.slice(0, 2)"
-            :key="group.id"
-            class="group-chip"
-            @click="$emit('select-group', group)"
+      <div class="flex flex-1 items-center gap-3 min-w-0">
+        <UserAvatar
+          :image-url="user.photoUrl"
+          :preview-url="user.photoUrl"
+          alt="User profile"
+          :preview-title="`${user.name || 'User'}'s Profile Photo`"
+          :preview-on-click="true"
+          :disabled="!user.photoUrl"
+          size="md"
+          variant="user"
+          icon-size="sm"
+          icon-tone="white"
+        />
+        <div class="flex flex-col">
+          <div
+            class="text-xs font-semibold text-gray-400 uppercase tracking-wide sm:hidden mb-1"
           >
-            <span class="group-chip__name">{{ group.name }}</span>
-            <span
-              v-if="groupStatusLabel(group)"
-              :class="[
-                'group-chip__status',
-                `group-chip__status--${getGroupStatus(group)}`
-              ]"
-            >
-              {{ groupStatusLabel(group) }}
-            </span>
-          </button>
-          <button
-            v-if="groups.length > 2"
-            class="group-chip group-chip--more"
-            @click="$emit('open-groups')"
-          >
-            <span class="group-chip__name">+{{ groups.length - 2 }} more</span>
-          </button>
-        </template>
-        <span v-else class="text-gray-400 text-xs">No groups</span>
+            Name / Mobile
+          </div>
+          <div class="min-w-0">
+            <div class="font-semibold text-gray-800 truncate">
+              {{ user.name }}
+            </div>
+            <div class="text-sm text-gray-400 truncate">{{ mobile }}</div>
+          </div>
+        </div>
       </div>
-
-      <!-- Actions -->
-      <div class="flex flex-wrap gap-1 flex-shrink-0 sm:w-48">
-        <div
-          class="w-full text-xs font-semibold text-gray-400 uppercase tracking-wide sm:hidden mb-1"
-        >
-          Actions
+      <div class="max-[640px]:flex max-[640px]:w-full max-[640px]:flex-wrap max-[640px]:justify-between min-[641px]:contents">
+        <!-- Groups -->
+        <div class="flex flex-wrap gap-1 sm:flex-1">
+          <div
+            class="w-full text-xs font-semibold text-gray-400 uppercase tracking-wide sm:hidden mb-1"
+          >
+            Groups
+          </div>
+          <template v-if="groups.length > 0">
+            <button
+              v-for="group in groups.slice(0, 2)"
+              :key="group.id"
+              class="group-chip"
+              @click="$emit('select-group', group)"
+            >
+              <span class="group-chip__name">{{ group.name }}</span>
+              <span
+                v-if="groupStatusLabel(group)"
+                :class="[
+                  'group-chip__status',
+                  `group-chip__status--${getGroupStatus(group)}`
+                ]"
+              >
+                {{ groupStatusLabel(group) }}
+              </span>
+            </button>
+            <button
+              v-if="groups.length > 2"
+              class="group-chip group-chip--more"
+              @click="$emit('open-groups')"
+            >
+              <span class="group-chip__name"
+                >+{{ groups.length - 2 }} more</span
+              >
+            </button>
+          </template>
+          <span v-else class="text-gray-400 text-xs">No groups</span>
         </div>
 
-        <el-button
-          v-if="user.uid !== activeUserUid"
-          size="small"
-          type="success"
-          plain
-          :disabled="isInteractionBlocked"
-          @click="$emit('create-group', user.uid)"
-        >
-          Create Group
-        </el-button>
+        <!-- Actions -->
+        <div class="flex flex-wrap gap-1 flex-shrink-0 sm:w-48">
+          <div
+            class="w-full text-xs font-semibold text-gray-400 uppercase tracking-wide sm:hidden mb-1"
+          >
+            Actions
+          </div>
 
-        <template v-if="canManage">
-          <template v-if="!user.deleteRequest">
-            <el-button
-              size="small"
-              type="primary"
-              :disabled="isInteractionBlocked"
-              @click="$emit('edit')"
-            >
-              Edit
-            </el-button>
-            <el-button
-              size="small"
-              type="danger"
-              :disabled="isInteractionBlocked"
-              @click="$emit('delete', user.uid, user.name)"
-            >
-              Delete
+          <el-button
+            size="small"
+            type="success"
+            plain
+            :disabled="isInteractionBlocked"
+            @click="$emit('create-group', user.uid)"
+          >
+            Create Group
+          </el-button>
+
+          <template v-if="canManage">
+            <template v-if="!user.deleteRequest">
+              <el-button
+                size="small"
+                type="primary"
+                :disabled="isInteractionBlocked"
+                @click="$emit('edit')"
+              >
+                Edit
+              </el-button>
+              <el-button
+                size="small"
+                type="danger"
+                :disabled="isInteractionBlocked"
+                @click="$emit('delete', user.uid, user.name)"
+              >
+                Delete
+              </el-button>
+            </template>
+            <el-button v-else size="small" disabled>
+              Delete Pending ({{ user.deleteRequest.approvals?.length || 0 }}/{{
+                user.deleteRequest.requiredApprovals?.length || 0
+              }})
             </el-button>
           </template>
-          <el-button v-else size="small" disabled>
-            Delete Pending ({{ user.deleteRequest.approvals?.length || 0 }}/{{
-              user.deleteRequest.requiredApprovals?.length || 0
-            }})
-          </el-button>
-        </template>
+        </div>
       </div>
     </div>
   </div>
@@ -114,10 +134,10 @@
 
 <script setup>
 import { computed } from 'vue'
+import { UserAvatar } from '@/components/generic-components'
 
 const props = defineProps({
   user: { type: Object, required: true },
-  activeUserUid: { type: String, default: null },
   groups: { type: Array, required: true },
   mobile: { type: String, required: true },
   canManage: { type: Boolean, required: true },
@@ -133,15 +153,11 @@ const isInteractionBlocked = computed(
 )
 
 const showBlockedWarning = computed(
-  () =>
-    props.user?.blocked === true ||
-    (props.activeUserBlocked && props.user?.uid === props.activeUserUid)
+  () => props.user?.blocked === true
 )
 
 const blockedMessage = computed(() =>
-  props.user?.blocked === true
-    ? 'This user is blocked by admin. Do not interact with this account.'
-    : 'Your account is blocked by admin. User actions are disabled.'
+  'This user is blocked by admin. Do not interact with this account.'
 )
 
 function getGroupStatus(group) {
@@ -152,7 +168,7 @@ function getGroupStatus(group) {
 
 function groupStatusLabel(group) {
   const status = getGroupStatus(group)
-  if (status === 'member') return 'Member'
+  if (status === 'member') return "You're Member"
   if (status === 'requested') return 'Request Sent'
   return ''
 }
@@ -160,7 +176,7 @@ function groupStatusLabel(group) {
 
 <style scoped>
 .user-card {
-  border-radius: 18px;
+  border-radius: 0.5rem;
   background:
     linear-gradient(
       180deg,

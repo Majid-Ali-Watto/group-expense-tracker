@@ -32,6 +32,9 @@ export const Header = (props, emit, options = {}) => {
   const canShowBugReport = computed(
     () => props.loggedIn && getBugReportConfig().report
   )
+  const canShowAdmin = computed(
+    () => props.loggedIn && activeUserProfile.value?.isAdmin === true
+  )
   const isPublicPage = computed(
     () =>
       !props.loggedIn &&
@@ -126,6 +129,7 @@ export const Header = (props, emit, options = {}) => {
     activeUserProfile,
     canShowBugReport,
     canShowManageTabs,
+    canShowAdmin,
     isPublicPage,
     isStuckState,
     publicNavLinks: PUBLIC_NAV_LINKS,

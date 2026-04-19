@@ -17,6 +17,28 @@ service cloud.firestore {
         || !userDoc(request.auth.uid).data.get('blocked', false);
     }
 
+    // True when the caller has isAdmin: true on their user document.
+    function callerIsAdmin() {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && userDoc(request.auth.uid).data.get('isAdmin', false) == true;
+    }
+
+    // Non-admin clients must not change admin-managed flags on user documents.
+    function adminManagedUserFlagsUnchanged() {
+      return request.resource.data.get('blocked', false) == resource.data.get('blocked', false)
+        && request.resource.data.get('billedUser', false) == resource.data.get('billedUser', false)
+        && request.resource.data.get('bugResolver', false) == resource.data.get('bugResolver', false)
+        && request.resource.data.get('isAdmin', false) == resource.data.get('isAdmin', false);
+    }
+
+    // Self-created user docs may include admin-managed flags only at their safe defaults.
+    function validUserCreateFlags() {
+      return request.resource.data.get('blocked', false) == false
+        && request.resource.data.get('billedUser', false) == false
+        && request.resource.data.get('bugResolver', false) == false
+        && request.resource.data.get('isAdmin', false) == false;
+    }
+
     // True when the named group document exists and is not blocked.
     function groupIsNotBlocked(groupId) {
       return !get(/databases/$(database)/documents/groups/$(groupId)).data.get('blocked', false);
@@ -31,23 +53,33 @@ service cloud.firestore {
     // Users — any authenticated user can read.
     // New users may create their own document (callerIsNotBlocked() would fail because
     // the document doesn't exist yet when checked). Updates/deletes still require the
-    // caller not to be blocked.
+    // caller not to be blocked. Admin-managed flags on users/{uid} remain writable
+    // only by admins.
     match /users/{userId} {
       allow read: if request.auth != null;
-      allow create: if request.auth != null && request.auth.uid == userId;
-      allow update, delete: if request.auth != null && callerIsNotBlocked();
+      allow create: if request.auth != null
+                    && request.auth.uid == userId
+                    && validUserCreateFlags();
+      allow update: if request.auth != null
+                    && callerIsNotBlocked()
+                    && (callerIsAdmin() || adminManagedUserFlagsUnchanged());
+      allow delete: if request.auth != null && callerIsNotBlocked();
     }
 
     // User tab configs — owner can read/write their own tab flags.
     // A blocked user may still update their own config (e.g. hide-blocked toggle)
     // but must not change `accessManageTabs`.
+    // Admins may write any tab-config field to any user's config.
     match /user-tab-configs/{uid} {
-      allow read: if request.auth != null && request.auth.uid == uid;
-      allow create: if request.auth != null
+      allow read: if request.auth != null
+                  && (request.auth.uid == uid || callerIsAdmin());
+      allow create: if (request.auth != null
                     && request.auth.uid == uid
                     && request.resource.data.uid == uid
-                    && !('accessManageTabs' in request.resource.data);
-      allow update: if request.auth != null
+                    && !('accessManageTabs' in request.resource.data))
+                    || callerIsAdmin();
+      allow update: if callerIsAdmin()
+                    || (request.auth != null
                     && request.auth.uid == uid
                     && request.resource.data.uid == uid
                     && (
@@ -56,7 +88,7 @@ service cloud.firestore {
                         'accessManageTabs' in resource.data
                         && request.resource.data.accessManageTabs == resource.data.accessManageTabs
                       )
-                    );
+                    ));
       allow delete: if false;
     }
 
@@ -186,11 +218,11 @@ service cloud.firestore {
       allow write: if request.auth != null && callerIsNotBlocked();
     }
 
-    // App config — read-only for any authenticated user; written via Admin Console only
+    // App config — readable by any authenticated user; writable only by admins
     match /configs/{configId} {
       allow read: if request.auth != null;
-      allow write: if false;
+      allow write: if request.auth != null
+                   && userDoc(request.auth.uid).data.get('isAdmin', false) == true;
     }
   }
 }
-

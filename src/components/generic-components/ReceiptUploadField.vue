@@ -50,10 +50,11 @@
             class="h-full w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-0 dark:border-slate-700 dark:bg-slate-800"
             @click="openExistingPreview(index)"
           >
-            <img
+            <AppImage
               :src="url"
               :alt="`Current receipt ${index + 1}`"
               class="block h-full w-full object-contain"
+              fit="contain"
             />
           </button>
         </el-carousel-item>
@@ -65,47 +66,29 @@
         class="block h-[220px] w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-0 dark:border-slate-700 dark:bg-slate-800"
         @click="openExistingPreview(0)"
       >
-        <img
+        <AppImage
           :src="existingUrls[0]"
           alt="Current receipt"
           class="block h-full w-full object-contain"
+          fit="contain"
         />
       </button>
     </div>
 
-    <el-dialog v-model="dialogVisible" append-to-body width="min(92vw, 720px)">
-      <el-carousel
-        v-if="previewImages.length > 1"
-        :initial-index="dialogInitialIndex"
-        height="420px"
-        indicator-position="outside"
-        arrow="always"
-      >
-        <el-carousel-item
-          v-for="(image, index) in previewImages"
-          :key="`${image.url}-${index}`"
-        >
-          <img
-            :src="image.url"
-            :alt="image.name"
-            class="block h-full max-h-[70vh] w-full object-contain"
-          />
-        </el-carousel-item>
-      </el-carousel>
-
-      <img
-        v-else-if="previewImages[0]"
-        :src="previewImages[0].url"
-        :alt="previewImages[0].name"
-        class="block h-full max-h-[70vh] w-full object-contain"
-      />
-    </el-dialog>
+    <ImagePreviewDialog
+      v-model="dialogVisible"
+      :images="previewImages"
+      :initial-index="dialogInitialIndex"
+      title="Receipt Preview"
+    />
   </div>
 </template>
 
 <script setup>
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { Plus } from '@element-plus/icons-vue'
+import AppImage from './AppImage.vue'
+import ImagePreviewDialog from './ImagePreviewDialog.vue'
 
 const props = defineProps({
   selectedFiles: {

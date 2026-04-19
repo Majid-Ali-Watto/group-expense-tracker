@@ -110,7 +110,7 @@
           rel="noopener noreferrer"
           class="mde-image-thumb-link"
         >
-          <img
+          <AppImage
             :src="img.preview"
             :alt="img.file.name"
             class="mde-image-thumb"
@@ -132,6 +132,7 @@
 <script setup>
 import { ref, nextTick } from 'vue'
 import { PhotoIcon, XIcon } from '@/components/icons'
+import AppImage from './AppImage.vue'
 
 const props = defineProps({
   modelValue: { type: String, default: '' },

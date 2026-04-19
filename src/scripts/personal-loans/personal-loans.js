@@ -71,6 +71,25 @@ export const PersonalLoans = () => {
   ])
 
   const activeUserUid = computed(() => authStore.getActiveUserUid)
+  const activeUserMobile = computed(
+    () => userStore.getUserByUid(activeUserUid.value)?.mobile || ''
+  )
+
+  function getLoanIdentity(loan, role) {
+    if (!loan) return ''
+    return (
+      loan[role === 'giver' ? 'loanGiverMobile' : 'loanReceiverMobile'] ||
+      loan[role === 'giver' ? 'loanGiver' : 'loanReceiver'] ||
+      ''
+    )
+  }
+
+  function isActiveUserIdentity(value) {
+    return Boolean(
+      value &&
+        (value === activeUserMobile.value || value === activeUserUid.value)
+    )
+  }
 
   const fetchMonths = async () => {
     return loadMonthsList({
@@ -277,7 +296,7 @@ export const PersonalLoans = () => {
 
   const totalLending = computed(() => {
     return filteredLoans.value.reduce((total, loan) => {
-      if (loan.loanGiver === activeUserUid.value) {
+      if (isActiveUserIdentity(getLoanIdentity(loan, 'giver'))) {
         return total + Number(loan.amount || 0)
       }
       return total
@@ -286,7 +305,7 @@ export const PersonalLoans = () => {
 
   const totalDebting = computed(() => {
     return filteredLoans.value.reduce((total, loan) => {
-      if (loan.loanReceiver === activeUserUid.value) {
+      if (isActiveUserIdentity(getLoanIdentity(loan, 'receiver'))) {
         return total + Number(loan.amount || 0)
       }
       return total

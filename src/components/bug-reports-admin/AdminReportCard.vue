@@ -82,7 +82,7 @@
         :key="i"
         class="bra-screenshot-thumb"
       >
-        <img :src="ss.url" :alt="`Screenshot ${i + 1}`" />
+        <AppImage :src="ss.url" :alt="`Screenshot ${i + 1}`" />
         <span class="bra-screenshot-overlay">
           <a
             :href="ss.url"
@@ -198,7 +198,7 @@
 
 <script setup>
 import { NoteThread } from '@/components/bug-reports'
-import { GenericButton } from '@/components/generic-components'
+import { AppImage, GenericButton } from '@/components/generic-components'
 import {
   ChatBubbleIcon,
   ChevronDownIcon,

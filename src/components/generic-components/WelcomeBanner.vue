@@ -7,9 +7,17 @@
         <!-- User Info -->
         <div class="flex items-center gap-3">
           <div class="flex-shrink-0">
-            <div class="avatar-circle">
-              <UserIcon class="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-            </div>
+            <UserAvatar
+              :image-url="currentUserPhotoUrl"
+              :preview-url="currentUserPhotoUrl"
+              alt="Profile"
+              preview-title="Profile Photo"
+              :show-zoom-button="true"
+              size="md"
+              variant="welcome"
+              icon-size="md"
+              icon-tone="white"
+            />
           </div>
           <div class="min-w-0 flex-1">
             <p class="text-xs sm:text-sm text-gray-500 font-medium mb-0.5">
@@ -27,7 +35,7 @@
         </div>
 
         <!-- Group Info -->
-        <div class="flex items-center gap-3 sm:ml-4" v-if="sharedTab">
+        <div class="flex items-center gap-3 sm:ml-4" v-if="sharedTab && !isAdminActive">
           <div class="flex-shrink-0">
             <div
               class="group-circle"
@@ -63,7 +71,8 @@
 
 <script setup>
 import { ref, computed, watch, nextTick } from 'vue'
-import { UserIcon, UsersIcon } from '@/components/icons'
+import { UsersIcon } from '@/components/icons'
+import { UserAvatar } from '@/components/generic-components'
 import GenericDropDown from './GenericDropDown.vue'
 import { useGroupStore, useAuthStore, useUserStore } from '@/stores'
 import { useJoinedGroups } from '@/composables'
@@ -72,7 +81,8 @@ import { showSuccess } from '@/utils'
 
 defineProps({
   displayName: String,
-  activeTab: String
+  activeTab: String,
+  isAdminActive: Boolean
 })
 
 const groupStore = useGroupStore()
@@ -83,6 +93,9 @@ const currentUserMobile = computed(
   () =>
     userStore.getUserByUid(authStore.getActiveUserUid)?.mobile ??
     authStore.getActiveUserUid
+)
+const currentUserPhotoUrl = computed(
+  () => userStore.getUserByUid(authStore.getActiveUserUid)?.photoUrl || ''
 )
 const sharedTab = computed(() =>
   hasSharedFeatures(userStore.getActiveUserTabConfig)
@@ -130,7 +143,6 @@ function handleSelectGroup(id) {
   /* border-radius: 12px; */
 }
 
-.avatar-circle,
 .group-circle {
   width: 2.5rem;
   height: 2.5rem;
@@ -139,10 +151,6 @@ function handleSelectGroup(id) {
   align-items: center;
   justify-content: center;
   box-shadow: 0 10px 18px -12px rgba(34, 197, 94, 0.5);
-}
-
-.avatar-circle {
-  background: linear-gradient(135deg, var(--success-400), var(--success-600));
 }
 
 .group-circle {

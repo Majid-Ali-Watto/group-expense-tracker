@@ -83,7 +83,7 @@
               :key="ni"
               class="nt-img-thumb"
             >
-              <img :src="img.url" :alt="`Image ${ni + 1}`" />
+              <AppImage :src="img.url" :alt="`Image ${ni + 1}`" />
               <span class="nt-img-overlay">
                 <a
                   :href="img.url"
@@ -234,7 +234,7 @@ import {
   copyText,
   downloadImage
 } from '@/scripts/bug-reports'
-import { MarkdownEditor } from '@/components/generic-components'
+import { AppImage, MarkdownEditor } from '@/components/generic-components'
 import {
   CopyIcon,
   DownloadIcon,

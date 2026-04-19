@@ -9,9 +9,18 @@
   >
     <div class="space-y-4">
       <div class="profile-hero flex items-start gap-3 rounded-2xl p-4">
-        <div class="profile-avatar">
-          <UserIcon class="w-6 h-6 text-white" />
-        </div>
+        <UserAvatar
+          :image-url="previewPhotoUrl || profilePhotoUrl"
+          :preview-url="previewPhotoUrl || profilePhotoUrl"
+          alt="Profile photo"
+          :preview-title="`${profileName}'s Profile Photo`"
+          :preview-on-click="true"
+          :disabled="!(previewPhotoUrl || profilePhotoUrl)"
+          size="lg"
+          variant="profile"
+          icon-size="lg"
+          icon-tone="white"
+        />
 
         <div class="min-w-0 flex-1">
           <p
@@ -25,6 +34,35 @@
           <p class="mt-1 text-sm text-slate-600 break-all">
             {{ profileEmail }}
           </p>
+          <div class="mt-2 flex flex-wrap gap-2">
+            <input
+              ref="photoInputRef"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              class="hidden"
+              @change="handlePhotoSelected"
+            />
+            <el-button
+              size="small"
+              type="success"
+              plain
+              :loading="photoSubmitting"
+              :disabled="isBlocked || photoSubmitting"
+              @click="photoInputRef?.click()"
+            >
+              {{ profilePhotoUrl ? 'Update Photo' : 'Add Photo' }}
+            </el-button>
+            <el-button
+              v-if="profilePhotoUrl"
+              size="small"
+              text
+              :loading="photoSubmitting"
+              :disabled="isBlocked || photoSubmitting"
+              @click="removeProfilePhoto"
+            >
+              Remove
+            </el-button>
+          </div>
         </div>
       </div>
 
@@ -37,7 +75,26 @@
 
       <el-descriptions :column="1" border>
         <el-descriptions-item label="Email Address">
-          {{ profileEmail }}
+          <div class="profile-field-value">
+            <div class="min-w-0 flex-1">
+              <span class="break-all">{{ profileEmail }}</span>
+              <p
+                v-if="!canEditVerifiedEmail"
+                class="mt-1 text-xs text-gray-500"
+              >
+                Managed by your current sign-in provider.
+              </p>
+            </div>
+            <el-button
+              v-if="canEditVerifiedEmail"
+              text
+              circle
+              size="small"
+              :icon="Edit"
+              :disabled="isBlocked"
+              @click="openEmailDialog"
+            />
+          </div>
         </el-descriptions-item>
         <el-descriptions-item label="Full Name">
           <div class="profile-field-value">
@@ -70,6 +127,44 @@
             {{ emailVerified ? 'Verified' : 'Pending' }}
           </el-tag>
         </el-descriptions-item>
+
+        <el-descriptions-item :label="`Emails Sent (${usageMonthKey})`">
+          {{ emailsSentCount }} / {{ emailsSentLimitLabel }}
+        </el-descriptions-item>
+        <el-descriptions-item :label="`OCR Extractions (${usageMonthKey})`">
+          {{ ocrExtractionsCount }} / {{ ocrExtractionsLimitLabel }}
+        </el-descriptions-item>
+        <el-descriptions-item label="Account Tier">
+          <el-tag :type="accountTierTagType" effect="light">
+            {{ accountTierLabel }}
+          </el-tag>
+        </el-descriptions-item>
+        <el-descriptions-item label="Roles">
+          <div class="flex flex-wrap gap-2">
+            <el-tag
+              v-if="isAdminUser"
+              size="small"
+              type="danger"
+              effect="light"
+            >
+              Admin
+            </el-tag>
+            <el-tag
+              v-if="isBugResolver"
+              size="small"
+              type="warning"
+              effect="light"
+            >
+              Bug Resolver
+            </el-tag>
+            <span
+              v-if="!isAdminUser && !isBugResolver"
+              class="text-sm text-gray-500"
+            >
+              Standard user
+            </span>
+          </div>
+        </el-descriptions-item>
         <el-descriptions-item label="Account Status">
           <el-tag :type="isBlocked ? 'danger' : 'success'" effect="light">
             {{ isBlocked ? 'Blocked' : 'Active' }}
@@ -79,15 +174,32 @@
     </div>
 
     <template #footer>
-      <div class="flex justify-between items-center flex-wrap gap-3 help-footer">
-        <el-button
-          size="small"
-          type="warning"
-          :disabled="isBlocked"
-          @click="showChangePasswordDialog = true"
-        >
-          Change Password
-        </el-button>
+      <div
+        class="flex justify-between items-center flex-wrap gap-3 help-footer"
+      >
+        <div class="flex flex-wrap items-center gap-2">
+          <el-button
+            size="small"
+            type="warning"
+            :disabled="isBlocked"
+            @click="showChangePasswordDialog = true"
+          >
+            Change Password
+          </el-button>
+          <el-button
+            size="small"
+            type="danger"
+            plain
+            :disabled="isBlocked || hasPendingDeleteRequest"
+            @click="requestDeleteAccount"
+          >
+            {{
+              hasPendingDeleteRequest
+                ? `Delete Pending (${deleteRequestApprovalsCount}/${deleteRequestRequiredCount})`
+                : 'Delete Account'
+            }}
+          </el-button>
+        </div>
         <el-button
           size="small"
           type="primary"
@@ -103,6 +215,74 @@
     v-if="showChangePasswordDialog"
     @close="showChangePasswordDialog = false"
   />
+
+  <el-dialog
+    :model-value="emailDialogVisible"
+    title="Update Verified Email"
+    :width="'min(92vw, 440px)'"
+    append-to-body
+    @update:model-value="handleEmailVisibilityChange"
+  >
+    <el-form
+      ref="emailFormRef"
+      :model="emailForm"
+      :rules="emailRules"
+      label-position="top"
+      class="space-y-3 w-full flex flex-col items-center"
+    >
+      <el-form-item label="New Verified Email" prop="email">
+        <GenericInputField
+          ref="emailInputRef"
+          :model-value="emailForm.email"
+          :wrap-form-item="false"
+          placeholder="new@example.com"
+          type="email"
+          @update:modelValue="emailForm.email = $event"
+        />
+      </el-form-item>
+
+      <el-form-item label="Confirm New Email" prop="confirmEmail">
+        <GenericInputField
+          ref="confirmEmailInputRef"
+          :model-value="emailForm.confirmEmail"
+          :wrap-form-item="false"
+          placeholder="new@example.com"
+          type="email"
+          @update:modelValue="emailForm.confirmEmail = $event"
+        />
+      </el-form-item>
+
+      <el-form-item label="Current Password" prop="currentPassword">
+        <GenericInputField
+          ref="currentPasswordInputRef"
+          :model-value="emailForm.currentPassword"
+          :wrap-form-item="false"
+          placeholder="Current password"
+          type="password"
+          show-password
+          @update:modelValue="emailForm.currentPassword = $event"
+        />
+      </el-form-item>
+    </el-form>
+
+    <template #footer>
+      <div class="flex flex-wrap justify-end gap-2">
+        <el-button size="small" @click="resetEmailForm">Reset</el-button>
+        <el-button size="small" @click="handleEmailVisibilityChange(false)">
+          Cancel
+        </el-button>
+        <el-button
+          size="small"
+          type="success"
+          :loading="emailSubmitting"
+          :disabled="emailSubmitting || isBlocked || !canEditVerifiedEmail"
+          @click="submitEmailUpdate"
+        >
+          Send Verification
+        </el-button>
+      </div>
+    </template>
+  </el-dialog>
 
   <el-dialog
     :model-value="editDialogVisible"
@@ -160,18 +340,42 @@
       </div>
     </template>
   </el-dialog>
+
+  <ProfilePhotoEditorDialog
+    :visible="photoEditorVisible"
+    :source-url="photoEditorSourceUrl"
+    :submitting="photoSubmitting"
+    @update:visible="(visible) => (visible ? null : closePhotoEditor())"
+    @confirm="handleEditedPhotoConfirm"
+  />
 </template>
 
 <script setup>
 import { computed, nextTick, reactive, ref, watch } from 'vue'
+import { ElMessageBox } from 'element-plus'
 import { Edit } from '@element-plus/icons-vue'
-import { auth, updateProfile } from '@/firebase'
-import { UserIcon } from '@/components/icons'
-import { GenericInputField } from '@/components/generic-components'
+import {
+  auth,
+  deleteUser,
+  EmailAuthProvider,
+  reauthenticateWithCredential,
+  updateProfile,
+  verifyBeforeUpdateEmail
+} from '@/firebase'
+import { GenericInputField, UserAvatar } from '@/components/generic-components'
 import ChangePasswordDialog from '@/components/auth/ChangePasswordDialog.vue'
-import { useFireBase } from '@/composables'
-import { useGroupStore, useUserStore } from '@/stores'
-import { appendNotificationForUser, maskMobile, showError } from '@/utils'
+import ProfilePhotoEditorDialog from '@/components/header/ProfilePhotoEditorDialog.vue'
+import { getEmailConfig, getOcrConfig, useFireBase } from '@/composables'
+import { findUserByEmail, validateEmail } from '@/helpers'
+import { useAuthStore, useGroupStore, useUserStore } from '@/stores'
+import {
+  appendNotificationForUser,
+  deleteReceipt,
+  maskMobile,
+  showError,
+  showSuccess,
+  uploadReceipt
+} from '@/utils'
 import { DB_NODES } from '@/constants'
 import { setUserInStorage } from '@/utils/whoAdded'
 
@@ -182,25 +386,106 @@ const props = defineProps({
 
 const emit = defineEmits(['update:visible'])
 
+const authStore = useAuthStore()
 const groupStore = useGroupStore()
 const userStore = useUserStore()
-const { read, updateData, isSubmitting } = useFireBase()
+const { read, updateData, deleteData, isSubmitting } = useFireBase()
 const formRef = ref(null)
+const emailFormRef = ref(null)
 const editDialogVisible = ref(false)
+const emailDialogVisible = ref(false)
 const editField = ref('name')
 const showChangePasswordDialog = ref(false)
+const photoInputRef = ref(null)
 const nameInputRef = ref(null)
 const mobileInputRef = ref(null)
+const emailInputRef = ref(null)
+const confirmEmailInputRef = ref(null)
+const currentPasswordInputRef = ref(null)
+const previewPhotoUrl = ref('')
+const photoSubmitting = ref(false)
+const emailSubmitting = ref(false)
+const photoEditorVisible = ref(false)
+const photoEditorSourceUrl = ref('')
+const selectedPhotoName = ref('profile-photo.jpg')
 const form = reactive({
   name: '',
   mobile: ''
+})
+const emailForm = reactive({
+  email: '',
+  confirmEmail: '',
+  currentPassword: ''
 })
 
 const profileName = computed(() => props.user?.name || 'Account User')
 const profileEmail = computed(() => props.user?.email || 'Not available')
 const profileMobile = computed(() => props.user?.mobile || 'Not available')
+const profilePhotoUrl = computed(() => props.user?.photoUrl || '')
 const emailVerified = computed(() => props.user?.emailVerified !== false)
+const canEditVerifiedEmail = computed(
+  () =>
+    auth.currentUser?.providerData?.some(
+      (provider) => provider.providerId === 'password'
+    ) === true
+)
 const isBlocked = computed(() => props.user?.blocked === true)
+const isAdminUser = computed(() => props.user?.isAdmin === true)
+const isBugResolver = computed(() => props.user?.bugResolver === true)
+const isBilledUser = computed(() => props.user?.billedUser === true)
+const activeUserTabConfig = computed(
+  () => userStore.getActiveUserTabConfig || {}
+)
+const currentDeleteRequest = computed(
+  () =>
+    props.user?.deleteRequest ||
+    userStore.getUserByUid(props.user?.uid)?.deleteRequest ||
+    null
+)
+const hasPendingDeleteRequest = computed(() => !!currentDeleteRequest.value)
+const deleteRequestApprovalsCount = computed(
+  () => currentDeleteRequest.value?.approvals?.length || 0
+)
+const deleteRequestRequiredCount = computed(
+  () => currentDeleteRequest.value?.requiredApprovals?.length || 0
+)
+const usageMonthKey = computed(() => {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+})
+const emailsSentCount = computed(
+  () => activeUserTabConfig.value?.emailsSent?.[usageMonthKey.value] ?? 0
+)
+const emailsSentLimit = computed(() => {
+  const cfg = getEmailConfig()
+  const raw = isBilledUser.value
+    ? cfg.paid_emails_limit_per_month
+    : cfg.free_email_limit_per_month
+  return raw != null ? Number(raw) : null
+})
+const ocrExtractionsCount = computed(
+  () => activeUserTabConfig.value?.ocrExtractions?.[usageMonthKey.value] ?? 0
+)
+const ocrExtractionsLimit = computed(() => {
+  const cfg = getOcrConfig()
+  const raw = isBilledUser.value
+    ? cfg.paid_extraction_limit_per_month
+    : cfg.free_extraction_limit_per_month
+  return raw != null ? Number(raw) : null
+})
+const emailsSentLimitLabel = computed(() =>
+  emailsSentLimit.value == null ? 'Unlimited' : emailsSentLimit.value
+)
+const ocrExtractionsLimitLabel = computed(() =>
+  ocrExtractionsLimit.value == null ? 'Unlimited' : ocrExtractionsLimit.value
+)
+
+const accountTierLabel = computed(() =>
+  isBilledUser.value ? 'Paid Tier' : 'Free Tier'
+)
+const accountTierTagType = computed(() =>
+  isBilledUser.value ? 'success' : 'info'
+)
 const editDialogTitle = computed(() =>
   editField.value === 'mobile' ? 'Edit Mobile Number' : 'Edit Full Name'
 )
@@ -243,6 +528,49 @@ const rules = {
   ]
 }
 
+const emailRules = {
+  email: [
+    {
+      validator: (_, value, callback) => {
+        const normalized = normalizeEmail(value)
+        if (!normalized) return callback(new Error('New email is required'))
+        if (!validateEmail(normalized)) {
+          return callback(new Error('Please enter a valid email address'))
+        }
+        if (normalized === normalizeEmail(profileEmail.value)) {
+          return callback(
+            new Error('New email must be different from your current email')
+          )
+        }
+        callback()
+      },
+      trigger: ['blur', 'change']
+    }
+  ],
+  confirmEmail: [
+    {
+      validator: (_, value, callback) => {
+        const normalized = normalizeEmail(value)
+        if (!normalized) {
+          return callback(new Error('Please confirm your new email'))
+        }
+        if (normalized !== normalizeEmail(emailForm.email)) {
+          return callback(new Error('Email addresses do not match'))
+        }
+        callback()
+      },
+      trigger: ['blur', 'change']
+    }
+  ],
+  currentPassword: [
+    {
+      required: true,
+      message: 'Current password is required',
+      trigger: ['blur', 'change']
+    }
+  ]
+}
+
 function normalizeName(value = '') {
   return String(value || '')
     .trim()
@@ -253,6 +581,12 @@ function normalizeMobile(value = '') {
   return String(value || '')
     .trim()
     .replace(/\s+/g, '')
+}
+
+function normalizeEmail(value = '') {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
 }
 
 function isValidName(name) {
@@ -272,6 +606,17 @@ function syncFormFromUser(user) {
   form.mobile = user?.mobile || ''
 }
 
+function syncPreviewPhoto(user) {
+  previewPhotoUrl.value = user?.photoUrl || ''
+}
+
+function resetEmailForm() {
+  emailForm.email = ''
+  emailForm.confirmEmail = ''
+  emailForm.currentPassword = ''
+  nextTick(() => emailFormRef.value?.clearValidate())
+}
+
 async function clearValidation() {
   await nextTick()
   formRef.value?.clearValidate()
@@ -279,6 +624,7 @@ async function clearValidation() {
 
 function resetForm() {
   syncFormFromUser(props.user)
+  syncPreviewPhoto(props.user)
   clearValidation()
 }
 
@@ -289,6 +635,15 @@ function handleEditVisibilityChange(nextVisible) {
     return
   }
   editDialogVisible.value = true
+}
+
+function handleEmailVisibilityChange(nextVisible) {
+  if (!nextVisible) {
+    emailDialogVisible.value = false
+    resetEmailForm()
+    return
+  }
+  emailDialogVisible.value = true
 }
 
 async function openEditDialog(field = 'name') {
@@ -304,13 +659,54 @@ async function openEditDialog(field = 'name') {
   targetRef?.$el?.querySelector('input, textarea')?.focus()
 }
 
+async function openEmailDialog() {
+  if (isBlocked.value) return
+  if (!canEditVerifiedEmail.value) {
+    showError('Email updates are only available for password-based accounts.')
+    return
+  }
+
+  resetEmailForm()
+  emailDialogVisible.value = true
+  await nextTick()
+  emailInputRef.value?.$el?.querySelector('input, textarea')?.focus()
+}
+
 function handleVisibilityChange(nextVisible) {
   if (!nextVisible) {
     editDialogVisible.value = false
+    emailDialogVisible.value = false
     showChangePasswordDialog.value = false
+    closePhotoEditor()
     resetForm()
+    resetEmailForm()
   }
   emit('update:visible', nextVisible)
+}
+
+function validateProfilePhoto(file) {
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp']
+  if (!allowedTypes.includes(file.type)) {
+    showError('Only JPG, PNG, and WEBP images are allowed.')
+    return false
+  }
+  if (file.size > 1024 * 1024) {
+    showError('Profile photo size must be less than 1MB.')
+    return false
+  }
+
+  return true
+}
+
+function closePhotoEditor() {
+  photoEditorVisible.value = false
+
+  if (photoEditorSourceUrl.value) {
+    URL.revokeObjectURL(photoEditorSourceUrl.value)
+  }
+
+  photoEditorSourceUrl.value = ''
+  selectedPhotoName.value = 'profile-photo.jpg'
 }
 
 async function notifyGroupsAboutProfileChange({
@@ -353,6 +749,238 @@ async function notifyGroupsAboutProfileChange({
       () => ({ notifications: updatedGroup.notifications }),
       ''
     )
+  }
+}
+
+function buildUpdatedUserPayload(currentUser, overrides = {}) {
+  return {
+    uid: currentUser.uid || props.user?.uid || '',
+    name: overrides.name ?? currentUser.name ?? props.user?.name ?? '',
+    mobile: overrides.mobile ?? currentUser.mobile ?? props.user?.mobile ?? '',
+    email: currentUser.email || props.user?.email || '',
+    emailVerified: currentUser.emailVerified !== false,
+    blocked: currentUser.blocked === true,
+    maskedMobile: maskMobile(
+      overrides.mobile ?? currentUser.mobile ?? props.user?.mobile ?? ''
+    ),
+    photoUrl:
+      overrides.photoUrl ?? currentUser.photoUrl ?? props.user?.photoUrl ?? '',
+    photoMeta:
+      overrides.photoMeta ??
+      currentUser.photoMeta ??
+      props.user?.photoMeta ??
+      null,
+    deleteRequest:
+      overrides.deleteRequest ??
+      currentUser.deleteRequest ??
+      props.user?.deleteRequest ??
+      null
+  }
+}
+
+function getGroupOwnerUids(userUid) {
+  return [
+    ...new Set(
+      (groupStore.getGroups || [])
+        .filter((group) =>
+          (group.members || []).some((member) =>
+            userMatchesMember(member, userUid)
+          )
+        )
+        .map((group) => group.ownerUid)
+        .filter(Boolean)
+    )
+  ]
+}
+
+async function clearDeletedSession(uid) {
+  userStore.setUsers(
+    [...(userStore.getUsers || [])].filter((user) => user.uid !== uid)
+  )
+  authStore.setActiveUserUid(null)
+  authStore.setSessionToken(null)
+  authStore.setActivePassword(null)
+  groupStore.setActiveGroup(null)
+  sessionStorage.removeItem('_session')
+  emit('update:visible', false)
+}
+
+async function requestDeleteAccount() {
+  const uid = props.user?.uid
+  const name = profileName.value
+  if (!uid || isBlocked.value || hasPendingDeleteRequest.value) return
+
+  try {
+    const ownerUids = getGroupOwnerUids(uid)
+    await ElMessageBox.confirm(
+      `Are you sure you want to delete <strong>${name}</strong>?${
+        ownerUids.length > 0
+          ? '<br><br>Your account is in one or more groups. All group owners must approve before deletion.'
+          : ''
+      }`,
+      'Delete Account',
+      {
+        confirmButtonText: 'Proceed',
+        cancelButtonText: 'Cancel',
+        type: 'error',
+        dangerouslyUseHTMLString: true
+      }
+    )
+
+    const user = await read(`${DB_NODES.USERS}/${uid}`)
+    if (!user) return showError('User not found')
+    if (user.deleteRequest) {
+      return showError('A delete request is already pending for this account')
+    }
+    if (user.updateRequest) {
+      return showError(
+        'An update request is pending. Resolve it before deleting the account.'
+      )
+    }
+
+    if (ownerUids.length === 0) {
+      await deleteData(`${DB_NODES.USERS}/${uid}`, `User ${name} deleted`)
+
+      try {
+        const currentUser = auth.currentUser
+        if (currentUser) {
+          await deleteUser(currentUser)
+        }
+      } catch (authError) {
+        console.error('Error deleting user from Firebase Auth:', authError)
+        showError(
+          'Account deleted from database but Firebase Authentication deletion failed. You may need to sign in again to complete deletion.'
+        )
+      }
+
+      await clearDeletedSession(uid)
+      return
+    }
+
+    const deleteRequest = {
+      requestedBy: uid,
+      requiredApprovals: ownerUids,
+      approvals: []
+    }
+
+    await updateData(
+      `${DB_NODES.USERS}/${uid}`,
+      () => ({ deleteRequest }),
+      'Delete request sent to group owners for approval'
+    )
+    userStore.addUser({ uid, deleteRequest })
+  } catch (error) {
+    if (error !== 'cancel') {
+      showError(error?.message || 'Failed to process delete request')
+    }
+  }
+}
+
+async function persistProfilePhoto(file) {
+  if (!props.user?.uid || isBlocked.value) return
+
+  if (!validateProfilePhoto(file)) {
+    return
+  }
+
+  photoSubmitting.value = true
+  try {
+    const uploaded = await uploadReceipt(file)
+    const currentUser = await read(`${DB_NODES.USERS}/${props.user.uid}`)
+    if (!currentUser) {
+      showError('User not found')
+      return
+    }
+
+    const previousMeta = currentUser.photoMeta || props.user?.photoMeta || null
+    await updateData(
+      `${DB_NODES.USERS}/${props.user.uid}`,
+      () => ({
+        photoUrl: uploaded.url,
+        photoMeta: uploaded
+      }),
+      'Profile photo updated successfully'
+    )
+
+    if (previousMeta?.url && previousMeta.url !== uploaded.url) {
+      deleteReceipt(previousMeta).catch(() => {})
+    }
+
+    userStore.addUser(
+      buildUpdatedUserPayload(currentUser, {
+        photoUrl: uploaded.url,
+        photoMeta: uploaded
+      })
+    )
+    previewPhotoUrl.value = uploaded.url
+  } catch (error) {
+    showError(error.message || 'Failed to update profile photo.')
+  } finally {
+    photoSubmitting.value = false
+    if (photoInputRef.value) photoInputRef.value.value = ''
+  }
+}
+
+async function handlePhotoSelected(event) {
+  const file = event?.target?.files?.[0]
+  if (!file) return
+
+  if (!validateProfilePhoto(file)) {
+    if (photoInputRef.value) photoInputRef.value.value = ''
+    return
+  }
+
+  closePhotoEditor()
+  selectedPhotoName.value = file.name || 'profile-photo.jpg'
+  photoEditorSourceUrl.value = URL.createObjectURL(file)
+  photoEditorVisible.value = true
+
+  if (photoInputRef.value) photoInputRef.value.value = ''
+}
+
+async function handleEditedPhotoConfirm(blob) {
+  const editedPhoto = new File([blob], selectedPhotoName.value, {
+    type: 'image/jpeg'
+  })
+
+  await persistProfilePhoto(editedPhoto)
+  closePhotoEditor()
+}
+
+async function removeProfilePhoto() {
+  if (!props.user?.uid || isBlocked.value) return
+
+  photoSubmitting.value = true
+  try {
+    const currentUser = await read(`${DB_NODES.USERS}/${props.user.uid}`)
+    if (!currentUser) {
+      showError('User not found')
+      return
+    }
+
+    const previousMeta = currentUser.photoMeta || props.user?.photoMeta || null
+    await updateData(
+      `${DB_NODES.USERS}/${props.user.uid}`,
+      () => ({
+        photoUrl: null,
+        photoMeta: null
+      }),
+      'Profile photo removed successfully'
+    )
+
+    if (previousMeta?.url) {
+      deleteReceipt(previousMeta).catch(() => {})
+    }
+
+    userStore.addUser(
+      buildUpdatedUserPayload(currentUser, {
+        photoUrl: '',
+        photoMeta: null
+      })
+    )
+    previewPhotoUrl.value = ''
+  } finally {
+    photoSubmitting.value = false
   }
 }
 
@@ -407,13 +1035,10 @@ async function submitProfileUpdate() {
   )
 
   userStore.addUser({
-    uid,
-    name: newName,
-    mobile: newMobile,
-    email: currentUser.email || props.user?.email || '',
-    emailVerified: currentUser.emailVerified !== false,
-    blocked: currentUser.blocked === true,
-    maskedMobile: maskMobile(newMobile)
+    ...buildUpdatedUserPayload(currentUser, {
+      name: newName,
+      mobile: newMobile
+    })
   })
 
   if (auth.currentUser) {
@@ -436,10 +1061,86 @@ async function submitProfileUpdate() {
   handleEditVisibilityChange(false)
 }
 
+async function submitEmailUpdate() {
+  if (
+    !props.user?.uid ||
+    isBlocked.value ||
+    emailSubmitting.value ||
+    !canEditVerifiedEmail.value
+  ) {
+    return
+  }
+
+  if (!emailFormRef.value) return
+
+  const currentAuthUser = auth.currentUser
+  const currentEmail = normalizeEmail(currentAuthUser?.email)
+  emailSubmitting.value = true
+  try {
+    if (!currentAuthUser || !currentEmail) {
+      throw new Error('No authenticated user found. Please log in again.')
+    }
+
+    try {
+      await emailFormRef.value.validate()
+    } catch {
+      return
+    }
+
+    const newEmail = normalizeEmail(emailForm.email)
+    if (newEmail === currentEmail) {
+      throw new Error('New email must be different from your current email.')
+    }
+
+    const existingUser = await findUserByEmail(newEmail)
+    if (existingUser && existingUser.uid !== props.user.uid) {
+      throw new Error('An account with this email already exists.')
+    }
+
+    const credential = EmailAuthProvider.credential(
+      currentAuthUser.email,
+      emailForm.currentPassword
+    )
+    await reauthenticateWithCredential(currentAuthUser, credential)
+    await verifyBeforeUpdateEmail(currentAuthUser, newEmail, {
+      url: `${window.location.origin}/login`,
+      handleCodeInApp: false
+    })
+
+    showSuccess(
+      `Verification email sent to ${newEmail}. Open that link to complete the change, then sign in again with the new email.`
+    )
+    handleEmailVisibilityChange(false)
+  } catch (error) {
+    if (
+      error.code === 'auth/wrong-password' ||
+      error.code === 'auth/invalid-credential'
+    ) {
+      showError('Current password is incorrect.')
+    } else if (error.code === 'auth/email-already-in-use') {
+      showError('An account with this email already exists.')
+    } else if (error.code === 'auth/invalid-email') {
+      showError('Please enter a valid email address.')
+    } else if (error.code === 'auth/requires-recent-login') {
+      showError(
+        'Session expired. Please log out and log back in before changing your email.'
+      )
+    } else if (error.code === 'auth/too-many-requests') {
+      showError('Too many attempts. Please try again later.')
+    } else {
+      showError(error.message || 'Failed to send email verification.')
+    }
+  } finally {
+    emailSubmitting.value = false
+  }
+}
+
 watch(
   () => props.user,
   (user) => {
     syncFormFromUser(user)
+    syncPreviewPhoto(user)
+    resetEmailForm()
   },
   { immediate: true }
 )
@@ -449,6 +1150,10 @@ watch(
   (visible) => {
     if (visible) {
       resetForm()
+      resetEmailForm()
+    } else {
+      emailDialogVisible.value = false
+      closePhotoEditor()
     }
   }
 )
@@ -468,17 +1173,6 @@ watch(
       rgba(240, 253, 244, 0.88)
     );
   border: 1px solid rgba(16, 185, 129, 0.18);
-}
-
-.profile-avatar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 3rem;
-  height: 3rem;
-  border-radius: 999px;
-  background: linear-gradient(135deg, #22c55e, #15803d);
-  box-shadow: 0 14px 24px -18px rgba(21, 128, 61, 0.8);
 }
 
 .profile-field-value {

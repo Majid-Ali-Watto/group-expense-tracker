@@ -10,7 +10,12 @@
   >
     <GroupsCreate
       :preselectedMember="preselectedMember"
-      @groupCreated="$emit('update:modelValue', false)"
+      @groupCreated="
+        (group) => {
+          $emit('group-created', group)
+          $emit('update:modelValue', false)
+        }
+      "
     >
       <template #clear>
         <el-button size="small" @click="$emit('update:modelValue', false)">
@@ -29,7 +34,7 @@ defineProps({
   preselectedMember: { type: String, default: null }
 })
 
-defineEmits(['update:modelValue'])
+defineEmits(['update:modelValue', 'group-created'])
 
 const GroupsCreate = loadAsyncComponent(
   () => import('@/components/groups/GroupsCreate.vue')

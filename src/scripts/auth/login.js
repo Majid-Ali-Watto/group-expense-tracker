@@ -11,6 +11,7 @@ import {
   validateEmail,
   findUserByEmail,
   findUserByMobile,
+  resolveUserFromAuth,
   USER_TAB_KEYS,
   createUserTabSelection,
   buildUserTabConfig,
@@ -57,7 +58,7 @@ export const Login = () => {
   const authStore = useAuthStore()
   const groupStore = useGroupStore()
   const userStore = useUserStore()
-  const { setData, updateData } = useFireBase()
+  const { setData } = useFireBase()
   const {
     clearLoginAttempts,
     isLoginLocked,
@@ -186,8 +187,13 @@ export const Login = () => {
       name: payload.name || '',
       mobile: payload.mobile || '',
       email: payload.email || '',
+      photoUrl: payload.photoUrl || '',
+      photoMeta: payload.photoMeta || null,
       emailVerified: payload.emailVerified !== false,
-      blocked: payload.blocked === true
+      blocked: payload.blocked === true,
+      billedUser: payload.billedUser === true,
+      bugResolver: payload.bugResolver === true,
+      isAdmin: payload.isAdmin === true
     })
     userStore.setActiveUserTabAccess({
       config: payload.userTabConfig || null,
@@ -425,7 +431,10 @@ export const Login = () => {
         mobile: mobileValue,
         email: emailValue,
         emailVerified: false, // Will be set to true on first successful login
-        blocked: false
+        blocked: false,
+        billedUser: false,
+        isAdmin: false,
+        bugResolver: false
       }
 
       await setData(
@@ -534,36 +543,11 @@ export const Login = () => {
         )
       }
 
-      // Find user in database
-      const user = await findUserByEmail(emailValue)
-
-      if (!user) {
+      const resolvedUser = await resolveUserFromAuth(userCredential.user)
+      if (!resolvedUser) {
         return showError(
           'No account found with this email. Please register first or check your email address.'
         )
-      }
-
-      // Always sync uid and emailVerified on login (backfills existing users without uid)
-      if (!user.emailVerified || !user.uid) {
-        const verifiedUserData = {
-          name: user.name,
-          email: user.email,
-          mobile: user.mobile,
-          uid: userCredential.user.uid,
-          emailVerified: true,
-          ...(user.addedBy ? { addedBy: user.addedBy } : {})
-        }
-        await updateData(
-          `${DB_NODES.USERS}/${user.uid}`,
-          () => verifiedUserData,
-          ''
-        )
-      }
-
-      const resolvedUser = {
-        ...user,
-        uid: userCredential.user.uid,
-        emailVerified: true
       }
 
       // Hide resend verification option on successful login
@@ -589,9 +573,14 @@ export const Login = () => {
           name: resolvedUser.name,
           mobile: resolvedUser.mobile,
           email: resolvedUser.email,
+          photoUrl: resolvedUser.photoUrl || '',
+          photoMeta: resolvedUser.photoMeta || null,
           uid: resolvedUser.uid,
           emailVerified: true,
           blocked: resolvedUser.blocked === true,
+          billedUser: resolvedUser.billedUser === true,
+          bugResolver: resolvedUser.bugResolver === true,
+          isAdmin: resolvedUser.isAdmin === true,
           password,
           userTabConfig: tabConfigDoc
         },
@@ -816,7 +805,10 @@ export const Login = () => {
         mobile,
         email,
         emailVerified: true,
-        blocked: false
+        blocked: false,
+        billedUser: false,
+        isAdmin: false,
+        bugResolver: false
       }
 
       await setDoc(doc(database, DB_NODES.USERS, uid), userData)

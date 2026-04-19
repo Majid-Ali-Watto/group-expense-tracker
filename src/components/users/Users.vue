@@ -73,7 +73,6 @@
           v-for="row in filteredUsers"
           :key="row.uid"
           :user="row"
-          :active-user="activeUserUid"
           :groups="getUserGroups(row.uid)"
           :mobile="displayMobile(row.uid)"
           :can-manage="canManage(row)"
@@ -107,6 +106,7 @@
       <UserCreateGroupDialog
         v-model="createGroupDialogVisible"
         :preselected-member="createGroupForMobile"
+        @group-created="handleGroupCreated"
       />
 
       <UserEditDialog
@@ -145,7 +145,6 @@ const {
   hasCurrentUserPendingJoinRequest,
   requestJoinFromUserGroup,
   canManage,
-  activeUserUid,
   openEditUser,
   requestDeleteUser,
   approveRequest,
@@ -161,7 +160,8 @@ const {
   openGroupsDialog,
   submitUpdateUser,
   resetEditUserForm,
-  activeUserIsBlocked
+  activeUserIsBlocked,
+  handleGroupCreated
 } = Users()
 
 function handleSave(formData) {

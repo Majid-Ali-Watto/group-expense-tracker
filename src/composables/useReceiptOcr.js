@@ -1,5 +1,6 @@
 import { ref } from 'vue'
-import { extractReceiptText, showError } from '@/utils'
+import { extractReceiptText, getApiAuthHeaders, showError } from '@/utils'
+import { useOcrLimit } from '@/composables/useOcrLimit'
 
 /**
  * Composable for OCR-based receipt auto-fill.
@@ -27,6 +28,7 @@ import { extractReceiptText, showError } from '@/utils'
  */
 export function useReceiptOcr({ receiptFiles, existingReceiptUrls, type }) {
   const receiptExtracting = ref(false)
+  const { incrementOcrExtraction } = useOcrLimit()
 
   async function extractAndStructure(jsonShape = '{}') {
     const sources = receiptFiles.value?.length
@@ -44,12 +46,13 @@ export function useReceiptOcr({ receiptFiles, existingReceiptUrls, type }) {
       const extractedResults = await extractReceiptText(sources)
 
       const API_BASE_URL = import.meta.env.VITE_NODE_BE_API_URL?.trim()
+      const headers = await getApiAuthHeaders({
+        'Content-Type': 'application/json',
+          'x-api-key': import.meta.env.VITE_X_API_KEY || ''
+      })
       const response = await fetch(`${API_BASE_URL}/structure-ocr`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': import.meta.env.VITE_X_API_KEY || ''
-        },
+        headers,
         body: JSON.stringify({
           receipts: extractedResults.map((r) => r.text),
           type,
@@ -61,7 +64,9 @@ export function useReceiptOcr({ receiptFiles, existingReceiptUrls, type }) {
         throw new Error(`API error: ${response.statusText}`)
       }
 
-      return await response.json()
+      const result = await response.json()
+      await incrementOcrExtraction()
+      return result
     } catch (error) {
       console.error('Receipt OCR extraction failed:', error)
       showError('Failed to extract text from the receipt. Please try again.')

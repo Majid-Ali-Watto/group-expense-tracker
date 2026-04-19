@@ -15,8 +15,6 @@ import {
   isUserBlocked
 } from '@/helpers'
 import {
-  auth,
-  deleteUser,
   onSnapshot,
   collection,
   doc,
@@ -128,21 +126,6 @@ export const Users = () => {
 
   function isValidMobile(mobile) {
     return /^03\d{9}$/.test(mobile)
-  }
-
-  function pinActiveUserFirst(rows) {
-    const activeUserId = activeUserUid.value
-    if (!activeUserId) return rows
-
-    const result = [...rows]
-    const activeUserIndex = result.findIndex(
-      (user) => getUserId(user) === activeUserId
-    )
-    if (activeUserIndex <= 0) return result
-
-    const [activeUserRow] = result.splice(activeUserIndex, 1)
-    result.unshift(activeUserRow)
-    return result
   }
 
   const editUserRules = {
@@ -319,7 +302,7 @@ export const Users = () => {
       result = result.sort((a, b) => b.name.localeCompare(a.name))
     }
 
-    return pinActiveUserFirst(result)
+    return result.filter((user) => getUserId(user) !== activeUserUid.value)
   })
 
   // Load full user data with real-time updates so delete/approve/reject
@@ -343,25 +326,32 @@ export const Users = () => {
     usersUnsubscribe = onSnapshot(
       query(collection(database, DB_NODES.USERS), ...queryConstraints),
       (snap) => {
-        const nextUsers = snap.docs.map((docSnap) => {
+        const nextUsers = snap.docs.reduce((list, docSnap) => {
           const uid = docSnap.id
+          if (uid === activeUserUid.value) return list
+
           const u = docSnap.data()
           const user = {
             uid,
             mobile: u.mobile || '',
             name: u.name || '',
             email: u.email || '',
+            photoUrl: u.photoUrl || '',
+            photoMeta: u.photoMeta || null,
             addedBy: u.addedBy || null,
             maskedMobile: maskMobile(u.mobile || ''),
             deleteRequest: u.deleteRequest || null,
             updateRequest: u.updateRequest || null,
+            billedUser: u.billedUser === true,
             bugResolver: u.bugResolver === true,
-            blocked: u.blocked === true
+            blocked: u.blocked === true,
+            isAdmin: u.isAdmin === true
           }
 
           userStore.addUser(user)
-          return user
-        })
+          list.push(user)
+          return list
+        }, [])
         userRows.value = nextUsers
         isPageLoading.value = false
       },
@@ -401,7 +391,7 @@ export const Users = () => {
     const me = activeUserUid.value
     if (!me) return false
     if (activeUserIsBlocked.value || isUserBlocked(row)) return false
-    return row.uid === me || row.addedBy === me
+    return row.addedBy === me
   }
 
   // Unique group owner UIDs of all groups the user is a member of
@@ -580,35 +570,13 @@ export const Users = () => {
           'An update request is pending. Cancel it before deleting.'
         )
 
-      const me = activeUserUid.value
-
       if (ownerUids.length === 0) {
         // Delete from Realtime Database
         await deleteData(`${DB_NODES.USERS}/${uid}`, `User ${name} deleted`)
         userStore.setUsers([...userStore.getUsers].filter((u) => u.uid !== uid))
-
-        // If user is deleting themselves, also delete from Firebase Auth
-        if (uid === me) {
-          try {
-            const currentUser = auth.currentUser
-            if (currentUser) {
-              await deleteUser(currentUser)
-            }
-          } catch (authError) {
-            console.error('Error deleting user from Firebase Auth:', authError)
-            showError(
-              'Account deleted from database but Firebase Authentication deletion failed. You may need to sign in again to complete deletion.'
-            )
-          }
-
-          authStore.setActiveUserUid(null)
-          groupStore.setActiveGroup(null)
-          authStore.setSessionToken(null)
-          sessionStorage.removeItem('_session')
-        }
       } else {
         const deleteRequest = {
-          requestedBy: me,
+          requestedBy: activeUserUid.value,
           requiredApprovals: ownerUids,
           approvals: []
         }
@@ -653,25 +621,6 @@ export const Users = () => {
         [...userStore.getUsers].filter((u) => u.uid !== userUid)
       )
 
-      // If user is deleting themselves, also delete from Firebase Auth
-      if (userUid === me) {
-        try {
-          const currentUser = auth.currentUser
-          if (currentUser) {
-            await deleteUser(currentUser)
-          }
-        } catch (authError) {
-          console.error('Error deleting user from Firebase Auth:', authError)
-          showError(
-            'Account deleted from database but Firebase Authentication deletion failed.'
-          )
-        }
-
-        authStore.setActiveUserUid(null)
-        groupStore.setActiveGroup(null)
-        authStore.setSessionToken(null)
-        sessionStorage.removeItem('_session')
-      }
     } else {
       const field = type === 'delete' ? 'deleteRequest' : 'updateRequest'
       const updatedRequest = { ...request, approvals: newApprovals }
@@ -740,14 +689,22 @@ export const Users = () => {
   }
 
   const groupsDialogVisible = ref(false)
-  const selectedUserGroups = ref([])
+  const selectedUserUid = ref('')
   const selectedUserName = ref('')
+  const selectedUserGroups = computed(() =>
+    selectedUserUid.value ? getUserGroups(selectedUserUid.value) : []
+  )
 
   function openGroupsDialog(row) {
     if (!ensureUsersInteractionAllowed(row)) return
-    selectedUserGroups.value = getUserGroups(row.uid)
+    selectedUserUid.value = row.uid
     selectedUserName.value = row.name
     groupsDialogVisible.value = true
+  }
+
+  function handleGroupCreated(group) {
+    if (!group?.id) return
+    groupStore.addGroup(group)
   }
 
   return {
@@ -766,7 +723,6 @@ export const Users = () => {
     hasCurrentUserPendingJoinRequest,
     requestJoinFromUserGroup,
     canManage,
-    activeUserUid,
     openEditUser,
     submitUpdateUser,
     requestDeleteUser,
@@ -780,6 +736,7 @@ export const Users = () => {
     selectedUserGroups,
     selectedUserName,
     openGroupsDialog,
+    handleGroupCreated,
     resetEditUserForm,
     activeUserIsBlocked
   }

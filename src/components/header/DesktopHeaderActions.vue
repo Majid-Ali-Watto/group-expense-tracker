@@ -61,7 +61,14 @@
       title="Profile"
       @click="emit('open-profile')"
     >
-      <UserIcon class="w-5 h-5" />
+      <UserAvatar
+        :image-url="activeUserPhotoUrl"
+        alt="Profile"
+        size="fill"
+        variant="profile"
+        icon-size="md"
+        icon-tone="current"
+      />
     </button>
 
     <button
@@ -71,6 +78,15 @@
       @click="emit('show-net-position')"
     >
       <el-icon :size="18"><DataAnalysis /></el-icon>
+    </button>
+
+    <button
+      v-if="canShowAdmin"
+      class="theme-btn"
+      title="Admin Config"
+      @click="emit('navigate', '/admin')"
+    >
+      <el-icon :size="18"><Tools /></el-icon>
     </button>
 
     <button
@@ -94,14 +110,14 @@
 </template>
 
 <script setup>
-import { DataAnalysis, Setting, SwitchButton } from '@element-plus/icons-vue'
+import { DataAnalysis, Setting, SwitchButton, Tools } from '@element-plus/icons-vue'
+import { UserAvatar } from '@/components/generic-components'
 import {
   AlertTriangleIcon,
   MoonIcon,
   QuestionCircleIcon,
   ShareIcon,
-  SunIcon,
-  UserIcon
+  SunIcon
 } from '@/components/icons'
 
 defineProps({
@@ -110,7 +126,9 @@ defineProps({
   isStuckState: { type: Boolean, default: false },
   isDarkTheme: { type: Boolean, default: false },
   canShowBugReport: { type: Boolean, default: false },
-  canShowManageTabs: { type: Boolean, default: false }
+  canShowManageTabs: { type: Boolean, default: false },
+  canShowAdmin: { type: Boolean, default: false },
+  activeUserPhotoUrl: { type: String, default: '' }
 })
 
 const emit = defineEmits([
@@ -170,4 +188,5 @@ const emit = defineEmits([
 .theme-btn:hover {
   background-color: rgba(255, 255, 255, 0.15);
 }
+
 </style>

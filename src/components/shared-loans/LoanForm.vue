@@ -42,38 +42,17 @@
         >
           <!-- Receipt upload at top -->
           <div>
-            <ReceiptUploadField
+            <ReceiptOcrField
               :selected-files="receiptFiles"
               :existing-urls="existingReceiptUrls"
-              :uploading="receiptUploading || receiptExtracting"
+              :uploading="receiptUploading"
+              :extracting="receiptExtracting"
               :multiple="false"
               helper-text="Only image files (JPG, PNG, GIF, BMP, WEBP) are allowed. Max size: 1MB per file."
               @files-selected="setSelectedFiles"
               @remove="removeReceipt"
+              @extract="extractTextFromReceipt"
             />
-            <div class="mt-3 flex justify-end">
-              <el-button
-                type="primary"
-                plain
-                size="small"
-                :loading="receiptExtracting"
-                :disabled="
-                  receiptUploading ||
-                  receiptExtracting ||
-                  (!receiptFiles.length && !existingReceiptUrls.length)
-                "
-                @click="extractTextFromReceipt"
-              >
-                {{ receiptExtracting ? 'Extracting...' : 'Extract Text' }}
-              </el-button>
-            </div>
-            <p
-              v-if="receiptFiles.length || existingReceiptUrls.length"
-              class="mt-2 text-xs text-amber-600"
-            >
-              Verify the extracted data before saving. Receipt extraction can
-              make mistakes.
-            </p>
           </div>
 
           <el-row :gutter="12">
@@ -348,7 +327,7 @@ import {
   DataTimePicker,
   GenericDropDown,
   GenericInput,
-  ReceiptUploadField
+  ReceiptOcrField
 } from '@/components/generic-components'
 import { LoanForm } from '@/scripts/shared-loans'
 import { DB_NODES } from '@/constants'

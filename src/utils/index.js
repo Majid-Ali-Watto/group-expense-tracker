@@ -1,6 +1,7 @@
 export * from './active-tab'
 export * from './analytics'
 export * from './async-component'
+export * from './apiAuth'
 export * from './buildRequestMeta'
 export * from './category-options'
 export {

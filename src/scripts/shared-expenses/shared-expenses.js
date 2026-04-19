@@ -282,15 +282,18 @@ export const SharedExpenses = (props, emit) => {
         const receiptMeta = uploadedReceipts.receiptMeta
         const paymentData = getPaymentData(receiptUrls, receiptMeta)
 
-        if (whatTask == 'Save') {
+        if (whatTask === 'Save' || whatTask === 'Duplicate') {
           saveData(
             `${DB_NODES.SHARED_EXPENSES}/${groupId}/months/${monthYear}/payments`,
             () => paymentData,
             transactionForm,
-            'Transaction successfully saved.',
+            whatTask === 'Duplicate'
+              ? 'Transaction duplicated successfully.'
+              : 'Transaction successfully saved.',
             (createdDoc) => {
               sendSharedActivityEmail({
                 type: 'shared-expense',
+                action: whatTask === 'Duplicate' ? 'duplicated' : 'created',
                 entryId: createdDoc?.id || '',
                 month: monthYear,
                 data: paymentData

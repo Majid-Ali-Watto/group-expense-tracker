@@ -13,6 +13,9 @@ export const NetPosition = () => {
   const { read, readShallow } = useFireBase()
 
   const activeUserUid = computed(() => authStore.getActiveUserUid)
+  const activeUserMobile = computed(
+    () => userStore.getUserByUid(activeUserUid.value)?.mobile || ''
+  )
   const isCalculating = ref(false)
 
   /**
@@ -183,12 +186,18 @@ export const NetPosition = () => {
         Object.values(loans).forEach((loan) => {
           if (!loan || !loan.amount) return
 
-          if (loan.loanGiver === userMobile) {
+          const amount = Number(loan.amount || 0)
+          if (!amount) return
+
+          const lenderIdentity = loan.loanGiverMobile || loan.loanGiver
+          const debtorIdentity = loan.loanReceiverMobile || loan.loanReceiver
+
+          if (lenderIdentity === userMobile) {
             // User gave the loan (lender)
-            result.lenderAmount += loan.amount
-          } else if (loan.loanReceiver === userMobile) {
+            result.lenderAmount += amount
+          } else if (debtorIdentity === userMobile) {
             // User took the loan (debtor)
-            result.debtorAmount += loan.amount
+            result.debtorAmount += amount
           }
         })
 
@@ -235,9 +244,10 @@ export const NetPosition = () => {
     }
 
     try {
-      const userMobile = activeUserUid.value
+      const userUid = activeUserUid.value
+      const personalLoanIdentity = activeUserMobile.value || userUid
 
-      if (!userMobile) {
+      if (!userUid) {
         showError('Please log in to view your net position')
         return summary
       }
@@ -247,16 +257,16 @@ export const NetPosition = () => {
         const allGroups = groupStore.getGroups || []
         const userGroups = allGroups.filter((group) => {
           if (!group || !group.members) return false
-          return group.members.some((m) => m.uid === userMobile)
+          return group.members.some((m) => m.uid === userUid)
         })
 
         for (const group of userGroups) {
           const [expensesResult, loansResult] = await Promise.all([
             hasSharedExpenses
-              ? calculateSharedExpensesPosition(group.id, userMobile)
+              ? calculateSharedExpensesPosition(group.id, userUid)
               : { lenderAmount: 0, debtorAmount: 0 },
             hasSharedLoans
-              ? calculateSharedLoansPosition(group.id, userMobile)
+              ? calculateSharedLoansPosition(group.id, userUid)
               : { lenderAmount: 0, debtorAmount: 0 }
           ])
 
@@ -276,7 +286,9 @@ export const NetPosition = () => {
 
       // Calculate personal loans only when the user has that feature
       if (hasPersonalLoans) {
-        summary.personalLoans = await calculatePersonalLoansPosition(userMobile)
+        summary.personalLoans = await calculatePersonalLoansPosition(
+          personalLoanIdentity
+        )
       }
 
       // Calculate totals from whichever sections were included

@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="flex flex-col min-h-screen">
     <Header
       @click-log="setLoggedInStatus"
       @show-net-position="handleShowNetPosition"
@@ -21,8 +21,9 @@
       class="container mx-auto mt-20"
       style="max-width: 980px"
     >
-      <WelcomeBanner :displayName="displayName" :activeTab="activeTab" />
+      <WelcomeBanner :displayName="displayName" :activeTab="activeTab" :isAdminActive="isAdminActive" />
       <el-tabs
+        v-if="!isAdminActive"
         :key="tabBarKey"
         :model-value="activeTab"
         @tab-change="handleActiveTab"
@@ -44,6 +45,7 @@
          /login, /register → Login.vue (self-centered)
          /groups etc       → tab content (sits below the tab bar above) -->
     <div
+      class="flex-1"
       :class="loggedIn ? 'container mx-auto' : ''"
       :style="loggedIn ? 'max-width: 980px' : ''"
     >
@@ -105,7 +107,8 @@ const {
   navigateToTab,
   allNotifications,
   notificationCount,
-  dismissNotification
+  dismissNotification,
+  isAdminActive
 } = App()
 </script>
 

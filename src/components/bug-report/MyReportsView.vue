@@ -102,7 +102,7 @@
           </div>
           <div v-if="r.screenshots?.length" class="bug-mr-screenshots">
             <div v-for="(ss, i) in r.screenshots" :key="i" class="bug-mr-thumb">
-              <img :src="ss.url" :alt="`Screenshot ${i + 1}`" />
+              <AppImage :src="ss.url" :alt="`Screenshot ${i + 1}`" />
               <span class="bug-mr-thumb-overlay">
                 <a
                   :href="ss.url"
@@ -206,6 +206,7 @@
 
 <script setup>
 import { NoteThread } from '@/components/bug-reports'
+import { AppImage } from '@/components/generic-components'
 import {
   ChatBubbleIcon,
   ChevronDownIcon,

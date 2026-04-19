@@ -84,7 +84,7 @@
             :key="ss.url"
             class="bug-edit-ss-item"
           >
-            <img
+            <AppImage
               :src="ss.url"
               class="bug-edit-ss-thumb"
               :alt="`Screenshot ${i + 1}`"
@@ -127,7 +127,7 @@
             :key="i"
             class="bug-file-item"
           >
-            <img
+            <AppImage
               :src="item.preview"
               class="bug-file-thumb"
               :alt="item.file.name"
@@ -172,7 +172,11 @@
 <script setup>
 import { ref } from 'vue'
 import { PhotoIcon, XIcon } from '@/components/icons'
-import { MarkdownEditor, GenericButton } from '@/components/generic-components'
+import {
+  AppImage,
+  MarkdownEditor,
+  GenericButton
+} from '@/components/generic-components'
 
 const localEditFormRef = ref(null)
 const localEditFileInputRef = ref(null)

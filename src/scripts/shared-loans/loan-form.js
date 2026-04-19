@@ -286,9 +286,12 @@ export const LoanForm = (props, emit) => {
     () => props.row,
     async (newRow) => {
       formData.value.amount = newRow?.amount ?? null
-      formData.value.loanGiver = newRow?.giverName ?? newRow?.giver ?? ''
-      formData.value.loanReceiver =
-        newRow?.receiverName ?? newRow?.receiver ?? ''
+      formData.value.loanGiver = props.isPersonal
+        ? newRow?.loanGiver ?? ''
+        : newRow?.giver ?? ''
+      formData.value.loanReceiver = props.isPersonal
+        ? newRow?.loanReceiver ?? ''
+        : newRow?.receiver ?? ''
       formData.value.loanGiverMobile =
         newRow?.giverMobile ?? newRow?.giver ?? newRow?.loanGiverMobile ?? ''
       formData.value.loanReceiverMobile =
@@ -472,7 +475,7 @@ export const LoanForm = (props, emit) => {
         const receiptMeta = uploadedReceipts.receiptMeta
         const loanData = getLoanData(receiptUrls, receiptMeta)
 
-        if (whatTask == 'Save') {
+        if (whatTask === 'Save' || whatTask === 'Duplicate') {
           // Capture expense data before saveData resets the form
           const expenseCopyMonth = dateToMonthNode(formData.value.date)
           const expenseCopy = copyToExpenses.value
@@ -494,11 +497,14 @@ export const LoanForm = (props, emit) => {
             loanPath,
             () => loanData,
             loanForm,
-            'Loan added successfully.',
+            whatTask === 'Duplicate'
+              ? 'Loan duplicated successfully.'
+              : 'Loan added successfully.',
             async (createdDoc) => {
               if (!props.isPersonal) {
                 sendSharedActivityEmail({
                   type: 'shared-loan',
+                  action: whatTask === 'Duplicate' ? 'duplicated' : 'created',
                   entryId: createdDoc?.id || '',
                   month: monthYear,
                   data: loanData
@@ -621,15 +627,12 @@ export const LoanForm = (props, emit) => {
           : {}),
       [!props.isPersonal ? 'giver' : 'loanGiver']: giverMobile,
       [!props.isPersonal ? 'receiver' : 'loanReceiver']: receiverMobile,
-      // For shared loans the giver/receiver field stores a UID (ME? case) or a
-      // name (dropdown case). Always resolve to a human-readable name here.
-      giverName: !props.isPersonal
-        ? userStore.getUserByUid(giverMobile)?.name || formData.value.loanGiver
-        : formData.value.loanGiver,
-      receiverName: !props.isPersonal
-        ? userStore.getUserByUid(receiverMobile)?.name ||
-          formData.value.loanReceiver
-        : formData.value.loanReceiver,
+      ...(props.isPersonal
+        ? {
+            giverName: formData.value.loanGiver,
+            receiverName: formData.value.loanReceiver
+          }
+        : {}),
       ...(!props.isPersonal
         ? { group: groupStore.getActiveGroup || null }
         : {}),

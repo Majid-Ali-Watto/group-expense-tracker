@@ -18,23 +18,23 @@
       <section
         class="rounded-xl border border-gray-200 p-4 dark:border-gray-700"
       >
-        <el-checkbox
+        <el-checkbox class="!whitespace-normal"
           :model-value="selection.shared"
           @update:model-value="updateSelection('shared', $event)"
         >
           Shared features
         </el-checkbox>
         <div v-if="selection.shared" class="mt-3 space-y-2 pl-6 text-sm">
-          <el-checkbox :model-value="selection[USER_TAB_KEYS.GROUPS]" disabled>
+          <el-checkbox class="!whitespace-normal" :model-value="selection[USER_TAB_KEYS.GROUPS]" disabled>
             Groups
           </el-checkbox>
-          <el-checkbox
+          <el-checkbox class="!whitespace-normal"
             :model-value="selection[USER_TAB_KEYS.USERS]"
             @update:model-value="updateSelection(USER_TAB_KEYS.USERS, $event)"
           >
             Users
           </el-checkbox>
-          <el-checkbox
+          <el-checkbox class="!whitespace-normal"
             :model-value="selection[USER_TAB_KEYS.SHARED_EXPENSES]"
             @update:model-value="
               updateSelection(USER_TAB_KEYS.SHARED_EXPENSES, $event)
@@ -42,7 +42,7 @@
           >
             Shared Expenses
           </el-checkbox>
-          <el-checkbox
+          <el-checkbox class="!whitespace-normal"
             :model-value="selection[USER_TAB_KEYS.SHARED_LOANS]"
             @update:model-value="
               updateSelection(USER_TAB_KEYS.SHARED_LOANS, $event)
@@ -51,19 +51,48 @@
             Shared Loans
           </el-checkbox>
         </div>
+
+        <div
+          v-if="
+            selection.shared &&
+            (selection[USER_TAB_KEYS.SHARED_EXPENSES] ||
+              selection[USER_TAB_KEYS.SHARED_LOANS])
+          "
+          class="mt-4 border-t border-gray-100 pt-3 dark:border-gray-700"
+        >
+          <p class="mb-2 text-xs font-medium text-gray-500 dark:text-gray-400">
+            Email notifications
+          </p>
+          <div class="space-y-2 pl-6 text-sm">
+            <el-checkbox class="!whitespace-normal"
+              v-if="selection[USER_TAB_KEYS.SHARED_EXPENSES]"
+              :model-value="selection.emailSharedExpenses"
+              @update:model-value="updateSelection('emailSharedExpenses', $event)"
+            >
+              Notify group when I add a shared expense
+            </el-checkbox>
+            <el-checkbox class="!whitespace-normal"
+              v-if="selection[USER_TAB_KEYS.SHARED_LOANS]"
+              :model-value="selection.emailSharedLoans"
+              @update:model-value="updateSelection('emailSharedLoans', $event)"
+            >
+              Notify group when I add a shared loan
+            </el-checkbox>
+          </div>
+        </div>
       </section>
 
       <section
         class="rounded-xl border border-gray-200 p-4 dark:border-gray-700"
       >
-        <el-checkbox
+        <el-checkbox class="!whitespace-normal"
           :model-value="selection.personal"
           @update:model-value="updateSelection('personal', $event)"
         >
           Personal features
         </el-checkbox>
         <div v-if="selection.personal" class="mt-3 space-y-2 pl-6 text-sm">
-          <el-checkbox
+          <el-checkbox class="!whitespace-normal"
             :model-value="selection[USER_TAB_KEYS.PERSONAL_EXPENSES]"
             @update:model-value="
               updateSelection(USER_TAB_KEYS.PERSONAL_EXPENSES, $event)
@@ -71,7 +100,7 @@
           >
             Personal Expenses
           </el-checkbox>
-          <el-checkbox
+          <el-checkbox class="!whitespace-normal"
             :model-value="selection[USER_TAB_KEYS.PERSONAL_LOANS]"
             @update:model-value="
               updateSelection(USER_TAB_KEYS.PERSONAL_LOANS, $event)

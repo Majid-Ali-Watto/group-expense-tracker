@@ -678,9 +678,13 @@ export const Groups = () => {
           mobile: user.mobile || '',
           name: user.name || '',
           email: user.email || '',
+          photoUrl: user.photoUrl || '',
+          photoMeta: user.photoMeta || null,
           maskedMobile: maskMobile(user.mobile || ''),
+          billedUser: user.billedUser === true,
           bugResolver: user.bugResolver === true,
-          blocked: user.blocked === true
+          blocked: user.blocked === true,
+          isAdmin: user.isAdmin === true
         })
       })
     } catch (error) {

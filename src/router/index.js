@@ -5,7 +5,7 @@ import { useUserStore } from '../stores/userStore'
 import { Tabs } from '../assets/enums'
 import { SEO_PAGES } from '@/constants'
 import {
-  findUserByEmail,
+  resolveUserFromAuth,
   canAccessTab,
   getDefaultAccessibleTab,
   findUserTabConfigByUid,
@@ -38,6 +38,7 @@ const PersonalLoans = () =>
   import('@/components/personal-loans/PersonalLoans.vue')
 const BugReportsAdmin = () =>
   import('@/components/bug-reports-admin/BugReportsAdmin.vue')
+const AdminConfig = () => import('@/components/admin/AdminConfig.vue')
 const SharedGroups = () => import('@/components/groups/SharedGroups.vue')
 
 // Tab name → URL path mapping (base paths, without :groupId)
@@ -70,6 +71,15 @@ export const GROUP_TABS = new Set([Tabs.SHARED_EXPENSES, Tabs.SHARED_LOANS])
 function hasSession() {
   return !!sessionStorage.getItem('_session')
 }
+
+// Resolves once Firebase Auth has finished its initial state check.
+// Prevents the guard from seeing auth.currentUser as null on first navigation.
+const authReady = new Promise((resolve) => {
+  const unsubscribe = auth.onAuthStateChanged((user) => {
+    unsubscribe()
+    resolve(user)
+  })
+})
 
 const routes = [
   // Public marketing pages
@@ -195,6 +205,11 @@ const routes = [
       seo: SEO_PAGES.app
     }
   },
+  {
+    path: '/admin',
+    component: AdminConfig,
+    meta: { requiresAuth: true, requiresAdmin: true, seo: SEO_PAGES.app }
+  },
   // Catch-all → redirect based on session
   {
     path: '/:pathMatch(.*)*',
@@ -221,10 +236,8 @@ async function getCurrentUserProfile() {
 
   if (cachedUser) return cachedUser
 
-  const currentEmail = auth.currentUser?.email?.trim()?.toLowerCase()
-  if (!currentEmail) return null
-
-  const user = await findUserByEmail(currentEmail)
+  const firebaseUser = auth.currentUser ?? (await authReady)
+  const user = await resolveUserFromAuth(firebaseUser)
   if (!user) return null
 
   authStore.setActiveUserUid(user.uid)
@@ -235,8 +248,10 @@ async function getCurrentUserProfile() {
     email: user.email || '',
     emailVerified: user.emailVerified !== false,
     maskedMobile: maskMobile(user.mobile || ''),
+    billedUser: user.billedUser === true,
     bugResolver: user.bugResolver === true,
-    blocked: user.blocked === true
+    blocked: user.blocked === true,
+    isAdmin: user.isAdmin === true
   })
 
   return userStore.getUserByUid(user.uid) || user
@@ -293,7 +308,7 @@ router.beforeEach(async (to) => {
     groupStore.setActiveGroup(to.params.groupId)
   }
 
-  if (to.meta.requiresBugResolver || to.meta.requiresUserTab) {
+  if (to.meta.requiresBugResolver || to.meta.requiresUserTab || to.meta.requiresAdmin) {
     const user = await getCurrentUserProfile()
     const tabConfig = await getCurrentUserTabConfig(user?.uid)
     const fallbackPath = getFallbackPath(
@@ -311,6 +326,10 @@ router.beforeEach(async (to) => {
     }
 
     if (to.meta.requiresBugResolver && !user?.bugResolver) {
+      return fallbackPath
+    }
+
+    if (to.meta.requiresAdmin && !user?.isAdmin) {
       return fallbackPath
     }
   }

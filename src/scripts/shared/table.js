@@ -221,7 +221,7 @@ export const Table = (props) => {
   async function duplicate() {
     try {
       const ref = await waitForComponentRef()
-      ref.validateForm('Save')
+      ref.validateForm('Duplicate')
     } catch (e) {
       ElMessage.error(e.message)
     }

@@ -80,19 +80,25 @@ export function resolveUserTabConfig(config) {
 export function buildUserTabConfig(selection = {}) {
   const sharedEnabled = selection.shared === true
   const personalEnabled = selection.personal === true
+  const sharedExpensesEnabled =
+    sharedEnabled && selection[USER_TAB_KEYS.SHARED_EXPENSES] === true
+  const sharedLoansEnabled =
+    sharedEnabled && selection[USER_TAB_KEYS.SHARED_LOANS] === true
 
   return {
     [USER_TAB_KEYS.GROUPS]: sharedEnabled,
-    [USER_TAB_KEYS.SHARED_EXPENSES]:
-      sharedEnabled && selection[USER_TAB_KEYS.SHARED_EXPENSES] === true,
-    [USER_TAB_KEYS.SHARED_LOANS]:
-      sharedEnabled && selection[USER_TAB_KEYS.SHARED_LOANS] === true,
+    [USER_TAB_KEYS.SHARED_EXPENSES]: sharedExpensesEnabled,
+    [USER_TAB_KEYS.SHARED_LOANS]: sharedLoansEnabled,
     [USER_TAB_KEYS.USERS]:
       sharedEnabled && selection[USER_TAB_KEYS.USERS] === true,
     [USER_TAB_KEYS.PERSONAL_EXPENSES]:
       personalEnabled && selection[USER_TAB_KEYS.PERSONAL_EXPENSES] === true,
     [USER_TAB_KEYS.PERSONAL_LOANS]:
-      personalEnabled && selection[USER_TAB_KEYS.PERSONAL_LOANS] === true
+      personalEnabled && selection[USER_TAB_KEYS.PERSONAL_LOANS] === true,
+    emailSharedExpenses:
+      sharedExpensesEnabled && selection.emailSharedExpenses !== false,
+    emailSharedLoans:
+      sharedLoansEnabled && selection.emailSharedLoans !== false
   }
 }
 
@@ -105,7 +111,9 @@ export function createUserTabSelection() {
     [USER_TAB_KEYS.SHARED_LOANS]: false,
     [USER_TAB_KEYS.USERS]: false,
     [USER_TAB_KEYS.PERSONAL_EXPENSES]: false,
-    [USER_TAB_KEYS.PERSONAL_LOANS]: false
+    [USER_TAB_KEYS.PERSONAL_LOANS]: false,
+    emailSharedExpenses: true,
+    emailSharedLoans: true
   }
 }
 
@@ -136,6 +144,9 @@ export function createUserTabSelectionFromConfig(config) {
   if (selection.shared) {
     selection[USER_TAB_KEYS.GROUPS] = true
   }
+
+  selection.emailSharedExpenses = config?.emailSharedExpenses !== false
+  selection.emailSharedLoans = config?.emailSharedLoans !== false
 
   return selection
 }

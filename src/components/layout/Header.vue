@@ -29,6 +29,8 @@
           :is-dark-theme="isDarkTheme"
           :can-show-bug-report="canShowBugReport"
           :can-show-manage-tabs="canShowManageTabs"
+          :can-show-admin="canShowAdmin"
+          :active-user-photo-url="activeUserProfile?.photoUrl || ''"
           @open-profile="showProfile = true"
           @open-bug-report="showBugReport = true"
           @open-help="showHelp = true"
@@ -50,7 +52,9 @@
           :is-stuck-state="isStuckState"
           :can-show-bug-report="canShowBugReport"
           :can-show-manage-tabs="canShowManageTabs"
+          :can-show-admin="canShowAdmin"
           :is-dark-theme="isDarkTheme"
+          :active-user-photo-url="activeUserProfile?.photoUrl || ''"
           @tab-change="emit('tab-change', $event)"
           @open-profile="showProfile = true"
           @navigate="navigateTo"
@@ -157,6 +161,7 @@ const {
   activeUserProfile,
   canShowBugReport,
   canShowManageTabs,
+  canShowAdmin,
   isPublicPage,
   isStuckState,
   publicNavLinks,

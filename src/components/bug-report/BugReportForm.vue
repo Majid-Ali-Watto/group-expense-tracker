@@ -90,7 +90,7 @@
         <!-- File list -->
         <div v-if="screenshots.length" class="bug-file-list">
           <div v-for="(item, i) in screenshots" :key="i" class="bug-file-item">
-            <img
+            <AppImage
               :src="item.preview"
               class="bug-file-thumb"
               :alt="item.file.name"
@@ -161,6 +161,7 @@
 import { ref } from 'vue'
 import { PhotoIcon, XIcon } from '@/components/icons'
 import {
+  AppImage,
   GenericDropDown,
   GenericButton,
   MarkdownEditor

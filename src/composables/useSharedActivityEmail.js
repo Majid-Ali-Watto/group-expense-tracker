@@ -1,36 +1,52 @@
 import { useAuthStore, useGroupStore, useUserStore } from '@/stores'
-import { getEmailConfig } from '@/composables'
-import { getIdentity } from '@/utils'
+import { getEmailConfig } from '@/composables/useAppConfig'
+import { useEmailLimit } from '@/composables/useEmailLimit'
+import { getApiAuthHeaders, getIdentity } from '@/utils'
 
 const API_BASE_URL = import.meta.env.VITE_NODE_BE_API_URL?.trim()
 const PRODUCTION = import.meta.env.PROD
-const SEND_EMAILS = getEmailConfig().send
 const BUG_REPORT_RECIPIENT = import.meta.env.VITE_BUG_REPORT_HELP_EMAIL?.trim()
 
 export function useSharedActivityEmail() {
   const authStore = useAuthStore()
   const groupStore = useGroupStore()
   const userStore = useUserStore()
+  const {
+    canSendEmail,
+    wantsSharedExpenseEmails,
+    wantsSharedLoanEmails,
+    incrementEmailCount
+  } = useEmailLimit()
 
   function postEmailNotification(payload) {
-    if (!API_BASE_URL || !PRODUCTION || !SEND_EMAILS) return
+    if (!API_BASE_URL || !PRODUCTION || !getEmailConfig().send) return
 
-    fetch(API_BASE_URL+'/send-email', {
-      method: 'POST',
-      headers: {
+    ;(async () => {
+      const headers = await getApiAuthHeaders({
         'Content-Type': 'application/json',
         'x-api-key': import.meta.env.VITE_X_API_KEY || ''
-      },
-      body: JSON.stringify(payload)
-    }).catch(() => {})
+
+      })
+
+      await fetch(API_BASE_URL + '/send-email', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(payload)
+      })
+    })().catch(() => {})
   }
 
   function sendSharedActivityEmail({
     type,
+    action = 'created',
     entryId = '',
     month = '',
     data = {}
   } = {}) {
+    if (type === 'shared-expense' && !wantsSharedExpenseEmails.value) return
+    if (type === 'shared-loan' && !wantsSharedLoanEmails.value) return
+    if (!canSendEmail.value) return
+
     const groupId = groupStore.getActiveGroup
     const group = groupStore.getGroupById(groupId)
     if (!groupId || !group?.members?.length) return
@@ -62,6 +78,7 @@ export function useSharedActivityEmail() {
 
     const payload = {
       type,
+      action,
       group: {
         name: group.name || ''
       },
@@ -79,6 +96,7 @@ export function useSharedActivityEmail() {
     }
 
     postEmailNotification(payload)
+    incrementEmailCount()
   }
 
   function sendBugReportEmail({

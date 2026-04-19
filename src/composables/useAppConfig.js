@@ -22,7 +22,8 @@ const _config = reactive({
   app: null,
   downloads: null,
   manageTabs: null,
-  bugs: null
+  bugs: null,
+  ocr: null
 })
 
 let _loaded = false
@@ -34,6 +35,7 @@ function resetConfigState() {
   _config.downloads = null
   _config.manageTabs = null
   _config.bugs = null
+  _config.ocr = null
   setCacheEnabled(true)
 }
 
@@ -114,6 +116,16 @@ export async function loadAppConfig() {
       onError: () => {
         _config.email = {}
       }
+    },
+    {
+      key: 'ocr',
+      ref: doc(database, DB_NODES.CONFIGS, 'ocr'),
+      onData: (snap) => {
+        _config.ocr = snap.exists() ? snap.data() : {}
+      },
+      onError: () => {
+        _config.ocr = {}
+      }
     }
   ]
 
@@ -140,12 +152,12 @@ export function stopAppConfigSync() {
 export function getStorageConfig() {
   const cfg = _config.storage
   if (!cfg) {
-    // Not yet loaded — both enabled by default
-    return { cloudinary: true, firebase: true }
+    return { cloudinary: true, firebase: true, upload_allowed: true }
   }
   return {
-    cloudinary: cfg.cloudinary !== false, // absent or true → enabled
-    firebase: cfg.firebase !== false // absent or true → enabled
+    cloudinary: cfg.cloudinary !== false,
+    firebase: cfg.firebase !== false,
+    upload_allowed: cfg.upload_allowed !== false
   }
 }
 
@@ -186,10 +198,25 @@ export function getBugReportConfig() {
 export function getEmailConfig() {
   const cfg = _config.email
   if (!cfg) {
-    return { send: true }
+    return { send: true, free_email_limit_per_month: null, paid_emails_limit_per_month: null }
   }
 
   return {
-    send: cfg.send !== false
+    send: cfg.send !== false,
+    free_email_limit_per_month: cfg.free_email_limit_per_month ?? null,
+    paid_emails_limit_per_month: cfg.paid_emails_limit_per_month ?? null
+  }
+}
+
+export function getOcrConfig() {
+  const cfg = _config.ocr
+  if (!cfg) {
+    return { extract_allowed: true, free_extraction_limit_per_month: null, paid_extraction_limit_per_month: null }
+  }
+
+  return {
+    extract_allowed: cfg.extract_allowed !== false,
+    free_extraction_limit_per_month: cfg.free_extraction_limit_per_month ?? null,
+    paid_extraction_limit_per_month: cfg.paid_extraction_limit_per_month ?? null
   }
 }

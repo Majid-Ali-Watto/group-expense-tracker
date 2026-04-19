@@ -94,11 +94,18 @@
         </el-dropdown-item>
         <div class="mobile-menu-divider" />
 
-        <template v-if="loggedIn || canShowManageTabs">
+        <template v-if="loggedIn || canShowManageTabs || canShowAdmin">
           <div class="mobile-menu-section-label">Workspace</div>
           <el-dropdown-item v-if="loggedIn" @click="emit('open-profile')">
             <div class="flex items-center gap-3">
-              <UserIcon class="w-5 h-5 menu-icon" />
+              <UserAvatar
+                :image-url="activeUserPhotoUrl"
+                alt="Profile"
+                size="xs"
+                variant="profile"
+                icon-size="md"
+                icon-tone="current"
+              />
               <span>Profile</span>
             </div>
           </el-dropdown-item>
@@ -107,6 +114,16 @@
             <div class="flex items-center gap-3">
               <el-icon class="menu-icon" :size="20"><DataAnalysis /></el-icon>
               <span>Expenses Summary</span>
+            </div>
+          </el-dropdown-item>
+
+          <el-dropdown-item
+            v-if="canShowAdmin"
+            @click="emit('navigate', '/admin')"
+          >
+            <div class="flex items-center gap-3">
+              <el-icon class="menu-icon" :size="20"><Tools /></el-icon>
+              <span>Admin Config</span>
             </div>
           </el-dropdown-item>
 
@@ -148,6 +165,7 @@ import {
   DataAnalysis,
   Setting,
   SwitchButton,
+  Tools,
   Money,
   CreditCard,
   Wallet,
@@ -164,9 +182,9 @@ import {
   QuestionCircleIcon,
   ShareIcon,
   SunIcon,
-  UserIcon,
   UsersIcon
 } from '@/components/icons'
+import { UserAvatar } from '@/components/generic-components'
 
 // Tab name → icon component
 const TAB_ICONS = {
@@ -198,7 +216,9 @@ defineProps({
   isStuckState: { type: Boolean, default: false },
   canShowBugReport: { type: Boolean, default: false },
   canShowManageTabs: { type: Boolean, default: false },
-  isDarkTheme: { type: Boolean, default: false }
+  canShowAdmin: { type: Boolean, default: false },
+  isDarkTheme: { type: Boolean, default: false },
+  activeUserPhotoUrl: { type: String, default: '' }
 })
 
 const emit = defineEmits([

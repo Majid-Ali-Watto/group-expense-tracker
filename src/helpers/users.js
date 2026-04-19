@@ -1,5 +1,14 @@
 import { useAuthStore, useUserStore } from '@/stores'
-import { collection, database, getDocs, query, where } from '@/firebase'
+import {
+  collection,
+  database,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  updateDoc,
+  where
+} from '@/firebase'
 import { DB_NODES } from '@/constants'
 import { getIdentity, maskMobile } from '@/utils'
 // Check if current user is a member of the group
@@ -198,6 +207,57 @@ export async function findUserByEmail(email) {
 
   const userDoc = snapshot.docs[0]
   return { ...userDoc.data(), uid: userDoc.id }
+}
+
+export async function findUserByUid(uid) {
+  const normalizedUid = uid?.trim()
+  if (!normalizedUid) return null
+
+  const userDoc = await getDoc(doc(database, DB_NODES.USERS, normalizedUid))
+  return userDoc.exists() ? { ...userDoc.data(), uid: userDoc.id } : null
+}
+
+async function syncFirestoreUserFromAuth(user, firebaseUser) {
+  if (!user?.uid || !firebaseUser?.uid) return user
+
+  const normalizedAuthEmail = firebaseUser.email?.trim().toLowerCase()
+  const nextEmailVerified = firebaseUser.emailVerified === true
+  const updates = {}
+
+  if (normalizedAuthEmail && user.email?.trim()?.toLowerCase() !== normalizedAuthEmail) {
+    updates.email = normalizedAuthEmail
+  }
+
+  if (user.emailVerified !== nextEmailVerified) {
+    updates.emailVerified = nextEmailVerified
+  }
+
+  if (user.uid !== firebaseUser.uid) {
+    updates.uid = firebaseUser.uid
+  }
+
+  if (Object.keys(updates).length) {
+    await updateDoc(doc(database, DB_NODES.USERS, user.uid), updates)
+  }
+
+  return {
+    ...user,
+    ...updates,
+    uid: firebaseUser.uid
+  }
+}
+
+export async function resolveUserFromAuth(firebaseUser) {
+  if (!firebaseUser?.uid) return null
+
+  const normalizedEmail = firebaseUser.email?.trim()?.toLowerCase()
+  const user =
+    (normalizedEmail ? await findUserByEmail(normalizedEmail) : null) ||
+    (await findUserByUid(firebaseUser.uid))
+
+  if (!user) return null
+
+  return syncFirestoreUserFromAuth(user, firebaseUser)
 }
 
 export async function findUserByMobile(mobile) {

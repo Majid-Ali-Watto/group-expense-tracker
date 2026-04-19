@@ -14,7 +14,7 @@ import { DB_NODES } from '@/constants'
 import { tabs as allTabs, Tabs } from '@/assets'
 import { TAB_ROUTES, ROUTE_TABS, GROUP_TABS } from '@/router'
 import {
-  findUserByEmail,
+  resolveUserFromAuth,
   canAccessTab,
   getAccessibleTabs,
   getDefaultAccessibleTab,
@@ -62,7 +62,7 @@ export const App = () => {
   const tabStore = useTabStore()
   const groupStore = useGroupStore()
   const userStore = useUserStore()
-
+  const isAdminActive = computed(() => route.path.startsWith('/admin'))
   // Expenses Summary state
   const showNetPositionDialog = ref(false)
   const netPositionSummary = ref(null)
@@ -129,6 +129,10 @@ export const App = () => {
 
     if (basePath === '/shared-groups') {
       return canAccessTab(Tabs.GROUPS, userTabConfig)
+    }
+
+    if (basePath === '/admin') {
+      return getActiveUserProfile()?.isAdmin === true
     }
 
     if (!tab) return false
@@ -257,7 +261,7 @@ export const App = () => {
       if (!firebaseUser.emailVerified || loggedIn.value) return
 
       await withTrace('session_bootstrap', async () => {
-        const userData = await findUserByEmail(firebaseUser.email)
+        const userData = await resolveUserFromAuth(firebaseUser)
         if (!userData?.emailVerified) return
 
         const uid = userData.uid
@@ -290,10 +294,14 @@ export const App = () => {
           mobile: userData.mobile || '',
           name: userData.name || '',
           email: userData.email || '',
+          photoUrl: userData.photoUrl || '',
+          photoMeta: userData.photoMeta || null,
           emailVerified: userData.emailVerified !== false,
           maskedMobile: maskMobile(userData.mobile || ''),
+          billedUser: userData.billedUser === true,
           bugResolver: userData.bugResolver === true,
-          blocked: userData.blocked === true
+          blocked: userData.blocked === true,
+          isAdmin: userData.isAdmin === true
         })
 
         // Restore last route — this is a page-refresh, not a fresh login.
@@ -749,6 +757,7 @@ export const App = () => {
     showNetPositionDialog,
     netPositionSummary,
     handleShowNetPosition,
-    navigateToTab
+    navigateToTab,
+    isAdminActive
   }
 }
