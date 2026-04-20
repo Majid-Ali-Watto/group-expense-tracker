@@ -4,7 +4,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 import { fileURLToPath, URL } from 'node:url'
 
 export default defineConfig({
-  base: './', // Use relative paths for deployment
+  base: '/', // Required for SPA deep links on root-hosted deployments like Netlify
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)) // Set up alias for cleaner imports
@@ -57,15 +57,15 @@ export default defineConfig({
         description: 'Track and manage expenses for a group of friends.',
         theme_color: '#16a34a',
         background_color: '#ffffff',
-        start_url: './', // Ensure it matches the base path
+        start_url: '/',
         icons: [
           {
-            src: './expenses.png', // Use relative paths
+            src: '/expenses.png',
             sizes: '192x192',
             type: 'image/png'
           },
           {
-            src: './expenses.png', // Use relative paths
+            src: '/expenses.png',
             sizes: '512x512',
             type: 'image/png'
           }

@@ -34,6 +34,68 @@ export function useSharedActivityEmail() {
     })().catch(() => {})
   }
 
+  function getUserIdentityRecord(identity) {
+    const normalizedIdentity = getIdentity(identity)
+    if (!normalizedIdentity) return null
+    return userStore.getUserByUid(normalizedIdentity) || null
+  }
+
+  function buildMemberAmountPayload(member) {
+    const identity = getIdentity(member?.uid || member)
+    const user = getUserIdentityRecord(identity)
+
+    return {
+      uid: identity || '',
+      name: user?.name || '',
+      mobile: user?.mobile || '',
+      amount: Number(member?.amount || 0)
+    }
+  }
+
+  function buildSharedExpenseEntry(entryId, month, data) {
+    return {
+      id: entryId,
+      month,
+      ...data,
+      split: Array.isArray(data?.split)
+        ? data.split.map((member) => buildMemberAmountPayload(member))
+        : [],
+      ...(data?.payerMode === 'multiple'
+        ? {
+            payers: Array.isArray(data?.payers)
+              ? data.payers.map((payer) => buildMemberAmountPayload(payer))
+              : []
+          }
+        : {}),
+      ...(data?.splitMode === 'custom'
+        ? {
+            splitItems: Array.isArray(data?.splitItems)
+              ? data.splitItems.map((item) => ({
+                  description: item?.description || '',
+                  amount: Number(item?.amount || 0),
+                  participants: Array.isArray(item?.participants)
+                    ? item.participants
+                    : []
+                }))
+              : []
+          }
+        : {})
+    }
+  }
+
+  function buildSharedLoanEntry(entryId, month, data) {
+    const giver = getUserIdentityRecord(data?.giver)
+    const receiver = getUserIdentityRecord(data?.receiver)
+
+    return {
+      id: entryId,
+      month,
+      ...data,
+      giverName: data?.giverName || giver?.name || '',
+      receiverName: data?.receiverName || receiver?.name || ''
+    }
+  }
+
   function sendSharedActivityEmail({
     type,
     action = 'created',
@@ -74,6 +136,11 @@ export function useSharedActivityEmail() {
 
     if (!recipients.length) return
 
+    const entry =
+      type === 'shared-expense'
+        ? buildSharedExpenseEntry(entryId, month, data)
+        : buildSharedLoanEntry(entryId, month, data)
+
     const payload = {
       type,
       action,
@@ -83,13 +150,10 @@ export function useSharedActivityEmail() {
       actor: {
         name: actor?.name || '',
         email: actor?.email || '',
-        mobile: actor?.mobile || actorId || ''
+        uid: actorId || '',
+        mobile: actor?.mobile || ''
       },
-      entry: {
-        id: entryId,
-        month,
-        ...data
-      },
+      entry,
       recipients
     }
 
