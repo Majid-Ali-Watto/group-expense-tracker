@@ -1,5 +1,6 @@
 import { ref, onUnmounted, onMounted, computed, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import {
   useAuthStore,
   useTabStore,
@@ -40,6 +41,7 @@ import {
 } from '@/utils/sessionCrypto'
 import { showError } from '@/utils/showAlerts'
 import { generateUUID } from '@/utils/uuid'
+import { stripLocalePrefix } from '@/utils/seo'
 import {
   auth,
   onAuthStateChanged,
@@ -56,6 +58,7 @@ import {
 import { NetPosition } from '@/scripts/generic'
 
 export const App = () => {
+  const { t } = useI18n()
   const router = useRouter()
   const route = useRoute()
   const authStore = useAuthStore()
@@ -70,7 +73,9 @@ export const App = () => {
     NetPosition()
   const formatInactivityLabel = (timeoutMs) => {
     const minutes = Math.round(timeoutMs / 60_000)
-    return minutes === 1 ? '1 minute' : `${minutes} minutes`
+    return minutes === 1
+      ? t('layout.inactivityMinute')
+      : t('layout.inactivityMinutes', { count: minutes })
   }
 
   const getActiveUserProfile = () => {
@@ -394,7 +399,9 @@ export const App = () => {
       isLoggedIn: loggedIn,
       onTimeout: async (timeoutMs) => {
         showError(
-          `You were logged out after ${formatInactivityLabel(timeoutMs)} of inactivity.`,
+          t('layout.inactivityLogoutMessage', {
+            label: formatInactivityLabel(timeoutMs)
+          }),
           { duration: 0 }
         )
         await logout('inactivity')
@@ -420,7 +427,9 @@ export const App = () => {
 
   const { read } = useFireBase()
   const displayName = computed(
-    () => userStore.getUserByUid(authStore.getActiveUserUid)?.name || 'Guest'
+    () =>
+      userStore.getUserByUid(authStore.getActiveUserUid)?.name ||
+      t('layout.guestName')
   )
   const activeUserTabConfig = computed(() => userStore.getActiveUserTabConfig)
   const activeGroup = computed(() => {
@@ -592,7 +601,7 @@ export const App = () => {
 
     const verified = await verifyUser()
     if (!verified) {
-      showError('Session expired. Please login again.')
+      showError(t('layout.sessionExpired'))
       logout('session_expired')
     }
   }
@@ -602,9 +611,11 @@ export const App = () => {
   watch(loggedIn, async (isLoggedIn) => {
     if (isLoggedIn) {
       startActiveUserTabConfigSync(authStore.getActiveUserUid)
-      // Fresh login from /login or /register → navigate immediately so the
-      // login form is replaced at once; verification runs in the background.
-      if (route.path === '/login' || route.path === '/register') {
+      // Fresh login from /login or /register (or their /ur equivalents) →
+      // navigate immediately so the login form is replaced at once;
+      // verification runs in the background.
+      const basePath = stripLocalePrefix(route.path)
+      if (basePath === '/login' || basePath === '/register') {
         sessionStorage.removeItem('_lastRoute')
         sessionStorage.removeItem('_lastGroupId')
         const redirectTo = route.query.redirect
@@ -619,7 +630,7 @@ export const App = () => {
       // Background check — catches anyone who faked store/sessionStorage values
       const verified = await verifyUser(false)
       if (!verified) {
-        showError('Session expired. Please login again.')
+        showError(t('layout.sessionExpired'))
         logout('session_expired')
         return
       }
@@ -628,7 +639,7 @@ export const App = () => {
       verifyInterval = setInterval(async () => {
         const verified = await verifyUser(false)
         if (!verified) {
-          showError('Session expired. Please login again.')
+          showError(t('layout.sessionExpired'))
           logout('session_expired')
         }
       }, 5 * 60_000)

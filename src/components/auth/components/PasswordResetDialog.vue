@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="dialogVisible"
-    title="Reset Password via Email"
+    :title="t('auth.passwordReset.title')"
     width="92%"
     append-to-body
     style="max-width: 480px"
@@ -11,18 +11,17 @@
       <el-alert type="info" :closable="false">
         <template #default>
           <div class="text-sm leading-relaxed">
-            We'll send a password reset link to your email. Click the link to
-            set a new password.
+            {{ t('auth.passwordReset.info') }}
           </div>
         </template>
       </el-alert>
 
       <GenericInputField
         :model-value="email"
-        label="Registered Email Address"
+        :label="t('auth.passwordReset.label')"
         label-position="top"
         type="email"
-        placeholder="Enter your registered email"
+        :placeholder="t('auth.passwordReset.placeholder')"
         @update:modelValue="$emit('update:email', $event)"
       />
 
@@ -32,19 +31,19 @@
           custom-class="flex-1"
           :loading="isLoading"
           :disabled="isLoading"
-          size="small"
+          size="medium"
           @click="$emit('send')"
         >
-          Send Reset Link
+          {{ t('auth.passwordReset.send') }}
         </GenericButton>
 
         <GenericButton
           type="default"
           :disabled="isLoading"
-          size="small"
+          size="medium"
           @click="dialogVisible = false"
         >
-          Cancel
+          {{ t('auth.passwordReset.cancel') }}
         </GenericButton>
       </div>
     </div>
@@ -53,8 +52,11 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { GenericButton } from '@/components/generic-components'
 import { GenericInputField } from '@/components/generic-components'
+
+const { t } = useI18n()
 
 const props = defineProps({
   visible: { type: Boolean, default: false },

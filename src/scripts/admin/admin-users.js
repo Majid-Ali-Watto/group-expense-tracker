@@ -1,9 +1,11 @@
 import { computed, ref, onUnmounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { database, collection, doc, setDoc, onSnapshot } from '@/firebase'
 import { DB_NODES } from '@/constants'
 import { showError, showSuccess } from '@/utils'
 
 export function AdminUsers() {
+  const { t } = useI18n()
   const users = ref([])
   const userTabConfigs = ref({})
   const usersLoaded = ref(false)
@@ -55,9 +57,9 @@ export function AdminUsers() {
       )
       const idx = users.value.findIndex((u) => u.uid === uid)
       if (idx !== -1) users.value[idx] = { ...users.value[idx], [field]: value }
-      showSuccess('User updated.')
+      showSuccess(t('admin.users.userUpdated'))
     } catch {
-      showError('Failed to update user.')
+      showError(t('admin.users.userUpdateFailed'))
     } finally {
       saving.value = false
     }
@@ -83,11 +85,11 @@ export function AdminUsers() {
           ...payload
         }
       }
-      showSuccess('User tab config updated.')
+      showSuccess(t('admin.users.tabConfigUpdated'))
       return true
     } catch (error) {
       console.error('Failed to update user tab config:', error)
-      showError('Failed to update user tab config.')
+      showError(t('admin.users.tabConfigUpdateFailed'))
       return false
     } finally {
       saving.value = false

@@ -38,7 +38,7 @@
         <el-tab-pane
           v-for="(tab, index) in tabs"
           :key="index"
-          :label="tab"
+          :label="tabLabel(tab)"
           :name="tab"
           class="px-3 sm:px-0"
         />
@@ -79,7 +79,26 @@
 
 <script setup>
 import { App } from '@/scripts/layout'
+import { Tabs } from '@/assets'
 import { loadAsyncComponent } from '@/utils/async-component'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
+
+const TAB_LABEL_KEYS = {
+  [Tabs.GROUPS]: 'tabs.groups',
+  [Tabs.USERS]: 'tabs.users',
+  [Tabs.SHARED_EXPENSES]: 'tabs.sharedExpenses',
+  [Tabs.SHARED_LOANS]: 'tabs.sharedLoans',
+  [Tabs.PERSONAL_EXPENSES]: 'tabs.personalExpenses',
+  [Tabs.PERSONAL_LOANS]: 'tabs.personalLoans',
+  [Tabs.BUG_RESOLVER]: 'tabs.bugReports'
+}
+
+function tabLabel(tab) {
+  return TAB_LABEL_KEYS[tab] ? t(TAB_LABEL_KEYS[tab]) : tab
+}
+
 const Header = loadAsyncComponent(
   () => import('@/components/layout/Header.vue')
 )

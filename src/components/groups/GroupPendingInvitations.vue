@@ -1,7 +1,7 @@
 <template>
   <div v-if="invitations.length > 0" class="mb-4">
     <h4 class="mb-2">
-      Pending Invitations
+      {{ t('groups.pendingInvitations') }}
       <el-badge :value="invitations.length" type="warning" class="ml-1" />
     </h4>
     <div
@@ -13,8 +13,8 @@
         v-if="activeUserBlocked || group.blocked"
         :title="
           group.blocked
-            ? 'This group is blocked by admin. Do not interact with it.'
-            : 'Your account is blocked by admin. Invitation actions are disabled.'
+            ? t('groups.groupBlockedByAdmin')
+            : t('groups.accountBlockedInviteDisabled')
         "
         type="warning"
         :closable="false"
@@ -33,7 +33,7 @@
           </div>
           <div class="flex flex-wrap items-center gap-x-4 gap-y-0.5 mt-0.5">
             <div class="text-xs text-gray-500 dark:text-gray-400">
-              Invited by
+              {{ t('groups.invitedBy') }}
               <span class="font-medium">
                 {{ getOwnerName(group) }}
                 ({{ displayMobileForGroup(group.ownerUid, group) }})
@@ -43,7 +43,8 @@
               v-if="group.category"
               class="text-xs text-gray-500 dark:text-gray-400"
             >
-              Category: <span class="font-medium">{{ group.category }}</span>
+              {{ t('common.category') }}:
+              <span class="font-medium">{{ group.category }}</span>
             </div>
           </div>
           <div
@@ -55,21 +56,21 @@
         </div>
         <div class="flex gap-2 flex-shrink-0">
           <el-button
-            size="small"
+            size="medium"
             type="success"
             :disabled="activeUserBlocked || group.blocked"
             @click="$emit('accept', group.id)"
           >
-            Accept
+            {{ t('groups.accept') }}
           </el-button>
           <el-button
-            size="small"
+            size="medium"
             type="danger"
             plain
             :disabled="activeUserBlocked || group.blocked"
             @click="$emit('reject', group.id)"
           >
-            Decline
+            {{ t('groups.decline') }}
           </el-button>
         </div>
       </div>
@@ -78,7 +79,10 @@
 </template>
 
 <script setup>
+import { useI18n } from 'vue-i18n'
 import { useUserStore } from '@/stores'
+
+const { t } = useI18n()
 
 defineProps({
   invitations: { type: Array, required: true },

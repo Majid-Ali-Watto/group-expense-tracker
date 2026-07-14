@@ -10,11 +10,11 @@
         <span
           v-if="notif.updatedBy || notif.rejectedBy"
           class="text-gray-600 ml-2"
-          >(by {{ formatActor(notif.updatedBy || notif.rejectedBy) }})</span
+          >{{ t('groups.byActor', { actor: formatActor(notif.updatedBy || notif.rejectedBy) }) }}</span
         >
       </div>
       <el-button
-        size="small"
+        size="medium"
         text
         @click="hideNotification(group.id, notif.id)"
       >
@@ -24,10 +24,12 @@
   </div>
 </template>
 <script setup>
+import { useI18n } from 'vue-i18n'
 import { getUserNotifications } from '@/helpers'
 import { formatUserDisplay } from '@/utils'
 import { useStoreProxy } from '@/composables'
 
+const { t } = useI18n()
 const storeProxy = useStoreProxy()
 
 const props = defineProps({

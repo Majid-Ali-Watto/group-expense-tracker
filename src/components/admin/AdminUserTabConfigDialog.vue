@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     :model-value="visible"
-    title="Edit User Tab Config"
+    :title="t('admin.userTabConfig.title')"
     width="min(96vw, 760px)"
     top="96px"
     append-to-body
@@ -17,7 +17,7 @@
         <div class="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p class="text-sm font-semibold text-gray-800 dark:text-gray-100">
-              {{ user.name || 'Unnamed User' }}
+              {{ user.name || t('admin.userTabConfig.unnamedUser') }}
             </p>
             <p class="text-xs text-gray-500 dark:text-gray-400">
               {{ user.email || user.mobile || user.uid }}
@@ -26,7 +26,11 @@
           <div class="text-right text-xs text-gray-500 dark:text-gray-400">
             <p>`user-tab-configs/{{ user.uid }}`</p>
             <p>
-              {{ config ? 'Existing config document' : 'No saved config yet' }}
+              {{
+                config
+                  ? t('admin.userTabConfig.existingConfigDoc')
+                  : t('admin.userTabConfig.noSavedConfigYet')
+              }}
             </p>
           </div>
         </div>
@@ -36,7 +40,7 @@
         class="rounded-xl border border-gray-200 p-4 dark:border-gray-700"
       >
         <p class="mb-3 text-sm font-medium text-gray-700 dark:text-gray-200">
-          Tabs and feature access
+          {{ t('admin.userTabConfig.tabsAndFeatureAccess') }}
         </p>
 
         <el-checkbox
@@ -44,7 +48,7 @@
           :model-value="tabSelection.shared"
           @update:model-value="updateSelection('shared', $event)"
         >
-          Shared features
+          {{ t('admin.userTabConfig.sharedFeatures') }}
         </el-checkbox>
 
         <div v-if="tabSelection.shared" class="mt-3 space-y-2 pl-6 text-sm">
@@ -53,14 +57,14 @@
             :model-value="tabSelection[USER_TAB_KEYS.GROUPS]"
             disabled
           >
-            Groups
+            {{ t('admin.userTabConfig.groups') }}
           </el-checkbox>
           <el-checkbox
             class="!whitespace-normal"
             :model-value="tabSelection[USER_TAB_KEYS.USERS]"
             @update:model-value="updateSelection(USER_TAB_KEYS.USERS, $event)"
           >
-            Users
+            {{ t('admin.userTabConfig.users') }}
           </el-checkbox>
           <el-checkbox
             class="!whitespace-normal"
@@ -69,7 +73,7 @@
               updateSelection(USER_TAB_KEYS.SHARED_EXPENSES, $event)
             "
           >
-            Shared Expenses
+            {{ t('admin.userTabConfig.sharedExpenses') }}
           </el-checkbox>
           <el-checkbox
             class="!whitespace-normal"
@@ -78,7 +82,7 @@
               updateSelection(USER_TAB_KEYS.SHARED_LOANS, $event)
             "
           >
-            Shared Loans
+            {{ t('admin.userTabConfig.sharedLoans') }}
           </el-checkbox>
         </div>
 
@@ -91,7 +95,7 @@
           class="mt-4 border-t border-gray-100 pt-3 dark:border-gray-700"
         >
           <p class="mb-2 text-xs font-medium text-gray-500 dark:text-gray-400">
-            Email preferences
+            {{ t('admin.userTabConfig.emailPreferences') }}
           </p>
           <div class="space-y-2 pl-6 text-sm">
             <el-checkbox
@@ -102,7 +106,7 @@
                 updateSelection('emailSharedExpenses', $event)
               "
             >
-              Notify group when user adds a shared expense
+              {{ t('admin.userTabConfig.notifySharedExpense') }}
             </el-checkbox>
             <el-checkbox
               v-if="tabSelection[USER_TAB_KEYS.SHARED_LOANS]"
@@ -110,7 +114,7 @@
               :model-value="tabSelection.emailSharedLoans"
               @update:model-value="updateSelection('emailSharedLoans', $event)"
             >
-              Notify group when user adds a shared loan
+              {{ t('admin.userTabConfig.notifySharedLoan') }}
             </el-checkbox>
           </div>
         </div>
@@ -121,7 +125,7 @@
             :model-value="tabSelection.personal"
             @update:model-value="updateSelection('personal', $event)"
           >
-            Personal features
+            {{ t('admin.userTabConfig.personalFeatures') }}
           </el-checkbox>
           <div v-if="tabSelection.personal" class="mt-3 space-y-2 pl-6 text-sm">
             <el-checkbox
@@ -131,7 +135,7 @@
                 updateSelection(USER_TAB_KEYS.PERSONAL_EXPENSES, $event)
               "
             >
-              Personal Expenses
+              {{ t('admin.userTabConfig.personalExpenses') }}
             </el-checkbox>
             <el-checkbox
               class="!whitespace-normal"
@@ -140,7 +144,7 @@
                 updateSelection(USER_TAB_KEYS.PERSONAL_LOANS, $event)
               "
             >
-              Personal Loans
+              {{ t('admin.userTabConfig.personalLoans') }}
             </el-checkbox>
           </div>
         </div>
@@ -150,22 +154,22 @@
         class="rounded-xl border border-gray-200 p-4 dark:border-gray-700"
       >
         <p class="mb-3 text-sm font-medium text-gray-700 dark:text-gray-200">
-          Admin-only tab config controls
+          {{ t('admin.userTabConfig.adminOnlyControls') }}
         </p>
 
         <div class="grid gap-3 sm:grid-cols-2">
           <ToggleRow
-            label="Allow Manage Tabs for this user"
+            :label="t('admin.userTabConfig.allowManageTabs')"
             :value="accessManageTabs"
             @change="accessManageTabs = $event"
           />
           <ToggleRow
-            label="Hide blocked users by default"
+            :label="t('admin.userTabConfig.hideBlockedUsersDefault')"
             :value="hideBlockedUsers"
             @change="hideBlockedUsers = $event"
           />
           <ToggleRow
-            label="Hide blocked groups by default"
+            :label="t('admin.userTabConfig.hideBlockedGroupsDefault')"
             :value="hideBlockedGroups"
             @change="hideBlockedGroups = $event"
           />
@@ -177,17 +181,17 @@
       >
         <div class="flex flex-wrap items-center justify-between gap-3">
           <p class="text-sm font-medium text-gray-700 dark:text-gray-200">
-            Usage counters
+            {{ t('admin.userTabConfig.usageCounters') }}
           </p>
-          <el-button size="small" plain @click="resetUsageCounters">
-            Reset Counters
+          <el-button size="medium" plain @click="resetUsageCounters">
+            {{ t('admin.userTabConfig.resetCounters') }}
           </el-button>
         </div>
 
         <div class="mt-3 grid gap-4 sm:grid-cols-2">
           <div class="space-y-2">
             <p class="text-xs font-medium text-gray-500 dark:text-gray-400">
-              OCR extractions map
+              {{ t('admin.userTabConfig.ocrExtractionsMap') }}
             </p>
             <el-input
               v-model="ocrExtractionsInput"
@@ -199,7 +203,7 @@
 
           <div class="space-y-2">
             <p class="text-xs font-medium text-gray-500 dark:text-gray-400">
-              Emails sent map
+              {{ t('admin.userTabConfig.emailsSentMap') }}
             </p>
             <el-input
               v-model="emailsSentInput"
@@ -211,16 +215,18 @@
         </div>
 
         <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
-          Use JSON objects with month keys like `YYYY-MM` and numeric counts.
+          {{ t('admin.userTabConfig.jsonHint') }}
         </p>
       </section>
     </div>
 
     <template #footer>
       <div class="flex justify-end gap-2">
-        <el-button @click="$emit('update:visible', false)">Cancel</el-button>
+        <el-button @click="$emit('update:visible', false)">{{
+          t('admin.userTabConfig.cancel')
+        }}</el-button>
         <el-button type="primary" :loading="loading" @click="handleSave">
-          Save Config
+          {{ t('admin.userTabConfig.saveConfig') }}
         </el-button>
       </div>
     </template>
@@ -229,6 +235,7 @@
 
 <script setup>
 import { defineComponent, h, ref, resolveComponent, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import {
   USER_TAB_KEYS,
   buildUserTabConfig,
@@ -237,6 +244,8 @@ import {
   hasEnabledUserTabs
 } from '@/helpers'
 import { showError } from '@/utils'
+
+const { t } = useI18n()
 
 const props = defineProps({
   visible: { type: Boolean, default: false },
@@ -337,7 +346,7 @@ function parseUsageMap(label, text) {
       })
     )
   } catch {
-    throw new Error(`${label} must be valid JSON with non-negative numbers.`)
+    throw new Error(t('admin.userTabConfig.validJsonError', { label }))
   }
 }
 
@@ -360,9 +369,7 @@ function handleSave() {
 
   const selection = tabSelection.value
   if (!selection.shared && !selection.personal) {
-    return showError(
-      'Select at least one feature group — Shared or Personal — to save.'
-    )
+    return showError(t('admin.userTabConfig.selectFeatureGroupError'))
   }
 
   if (
@@ -371,9 +378,7 @@ function handleSave() {
     !selection[USER_TAB_KEYS.SHARED_LOANS] &&
     !selection[USER_TAB_KEYS.USERS]
   ) {
-    return showError(
-      'Shared features require at least one shared tab: Shared Expenses, Shared Loans, or Users.'
-    )
+    return showError(t('admin.userTabConfig.sharedRequiresTabError'))
   }
 
   if (
@@ -381,14 +386,12 @@ function handleSave() {
     !selection[USER_TAB_KEYS.PERSONAL_EXPENSES] &&
     !selection[USER_TAB_KEYS.PERSONAL_LOANS]
   ) {
-    return showError(
-      'Personal features require at least one personal tab: Personal Expenses or Personal Loans.'
-    )
+    return showError(t('admin.userTabConfig.personalRequiresTabError'))
   }
 
   const userTabConfig = buildUserTabConfig(selection)
   if (!hasEnabledUserTabs(userTabConfig)) {
-    return showError('Select at least one actual tab to continue.')
+    return showError(t('admin.userTabConfig.selectAtLeastOneTabError'))
   }
 
   try {
@@ -402,14 +405,17 @@ function handleSave() {
     payload.hideBlockedUsers = hideBlockedUsers.value
     payload.hideBlockedGroups = hideBlockedGroups.value
     payload.ocrExtractions = parseUsageMap(
-      'OCR extractions',
+      t('admin.userTabConfig.ocrExtractionsMap'),
       ocrExtractionsInput.value
     )
-    payload.emailsSent = parseUsageMap('Emails sent', emailsSentInput.value)
+    payload.emailsSent = parseUsageMap(
+      t('admin.userTabConfig.emailsSentMap'),
+      emailsSentInput.value
+    )
 
     emit('save', payload)
   } catch (error) {
-    showError(error.message || 'Failed to validate user tab config.')
+    showError(error.message || t('admin.userTabConfig.validateFailed'))
   }
 }
 

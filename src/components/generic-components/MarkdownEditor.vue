@@ -5,7 +5,7 @@
       <button
         type="button"
         class="mde-btn"
-        title="Bold"
+        :title="t('markdownEditor.bold')"
         @mousedown.prevent="wrap('**', '**')"
       >
         <b>B</b>
@@ -13,7 +13,7 @@
       <button
         type="button"
         class="mde-btn"
-        title="Italic"
+        :title="t('markdownEditor.italic')"
         @mousedown.prevent="wrap('*', '*')"
       >
         <i>I</i>
@@ -21,7 +21,7 @@
       <button
         type="button"
         class="mde-btn mde-btn--mono"
-        title="Inline code"
+        :title="t('markdownEditor.inlineCode')"
         @mousedown.prevent="wrap('`', '`')"
       >
         &lt;/&gt;
@@ -29,7 +29,7 @@
       <button
         type="button"
         class="mde-btn mde-btn--mono"
-        title="Code block"
+        :title="t('markdownEditor.codeBlock')"
         @mousedown.prevent="insertCodeBlock()"
       >
         &#9641;&thinsp;Block
@@ -38,7 +38,7 @@
       <button
         type="button"
         class="mde-btn"
-        title="Bullet list"
+        :title="t('markdownEditor.bulletList')"
         @mousedown.prevent="prefixLine('- ')"
       >
         &#8226; List
@@ -46,7 +46,7 @@
       <button
         type="button"
         class="mde-btn"
-        title="Numbered list"
+        :title="t('markdownEditor.numberedList')"
         @mousedown.prevent="prefixLine('1. ')"
       >
         1. List
@@ -56,7 +56,7 @@
         <button
           type="button"
           class="mde-btn mde-btn--template"
-          title="Insert bug report template"
+          :title="t('markdownEditor.insertTemplate')"
           @mousedown.prevent="$emit('template')"
         >
           &#128196; Template
@@ -69,10 +69,10 @@
           :class="{
             'is-disabled': localImages.length >= maxImages || disabled
           }"
-          title="Attach image"
+          :title="t('markdownEditor.attachImage')"
         >
           <PhotoIcon class="w-3.5 h-3.5" />
-          Image
+          {{ t('markdownEditor.imageLabel') }}
           <input
             type="file"
             accept="image/*"
@@ -83,7 +83,7 @@
           />
         </label>
       </template>
-      <span class="mde-hint">Markdown supported</span>
+      <span class="mde-hint">{{ t('markdownEditor.hint') }}</span>
     </div>
 
     <!-- Textarea -->
@@ -131,8 +131,11 @@
 
 <script setup>
 import { ref, nextTick } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { PhotoIcon, XIcon } from '@/components/icons'
 import AppImage from './AppImage.vue'
+
+const { t } = useI18n()
 
 const props = defineProps({
   modelValue: { type: String, default: '' },

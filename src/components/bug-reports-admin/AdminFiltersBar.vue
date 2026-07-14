@@ -5,7 +5,7 @@
       <div class="bra-filter-group">
         <el-select
           :model-value="activeStatusFilter"
-          size="small"
+          size="medium"
           class="bra-status-filter-select"
           popper-class="bra-status-filter-popper"
           @change="$emit('update:activeStatusFilter', $event)"
@@ -27,11 +27,11 @@
         <GenericDropDown
           :model-value="activeSeverityFilter"
           :options="severityOptions"
-          placeholder="Severity"
+          :placeholder="t('bugReports.severity')"
           :filterable="false"
           :clearable="false"
           :wrap-form-item="false"
-          size="small"
+          size="medium"
           select-class="w-full"
           class="bra-severity-filter-select"
           @update:model-value="$emit('update:activeSeverityFilter', $event)"
@@ -42,7 +42,7 @@
     <!-- Search -->
     <GenericInputField
       :model-value="searchQuery"
-      placeholder="Search by bug number (khata-bug-…) or title…"
+      :placeholder="t('bugReports.searchPlaceholder')"
       :maxlength="120"
       :wrap-form-item="false"
       :clearable="true"
@@ -61,6 +61,9 @@ import {
   GenericDropDown,
   GenericInputField
 } from '@/components/generic-components'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 defineProps({
   activeStatusFilter: { type: String, default: 'all' },

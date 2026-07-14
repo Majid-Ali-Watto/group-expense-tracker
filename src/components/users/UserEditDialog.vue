@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     :model-value="modelValue"
-    title="Edit User"
+    :title="t('users.editUser')"
     width="90%"
     append-to-body
     style="max-width: 400px"
@@ -13,21 +13,21 @@
       ref="formRef"
       label-position="top"
     >
-      <el-form-item label="Mobile Number" prop="mobile">
+      <el-form-item :label="t('users.mobileNumber')" prop="mobile">
         <GenericInputField
           :model-value="localForm.mobile"
           :wrap-form-item="false"
-          placeholder="03XXXXXXXXX"
+          :placeholder="t('users.mobilePlaceholder')"
           :maxlength="11"
           type="tel"
           @update:modelValue="localForm.mobile = $event"
         />
       </el-form-item>
-      <el-form-item label="Full Name" prop="name">
+      <el-form-item :label="t('users.fullName')" prop="name">
         <GenericInputField
           :model-value="localForm.name"
           :wrap-form-item="false"
-          placeholder="Full name"
+          :placeholder="t('users.fullNamePlaceholder')"
           :maxlength="50"
           @update:modelValue="localForm.name = $event.toCapitalize()"
         />
@@ -35,12 +35,12 @@
     </el-form>
     <template #footer>
       <div class="flex gap-2 justify-end">
-        <el-button size="small" @click="handleReset">Reset</el-button>
-        <el-button size="small" @click="$emit('update:modelValue', false)">
-          Cancel
+        <el-button size="medium" @click="handleReset">{{ t('common.reset') }}</el-button>
+        <el-button size="medium" @click="$emit('update:modelValue', false)">
+          {{ t('common.cancel') }}
         </el-button>
-        <el-button type="primary" size="small" @click="handleSave">
-          Save
+        <el-button type="primary" size="medium" @click="handleSave">
+          {{ t('users.save') }}
         </el-button>
       </div>
     </template>
@@ -49,7 +49,10 @@
 
 <script setup>
 import { ref, reactive, watch, nextTick } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { GenericInputField } from '@/components/generic-components'
+
+const { t } = useI18n()
 
 const props = defineProps({
   modelValue: { type: Boolean, required: true },

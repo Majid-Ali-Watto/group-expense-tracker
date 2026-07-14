@@ -1,5 +1,6 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { ElMessageBox } from 'element-plus'
 import { useFireBase, useDebouncedRef } from '@/composables'
 import { useAuthStore, useGroupStore, useUserStore } from '@/stores'
@@ -9,7 +10,7 @@ import { confirmAction } from '@/utils/confirmAction'
 import { getDisplayMobile } from '@/utils/user-display'
 import { createUserDisplayStoreProxy } from '@/composables'
 import {
-  ACTIVE_USER_BLOCKED_MESSAGE,
+  getActiveUserBlockedMessage,
   getBlockedEntityMessage,
   isGroupBlocked,
   isUserBlocked
@@ -26,6 +27,7 @@ import {
 
 export const Users = () => {
   const isPageLoading = ref(true)
+  const { t } = useI18n()
   const authStore = useAuthStore()
   const groupStore = useGroupStore()
   const userStore = useUserStore()
@@ -66,7 +68,7 @@ export const Users = () => {
 
   function ensureUsersInteractionAllowed(user = null) {
     if (activeUserIsBlocked.value) {
-      showError(ACTIVE_USER_BLOCKED_MESSAGE)
+      showError(getActiveUserBlockedMessage())
       return false
     }
 
@@ -130,21 +132,21 @@ export const Users = () => {
 
   const editUserRules = {
     name: [
-      { required: true, message: 'Full name is required', trigger: 'blur' },
+      { required: true, message: t('users.validationFullNameRequired'), trigger: 'blur' },
       {
         validator: (_rule, value, callback) => {
           const normalizedName = normalizeName(value || '')
           if (!normalizedName) {
-            callback(new Error('Full name is required'))
+            callback(new Error(t('users.nameRequired')))
             return
           }
           if (normalizedName.length < 3) {
-            callback(new Error('Name should be at least 3 characters'))
+            callback(new Error(t('users.nameMinLength')))
             return
           }
           if (!isValidName(normalizedName)) {
             callback(
-              new Error('Name can only contain alphabets and single spaces')
+              new Error(t('users.nameInvalid'))
             )
             return
           }
@@ -154,17 +156,17 @@ export const Users = () => {
       }
     ],
     mobile: [
-      { required: true, message: 'Mobile number is required', trigger: 'blur' },
+      { required: true, message: t('users.validationMobileRequired'), trigger: 'blur' },
       {
         validator: (_rule, value, callback) => {
           const normalizedMobile = normalizeMobile(value || '')
           if (!normalizedMobile) {
-            callback(new Error('Mobile number is required'))
+            callback(new Error(t('users.mobileRequired')))
             return
           }
           if (!isValidMobile(normalizedMobile)) {
             callback(
-              new Error('Mobile number must be 11 digits starting with 03')
+              new Error(t('users.mobileInvalid'))
             )
             return
           }
@@ -189,7 +191,7 @@ export const Users = () => {
 
   function ensureGroupInteractionAllowed(group) {
     if (activeUserIsBlocked.value) {
-      showError(ACTIVE_USER_BLOCKED_MESSAGE)
+      showError(getActiveUserBlockedMessage())
       return false
     }
 
@@ -206,15 +208,15 @@ export const Users = () => {
     if (!ensureGroupInteractionAllowed(group)) return
 
     if (hasCurrentUserPendingJoinRequest(group)) {
-      showError('You already have a pending join request for this group.')
+      showError(t('users.alreadyPendingJoin'))
       return
     }
 
     const confirmed = await confirmAction({
-      message: `Do you want to send a join request for "${group.name}"?`,
-      title: 'Join Group',
-      confirmButtonText: 'Send Request',
-      cancelButtonText: 'Cancel',
+      message: t('users.joinGroupConfirm', { name: group.name }),
+      title: t('users.joinGroupTitle'),
+      confirmButtonText: t('users.sendRequest'),
+      cancelButtonText: t('common.cancel'),
       type: 'info'
     })
     if (!confirmed) return
@@ -236,7 +238,11 @@ export const Users = () => {
         updatedGroup = appendNotificationForUser(updatedGroup, member.uid, {
           id: `${Date.now()}-${Math.random()}`,
           type: 'join-request',
-          message: `${myName} (${maskMobile(myMobile)}) wants to join "${group.name}"`,
+          message: t('groupsMessages.wantsToJoinNotif', {
+            name: myName,
+            mobile: maskMobile(myMobile),
+            groupName: group.name
+          }),
           updatedBy: activeUserUid.value,
           timestamp: Date.now()
         })
@@ -249,12 +255,12 @@ export const Users = () => {
       await updateData(
         `${DB_NODES.GROUPS}/${group.id}`,
         () => payload,
-        'Join request sent! Waiting for member approval.'
+        t('users.joinRequestSent')
       )
 
       groupStore.updateGroup(updatedGroup)
     } catch {
-      showError('Failed to send join request. Please try again.')
+      showError(t('users.failedJoinRequest'))
     }
   }
 
@@ -442,25 +448,25 @@ export const Users = () => {
     const newName = normalizeName(editForm.value.name)
     const newMobile = normalizeMobile(editForm.value.mobile)
 
-    if (!newName) return showError('Name is required')
+    if (!newName) return showError(t('users.nameRequired'))
     if (newName.length < 3) {
-      return showError('Name should be at least 3 characters')
+      return showError(t('users.nameMinLength'))
     }
     if (!isValidName(newName)) {
-      return showError('Name can only contain alphabets and single spaces')
+      return showError(t('users.nameInvalid'))
     }
-    if (!newMobile) return showError('Mobile number is required')
+    if (!newMobile) return showError(t('users.mobileRequired'))
     if (!isValidMobile(newMobile)) {
-      return showError('Mobile number must be 11 digits starting with 03')
+      return showError(t('users.mobileInvalid'))
     }
 
     const user = await read(`${DB_NODES.USERS}/${uid}`)
-    if (!user) return showError('User not found')
+    if (!user) return showError(t('users.userNotFound'))
     if (!ensureUsersInteractionAllowed(user)) return
     if (user.deleteRequest)
-      return showError('A delete request is pending for this user')
+      return showError(t('users.deleteRequestPending'))
     if (user.updateRequest)
-      return showError('An update request is pending for this user')
+      return showError(t('users.updateRequestPending'))
 
     const existingUsers = (await read(DB_NODES.USERS, false)) || {}
     const mobileTaken = Object.entries(existingUsers).some(
@@ -469,7 +475,7 @@ export const Users = () => {
         normalizeMobile(otherUser?.mobile || '') === newMobile
     )
     if (mobileTaken) {
-      return showError('An account with this mobile number already exists')
+      return showError(t('users.mobileTaken'))
     }
 
     const oldName = user.name
@@ -488,7 +494,7 @@ export const Users = () => {
     await updateData(
       `${DB_NODES.USERS}/${uid}`,
       () => updated,
-      'User updated successfully'
+      t('users.userUpdated')
     )
     userStore.addUser({
       uid,
@@ -509,10 +515,12 @@ export const Users = () => {
 
       const changeParts = []
       if (nameChanged) {
-        changeParts.push(`changed their name from "${oldName}" to "${newName}"`)
+        changeParts.push(
+          t('usersMessages.nameChangedPart', { oldName, newName })
+        )
       }
       if (mobileChanged) {
-        changeParts.push('updated their mobile number')
+        changeParts.push(t('usersMessages.mobileUpdatedPart'))
       }
 
       let updatedGroup = { ...group }
@@ -520,9 +528,11 @@ export const Users = () => {
         updatedGroup = appendNotificationForUser(updatedGroup, member.uid, {
           id: Date.now().toString() + Math.random(),
           type: 'member-renamed',
-          message: `${newName} has ${changeParts.join(
-            ' and '
-          )} in group "${group.name}".`,
+          message: t('usersMessages.memberRenamedNotif', {
+            newName,
+            changes: changeParts.join(' and '),
+            groupName: group.name
+          }),
           updatedBy: uid,
           timestamp: Date.now()
         })
@@ -547,32 +557,29 @@ export const Users = () => {
 
       const ownerUids = getGroupOwnerUids(uid)
       await ElMessageBox.confirm(
-        `Are you sure you want to delete <strong>${name}</strong>?${
-          ownerUids.length > 0
-            ? '<br><br>This user is in one or more groups. All group owners must approve before deletion.'
-            : ''
-        }`,
-        'Delete User',
+        t('users.deleteUserConfirm', { name }) +
+          (ownerUids.length > 0
+            ? t('users.deleteUserGroupWarning')
+            : ''),
+        t('users.deleteUserTitle'),
         {
-          confirmButtonText: 'Proceed',
-          cancelButtonText: 'Cancel',
+          confirmButtonText: t('users.proceed'),
+          cancelButtonText: t('common.cancel'),
           type: 'error',
           dangerouslyUseHTMLString: true
         }
       )
 
       const user = await read(`${DB_NODES.USERS}/${uid}`)
-      if (!user) return showError('User not found')
+      if (!user) return showError(t('users.userNotFound'))
       if (user.deleteRequest)
-        return showError('A delete request is already pending for this user')
+        return showError(t('users.deleteAlreadyPending'))
       if (user.updateRequest)
-        return showError(
-          'An update request is pending. Cancel it before deleting.'
-        )
+        return showError(t('users.updatePendingCannotDelete'))
 
       if (ownerUids.length === 0) {
         // Delete from Realtime Database
-        await deleteData(`${DB_NODES.USERS}/${uid}`, `User ${name} deleted`)
+        await deleteData(`${DB_NODES.USERS}/${uid}`, t('users.userDeleted', { name }))
         userStore.setUsers([...userStore.getUsers].filter((u) => u.uid !== uid))
       } else {
         const deleteRequest = {
@@ -583,13 +590,13 @@ export const Users = () => {
         await updateData(
           `${DB_NODES.USERS}/${uid}`,
           () => ({ deleteRequest }),
-          'Delete request sent to group owners for approval'
+          t('users.deleteRequestSentToOwners')
         )
         userStore.addUser({ uid, deleteRequest })
       }
     } catch (error) {
       if (error !== 'cancel') {
-        showError(error?.message || 'Failed to process delete request')
+        showError(error?.message || t('users.failedProcessDeleteRequest'))
       }
     }
   }
@@ -599,11 +606,11 @@ export const Users = () => {
   async function approveRequest(userUid, type) {
     const me = activeUserUid.value
     const user = await read(`${DB_NODES.USERS}/${userUid}`)
-    if (!user) return showError('User not found')
+    if (!user) return showError(t('users.userNotFound'))
     if (!ensureUsersInteractionAllowed(user)) return
 
     const request = type === 'delete' ? user.deleteRequest : user.updateRequest
-    if (!request) return showError('Request not found or already resolved')
+    if (!request) return showError(t('users.requestNotFoundOrResolved'))
 
     const newApprovals = [...(request.approvals || []), { uid: me }]
     const allApproved = request.requiredApprovals.every((r) =>
@@ -615,7 +622,7 @@ export const Users = () => {
       // Delete from Realtime Database
       await deleteData(
         `${DB_NODES.USERS}/${userUid}`,
-        `User ${user.name} deleted`
+        t('users.userDeleted', { name: user.name })
       )
       userStore.setUsers(
         [...userStore.getUsers].filter((u) => u.uid !== userUid)
@@ -626,7 +633,7 @@ export const Users = () => {
       await updateData(
         `${DB_NODES.USERS}/${userUid}`,
         () => ({ [field]: updatedRequest }),
-        'Approval recorded'
+        t('users.approvalRecorded')
       )
       userStore.addUser({ uid: userUid, [field]: updatedRequest })
     }
@@ -637,15 +644,15 @@ export const Users = () => {
   async function rejectRequest(userUid, type, userName) {
     try {
       const targetUser = await read(`${DB_NODES.USERS}/${userUid}`)
-      if (!targetUser) return showError('User not found')
+      if (!targetUser) return showError(t('users.userNotFound'))
       if (!ensureUsersInteractionAllowed(targetUser)) return
 
       await ElMessageBox.confirm(
-        `Reject the ${type} request for <strong>${userName}</strong>?`,
-        'Reject Request',
+        t('users.rejectUserConfirm', { name: userName, type }),
+        t('users.rejectUserTitle'),
         {
-          confirmButtonText: 'Reject',
-          cancelButtonText: 'Cancel',
+          confirmButtonText: t('users.reject'),
+          cancelButtonText: t('common.cancel'),
           type: 'warning',
           dangerouslyUseHTMLString: true
         }
@@ -657,10 +664,11 @@ export const Users = () => {
           ? {
               rejectionNotification: {
                 type: 'delete-rejected',
-                message: `Your account deletion request was rejected by ${
-                  userStore.getUserByUid(activeUserUid.value)?.name ||
-                  activeUserUid.value
-                }.`,
+                message: t('usersMessages.deletionRejectedNotif', {
+                  name:
+                    userStore.getUserByUid(activeUserUid.value)?.name ||
+                    activeUserUid.value
+                }),
                 rejectedBy: activeUserUid.value,
                 timestamp: Date.now()
               }
@@ -669,11 +677,11 @@ export const Users = () => {
       await updateData(
         `${DB_NODES.USERS}/${userUid}`,
         () => ({ [field]: null, ...rejectionData }),
-        `${type === 'delete' ? 'Delete' : 'Update'} request rejected`
+        type === 'delete' ? t('users.deleteRejected') : t('users.updateRejected')
       )
       userStore.addUser({ uid: userUid, [field]: null, ...rejectionData })
     } catch (e) {
-      if (e !== 'cancel') showError(e?.message || 'Failed to reject request')
+      if (e !== 'cancel') showError(e?.message || t('users.failedReject'))
     }
   }
 

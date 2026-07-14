@@ -1,4 +1,5 @@
 import { ref, watch, computed, nextTick } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore, useDataStore, useUserStore } from '@/stores'
 import {
   getWhoAddedTransaction,
@@ -21,6 +22,7 @@ import { DB_NODES } from '@/constants'
 
 export const PersonalExpenseForm = (props, emit) => {
   const { saveData, updateData, deleteData, isSubmitting } = useFireBase()
+  const { t } = useI18n()
   const isVisible = ref(true)
   const isEditMode = computed(() => !!props.row?.amount)
 
@@ -95,7 +97,7 @@ export const PersonalExpenseForm = (props, emit) => {
     receiptTax.value = data.tax != null && data.tax > 0 ? data.tax : null
 
     await nextTick()
-    showSuccess('Receipt data extracted and filled into the form.')
+    showSuccess(t('common.receiptExtracted'))
   }
 
   const splitItemsTotal = computed(
@@ -214,7 +216,7 @@ export const PersonalExpenseForm = (props, emit) => {
             `${DB_NODES.PERSONAL_EXPENSES}/${activeUserUid.value}/months/${dateToMonthNode(form.value.date)}/expenses`,
             () => getExpenseData(receiptUrls, receiptMeta),
             expenseForm,
-            'Expense added successfully!',
+            t('personalExpenses.expenseAdded'),
             () => {
               if (isEditMode.value) {
                 emit('closeModal')
@@ -228,14 +230,14 @@ export const PersonalExpenseForm = (props, emit) => {
           updateData(
             `${DB_NODES.PERSONAL_EXPENSES}/${activeUserUid.value}/months/${existingMonth.value || selectedMonth.value}/expenses/${props.row.id}`,
             () => getExpenseData(receiptUrls, receiptMeta),
-            'Expense updated successfully'
+            t('personalExpenses.expenseUpdated')
           )
           emit('closeModal')
         } else if (whatTask == 'Delete') {
           deleteExistingReceipts()
           deleteData(
             `${DB_NODES.PERSONAL_EXPENSES}/${activeUserUid.value}/months/${existingMonth.value || selectedMonth.value}/expenses/${props.row.id}`,
-            'Expense deleted successfully'
+            t('personalExpenses.expenseDeleted')
           )
           emit('closeModal')
         }

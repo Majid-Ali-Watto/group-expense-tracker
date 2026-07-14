@@ -9,6 +9,7 @@ import {
   ref,
   watch
 } from 'vue'
+import { useI18n } from 'vue-i18n'
 import {
   useTabStore,
   useGroupStore,
@@ -72,6 +73,7 @@ const TABLE_HEADER_CONFIG = {
 }
 
 export const Table = (props) => {
+  const { t } = useI18n()
   const dialogFormVisible = ref(false)
   const deleteMode = ref(false)
   const state = reactive({ row: null })
@@ -184,7 +186,7 @@ export const Table = (props) => {
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
         stop()
-        reject(new Error('Form is not ready. Please try again.'))
+        reject(new Error(t('table.formNotReady')))
       }, timeoutMs)
       const stop = watch(
         () => childRef.value?.componentRef,
@@ -326,7 +328,7 @@ export const Table = (props) => {
         })
 
       return receiptIndex !== -1
-        ? cols.concat({ key: 'receiptUrls', label: 'Receipts' })
+        ? cols.concat({ key: 'receiptUrls', label: t('table.receiptsTitle') })
         : cols
     }
 
@@ -341,13 +343,9 @@ export const Table = (props) => {
       const currentUser = authStore.getActiveUserUid
 
       if (requester === currentUser) {
-        ElMessage.info(
-          `You have a pending ${requestType} request. Please wait for approval or cancel it from the pending requests section.`
-        )
+        ElMessage.info(t('table.pendingRequestOwn', { type: requestType }))
       } else {
-        ElMessage.warning(
-          `This item has a pending ${requestType} request. Please approve or reject it before making changes.`
-        )
+        ElMessage.warning(t('table.pendingRequestOther', { type: requestType }))
       }
       return
     }
@@ -363,8 +361,8 @@ export const Table = (props) => {
     const whoAdded = row?.whoAdded
     const addedBy = whoAdded
       ? formatUserDisplay(storeProxy, whoAdded, { group: activeGroupObj.value })
-      : 'N/A'
-    const when = row?.whenAdded || 'N/A'
+      : t('table.notAvailable')
+    const when = row?.whenAdded || t('table.notAvailable')
 
     ElMessage({
       type: 'info',
@@ -374,9 +372,9 @@ export const Table = (props) => {
       dangerouslyUseHTMLString: true,
       message: `
         <div class="table-toast__content">
-          <div class="table-toast__label">Added By</div>
+          <div class="table-toast__label">${t('table.addedBy')}</div>
           <div class="table-toast__value">${addedBy}</div>
-          <div class="table-toast__label">Date</div>
+          <div class="table-toast__label">${t('common.date')}</div>
           <div class="table-toast__value">${when}</div>
         </div>
       `
@@ -390,13 +388,9 @@ export const Table = (props) => {
         rowS.deleteRequest?.requestedBy || rowS.updateRequest?.requestedBy
       const currentUser = authStore.getActiveUserUid
       if (requester === currentUser) {
-        ElMessage.info(
-          `You have a pending ${requestType} request. Please wait for approval or cancel it from the pending requests section.`
-        )
+        ElMessage.info(t('table.pendingRequestOwn', { type: requestType }))
       } else {
-        ElMessage.warning(
-          `This item has a pending ${requestType} request. Please approve or reject it before making changes.`
-        )
+        ElMessage.warning(t('table.pendingRequestOther', { type: requestType }))
       }
       return
     }
@@ -500,26 +494,39 @@ export const Table = (props) => {
     const th = document.createElement('th')
     th.colSpan = 2
     th.style.cssText = SECTION_HEADER_STYLE
-    th.textContent = 'Expense Summary'
+    th.textContent = t('sharedExpenses.expenseSummary')
     headerTr.appendChild(th)
     thead.appendChild(headerTr)
     table.appendChild(thead)
 
     const tbody = document.createElement('tbody')
-    tbody.appendChild(makeRow('Total Spent', formatAmount(totalSpent)))
+    tbody.appendChild(
+      makeRow(t('sharedExpenses.totalSpent'), formatAmount(totalSpent))
+    )
     if (!hasCustomSplits) {
       tbody.appendChild(
-        makeRow('Average Per Person', formatAmount(averageSpent))
+        makeRow(
+          t('sharedExpenses.averagePerPerson'),
+          formatAmount(averageSpent)
+        )
       )
     } else {
       perPersonOwed.forEach((p) =>
         tbody.appendChild(
-          makeRow(`${p.name}'s Expense`, formatAmount(p.amount))
+          makeRow(
+            t('sharedExpenses.personExpense', { name: p.name }),
+            formatAmount(p.amount)
+          )
         )
       )
     }
     friendTotals.forEach((f) =>
-      tbody.appendChild(makeRow(`${f.name} Paid`, formatAmount(f.total)))
+      tbody.appendChild(
+        makeRow(
+          t('sharedExpenses.personPaid', { name: f.name }),
+          formatAmount(f.total)
+        )
+      )
     )
     table.appendChild(tbody)
     return table
@@ -613,13 +620,17 @@ export const Table = (props) => {
     const titleTh = document.createElement('th')
     titleTh.colSpan = 3
     titleTh.style.cssText = SECTION_HEADER_STYLE
-    titleTh.textContent = 'Pairwise Settlements (Who pays whom)'
+    titleTh.textContent = t('table.pairwiseSettlementsPdfTitle')
     titleTr.appendChild(titleTh)
     thead.appendChild(titleTr)
 
     // column headers — matches BalanceSummaryCard columns
     const colTr = document.createElement('tr')
-    ;['Pays', 'Receives', 'Amount'].forEach((label) => {
+    ;[
+      t('sharedExpenses.pays'),
+      t('sharedExpenses.receives'),
+      t('common.amount')
+    ].forEach((label) => {
       const th = document.createElement('th')
       th.style.cssText =
         CELL +
@@ -638,7 +649,7 @@ export const Table = (props) => {
       td.style.cssText =
         CELL +
         'background:#ffffff;color:#6b7280;font-style:italic;text-align:center;'
-      td.textContent = "No pending settlements. Everyone's balance is zero."
+      td.textContent = t('table.noSettlementsPdf')
       tr.appendChild(td)
       tbody.appendChild(tr)
     } else {
@@ -797,7 +808,7 @@ export const Table = (props) => {
               if (i > 0) td.appendChild(document.createElement('br'))
               const a = document.createElement('a')
               a.href = url
-              a.textContent = `Receipt ${i + 1}`
+              a.textContent = t('table.receiptNumbered', { index: i + 1 })
               a.style.cssText =
                 'color:#2563eb;text-decoration:underline;font-size:12px;'
               td.appendChild(a)
@@ -962,8 +973,11 @@ export const Table = (props) => {
     const printRows = props.rows
     if (!headers.value.length || !printRows.length) return
 
-    const title = props.downloadTitle.replace(/_/g, ' ') + ' Report'
-    const subtitle = props.reportMonth ? `Report for: ${props.reportMonth}` : ''
+    const title =
+      props.downloadTitle.replace(/_/g, ' ') + t('table.reportSuffix')
+    const subtitle = props.reportMonth
+      ? t('table.reportForMonth', { month: props.reportMonth })
+      : ''
     _downloadPdf(
       printRows,
       getCurrentMonth() + `_${props.downloadTitle}_`,
@@ -1057,25 +1071,25 @@ export const Table = (props) => {
     const skipped = selectedKeys.value.length - eligible.length
 
     if (!eligible.length) {
-      ElMessage.warning(
-        'All selected items have pending requests and cannot be deleted.'
-      )
+      ElMessage.warning(t('table.bulkDeleteAllPending'))
       return
     }
 
     const isShared = !isBulkDeleteDirectly.value
-    const actionLabel = isShared ? 'Send delete requests for' : 'Delete'
+    const actionLabel = isShared
+      ? t('table.sendDeleteRequestsFor')
+      : t('common.delete')
     const skippedNote = skipped
-      ? ` (${skipped} skipped — pending requests)`
+      ? ` ${t('table.skippedPendingNote', { count: skipped })}`
       : ''
 
     try {
       await ElMessageBox.confirm(
         `${actionLabel} ${eligible.length} item(s)?${skippedNote}`,
-        'Bulk Delete',
+        t('table.bulkDeleteTitle'),
         {
-          confirmButtonText: 'Confirm',
-          cancelButtonText: 'Cancel',
+          confirmButtonText: t('table.confirm'),
+          cancelButtonText: t('common.cancel'),
           type: 'error'
         }
       )
@@ -1148,13 +1162,13 @@ export const Table = (props) => {
       clearSelection()
       if (isShared) {
         showSuccess(
-          `Delete request sent for ${eligible.length} item(s). Waiting for group approval.`
+          t('table.bulkDeleteRequestSent', { count: eligible.length })
         )
       } else {
-        showSuccess(`${eligible.length} item(s) deleted successfully.`)
+        showSuccess(t('table.bulkDeleteSuccess', { count: eligible.length }))
       }
     } catch (err) {
-      showError(err.message || 'Bulk delete failed.')
+      showError(err.message || t('table.bulkDeleteFailed'))
     } finally {
       stopLoading(loading)
     }
@@ -1176,8 +1190,10 @@ export const Table = (props) => {
     if (!headers.value.length) return
 
     const rows = selectedRows.value
-    const title = `${props.downloadTitle.replace(/_/g, ' ')} — ${rows.length} selected row(s)`
-    const subtitle = props.reportMonth ? `Report for: ${props.reportMonth}` : ''
+    const title = `${props.downloadTitle.replace(/_/g, ' ')} — ${rows.length} ${t('table.selectedRowsSuffix')}`
+    const subtitle = props.reportMonth
+      ? t('table.reportForMonth', { month: props.reportMonth })
+      : ''
     _downloadPdf(
       rows,
       `${getCurrentMonth()}_${props.downloadTitle}_Selected_`,
@@ -1338,7 +1354,7 @@ export const Table = (props) => {
       {
         key: '__actions__',
         dataKey: '__actions__',
-        title: 'Actions',
+        title: t('table.actions'),
         width: ACTIONS_COL_WIDTH,
         align: 'center'
       }
@@ -1433,7 +1449,7 @@ export const Table = (props) => {
     `${formatUser(s.uid, s.name)}: ${formatAmount(s.amount)}`
 
   const formatSplitItem = (item) => {
-    const description = item?.description?.trim() || 'Item'
+    const description = item?.description?.trim() || t('table.itemFallback')
     const amount =
       item?.amount === undefined || item?.amount === null || item?.amount === ''
         ? '-'
@@ -1446,7 +1462,10 @@ export const Table = (props) => {
     return `${description}: ${amount} [${participants}]`
   }
 
-  const formatReceipt = (url, i) => ({ label: `Receipt ${i + 1}`, href: url })
+  const formatReceipt = (url, i) => ({
+    label: t('table.receiptNumbered', { index: i + 1 }),
+    href: url
+  })
 
   function openShowMore(title, items) {
     showMoreTitle.value = title

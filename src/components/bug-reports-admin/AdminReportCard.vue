@@ -7,16 +7,16 @@
           >#{{ report.bugNumber }}</span
         >
         <span class="bra-sev-badge" :class="`badge-${report.severity}`">
-          <span class="sev-dot" />{{ report.severity }}
+          <span class="sev-dot" />{{ severityLabel(report.severity) }}
         </span>
-        <span class="bra-cat-badge">{{ report.category }}</span>
+        <span class="bra-cat-badge">{{ categoryLabel(report.category) }}</span>
       </div>
 
       <!-- Status selector + delete -->
       <div class="bra-card-top-right">
         <el-select
           :model-value="report.status"
-          size="small"
+          size="medium"
           class="bra-status-select"
           :class="`status-${report.status}`"
           @change="(val) => $emit('update-status', report.id, val)"
@@ -30,7 +30,7 @@
         </el-select>
         <button
           class="bra-delete-btn"
-          title="Delete report"
+          :title="t('bugReports.deleteTitle')"
           :disabled="deletingId === report.id"
           @click="$emit('delete', report)"
         >
@@ -44,7 +44,7 @@
       <p class="bra-card-title">{{ report.title }}</p>
       <button
         class="bra-copy-btn"
-        title="Copy title"
+        :title="t('bugReports.copyTitle')"
         @click.stop="copyText(report.title)"
       >
         <CopyIcon class="w-3.5 h-3.5" />
@@ -59,7 +59,7 @@
       ></div>
       <button
         class="bra-copy-btn bra-copy-btn--desc"
-        title="Copy description"
+        :title="t('bugReports.copyDescription')"
         @click.stop="copyText(report.description)"
       >
         <CopyIcon class="w-3.5 h-3.5" />
@@ -68,11 +68,15 @@
     <GenericButton
       v-if="report.description.length > 160"
       type="default"
-      size="small"
+      size="medium"
       class="bra-expand-btn"
       @click="$emit('toggle-expand', report.id)"
     >
-      {{ expandedIds.has(report.id) ? 'Show less' : 'Show more' }}
+      {{
+        expandedIds.has(report.id)
+          ? t('bugReports.showLess')
+          : t('bugReports.showMore')
+      }}
     </GenericButton>
 
     <!-- Screenshots -->
@@ -82,20 +86,23 @@
         :key="i"
         class="bra-screenshot-thumb"
       >
-        <AppImage :src="ss.url" :alt="`Screenshot ${i + 1}`" />
+        <AppImage
+          :src="ss.url"
+          :alt="t('bugReports.screenshotAlt', { index: i + 1 })"
+        />
         <span class="bra-screenshot-overlay">
           <a
             :href="ss.url"
             target="_blank"
             rel="noopener"
             class="bra-img-action-btn"
-            title="Open"
+            :title="t('common.open')"
           >
             <ExternalLinkIcon class="w-3.5 h-3.5" />
           </a>
           <button
             class="bra-img-action-btn"
-            title="Download"
+            :title="t('common.download')"
             @click.prevent="downloadImage(ss.url, `screenshot-${i + 1}`)"
           >
             <DownloadIcon class="w-3.5 h-3.5" />
@@ -108,7 +115,7 @@
     <div class="bra-card-footer">
       <span class="bra-reporter">
         <UserIcon class="w-3.5 h-3.5" />
-        {{ report.reporter?.name || 'Anonymous' }}
+        {{ report.reporter?.name || t('bugReports.anonymous') }}
         <template v-if="report.reporter?.email">
           ·
           <a
@@ -118,7 +125,7 @@
           >
         </template>
         <span v-if="report.reporter?.isGuest" class="bra-guest-badge"
-          >guest</span
+          >{{ t('bugReports.guest') }}</span
         >
       </span>
       <span class="bra-date">{{ formatDate(report.submittedAt) }}</span>
@@ -132,11 +139,11 @@
       >
         <span class="bra-notes-toggle-left">
           <ChatBubbleIcon class="w-3.5 h-3.5" />
-          Notes{{
+          {{ t('bugReports.notes') }}{{
             notesOf(report).length ? ` (${notesOf(report).length})` : ''
           }}
           <span v-if="report.hasReporterReply" class="bra-notes-new-badge"
-            >&#128276; New reply</span
+            >&#128276; {{ t('bugReports.newReply') }}</span
           >
         </span>
         <ChevronDownIcon
@@ -153,7 +160,10 @@
             (note) => (note.authorName || '?').charAt(0).toUpperCase()
           "
           :author-label-fn="
-            (note) => (note.authorType === 'admin' ? 'Admin' : note.authorName)
+            (note) =>
+              note.authorType === 'admin'
+                ? t('bugReports.admin')
+                : note.authorName
           "
           :can-edit="(note) => note.authorType === 'admin'"
           :can-delete="(note) => note.authorType === 'admin'"
@@ -170,7 +180,7 @@
           :note-edit-saving-id="noteEditSavingId"
           :compose-text="noteInputs[report.id] || ''"
           :compose-error="noteErrors[report.id] || ''"
-          compose-placeholder="Write a note… Ctrl+Enter to send"
+          :compose-placeholder="t('bugReports.writeNote')"
           :sending="noteSavingId === report.id"
           @toggle-picker="
             (noteId, event) => $emit('toggle-picker', noteId, event)
@@ -199,6 +209,7 @@
 <script setup>
 import { NoteThread } from '@/components/bug-reports'
 import { AppImage, GenericButton } from '@/components/generic-components'
+import { useI18n } from 'vue-i18n'
 import {
   ChatBubbleIcon,
   ChevronDownIcon,
@@ -208,6 +219,30 @@ import {
   TrashIcon,
   UserIcon
 } from '@/components/icons'
+
+const { t } = useI18n()
+
+const CATEGORY_LABEL_KEYS = {
+  'shared-expenses': 'bugReports.categories.sharedExpenses',
+  'shared-loans': 'bugReports.categories.sharedLoans',
+  'personal-loans': 'bugReports.categories.personalLoans',
+  'personal-expenses': 'bugReports.categories.personalExpenses',
+  groups: 'bugReports.categories.groups',
+  notifications: 'bugReports.categories.notifications',
+  auth: 'bugReports.categories.auth',
+  settlement: 'bugReports.categories.settlement',
+  export: 'bugReports.categories.export',
+  charts: 'bugReports.categories.charts',
+  other: 'bugReports.categories.other'
+}
+
+function categoryLabel(value) {
+  return CATEGORY_LABEL_KEYS[value] ? t(CATEGORY_LABEL_KEYS[value]) : value
+}
+
+function severityLabel(value) {
+  return value ? t(`bugReports.severities.${value}`) : value
+}
 
 defineProps({
   report: { type: Object, required: true },

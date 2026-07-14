@@ -1,5 +1,5 @@
 <template>
-  <nav v-if="isVisible" class="hidden lg:flex items-center gap-2 mr-2">
+  <nav v-if="isVisible" class="hidden lg:flex items-center gap-2 me-2">
     <button
       v-for="link in publicNavLinks"
       :key="link.to"

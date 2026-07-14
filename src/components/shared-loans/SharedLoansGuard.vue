@@ -3,8 +3,8 @@
     <div>
       <el-alert
         v-if="memberCount > 2"
-        title="Shared loans are designed for managing loans between two people."
-        description="This group has more than 2 members. Loan tracking works best between two members only."
+        :title="t('sharedLoans.guardTitle')"
+        :description="t('sharedLoans.guardDescription')"
         type="warning"
         show-icon
         :closable="false"
@@ -16,12 +16,14 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { GroupAccessGuard } from '@/components/shared'
 import { useGroupStore } from '@/stores'
 import { loadAsyncComponent } from '@/utils'
 
 const Loans = loadAsyncComponent(() => import('./Loans.vue'))
 
+const { t } = useI18n()
 const userStore = useGroupStore()
 
 const activeGroup = computed(() => userStore.getActiveGroup)

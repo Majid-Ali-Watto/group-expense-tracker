@@ -1,4 +1,5 @@
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ElMessageBox } from 'element-plus'
 import { database, doc, updateDoc, deleteField } from '@/firebase'
 import { DB_NODES } from '@/constants'
@@ -24,6 +25,7 @@ export const REACTION_EMOJIS = ['👍', '❤️', '😄', '😮', '😢', '👎'
  *   - pickerWrapClass – CSS class of the reaction picker wrapper div (for outside-click logic)
  */
 export const NoteThread = ({ actorKeyFn, idPrefix, pickerWrapClass }) => {
+  const { t } = useI18n()
   // ── Emoji reaction picker ─────────────────────────────────────────────────
   const openReactionPicker = ref(null)
   const reactionPickerAlign = ref('left')
@@ -108,7 +110,7 @@ export const NoteThread = ({ actorKeyFn, idPrefix, pickerWrapClass }) => {
   async function saveNoteEdit(report, note, textOverride) {
     const text = (textOverride ?? noteEditText.value).trim()
     if (!text) {
-      noteEditError.value = 'Note cannot be empty.'
+      noteEditError.value = t('bugReports.noteEmpty')
       return
     }
     noteEditSavingId.value = note.id
@@ -118,9 +120,9 @@ export const NoteThread = ({ actorKeyFn, idPrefix, pickerWrapClass }) => {
         [`notes.${note.id}.editedAt`]: new Date().toISOString()
       })
       cancelNoteEdit()
-      showSuccess('Note updated.')
+      showSuccess(t('bugReports.noteUpdated'))
     } catch {
-      showError('Failed to update note. Please try again.')
+      showError(t('bugReports.noteUpdateFailed'))
     } finally {
       noteEditSavingId.value = null
     }
@@ -129,11 +131,11 @@ export const NoteThread = ({ actorKeyFn, idPrefix, pickerWrapClass }) => {
   async function deleteNote(report, note) {
     try {
       await ElMessageBox.confirm(
-        'Delete this note permanently?',
-        'Delete Note',
+        t('bugReports.deleteNoteConfirm'),
+        t('bugReports.deleteNoteTitle'),
         {
-          confirmButtonText: 'Delete',
-          cancelButtonText: 'Cancel',
+          confirmButtonText: t('common.delete'),
+          cancelButtonText: t('common.cancel'),
           type: 'error'
         }
       )
@@ -144,9 +146,9 @@ export const NoteThread = ({ actorKeyFn, idPrefix, pickerWrapClass }) => {
       await updateDoc(reportDocRef(report), {
         [`notes.${note.id}`]: deleteField()
       })
-      showSuccess('Note deleted.')
+      showSuccess(t('bugReports.noteDeleted'))
     } catch {
-      showError('Failed to delete note. Please try again.')
+      showError(t('bugReports.noteDeleteFailed'))
     }
   }
 
@@ -162,7 +164,7 @@ export const NoteThread = ({ actorKeyFn, idPrefix, pickerWrapClass }) => {
           : true
       })
     } catch {
-      showError('Failed to update reaction. Please try again.')
+      showError(t('bugReports.reactionFailed'))
     }
   }
 

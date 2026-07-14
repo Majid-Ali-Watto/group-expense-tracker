@@ -12,7 +12,7 @@
       <!-- Pending Approval Requests Section -->
       <div v-if="pendingRequests && pendingRequests.length > 0" class="mb-6">
         <h3 class="pending-title text-lg font-semibold mb-3 text-orange-600">
-          ⚠️ Pending Approval Requests
+          {{ t('approval.pendingTitle') }}
         </h3>
         <div
           v-for="(request, index) in pendingRequests"
@@ -22,18 +22,18 @@
           <div class="flex justify-between items-start mb-2">
             <div>
               <strong class="text-gray-800">
-                {{ request.type === 'delete' ? 'Delete' : 'Update' }} Request
+                {{ request.type === 'delete' ? t('approval.deleteRequest') : t('approval.updateRequest') }}
               </strong>
               <p class="text-sm text-gray-600">
-                Requested by:
+                {{ t('approval.requestedBy') }}
                 <strong>{{ getUserName(request.requestedBy) }}</strong>
                 <span v-if="request.requestedAt">
-                  on {{ request.requestedAt }}</span
+                  {{ t('approval.on') }} {{ request.requestedAt }}</span
                 >
               </p>
             </div>
             <el-tag :type="request.type === 'delete' ? 'danger' : 'warning'">
-              {{ request.approvals.length }} / {{ getTotalMembers() }} Approved
+              {{ request.approvals.length }} / {{ getTotalMembers() }} {{ t('approval.approved') }}
             </el-tag>
           </div>
 
@@ -46,30 +46,30 @@
             v-if="request.requestedBy === activeUserUid"
           >
             <span class="text-blue-600 text-sm font-semibold">
-              ✓ You requested this {{ request.type }}
+              {{ t('approval.youRequestedThis', { type: request.type }) }}
             </span>
             <el-button
               type="warning"
-              size="small"
+              size="medium"
               @click="cancelRequest(request)"
             >
-              Cancel Request
+              {{ t('approval.cancelRequest') }}
             </el-button>
           </div>
           <div class="flex gap-2 mt-3" v-else-if="!hasUserApproved(request)">
             <el-button
               type="success"
-              size="small"
+              size="medium"
               @click="approveRequest(request)"
             >
-              Approve
+              {{ t('common.approve') }}
             </el-button>
             <el-button
               type="danger"
-              size="small"
+              size="medium"
               @click="rejectRequest(request)"
             >
-              Reject
+              {{ t('common.reject') }}
             </el-button>
           </div>
           <div
@@ -77,18 +77,18 @@
             class="flex gap-2 mt-3 items-center"
           >
             <span class="text-green-600 text-sm font-semibold">
-              ✓ All members approved
+              {{ t('approval.allMembersApproved') }}
             </span>
             <el-button
               type="primary"
-              size="small"
+              size="medium"
               @click="executeRequestManually(request)"
             >
-              Complete Request
+              {{ t('approval.completeRequest') }}
             </el-button>
           </div>
           <div v-else class="text-green-600 text-sm font-semibold">
-            ✓ You have approved this request
+            {{ t('approval.youApprovedRequest') }}
           </div>
         </div>
       </div>
@@ -107,19 +107,19 @@
         </div>
         <el-divider />
         <div class="flex justify-between">
-          <h2>Expense List</h2>
+          <h2>{{ t('sharedExpenses.expenseList') }}</h2>
           <el-badge
             :value="filteredPayments.length"
             class="item mr-4"
             type="info"
-            >{{ selectedFriend }}:<el-text tag="b"> Transactions</el-text>
+            >{{ selectedFriend }}:<el-text tag="b"> {{ t('common.transactions') }}</el-text>
           </el-badge>
         </div>
 
         <!-- Table -->
         <Table
           :rows="filteredPayments"
-          downloadTitle="Shared Expenses"
+          :downloadTitle="t('sharedExpenses.sharedExpensesDownload')"
           :keys="paymentKeys"
           :dataRef="pdfContent"
           :showPopup="true"
@@ -130,6 +130,7 @@
   </div>
 </template>
 <script setup>
+import { useI18n } from 'vue-i18n'
 import { Table, LoadingSkeleton } from '@/components/shared'
 import { FilterBar } from '@/components/generic-components'
 import Settlement from './Settlement.vue'
@@ -143,6 +144,8 @@ const NotificationsForCurrentUser = loadAsyncComponent(
 const ShowPaymentDetails = loadAsyncComponent(
   () => import('../generic-components/ShowPaymentDetails.vue')
 )
+
+const { t } = useI18n()
 
 const props = defineProps({
   payments: Array,

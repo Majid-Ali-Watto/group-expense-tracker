@@ -21,8 +21,8 @@
         <UserAvatar
           :image-url="user.photoUrl"
           :preview-url="user.photoUrl"
-          alt="User profile"
-          :preview-title="`${user.name || 'User'}'s Profile Photo`"
+          :alt="t('users.profilePhotoAlt')"
+          :preview-title="t('users.profilePhotoTitle', { name: user.name || t('common.guest') })"
           :preview-on-click="true"
           :disabled="!user.photoUrl"
           size="md"
@@ -34,7 +34,7 @@
           <div
             class="text-xs font-semibold text-gray-400 uppercase tracking-wide sm:hidden mb-1"
           >
-            Name / Mobile
+            {{ t('users.nameMobile') }}
           </div>
           <div class="min-w-0">
             <div class="font-semibold text-gray-800 truncate">
@@ -52,7 +52,7 @@
           <div
             class="w-full text-xs font-semibold text-gray-400 uppercase tracking-wide sm:hidden mb-1"
           >
-            Groups
+            {{ t('users.groups') }}
           </div>
           <template v-if="groups.length > 0">
             <button
@@ -77,12 +77,10 @@
               class="group-chip group-chip--more"
               @click="$emit('open-groups')"
             >
-              <span class="group-chip__name"
-                >+{{ groups.length - 2 }} more</span
-              >
+              <span class="group-chip__name">{{ t('users.morGroups', { count: groups.length - 2 }) }}</span>
             </button>
           </template>
-          <span v-else class="text-gray-400 text-xs">No groups</span>
+          <span v-else class="text-gray-400 text-xs">{{ t('users.noGroups') }}</span>
         </div>
 
         <!-- Actions -->
@@ -90,42 +88,40 @@
           <div
             class="w-full text-xs font-semibold text-gray-400 uppercase tracking-wide sm:hidden mb-1"
           >
-            Actions
+            {{ t('users.actions') }}
           </div>
 
           <el-button
-            size="small"
+            size="medium"
             type="success"
             plain
             :disabled="isInteractionBlocked"
             @click="$emit('create-group', user.uid)"
           >
-            Create Group
+            {{ t('users.createGroup') }}
           </el-button>
 
           <template v-if="canManage">
             <template v-if="!user.deleteRequest">
               <el-button
-                size="small"
+                size="medium"
                 type="primary"
                 :disabled="isInteractionBlocked"
                 @click="$emit('edit')"
               >
-                Edit
+                {{ t('users.edit') }}
               </el-button>
               <el-button
-                size="small"
+                size="medium"
                 type="danger"
                 :disabled="isInteractionBlocked"
                 @click="$emit('delete', user.uid, user.name)"
               >
-                Delete
+                {{ t('users.delete') }}
               </el-button>
             </template>
-            <el-button v-else size="small" disabled>
-              Delete Pending ({{ user.deleteRequest.approvals?.length || 0 }}/{{
-                user.deleteRequest.requiredApprovals?.length || 0
-              }})
+            <el-button v-else size="medium" disabled>
+              {{ t('users.deletePending', { approved: user.deleteRequest.approvals?.length || 0, required: user.deleteRequest.requiredApprovals?.length || 0 }) }}
             </el-button>
           </template>
         </div>
@@ -136,7 +132,10 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { UserAvatar } from '@/components/generic-components'
+
+const { t } = useI18n()
 
 const props = defineProps({
   user: { type: Object, required: true },
@@ -157,7 +156,7 @@ const isInteractionBlocked = computed(
 const showBlockedWarning = computed(() => props.user?.blocked === true)
 
 const blockedMessage = computed(
-  () => 'This user is blocked by admin. Do not interact with this account.'
+  () => t('users.blockedUserWarning')
 )
 
 function getGroupStatus(group) {
@@ -168,8 +167,8 @@ function getGroupStatus(group) {
 
 function groupStatusLabel(group) {
   const status = getGroupStatus(group)
-  if (status === 'member') return "You're Member"
-  if (status === 'requested') return 'Request Sent'
+  if (status === 'member') return t('users.youAreMember')
+  if (status === 'requested') return t('users.requestSent')
   return ''
 }
 </script>

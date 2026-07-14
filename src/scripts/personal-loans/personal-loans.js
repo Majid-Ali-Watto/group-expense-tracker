@@ -1,4 +1,5 @@
 import { ref, computed, onMounted, onUnmounted, inject, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { onSnapshot } from '@/firebase'
 import { useLoadingTimeout } from '@/composables/useLoadingTimeout'
@@ -21,6 +22,7 @@ import { createUserDisplayStoreProxy } from '@/composables'
 
 export const PersonalLoans = () => {
   const formatAmount = inject('formatAmount')
+  const { t } = useI18n()
   const { dbRef, read, readShallow } = useFireBase()
   const authStore = useAuthStore()
   const userStore = useUserStore()
@@ -101,7 +103,7 @@ export const PersonalLoans = () => {
       monthsRef: months,
       loadedRef: monthsLoaded,
       errorHandler: (error) => {
-        showError('Failed to load months. Please try again.')
+        showError(t('personalLoans.failedLoadMonths'))
         console.error(error)
       },
       onResolved: (resolvedMonths) => {
@@ -227,7 +229,7 @@ export const PersonalLoans = () => {
       // Ignore permission errors that fire after logout — Firebase revokes the
       // auth token before reads complete (on component unmount).
       if (authStore.getActiveUserUid) {
-        showError('Failed to load loans. Please try again.')
+        showError(t('personalLoans.failedLoadLoans'))
         console.error(error)
       }
     } finally {
@@ -387,10 +389,10 @@ export const PersonalLoans = () => {
   const filterFields = computed(() => [
     {
       key: 'month',
-      label: 'Month',
-      placeholder: 'Select Month',
+      label: t('common.month'),
+      placeholder: t('common.selectMonth'),
       modelValue: selectedMonth.value,
-      options: [{ label: 'All Months', value: 'All' }, ...months.value],
+      options: [{ label: t('common.allMonths'), value: 'All' }, ...months.value],
       onChange: (v) => {
         selectedMonth.value = v
         fetchLoans()
@@ -398,11 +400,11 @@ export const PersonalLoans = () => {
     },
     {
       key: 'giver',
-      label: 'Giver',
-      placeholder: 'All Givers',
+      label: t('sharedLoans.giver'),
+      placeholder: t('sharedLoans.allGivers'),
       modelValue: selectedGiver.value,
       options: [
-        { label: 'All Givers', value: 'All' },
+        { label: t('sharedLoans.allGivers'), value: 'All' },
         ...giverOptions.value.map((o) => ({ label: o.name, value: o.mobile }))
       ],
       onChange: (v) => {
@@ -411,8 +413,8 @@ export const PersonalLoans = () => {
     },
     {
       key: 'category',
-      label: 'Category',
-      placeholder: 'All Categories',
+      label: t('common.category'),
+      placeholder: t('common.allCategories'),
       modelValue: selectedCategory.value,
       options: categoryOptions.value,
       onChange: (v) => {

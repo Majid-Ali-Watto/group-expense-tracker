@@ -4,15 +4,15 @@
       <ClipboardDocumentIcon class="w-7 h-7" />
     </div>
     <div class="flex-1">
-      <h1 class="bra-title">Bug Reports</h1>
+      <h1 class="bra-title">{{ t('tabs.bugReports') }}</h1>
       <p class="bra-subtitle">
-        {{ totalCount }} total &nbsp;·&nbsp; {{ openCount }} open
+        {{ t('bugReports.totalOpen', { total: totalCount, open: openCount }) }}
       </p>
     </div>
     <button
       class="bra-refresh-btn"
       :class="{ 'is-spinning': loading }"
-      title="Refresh"
+      :title="t('bugReports.refresh')"
       @click="$emit('refresh')"
     >
       <RefreshIcon class="w-5 h-5" />
@@ -22,6 +22,9 @@
 
 <script setup>
 import { ClipboardDocumentIcon, RefreshIcon } from '@/components/icons'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 defineProps({
   totalCount: { type: Number, default: 0 },

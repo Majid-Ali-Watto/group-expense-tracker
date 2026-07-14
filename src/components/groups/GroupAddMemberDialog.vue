@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     :model-value="modelValue"
-    title="Request to Add Member"
+    :title="t('groups.requestAddMemberTitle')"
     width="90%"
     append-to-body
     style="max-width: 500px"
@@ -10,15 +10,15 @@
     <el-form label-position="top">
       <GenericDropDown
         :model-value="selectedMember"
-        label="Select Member to Add"
+        :label="t('groups.selectMemberToAdd')"
         :options="memberOptions"
-        placeholder="Select member"
-        size="small"
+        :placeholder="t('groups.selectMemberPlaceholder')"
+        size="medium"
         :wrap-form-item="false"
         @update:modelValue="$emit('update:selectedMember', $event)"
       />
       <el-alert
-        title="All current members must approve before this member can be added"
+        :title="t('groups.allMembersApproveNotice')"
         type="info"
         :closable="false"
       />
@@ -34,19 +34,19 @@
           Reset
         </el-button> -->
         <el-button
-          size="small"
+          size="medium"
           style="min-width: 100px"
           @click="$emit('update:modelValue', false)"
         >
-          Cancel
+          {{ t('common.cancel') }}
         </el-button>
         <el-button
           type="primary"
-          size="small"
+          size="medium"
           style="min-width: 100px"
           @click="$emit('submit')"
         >
-          Send Request
+          {{ t('groups.sendRequest') }}
         </el-button>
       </div>
     </template>
@@ -54,7 +54,10 @@
 </template>
 
 <script setup>
+import { useI18n } from 'vue-i18n'
 import { GenericDropDown } from '@/components/generic-components'
+
+const { t } = useI18n()
 
 defineProps({
   modelValue: { type: Boolean, required: true },

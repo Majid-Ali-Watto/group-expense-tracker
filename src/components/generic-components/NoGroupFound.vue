@@ -4,25 +4,29 @@
     <div class="ngf-title">
       {{
         searchQuery
-          ? 'No groups match your search'
+          ? t('groups.noGroupsMatchSearch')
           : variant === 'joined'
-            ? "You haven't joined any groups yet"
-            : 'No more groups are available right now'
+            ? t('groups.notJoinedAnyGroups')
+            : t('groups.noMoreGroupsAvailable')
       }}
     </div>
     <div class="ngf-copy">
       {{
         searchQuery
-          ? 'Try a different group name, code, owner, or member.'
+          ? t('groups.tryDifferentSearch')
           : variant === 'joined'
-            ? 'Create a new group or accept an invitation to get started.'
-            : 'New groups will appear here when someone invites you or creates one.'
+            ? t('groups.createOrAcceptInvite')
+            : t('groups.newGroupsWillAppear')
       }}
     </div>
   </div>
 </template>
 
 <script setup>
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
+
 defineProps({
   searchQuery: {
     type: String,

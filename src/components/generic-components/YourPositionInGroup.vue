@@ -1,15 +1,15 @@
 <template>
   <div class="your-position-card">
     <div class="flex items-center justify-between mb-2">
-      <span class="text-xs font-semibold position-title">Your Position</span>
+      <span class="text-xs font-semibold position-title">{{ t('groups.yourPosition') }}</span>
       <el-tag size="small" type="info">{{ currentUserLabel }}</el-tag>
     </div>
     <div v-if="balance.loading" class="text-xs position-text">
-      Calculating...
+      {{ t('groups.calculating') }}
     </div>
     <div v-else class="space-y-2 text-sm">
       <div class="flex justify-between gap-2">
-        <span class="position-text shrink-0">Shared Expenses</span>
+        <span class="position-text shrink-0">{{ t('groups.sharedExpensesLabel') }}</span>
         <div class="flex items-center gap-1.5 flex-wrap justify-end">
           <el-tag
             :type="expenseState.type"
@@ -24,7 +24,7 @@
         </div>
       </div>
       <div class="flex items-center justify-between gap-2">
-        <span class="position-text shrink-0">Shared Loans</span>
+        <span class="position-text shrink-0">{{ t('groups.sharedLoansLabel') }}</span>
         <div class="flex items-center gap-1.5 flex-wrap justify-end">
           <el-tag
             :type="loanState.type"
@@ -40,7 +40,7 @@
       </div>
       <el-divider class="!my-2" />
       <div class="flex items-center justify-between gap-2">
-        <span class="position-label shrink-0">Net Amount</span>
+        <span class="position-label shrink-0">{{ t('groups.netAmountLabel') }}</span>
         <div class="flex items-center gap-1.5 flex-wrap justify-end">
           <el-tag
             :type="netState.type"
@@ -56,15 +56,16 @@
       </div>
     </div>
     <div class="text-[11px] position-hint mt-2">
-      Only visible to you. Calculated from your share, payments, and loans in
-      this group.
+      {{ t('groups.visibleOnlyToYouHint') }}
     </div>
   </div>
 </template>
 <script setup>
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore, useUserStore } from '@/stores'
 
+const { t } = useI18n()
 const authStore = useAuthStore()
 const userStore = useUserStore()
 
@@ -88,7 +89,11 @@ const balance = computed(() => props.getGroupBalances(props.group.id) || {})
 
 const makeState = (
   val,
-  { pos = 'Will Receive', neg = 'Will Pay', zero = 'Settled' } = {}
+  {
+    pos = t('groups.willReceive'),
+    neg = t('groups.willPay'),
+    zero = t('groups.settled')
+  } = {}
 ) => {
   const num = Number(val || 0)
   return {
@@ -109,9 +114,9 @@ const expenseState = computed(() => makeState(balance.value.expenses))
 const loanState = computed(() => makeState(balance.value.loans))
 const netState = computed(() =>
   makeState((balance.value.expenses || 0) + (balance.value.loans || 0), {
-    pos: 'You Get',
-    neg: 'You Pay',
-    zero: 'Settled'
+    pos: t('groups.youGet'),
+    neg: t('groups.youPay'),
+    zero: t('groups.settled')
   })
 )
 </script>

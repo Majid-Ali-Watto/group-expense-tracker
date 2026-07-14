@@ -1,26 +1,26 @@
 <template>
   <el-dialog
     :model-value="visible"
-    title="Adjust Profile Photo"
+    :title="resolvedTitle"
     :width="'min(96vw, 920px)'"
     append-to-body
     destroy-on-close
     @opened="handleDialogOpened"
     @update:model-value="emit('update:visible', $event)"
   >
-    <div class="profile-photo-editor">
+    <div class="image-crop-editor">
       <div
         ref="editorViewportRef"
-        class="profile-photo-editor__canvas"
+        class="image-crop-editor__canvas"
         @pointerdown="handlePointerDown"
       >
-        <div class="profile-photo-editor__viewport-frame">
+        <div class="image-crop-editor__viewport-frame">
           <img
             v-if="sourceUrl"
             ref="imageRef"
             :src="sourceUrl"
-            alt="Profile photo editor"
-            class="profile-photo-editor__image"
+            :alt="resolvedImageAlt"
+            class="image-crop-editor__image"
             :style="editorImageStyle"
             @load="handleImageLoad"
             draggable="false"
@@ -28,16 +28,33 @@
         </div>
       </div>
 
-      <div class="profile-photo-editor__sidebar">
-        <div class="profile-photo-editor__preview-block">
-          <p class="profile-photo-editor__label">Preview</p>
-          <div class="profile-photo-editor__preview-frame">
-            <div class="profile-photo-editor__preview">
+      <div class="image-crop-editor__sidebar">
+        <div class="image-crop-editor__preview-block">
+          <p class="image-crop-editor__label">
+            {{ t('imageEditor.previewLabel') }}
+          </p>
+          <div
+            class="image-crop-editor__preview-frame"
+            :class="{
+              'image-crop-editor__preview-frame--round':
+                previewShape === 'circle'
+            }"
+          >
+            <div
+              class="image-crop-editor__preview"
+              :class="{
+                'image-crop-editor__preview--round': previewShape === 'circle'
+              }"
+            >
               <img
                 v-if="sourceUrl && imageLoaded"
                 :src="sourceUrl"
-                alt="Profile photo preview"
-                class="profile-photo-editor__preview-image"
+                :alt="`${resolvedImageAlt} preview`"
+                class="image-crop-editor__preview-image"
+                :class="{
+                  'image-crop-editor__preview-image--round':
+                    previewShape === 'circle'
+                }"
                 :style="previewImageStyle"
                 draggable="false"
               />
@@ -45,8 +62,10 @@
           </div>
         </div>
 
-        <div class="profile-photo-editor__controls">
-          <p class="profile-photo-editor__label">Zoom</p>
+        <div class="image-crop-editor__controls">
+          <p class="image-crop-editor__label">
+            {{ t('imageEditor.zoomLabel') }}
+          </p>
           <el-slider
             v-model="zoomLevel"
             :min="1"
@@ -55,37 +74,44 @@
             @input="handleZoom"
           />
 
-          <div class="profile-photo-editor__actions">
-            <el-button size="small" @click="zoomOut">Zoom Out</el-button>
-            <el-button size="small" @click="zoomIn">Zoom In</el-button>
-            <el-button size="small" @click="rotateLeft">Rotate Left</el-button>
-            <el-button size="small" @click="rotateRight">
-              Rotate Right
+          <div class="image-crop-editor__actions">
+            <el-button size="medium" @click="zoomOut">{{
+              t('imageEditor.zoomOut')
+            }}</el-button>
+            <el-button size="medium" @click="zoomIn">{{
+              t('imageEditor.zoomIn')
+            }}</el-button>
+            <el-button size="medium" @click="rotateLeft">{{
+              t('imageEditor.rotateLeft')
+            }}</el-button>
+            <el-button size="medium" @click="rotateRight">
+              {{ t('imageEditor.rotateRight') }}
             </el-button>
-            <el-button size="small" @click="resetEditor">Reset</el-button>
+            <el-button size="medium" @click="resetEditor">{{
+              t('common.reset')
+            }}</el-button>
           </div>
         </div>
 
-        <p class="profile-photo-editor__hint">
-          Drag the image to reposition it inside the crop area, then use zoom or
-          rotate before uploading.
+        <p class="image-crop-editor__hint">
+          {{ resolvedHintText }}
         </p>
       </div>
     </div>
 
     <template #footer>
-      <div class="profile-photo-editor__footer">
-        <el-button size="small" @click="emit('update:visible', false)">
-          Cancel
+      <div class="image-crop-editor__footer">
+        <el-button size="medium" @click="emit('update:visible', false)">
+          {{ t('common.cancel') }}
         </el-button>
         <el-button
-          size="small"
+          size="medium"
           type="success"
           :loading="submitting"
           :disabled="submitting || !sourceUrl || !imageLoaded"
           @click="confirmCrop"
         >
-          Upload Photo
+          {{ resolvedConfirmLabel }}
         </el-button>
       </div>
     </template>
@@ -94,14 +120,43 @@
 
 <script setup>
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const props = defineProps({
   visible: { type: Boolean, default: false },
   sourceUrl: { type: String, default: '' },
-  submitting: { type: Boolean, default: false }
+  submitting: { type: Boolean, default: false },
+  title: { type: String, default: '' },
+  confirmLabel: { type: String, default: '' },
+  imageAlt: { type: String, default: '' },
+  maxOutputBytes: { type: Number, default: 1024 * 1024 },
+  hintText: {
+    type: String,
+    default: ''
+  },
+  previewShape: {
+    type: String,
+    default: 'square',
+    validator: (value) => ['square', 'circle'].includes(value)
+  }
 })
 
 const emit = defineEmits(['update:visible', 'confirm'])
+
+const resolvedTitle = computed(
+  () => props.title || t('imageEditor.defaultTitle')
+)
+const resolvedConfirmLabel = computed(
+  () => props.confirmLabel || t('imageEditor.defaultConfirmLabel')
+)
+const resolvedImageAlt = computed(
+  () => props.imageAlt || t('imageEditor.defaultAlt')
+)
+const resolvedHintText = computed(
+  () => props.hintText || t('imageEditor.defaultHint')
+)
 
 const imageRef = ref(null)
 const editorViewportRef = ref(null)
@@ -292,10 +347,9 @@ function handlePointerUp() {
   window.removeEventListener('pointerup', handlePointerUp)
 }
 
-function confirmCrop() {
+function renderCropCanvas(canvasSize) {
   if (!imageRef.value || !imageLoaded.value || !editorSize.value) return
 
-  const canvasSize = 720
   const ratio = canvasSize / editorSize.value
   const outputBaseScale = resolveBaseScale(canvasSize)
   const canvas = document.createElement('canvas')
@@ -326,14 +380,50 @@ function confirmCrop() {
   )
   context.restore()
 
-  canvas.toBlob(
-    (blob) => {
-      if (!blob) return
-      emit('confirm', blob)
-    },
-    'image/jpeg',
-    0.92
-  )
+  return canvas
+}
+
+function canvasToBlob(canvas, quality) {
+  return new Promise((resolve) => {
+    canvas.toBlob(
+      (blob) => {
+        resolve(blob || null)
+      },
+      'image/jpeg',
+      quality
+    )
+  })
+}
+
+async function exportCroppedBlob() {
+  const targetBytes = Math.max(64 * 1024, Number(props.maxOutputBytes) || 0)
+  const canvasSizes = [720, 640, 560, 480]
+  const qualities = [0.9, 0.82, 0.74, 0.66, 0.58, 0.5]
+  let fallbackBlob = null
+
+  for (const canvasSize of canvasSizes) {
+    const canvas = renderCropCanvas(canvasSize)
+    if (!canvas) return null
+
+    for (const quality of qualities) {
+      const blob = await canvasToBlob(canvas, quality)
+      if (!blob) continue
+      fallbackBlob = blob
+
+      if (blob.size <= targetBytes) {
+        return blob
+      }
+    }
+  }
+
+  return fallbackBlob
+}
+
+async function confirmCrop() {
+  const blob = await exportCroppedBlob()
+  if (!blob) return
+
+  emit('confirm', blob)
 }
 
 watch(
@@ -358,12 +448,12 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-.profile-photo-editor {
+.image-crop-editor {
   display: grid;
   gap: 1rem;
 }
 
-.profile-photo-editor__canvas {
+.image-crop-editor__canvas {
   position: relative;
   width: 100%;
   max-width: 520px;
@@ -384,18 +474,18 @@ onBeforeUnmount(() => {
   cursor: grab;
 }
 
-.profile-photo-editor__canvas:active {
+.image-crop-editor__canvas:active {
   cursor: grabbing;
 }
 
-.profile-photo-editor__viewport-frame {
+.image-crop-editor__viewport-frame {
   position: absolute;
   inset: 0;
   overflow: hidden;
   border-radius: 18px;
 }
 
-.profile-photo-editor__image {
+.image-crop-editor__image {
   position: absolute;
   top: 50%;
   left: 50%;
@@ -405,18 +495,18 @@ onBeforeUnmount(() => {
   transform-origin: center center;
 }
 
-.profile-photo-editor__sidebar {
+.image-crop-editor__sidebar {
   display: grid;
   gap: 1rem;
   align-content: start;
 }
 
-.profile-photo-editor__preview-block {
+.image-crop-editor__preview-block {
   display: grid;
   gap: 0.5rem;
 }
 
-.profile-photo-editor__label {
+.image-crop-editor__label {
   margin-bottom: 0.5rem;
   font-size: 0.75rem;
   font-weight: 700;
@@ -425,7 +515,7 @@ onBeforeUnmount(() => {
   color: var(--text-secondary);
 }
 
-.profile-photo-editor__preview-frame {
+.image-crop-editor__preview-frame {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -437,7 +527,11 @@ onBeforeUnmount(() => {
   background: rgba(34, 197, 94, 0.04);
 }
 
-.profile-photo-editor__preview {
+.image-crop-editor__preview-frame--round {
+  border-radius: 28px;
+}
+
+.image-crop-editor__preview {
   position: relative;
   width: 160px;
   height: 160px;
@@ -445,21 +539,25 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 999px;
+  border-radius: 24px;
   border: 1px solid rgba(34, 197, 94, 0.24);
   background: rgba(34, 197, 94, 0.06);
 }
 
-.profile-photo-editor__preview-image {
+.image-crop-editor__preview--round,
+.image-crop-editor__preview-image--round {
+  border-radius: 999px;
+}
+
+.image-crop-editor__preview-image {
   position: absolute;
   top: 50%;
   left: 50%;
   max-width: none;
-  border-radius: 999px;
   transform-origin: center center;
 }
 
-.profile-photo-editor__controls {
+.image-crop-editor__controls {
   display: grid;
   gap: 0.75rem;
   padding: 0.9rem;
@@ -468,26 +566,26 @@ onBeforeUnmount(() => {
   background: color-mix(in srgb, var(--card-bg) 94%, transparent);
 }
 
-.profile-photo-editor__actions {
+.image-crop-editor__actions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
 }
 
-.profile-photo-editor__hint {
+.image-crop-editor__hint {
   margin: 0;
   font-size: 0.85rem;
   line-height: 1.5;
   color: var(--text-secondary);
 }
 
-.profile-photo-editor__footer {
+.image-crop-editor__footer {
   display: flex;
   justify-content: flex-end;
   gap: 0.5rem;
 }
 
-:global(:root.dark-theme) .profile-photo-editor__canvas {
+:global(:root.dark-theme) .image-crop-editor__canvas {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0)),
     repeating-conic-gradient(
@@ -499,7 +597,7 @@ onBeforeUnmount(() => {
 }
 
 @media (min-width: 768px) {
-  .profile-photo-editor {
+  .image-crop-editor {
     grid-template-columns: minmax(0, 1fr) 260px;
     align-items: start;
   }

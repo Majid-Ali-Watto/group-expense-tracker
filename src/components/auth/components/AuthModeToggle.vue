@@ -11,14 +11,18 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+
 defineProps({
   mode: { type: String, required: true }
 })
 
 defineEmits(['update:mode'])
 
-const options = [
-  { label: 'Login', value: 'login' },
-  { label: 'Register', value: 'register' }
-]
+const { t } = useI18n()
+const options = computed(() => [
+  { label: t('auth.modeToggle.login'), value: 'login' },
+  { label: t('auth.modeToggle.register'), value: 'register' }
+])
 </script>

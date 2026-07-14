@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     :model-value="modelValue"
-    :title="`${userName}'s Groups (${groups.length})`"
+    :title="t('users.usersGroupsTitle', { name: userName, count: groups.length })"
     width="360px"
     append-to-body
     align-center
@@ -26,23 +26,23 @@
             v-if="isMember(group)"
             class="dialog-group__status dialog-group__status--member"
           >
-            member
+            {{ t('users.member') }}
           </div>
           <div
             v-else-if="hasPendingJoinRequest(group)"
             class="dialog-group__status dialog-group__status--requested"
           >
-            requested
+            {{ t('users.requested') }}
           </div>
         </div>
         <el-button
           v-if="!isMember(group) && !hasPendingJoinRequest(group)"
-          size="small"
+          size="medium"
           type="success"
           plain
           @click="$emit('join-group', group)"
         >
-          Join Group
+          {{ t('users.joinGroup') }}
         </el-button>
       </div>
     </div>
@@ -50,6 +50,10 @@
 </template>
 
 <script setup>
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
+
 defineProps({
   modelValue: { type: Boolean, required: true },
   userName: { type: String, default: '' },

@@ -16,7 +16,7 @@
       </div>
 
       <Table
-        downloadTitle="Personal_Expenses"
+        :downloadTitle="t('personalExpenses.personalExpensesDownload')"
         :rows="filteredExpenses"
         :keys="keys"
         :dataRef="content"
@@ -31,6 +31,9 @@ import { Table, LoadingSkeleton } from '@/components/shared'
 import { FilterBar } from '@/components/generic-components'
 import PersonalExpenseStats from './PersonalExpenseStats.vue'
 import { PersonalExpenseList } from '@/scripts/personal-expenses'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const {
   formatAmount,

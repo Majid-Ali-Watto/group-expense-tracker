@@ -19,15 +19,18 @@
       <h3 class="font-semibold text-lg mb-0.5">{{ group.name }}</h3>
       <div class="flex flex-wrap items-center gap-x-4 gap-y-0.5 mb-2">
         <p class="text-xs text-gray-500 dark:text-gray-400">
-          Owner: {{ ownerName }} ({{
-            displayMobileForGroup(group.ownerUid, group)
-          }})
+          {{
+            t('groups.ownerLabel', {
+              name: ownerName,
+              mobile: displayMobileForGroup(group.ownerUid, group)
+            })
+          }}
         </p>
         <p
           v-if="group.category"
           class="text-xs text-gray-500 dark:text-gray-400"
         >
-          Category: {{ group.category }}
+          {{ t('groups.categoryInline', { category: group.category }) }}
         </p>
       </div>
       <GroupDetailsAccordion
@@ -43,11 +46,14 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useUserStore } from '@/stores'
 import {
   GroupDetailsAccordion,
   GroupActionButtons
 } from '@/components/generic-components'
+
+const { t } = useI18n()
 
 const props = defineProps({
   group: { type: Object, required: true },
@@ -70,8 +76,8 @@ const isInteractionBlocked = computed(
 
 const blockedMessage = computed(() =>
   props.group?.blocked === true
-    ? 'This group is blocked by admin. Do not interact with it.'
-    : 'Your account is blocked by admin. Group actions are disabled.'
+    ? t('groups.groupBlockedByAdmin')
+    : t('groups.accountBlockedActionsDisabled')
 )
 </script>
 

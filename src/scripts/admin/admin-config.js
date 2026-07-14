@@ -1,4 +1,5 @@
 import { reactive, ref, onUnmounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { database, doc, setDoc, onSnapshot } from '@/firebase'
 import { DB_NODES } from '@/constants'
 import { showError, showSuccess } from '@/utils'
@@ -14,6 +15,7 @@ const CONFIG_DOCS = [
 ]
 
 export function AdminConfig() {
+  const { t } = useI18n()
   const configs = reactive(
     Object.fromEntries(CONFIG_DOCS.map((id) => [id, null]))
   )
@@ -45,10 +47,10 @@ export function AdminConfig() {
         { [field]: value },
         { merge: true }
       )
-      showSuccess('Config updated.')
+      showSuccess(t('admin.config.updated'))
     } catch (error) {
       console.error('Failed to update config:', error)
-      showError('Failed to update config.')
+      showError(t('admin.config.updateFailed'))
     } finally {
       saving.value = false
     }

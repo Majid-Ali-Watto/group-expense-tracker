@@ -2,9 +2,9 @@
   <!-- Show payment details -->
   <div class="text-sm text-gray-700 mb-2">
     <p v-if="request.type === 'update'">
-      <strong>Proposed Changes:</strong><br />
+      <strong>{{ t('approval.proposedChanges') }}</strong><br />
       <template v-if="request.changes.amount !== undefined">
-        Amount:
+        {{ t('sharedExpenses.proposedAmountLabel') }}
         <span
           v-if="
             request.current?.amount !== undefined &&
@@ -22,7 +22,7 @@
         ><br />
       </template>
       <template v-if="request.changes.payer !== undefined">
-        Payer:
+        {{ t('sharedExpenses.proposedPayerLabel') }}
         <span
           v-if="
             request.current?.payer &&
@@ -38,7 +38,7 @@
         ><br />
       </template>
       <template v-if="request.changes.description !== undefined">
-        Description:
+        {{ t('sharedExpenses.proposedDescriptionLabel') }}
         <span
           v-if="
             request.current?.description !== undefined &&
@@ -54,7 +54,7 @@
         ><br />
       </template>
       <template v-if="request.changes.category !== undefined">
-        Category:
+        {{ t('sharedExpenses.proposedCategoryLabel') }}
         <span
           v-if="
             request.current?.category !== undefined &&
@@ -62,15 +62,17 @@
           "
         >
           <span class="line-through text-gray-400">{{
-            request.current.category || 'None'
+            request.current.category || t('common.none')
           }}</span>
           &nbsp;→&nbsp;
         </span>
-        <span class="font-medium">{{ request.changes.category || 'None' }}</span
+        <span class="font-medium">{{
+          request.changes.category || t('common.none')
+        }}</span
         ><br />
       </template>
       <template v-if="request.changes.date !== undefined">
-        Date:
+        {{ t('sharedExpenses.proposedDateLabel') }}
         <span
           v-if="
             request.current?.date &&
@@ -86,19 +88,25 @@
       </template>
     </p>
     <p v-else>
-      <strong>Payment to be deleted:</strong><br />
-      Amount: {{ formatAmount(request.payment.amount) }}<br />
-      Payer: {{ getUserName(request.payment.payer) }}<br />
-      Category: {{ request.payment.category || 'None' }}<br />
-      Description: {{ request.payment.description }}
+      <strong>{{ t('sharedExpenses.paymentToBeDeleted') }}</strong><br />
+      {{ t('sharedExpenses.proposedAmountLabel') }}
+      {{ formatAmount(request.payment.amount) }}<br />
+      {{ t('sharedExpenses.proposedPayerLabel') }}
+      {{ getUserName(request.payment.payer) }}<br />
+      {{ t('sharedExpenses.proposedCategoryLabel') }}
+      {{ request.payment.category || t('common.none') }}<br />
+      {{ t('sharedExpenses.proposedDescriptionLabel') }}
+      {{ request.payment.description }}
     </p>
   </div>
 </template>
 <script setup>
 import { inject } from 'vue'
+import { useI18n } from 'vue-i18n'
 defineProps({
   request: Object,
   getUserName: Function
 })
 const formatAmount = inject('formatAmount')
+const { t } = useI18n()
 </script>

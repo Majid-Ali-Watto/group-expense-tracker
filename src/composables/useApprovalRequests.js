@@ -1,4 +1,5 @@
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ElMessageBox } from 'element-plus'
 import { appendNotificationForUser, maskMobile } from '@/utils'
 import { deleteField } from '@/firebase'
@@ -22,6 +23,7 @@ export function useApprovalRequests({
   cleanupDeletedReceipts,
   buildUpdatedItem
 }) {
+  const { t } = useI18n()
   function summarizeChanges(changes) {
     if (!changes) return ''
     const resolveUser = (identity) => {
@@ -198,7 +200,7 @@ export function useApprovalRequests({
       const notification = {
         id: Date.now().toString() + Math.random(),
         type: 'approved',
-        message: `Your ${request.type} request for ${itemLabel} has been approved by all members${changesSummary}`,
+        message: t('approval.requestApprovedByAll', { type: request.type, item: itemLabel }) + changesSummary,
         timestamp: Date.now()
       }
 
@@ -214,7 +216,7 @@ export function useApprovalRequests({
         await new Promise((resolve) => setTimeout(resolve, 100))
         await deleteData(
           itemPath,
-          `${listLabel} has been deleted (approved by all members).`
+          t('approval.itemDeleted', { label: listLabel })
         )
         return
       }
@@ -228,7 +230,7 @@ export function useApprovalRequests({
       await updateData(
         itemPath,
         () => updatedItem,
-        `${listLabel} has been updated (approved by all members).`
+        t('approval.itemUpdated', { label: listLabel })
       )
     })
   }
@@ -240,11 +242,11 @@ export function useApprovalRequests({
 
   const cancelRequest = async (request) => {
     await ElMessageBox.confirm(
-      `Are you sure you want to cancel this ${request.type} request?`,
-      'Cancel Request',
+      t('approval.cancelConfirm', { type: request.type }),
+      t('approval.cancelTitle'),
       {
-        confirmButtonText: 'Yes, Cancel',
-        cancelButtonText: 'No',
+        confirmButtonText: t('approval.yesCancelBtn'),
+        cancelButtonText: t('approval.noBtn'),
         type: 'warning'
       }
     )
@@ -259,7 +261,7 @@ export function useApprovalRequests({
     await updateData(
       itemPath,
       () => ({ [`${request.type}Request`]: deleteField() }),
-      `${request.type} request has been cancelled.`
+      t('approval.requestCancelled', { type: request.type })
     )
   }
 
@@ -276,7 +278,7 @@ export function useApprovalRequests({
       await updateData(
         itemPath,
         () => ({ [`${request.type}Request.approvals`]: updatedApprovals }),
-        'Your approval has been recorded.'
+        t('approval.yourApprovalRecorded')
       )
 
       if (updatedApprovals.length >= getTotalMembers()) {
@@ -287,11 +289,11 @@ export function useApprovalRequests({
 
   const rejectRequest = async (request) => {
     await ElMessageBox.confirm(
-      `Are you sure you want to reject this ${request.type} request?`,
-      'Confirm Rejection',
+      t('approval.rejectConfirm', { type: request.type }),
+      t('approval.rejectTitle'),
       {
-        confirmButtonText: 'Yes, Reject',
-        cancelButtonText: 'Cancel',
+        confirmButtonText: t('approval.yesRejectBtn'),
+        cancelButtonText: t('common.cancel'),
         type: 'warning'
       }
     )
@@ -309,7 +311,7 @@ export function useApprovalRequests({
     const notification = {
       id: Date.now().toString() + Math.random(),
       type: 'rejected',
-      message: `Your ${request.type} request for ${itemLabel} was rejected${changesSummary}`,
+      message: t('approval.requestRejected', { type: request.type, item: itemLabel }) + changesSummary,
       byMobile: rejector?.mobile || activeUserUid.value,
       timestamp: Date.now()
     }
@@ -324,7 +326,7 @@ export function useApprovalRequests({
     await updateData(
       itemPath,
       () => ({ [`${request.type}Request`]: deleteField() }),
-      `${request.type} request has been rejected.`
+      t('approval.requestRejectedMsg', { type: request.type })
     )
   }
 

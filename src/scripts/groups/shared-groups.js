@@ -1,5 +1,6 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import {
   auth,
   onAuthStateChanged,
@@ -20,7 +21,7 @@ import {
   showSuccess
 } from '@/utils'
 import {
-  ACTIVE_USER_BLOCKED_MESSAGE,
+  getActiveUserBlockedMessage,
   getBlockedEntityMessage,
   isGroupBlocked,
   isUserBlocked
@@ -29,6 +30,7 @@ import { getDisplayMobile } from '@/utils/user-display'
 import { createUserDisplayStoreProxy } from '@/composables'
 
 export const SharedGroups = () => {
+  const { t } = useI18n()
   const route = useRoute()
   const router = useRouter()
   const authStore = useAuthStore()
@@ -123,7 +125,7 @@ export const SharedGroups = () => {
       }
     } catch (error) {
       console.error('Failed to load shared groups:', error)
-      showError('Failed to load shared groups.')
+      showError(t('groupsMessages.failedLoadSharedGroups'))
     } finally {
       loading.value = false
     }
@@ -131,7 +133,7 @@ export const SharedGroups = () => {
 
   async function selectSharedGroup(group) {
     if (activeUserIsBlocked.value) {
-      showError(ACTIVE_USER_BLOCKED_MESSAGE)
+      showError(getActiveUserBlockedMessage())
       return
     }
     if (isGroupBlocked(group)) {
@@ -147,7 +149,7 @@ export const SharedGroups = () => {
         timestamp: Date.now()
       })
       await router.push('/groups')
-      showSuccess(`Selected group: ${group.name}`)
+      showSuccess(t('groupsMessages.selectedGroupSuccess', { name: group.name }))
     } finally {
       actioningGroupId.value = null
     }
@@ -155,7 +157,7 @@ export const SharedGroups = () => {
 
   async function requestJoin(group) {
     if (activeUserIsBlocked.value) {
-      showError(ACTIVE_USER_BLOCKED_MESSAGE)
+      showError(getActiveUserBlockedMessage())
       return
     }
     if (isGroupBlocked(group)) {
@@ -181,7 +183,11 @@ export const SharedGroups = () => {
         updatedGroup = appendNotificationForUser(updatedGroup, member.uid, {
           id: `${Date.now()}-${Math.random()}`,
           type: 'join-request',
-          message: `${myName} (${maskMobile(myMobile)}) wants to join "${group.name}"`,
+          message: t('groupsMessages.wantsToJoinNotif', {
+            name: myName,
+            mobile: maskMobile(myMobile),
+            groupName: group.name
+          }),
           updatedBy: activeUserUid.value,
           timestamp: Date.now()
         })
@@ -194,12 +200,12 @@ export const SharedGroups = () => {
       await updateData(
         `${DB_NODES.GROUPS}/${group.id}`,
         () => payload,
-        'Join request sent! Waiting for member approval.'
+        t('groupsMessages.joinRequestSentWaiting')
       )
 
       groupStore.updateGroup(updatedGroup)
     } catch {
-      showError('Failed to send join request. Please try again.')
+      showError(t('groupsMessages.failedSendJoinRequest'))
     } finally {
       actioningGroupId.value = null
     }
@@ -207,7 +213,7 @@ export const SharedGroups = () => {
 
   async function acceptInvitation(group) {
     if (activeUserIsBlocked.value) {
-      showError(ACTIVE_USER_BLOCKED_MESSAGE)
+      showError(getActiveUserBlockedMessage())
       return
     }
     if (isGroupBlocked(group)) {
@@ -249,7 +255,11 @@ export const SharedGroups = () => {
         updatedGroup = appendNotificationForUser(updatedGroup, group.ownerUid, {
           id: `${Date.now()}-${Math.random()}`,
           type: 'invitation-accepted',
-          message: `${myName} (${maskMobile(myMobile)}) accepted your invitation to join "${group.name}"`,
+          message: t('groupsMessages.acceptedInvitationNotif', {
+            name: myName,
+            mobile: maskMobile(myMobile),
+            groupName: group.name
+          }),
           updatedBy: activeUserUid.value,
           timestamp: Date.now()
         })
@@ -262,12 +272,12 @@ export const SharedGroups = () => {
       await updateData(
         `${DB_NODES.GROUPS}/${group.id}`,
         () => payload,
-        'You have joined the group!'
+        t('groupsMessages.joinedGroupSuccess')
       )
 
       groupStore.updateGroup(updatedGroup)
     } catch {
-      showError('Failed to join this group. Please try again.')
+      showError(t('groupsMessages.failedJoinGroup'))
     } finally {
       actioningGroupId.value = null
     }

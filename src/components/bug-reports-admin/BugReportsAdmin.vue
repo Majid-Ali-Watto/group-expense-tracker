@@ -26,7 +26,7 @@
     <!-- Empty -->
     <div v-else-if="!filteredReports.length" class="bra-empty">
       <CheckCircleIcon class="w-12 h-12 bra-empty-icon" />
-      <p>No bug reports match the current filter.</p>
+      <p>{{ t('bugReports.noReportsMatch') }}</p>
     </div>
 
     <!-- Report list -->
@@ -66,7 +66,9 @@
             startReply(
               reportId,
               note,
-              note.authorType === 'admin' ? 'Admin' : note.authorName
+              note.authorType === 'admin'
+                ? t('bugReports.admin')
+                : note.authorName
             )
         "
         @cancel-reply="cancelReply"
@@ -96,17 +98,18 @@
 import AdminHeader from './AdminHeader.vue'
 import AdminFiltersBar from './AdminFiltersBar.vue'
 import AdminReportCard from './AdminReportCard.vue'
+import { useI18n } from 'vue-i18n'
 import { CheckCircleIcon } from '@/components/icons'
 import {
   BugReportsAdmin,
-  STATUS_OPTIONS,
-  SEVERITY_OPTIONS,
   markdownToHtml,
   formatDate,
   copyText,
   downloadImage,
   notesOf
 } from '@/scripts/bug-reports'
+
+const { t } = useI18n()
 
 const {
   loading,
@@ -117,6 +120,8 @@ const {
   activeSeverityFilter,
   searchQuery,
   statusFilters,
+  statusOptions,
+  severityOptions,
   expandedIds,
   deletingId,
   noteInputs,
@@ -148,9 +153,6 @@ const {
   toggleReaction,
   reactionsOf
 } = BugReportsAdmin()
-
-const statusOptions = STATUS_OPTIONS
-const severityOptions = SEVERITY_OPTIONS
 </script>
 
 <style scoped>

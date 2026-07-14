@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     :model-value="modelValue"
-    title="Transfer Ownership"
+    :title="t('groups.transferOwnershipTitle')"
     width="90%"
     append-to-body
     style="max-width: 500px"
@@ -10,15 +10,15 @@
     <el-form label-position="top">
       <GenericDropDown
         :model-value="newOwner"
-        label="Select New Owner"
+        :label="t('groups.selectNewOwner')"
         :options="ownerOptions"
-        placeholder="Select new owner"
-        size="small"
+        :placeholder="t('groups.selectNewOwnerPlaceholder')"
+        size="medium"
         :wrap-form-item="false"
         @update:modelValue="$emit('update:newOwner', $event)"
       />
       <el-alert
-        title="The selected member must accept this transfer before it takes effect."
+        :title="t('groups.transferAcceptNotice')"
         type="info"
         :closable="false"
       />
@@ -27,19 +27,19 @@
     <template #footer>
       <div class="flex justify-end gap-2">
         <el-button
-          size="small"
+          size="medium"
           style="min-width: 120px"
           @click="$emit('update:modelValue', false)"
         >
-          Cancel
+          {{ t('common.cancel') }}
         </el-button>
         <el-button
           type="primary"
-          size="small"
+          size="medium"
           style="min-width: 120px"
           @click="$emit('submit')"
         >
-          Request Transfer
+          {{ t('groups.requestTransfer') }}
         </el-button>
       </div>
     </template>
@@ -47,7 +47,10 @@
 </template>
 
 <script setup>
+import { useI18n } from 'vue-i18n'
 import { GenericDropDown } from '@/components/generic-components'
+
+const { t } = useI18n()
 
 defineProps({
   modelValue: { type: Boolean, required: true },

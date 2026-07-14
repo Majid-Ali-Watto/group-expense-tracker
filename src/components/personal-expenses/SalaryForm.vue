@@ -4,12 +4,14 @@
       <template #title>
         <span class="font-semibold text-sm lg:text-base px-2">
           <template v-if="salaryData.salary !== null">
-            Salary for {{ salaryData.month }}:
+            {{ t('personalExpenses.salaryFor', { month: salaryData.month }) }}
             <span class="text-green-600 font-bold ml-1">
               {{ formatAmount(salaryData.salary) }}
             </span>
           </template>
-          <template v-else>Add/Update Monthly Salary</template>
+          <template v-else>{{
+            t('personalExpenses.addUpdateMonthlySalary')
+          }}</template>
         </span>
       </template>
 
@@ -24,14 +26,14 @@
         <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <GenericDropDown
             v-model="selectedMonthValue"
-            label="Month"
-            placeholder="Select month"
+            :label="t('common.month')"
+            :placeholder="t('common.selectMonth')"
             :options="monthOptions"
           />
           <GenericDropDown
             v-model="selectedYear"
-            label="Year"
-            placeholder="Select year"
+            :label="t('common.year')"
+            :placeholder="t('common.selectYear')"
             :options="yearOptions"
             :filterable="false"
           />
@@ -39,10 +41,10 @@
 
         <GenericInputNumber
           v-model="form.salary"
-          label="Monthly Salary"
+          :label="t('personalExpenses.monthlySalary')"
           prop="salary"
           :min="1"
-          placeholder="Enter salary"
+          :placeholder="t('personalExpenses.enterSalary')"
         />
 
         <div class="flex flex-wrap justify-end gap-2">
@@ -50,19 +52,19 @@
             :disabled="isSaveEnbl || isSubmitting"
             :loading="isSubmitting"
             type="success"
-            size="small"
+            size="medium"
             @click="addSalary"
           >
-            Save Salary
+            {{ t('personalExpenses.saveSalary') }}
           </GenericButton>
           <GenericButton
             :disabled="isUpdateEnbl || isSubmitting"
             :loading="isSubmitting"
             type="warning"
-            size="small"
+            size="medium"
             @click="updateSalary"
           >
-            Update Salary
+            {{ t('personalExpenses.updateSalary') }}
           </GenericButton>
         </div>
       </el-form>
@@ -72,6 +74,7 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { rules } from '@/assets'
 import { GenericButton } from '@/components/generic-components'
 import { SalaryForm } from '@/scripts/personal-expenses'
@@ -81,6 +84,7 @@ import {
 } from '@/components/generic-components'
 
 const activePanel = ref([])
+const { t } = useI18n()
 
 const {
   formatAmount,

@@ -5,40 +5,43 @@
     <el-button
       @click="confirmUpdate"
       type="warning"
-      size="small"
+      size="medium"
       class="text-white py-2 px-4 rounded-lg"
     >
-      Update
+      {{ t('common.update') }}
     </el-button>
     <el-button
       @click="confirmDelete"
       type="danger"
-      size="small"
+      size="medium"
       class="text-white py-2 px-4 rounded-lg"
     >
-      Delete
+      {{ t('common.delete') }}
     </el-button>
     <el-button
       @click="confirmDuplicate"
       type="primary"
-      size="small"
+      size="medium"
       class="py-2 px-4 rounded-lg"
     >
-      Duplicate
+      {{ t('common.duplicate') }}
     </el-button>
     <el-button
       @click="$emit('cancel')"
       type="success"
-      size="small"
+      size="medium"
       class="py-2 px-4 rounded-lg"
     >
-      Cancel
+      {{ t('common.cancel') }}
     </el-button>
   </div>
 </template>
 
 <script setup>
+import { useI18n } from 'vue-i18n'
 import { BottomButtons } from '@/scripts/shared'
+
+const { t } = useI18n()
 
 const emit = defineEmits(['update', 'delete', 'duplicate', 'cancel'])
 

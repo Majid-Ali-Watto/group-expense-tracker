@@ -2,15 +2,15 @@
   <el-card shadow="never" class="sm:col-span-2">
     <template #header>
       <div class="flex items-baseline gap-2">
-        <span class="font-semibold text-gray-800 dark:text-gray-100"
-          >Users</span
-        >
+        <span class="font-semibold text-gray-800 dark:text-gray-100">{{
+          t('admin.users.title')
+        }}</span>
         <span class="text-xs text-gray-400">users/{uid}</span>
       </div>
     </template>
 
     <div v-if="loading" class="py-6 text-center text-sm text-gray-400">
-      Loading users…
+      {{ t('admin.users.loadingUsers') }}
     </div>
 
     <template v-else>
@@ -18,7 +18,7 @@
       <input
         v-model="search"
         type="text"
-        placeholder="Search by name or email…"
+        :placeholder="t('admin.users.searchPlaceholder')"
         class="w-full mb-4 px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
       />
 
@@ -26,13 +26,15 @@
       <div
         class="hidden sm:grid sm:grid-cols-[1fr_1fr_repeat(4,6rem)_8.5rem] gap-x-3 px-2 mb-1 text-xs font-semibold text-gray-400 uppercase tracking-wide"
       >
-        <span>Name</span>
-        <span>Email</span>
-        <span class="text-center">Blocked</span>
-        <span class="text-center">Bug Resolver</span>
-        <span class="text-center">Admin</span>
-        <span class="text-center">Paid Tier</span>
-        <span class="text-center">Tab Config</span>
+        <span>{{ t('admin.users.nameColumn') }}</span>
+        <span>{{ t('admin.users.emailColumn') }}</span>
+        <span class="text-center">{{ t('admin.users.blockedColumn') }}</span>
+        <span class="text-center">{{
+          t('admin.users.bugResolverColumn')
+        }}</span>
+        <span class="text-center">{{ t('admin.users.adminColumn') }}</span>
+        <span class="text-center">{{ t('admin.users.paidTierColumn') }}</span>
+        <span class="text-center">{{ t('admin.users.tabConfigColumn') }}</span>
       </div>
 
       <div class="space-y-2">
@@ -58,32 +60,34 @@
             class="sm:contents flex flex-wrap gap-4 col-span-full sm:col-span-1"
           >
             <FlagToggle
-              label="Blocked"
+              :label="t('admin.users.blockedColumn')"
               :value="user.blocked === true"
               :danger="true"
               @change="updateUserFlag(user.uid, 'blocked', $event)"
             />
             <FlagToggle
-              label="Bug Resolver"
+              :label="t('admin.users.bugResolverColumn')"
               :value="user.bugResolver === true"
               @change="updateUserFlag(user.uid, 'bugResolver', $event)"
             />
             <FlagToggle
-              label="Admin"
+              :label="t('admin.users.adminColumn')"
               :value="user.isAdmin === true"
               @change="updateUserFlag(user.uid, 'isAdmin', $event)"
             />
             <FlagToggle
-              label="Paid Tier"
+              :label="t('admin.users.paidTierColumn')"
               :value="user.billedUser === true"
               @change="updateUserFlag(user.uid, 'billedUser', $event)"
             />
             <div
               class="flex flex-col items-center gap-1 sm:justify-self-center"
             >
-              <span class="text-xs text-gray-400 sm:hidden">Tab Config</span>
+              <span class="text-xs text-gray-400 sm:hidden">{{
+                t('admin.users.tabConfigColumn')
+              }}</span>
               <el-button
-                size="small"
+                size="medium"
                 plain
                 :loading="
                   saving &&
@@ -92,7 +96,11 @@
                 "
                 @click="openTabConfigDialog(user)"
               >
-                {{ getUserTabConfig(user.uid) ? 'Edit' : 'Create' }}
+                {{
+                  getUserTabConfig(user.uid)
+                    ? t('admin.users.editAction')
+                    : t('admin.users.createAction')
+                }}
               </el-button>
             </div>
           </div>
@@ -102,7 +110,7 @@
           v-if="filteredUsers.length === 0"
           class="py-4 text-center text-sm text-gray-400"
         >
-          No users match your search.
+          {{ t('admin.users.noUsersMatch') }}
         </div>
       </div>
 
@@ -119,9 +127,11 @@
 
 <script setup>
 import { ref, computed, defineComponent, h, resolveComponent } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { AdminUsers } from '@/scripts/admin/admin-users'
 import AdminUserTabConfigDialog from './AdminUserTabConfigDialog.vue'
 
+const { t } = useI18n()
 const {
   users,
   loading,

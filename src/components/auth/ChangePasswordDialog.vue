@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="dialogVisible"
-    title="Change Password"
+    :title="t('auth.changePassword.title')"
     :width="'min(95vw, 420px)'"
     append-to-body
     :close-on-click-modal="!isSubmitting"
@@ -15,37 +15,46 @@
       label-position="top"
       @submit.prevent="handleChangePassword"
     >
-      <el-form-item label="Current Password" prop="currentPassword">
+      <el-form-item
+        :label="t('auth.changePassword.currentPasswordLabel')"
+        prop="currentPassword"
+      >
         <el-input
           v-model="form.currentPassword"
           type="password"
           show-password
-          size="small"
-          placeholder="Enter your current password"
+          size="medium"
+          :placeholder="t('auth.changePassword.currentPasswordPlaceholder')"
           :disabled="isSubmitting"
           autocomplete="current-password"
         />
       </el-form-item>
 
-      <el-form-item label="New Password" prop="newPassword">
+      <el-form-item
+        :label="t('auth.changePassword.newPasswordLabel')"
+        prop="newPassword"
+      >
         <el-input
           v-model="form.newPassword"
           type="password"
           show-password
-          placeholder="Enter new password (6–15 characters)"
+          :placeholder="t('auth.changePassword.newPasswordPlaceholder')"
           :disabled="isSubmitting"
           autocomplete="new-password"
-          size="small"
+          size="medium"
         />
       </el-form-item>
 
-      <el-form-item label="Confirm New Password" prop="confirmPassword">
+      <el-form-item
+        :label="t('auth.changePassword.confirmPasswordLabel')"
+        prop="confirmPassword"
+      >
         <el-input
           v-model="form.confirmPassword"
           type="password"
           show-password
-          size="small"
-          placeholder="Re-enter new password"
+          size="medium"
+          :placeholder="t('auth.changePassword.confirmPasswordPlaceholder')"
           :disabled="isSubmitting"
           autocomplete="new-password"
         />
@@ -53,23 +62,26 @@
     </el-form>
 
     <template #footer>
-      <el-button size="small" :disabled="isSubmitting" @click="closeDialog"
-        >Cancel</el-button
+      <el-button size="medium" :disabled="isSubmitting" @click="closeDialog"
+        >{{ t('common.cancel') }}</el-button
       >
       <el-button
         type="primary"
-        size="small"
+        size="medium"
         :loading="isSubmitting"
         @click="handleChangePassword"
       >
-        Change Password
+        {{ t('auth.changePassword.submit') }}
       </el-button>
     </template>
   </el-dialog>
 </template>
 
 <script setup>
+import { useI18n } from 'vue-i18n'
 import { ChangePassword } from '@/scripts/auth'
+
+const { t } = useI18n()
 
 const emit = defineEmits(['close'])
 

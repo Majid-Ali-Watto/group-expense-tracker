@@ -1,9 +1,9 @@
 <template>
   <div class="sel-stats">
     <div class="sel-stat">
-      <span class="sel-stat-label">Total Spent</span>
+      <span class="sel-stat-label">{{ t('personalExpenses.totalSpent') }}</span>
       <span
-        v-overflow-popup="{ title: 'Total Spent' }"
+        v-overflow-popup="{ title: t('personalExpenses.totalSpent') }"
         class="sel-stat-value sel-danger"
       >
         {{ formattedTotalSpent }}
@@ -11,9 +11,9 @@
     </div>
     <div class="sel-divider" />
     <div class="sel-stat">
-      <span class="sel-stat-label">Remaining</span>
+      <span class="sel-stat-label">{{ t('personalExpenses.remaining') }}</span>
       <span
-        v-overflow-popup="{ title: 'Remaining' }"
+        v-overflow-popup="{ title: t('personalExpenses.remaining') }"
         class="sel-stat-value sel-success"
       >
         {{ formattedRemaining }}
@@ -21,8 +21,11 @@
     </div>
     <div class="sel-divider" />
     <div class="sel-stat sel-stat-end">
-      <span class="sel-stat-label">Transactions</span>
-      <span v-overflow-popup="{ title: 'Transactions' }" class="sel-stat-value">
+      <span class="sel-stat-label">{{ t('common.transactions') }}</span>
+      <span
+        v-overflow-popup="{ title: t('common.transactions') }"
+        class="sel-stat-value"
+      >
         {{ transactionCount }}
         <span class="sel-month">{{ selectedMonth }}</span>
       </span>
@@ -32,6 +35,7 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 const props = defineProps({
   totalSpent: {
@@ -56,6 +60,7 @@ const props = defineProps({
   }
 })
 
+const { t } = useI18n()
 const formattedTotalSpent = computed(() => props.formatAmount(props.totalSpent))
 const formattedRemaining = computed(() => props.formatAmount(props.remaining))
 </script>

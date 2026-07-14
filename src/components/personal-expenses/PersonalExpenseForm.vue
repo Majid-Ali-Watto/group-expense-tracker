@@ -1,6 +1,6 @@
 <template>
   <fieldset class="w-full border border-gray-300 rounded-lg p-4">
-    <legend>Expense Details</legend>
+    <legend>{{ t('personalExpenses.expenseDetails') }}</legend>
     <el-form
       label-position="top"
       :model="form"
@@ -15,7 +15,7 @@
           :uploading="receiptUploading"
           :extracting="receiptExtracting"
           :multiple="false"
-          helper-text="Only image files (JPG, PNG, GIF, BMP, WEBP) are allowed. Max size: 1MB per file."
+          :helper-text="t('common.receiptHelperDefault')"
           @files-selected="setSelectedFiles"
           @remove="removeReceipt"
           @extract="extractTextFromReceipt"
@@ -29,9 +29,9 @@
         <el-col :xs="24" :sm="12" :md="12" :lg="12">
           <GenericDropDown
             v-model="form.category"
-            label="Category"
+            :label="t('common.category')"
             prop="category"
-            placeholder="Add or select category"
+            :placeholder="t('personalExpenses.addOrSelectCategory')"
             :options="categoryOptions"
             :allow-create="true"
             required
@@ -41,9 +41,9 @@
           <GenericInput
             :rows="1"
             v-model="form.description"
-            label="Description"
+            :label="t('common.description')"
             prop="description"
-            placeholder="Enter description"
+            :placeholder="t('common.enterDescription')"
             required
             type="textarea"
             :maxlength="200"
@@ -53,18 +53,18 @@
         <el-col :xs="24" :sm="12" :md="12" :lg="12">
           <GenericInput
             v-model="form.location"
-            label="Location"
+            :label="t('common.location')"
             prop="location"
-            placeholder="Enter location"
+            :placeholder="t('common.enterLocation')"
             :maxlength="100"
           />
         </el-col>
         <el-col :xs="24" :sm="12" :md="12" :lg="12">
           <GenericDropDown
             v-model="form.recipient"
-            label="Recipient"
+            :label="t('personalExpenses.recipient')"
             prop="recipient"
-            placeholder="Select a user or enter recipient"
+            :placeholder="t('personalExpenses.recipientPlaceholder')"
             :options="recipientOptions"
             :allow-create="true"
             :filterable="true"
@@ -75,7 +75,7 @@
             v-model="form.date"
             required
             type="date"
-            placeholder="Select date"
+            :placeholder="t('common.selectDate')"
             format="YYYY-MM-DD"
             value-format="YYYY-MM-DD"
           />
@@ -85,13 +85,13 @@
       <div class="mt-2 space-y-2">
         <div class="flex items-center justify-between">
           <span class="text-sm font-semibold text-gray-700">
-            Line Items
+            {{ t('personalExpenses.lineItems') }}
             <span class="text-gray-400 font-normal text-xs ml-1"
-              >(optional)</span
+              >({{ t('common.optional') }})</span
             >
           </span>
-          <el-button size="small" type="primary" plain @click="addSplitItem">
-            + Add Item
+          <el-button size="medium" type="primary" plain @click="addSplitItem">
+            {{ t('personalExpenses.addItem') }}
           </el-button>
         </div>
 
@@ -101,16 +101,19 @@
             :key="index"
             class="flex gap-2 items-end border border-gray-200 rounded-lg p-2 bg-gray-50"
           >
-            <el-form-item label="Description" class="mb-0 flex-1 min-w-0">
+            <el-form-item
+              :label="t('common.description')"
+              class="mb-0 flex-1 min-w-0"
+            >
               <GenericInputField
                 v-model="item.description"
-                placeholder="e.g. Burger, Coffee..."
+                :placeholder="t('personalExpenses.itemPlaceholder')"
                 :maxlength="100"
                 :wrap-form-item="false"
               />
             </el-form-item>
             <el-form-item
-              label="Amount"
+              :label="t('common.amount')"
               class="mb-0"
               style="width: 120px; flex-shrink: 0"
             >
@@ -123,7 +126,7 @@
               />
             </el-form-item>
             <el-button
-              size="small"
+              size="medium"
               type="danger"
               text
               style="flex-shrink: 0; margin-bottom: 2px"
@@ -138,7 +141,9 @@
             v-show="receiptTax != null"
             class="flex items-center gap-2 border border-dashed border-gray-300 rounded-lg px-3 py-2 bg-gray-50"
           >
-            <span class="text-sm text-gray-600 flex-1">Tax</span>
+            <span class="text-sm text-gray-600 flex-1">{{
+              t('common.tax')
+            }}</span>
             <GenericInputNumber
               v-model="receiptTax"
               :min="0"
@@ -148,11 +153,11 @@
               style="width: 120px; flex-shrink: 0"
             />
             <el-button
-              size="small"
+              size="medium"
               type="danger"
               text
               style="flex-shrink: 0"
-              title="Remove tax"
+              :title="t('common.removeTax')"
               @click="receiptTax = null"
             >
               ✕
@@ -165,8 +170,10 @@
             class="flex items-center gap-2 text-sm"
           >
             <span class="text-gray-600">
-              Items total{{
-                receiptTax != null && receiptTax > 0 ? ' + tax' : ''
+              {{
+                receiptTax != null && receiptTax > 0
+                  ? t('personalExpenses.itemsTotalPlusTax')
+                  : t('personalExpenses.itemsTotal')
               }}:
             </span>
             <span
@@ -184,32 +191,38 @@
               type="success"
               size="small"
             >
-              Balanced
+              {{ t('common.balanced') }}
             </el-tag>
-            <el-tag v-else type="warning" size="small">Mismatch</el-tag>
+            <el-tag v-else type="warning" size="small">{{
+              t('common.mismatch')
+            }}</el-tag>
           </div>
         </template>
       </div>
 
       <div class="flex justify-end gap-2 mt-3" v-if="!isEditMode">
-        <el-button type="default" size="small" @click="resetForm">
-          Reset
+        <el-button type="default" size="medium" @click="resetForm">
+          {{ t('common.reset') }}
         </el-button>
         <GenericButton
           v-if="showForm"
           type="info"
           @click="requestClose"
-          size="small"
-          >Cancel</GenericButton
+          size="medium"
+          >{{ t('common.cancel') }}</GenericButton
         >
         <el-button
           type="success"
           :loading="receiptUploading || receiptExtracting || isSubmitting"
           :disabled="receiptUploading || receiptExtracting || isSubmitting"
           @click="() => validateForm()"
-          size="small"
+          size="medium"
         >
-          {{ receiptUploading ? 'Uploading...' : 'Add Expense' }}
+          {{
+            receiptUploading
+              ? t('common.uploading')
+              : t('personalExpenses.addExpense')
+          }}
         </el-button>
       </div>
     </el-form>
@@ -218,6 +231,7 @@
 
 <script setup>
 import { rules } from '@/assets'
+import { useI18n } from 'vue-i18n'
 import {
   GenericButton,
   AmountInput,
@@ -258,6 +272,7 @@ const {
   removeSplitItem,
   isSubmitting
 } = PersonalExpenseForm(props, emit)
+const { t } = useI18n()
 
 defineExpose({
   validateForm,

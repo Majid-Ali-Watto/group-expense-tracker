@@ -1,23 +1,24 @@
 <template>
   <main class="public-page inner-page">
     <section class="title-section">
-      <p class="eyebrow">Public help page</p>
-      <h1>How to use Kharchafy</h1>
-      <p>
-        This page explains the app’s current workflows, including registration,
-        groups, shared expenses, shared loans, personal budgeting, exports, and
-        notifications.
-      </p>
+      <p class="eyebrow">{{ t('help.eyebrow') }}</p>
+      <h1>{{ t('help.title') }}</h1>
+      <p>{{ t('help.intro') }}</p>
     </section>
 
     <section class="help-shell">
-      <HelpContent :expand-all="true" />
+      <HelpContent :expand-all="true" :locale="route.meta?.locale || 'en'" />
     </section>
   </main>
 </template>
 
 <script setup>
+import { useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import HelpContent from '@/components/generic-components/HelpContent.vue'
+
+const route = useRoute()
+const { t } = useI18n()
 </script>
 
 <style scoped>

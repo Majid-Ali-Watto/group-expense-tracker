@@ -1,4 +1,5 @@
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ElMessageBox } from 'element-plus'
 import {
   auth,
@@ -34,51 +35,35 @@ const BUG_NUMBER_PREFIX = 'khata-bug'
 const BUG_NUMBER_PAD = 6
 
 export const ALL_CATEGORIES = [
-  { label: 'Shared Expenses', value: 'shared-expenses' },
-  { label: 'Shared Loans', value: 'shared-loans' },
-  { label: 'Personal Loans', value: 'personal-loans' },
-  { label: 'Personal Expenses', value: 'personal-expenses' },
-  { label: 'Groups', value: 'groups' },
-  { label: 'Notifications', value: 'notifications' },
-  { label: 'Authentication / Login', value: 'auth' },
-  { label: 'Settlement', value: 'settlement' },
-  { label: 'Export (PDF / Excel)', value: 'export' },
-  { label: 'Charts / Visuals', value: 'charts' },
-  { label: 'Other', value: 'other' }
+  { labelKey: 'bugReports.categories.sharedExpenses', value: 'shared-expenses' },
+  { labelKey: 'bugReports.categories.sharedLoans', value: 'shared-loans' },
+  { labelKey: 'bugReports.categories.personalLoans', value: 'personal-loans' },
+  { labelKey: 'bugReports.categories.personalExpenses', value: 'personal-expenses' },
+  { labelKey: 'bugReports.categories.groups', value: 'groups' },
+  { labelKey: 'bugReports.categories.notifications', value: 'notifications' },
+  { labelKey: 'bugReports.categories.auth', value: 'auth' },
+  { labelKey: 'bugReports.categories.settlement', value: 'settlement' },
+  { labelKey: 'bugReports.categories.export', value: 'export' },
+  { labelKey: 'bugReports.categories.charts', value: 'charts' },
+  { labelKey: 'bugReports.categories.other', value: 'other' }
 ]
 
 export const SEVERITIES = [
-  { label: 'Low', value: 'low' },
-  { label: 'Medium', value: 'medium' },
-  { label: 'High', value: 'high' },
-  { label: 'Critical', value: 'critical' }
+  { labelKey: 'bugReports.severities.low', value: 'low' },
+  { labelKey: 'bugReports.severities.medium', value: 'medium' },
+  { labelKey: 'bugReports.severities.high', value: 'high' },
+  { labelKey: 'bugReports.severities.critical', value: 'critical' }
 ]
 
-export const STATUS_LABEL = {
-  open: 'Open',
-  'in-progress': 'In Progress',
-  'needs-info': 'Needs Info',
-  duplicate: 'Duplicate',
-  'wont-fix': "Won't Fix",
-  resolved: 'Resolved',
-  closed: 'Closed'
+const STATUS_LABEL_KEYS = {
+  open: 'bugReports.statuses.open',
+  'in-progress': 'bugReports.statuses.inProgress',
+  'needs-info': 'bugReports.statuses.needsInfo',
+  duplicate: 'bugReports.statuses.duplicate',
+  'wont-fix': 'bugReports.statuses.wontFix',
+  resolved: 'bugReports.statuses.resolved',
+  closed: 'bugReports.statuses.closed'
 }
-
-const BUG_TEMPLATE = `**What happened?**
-Describe the bug clearly.
-
-**What did you expect?**
-Describe what you expected to happen.
-
-**Steps to reproduce**
-1. Go to ...
-2. Click on ...
-3. See the error
-
-**Additional context**
-- Browser / device: 
-- Does it happen every time? 
-- Any error message? `
 
 function emptyForm() {
   return {
@@ -100,6 +85,7 @@ function emptyForm() {
 export const BugReport = (props) => {
   const authStore = useAuthStore()
   const userStore = useUserStore()
+  const { t } = useI18n()
   const { sendBugReportEmail } = useSharedActivityEmail()
 
   const activeView = ref(props.view)
@@ -136,27 +122,55 @@ export const BugReport = (props) => {
           // notifications, auth, export, charts, other — always visible
           return true
       }
-    })
+    }).map((cat) => ({ ...cat, label: t(cat.labelKey) }))
   })
+
+  const severities = computed(() =>
+    SEVERITIES.map((severity) => ({
+      ...severity,
+      label: t(severity.labelKey)
+    }))
+  )
+
+  const statusLabel = computed(() =>
+    Object.fromEntries(
+      Object.entries(STATUS_LABEL_KEYS).map(([status, key]) => [
+        status,
+        t(key)
+      ])
+    )
+  )
 
   // ── Validation rules ─────────────────────────────────────────────────────
   const rules = computed(() => ({
     category: [
-      { required: true, message: 'Please select a category', trigger: 'change' }
+      {
+        required: true,
+        message: t('bugReports.validation.categoryRequired'),
+        trigger: 'change'
+      }
     ],
     title: [
-      { required: true, message: 'Please enter a title', trigger: 'blur' },
+      {
+        required: true,
+        message: t('bugReports.validation.titleRequired'),
+        trigger: 'blur'
+      },
       {
         min: 5,
-        message: 'Title must be at least 5 characters',
+        message: t('bugReports.validation.titleMin'),
         trigger: 'blur'
       }
     ],
     description: [
-      { required: true, message: 'Please describe the bug', trigger: 'blur' },
+      {
+        required: true,
+        message: t('bugReports.validation.descriptionRequired'),
+        trigger: 'blur'
+      },
       {
         min: 20,
-        message: 'Description must be at least 20 characters',
+        message: t('bugReports.validation.descriptionMin'),
         trigger: 'blur'
       }
     ]
@@ -184,20 +198,20 @@ export const BugReport = (props) => {
   function applyTemplate() {
     if (form.value.description?.trim()) {
       ElMessageBox.confirm(
-        'This will replace your current description with the template. Continue?',
-        'Use Template',
+        t('bugReports.templateConfirm'),
+        t('bugReports.useTemplateTitle'),
         {
-          confirmButtonText: 'Yes, use template',
-          cancelButtonText: 'Cancel',
+          confirmButtonText: t('bugReports.yesUseTemplate'),
+          cancelButtonText: t('common.cancel'),
           type: 'warning'
         }
       )
         .then(() => {
-          form.value.description = BUG_TEMPLATE
+          form.value.description = t('bugReports.templateText')
         })
         .catch(() => {})
     } else {
-      form.value.description = BUG_TEMPLATE
+      form.value.description = t('bugReports.templateText')
     }
   }
 
@@ -213,11 +227,16 @@ export const BugReport = (props) => {
       .slice(0, remaining)
       .forEach((file) => {
         if (!file.type.startsWith('image/')) {
-          showError(`"${file.name}" is not an image file.`)
+          showError(t('bugReports.notImage', { name: file.name }))
           return
         }
         if (file.size > MAX_SIZE_BYTES) {
-          showError(`"${file.name}" exceeds the ${MAX_SIZE_MB}MB limit.`)
+          showError(
+            t('bugReports.exceedsLimit', {
+              name: file.name,
+              size: MAX_SIZE_MB
+            })
+          )
           return
         }
         screenshots.value.push({ file, preview: URL.createObjectURL(file) })
@@ -283,7 +302,10 @@ export const BugReport = (props) => {
           } catch (err) {
             uploadProgress.value[i].status = 'exception'
             throw new Error(
-              `Failed to upload "${screenshots.value[i].file.name}": ${err.message}`
+              t('bugReports.uploadFailed', {
+                name: screenshots.value[i].file.name,
+                message: err.message
+              })
             )
           }
         }
@@ -355,7 +377,7 @@ export const BugReport = (props) => {
       submitted.value = true
     } catch (err) {
       uploadingScreenshots.value = false
-      showError(err.message || 'Submission failed. Please try again.')
+      showError(err.message || t('bugReports.submissionFailed'))
     } finally {
       submitting.value = false
     }
@@ -377,11 +399,11 @@ export const BugReport = (props) => {
   async function deleteReport(r) {
     try {
       await ElMessageBox.confirm(
-        `Delete report "<strong>${r.title}</strong>"? This cannot be undone.`,
-        'Delete Report',
+        t('bugReports.deleteConfirm', { title: r.title }),
+        t('bugReports.deleteTitle'),
         {
-          confirmButtonText: 'Delete',
-          cancelButtonText: 'Cancel',
+          confirmButtonText: t('common.delete'),
+          cancelButtonText: t('common.cancel'),
           type: 'error',
           dangerouslyUseHTMLString: true
         }
@@ -395,9 +417,9 @@ export const BugReport = (props) => {
         ).catch(() => {})
       if (r.screenshots?.length)
         r.screenshots.forEach((ss) => cleanupOldReceipts([ss], []))
-      showSuccess('Report deleted.')
+      showSuccess(t('bugReports.reportDeleted'))
     } catch (e) {
-      if (e !== 'cancel') showError(e?.message || 'Failed to delete report.')
+      if (e !== 'cancel') showError(e?.message || t('bugReports.deleteFailed'))
     } finally {
       actionLoading.value = null
     }
@@ -426,9 +448,9 @@ export const BugReport = (props) => {
           updatedAt: new Date().toISOString()
         }
       )
-      showSuccess('Report re-opened.')
+      showSuccess(t('bugReports.reportReopened'))
     } catch (e) {
-      showError(e?.message || 'Failed to re-open report.')
+      showError(e?.message || t('bugReports.reopenFailed'))
     } finally {
       actionLoading.value = null
     }
@@ -488,11 +510,16 @@ export const BugReport = (props) => {
       .slice(0, remaining)
       .forEach((file) => {
         if (!file.type.startsWith('image/')) {
-          showError(`"${file.name}" is not an image.`)
+          showError(t('bugReports.notImage', { name: file.name }))
           return
         }
         if (file.size > MAX_SIZE_BYTES) {
-          showError(`"${file.name}" exceeds ${MAX_SIZE_MB}MB.`)
+          showError(
+            t('bugReports.exceedsLimit', {
+              name: file.name,
+              size: MAX_SIZE_MB
+            })
+          )
           return
         }
         editNewScreenshots.value.push({
@@ -554,10 +581,10 @@ export const BugReport = (props) => {
           updatedAt: new Date().toISOString()
         }
       )
-      showSuccess('Report updated.')
+      showSuccess(t('bugReports.reportUpdated'))
       closeEdit()
     } catch (e) {
-      showError(e?.message || 'Failed to save changes.')
+      showError(e?.message || t('bugReports.saveFailed'))
     } finally {
       editSaving.value = false
     }
@@ -596,7 +623,7 @@ export const BugReport = (props) => {
     const text = (replyInputs.value[r.id] || '').trim()
     const editorImages = replyEditorRefs[r.id]?.images || []
     if (!text && !editorImages.length) {
-      replyErrors.value[r.id] = 'Message cannot be empty.'
+      replyErrors.value[r.id] = t('bugReports.messageEmpty')
       return
     }
     replySavingId.value = r.id
@@ -639,9 +666,9 @@ export const BugReport = (props) => {
       replyInputs.value[r.id] = ''
       replyEditorRefs[r.id]?.clearImages()
       noteThread.cancelReply()
-      showSuccess('Reply sent.')
+      showSuccess(t('bugReports.replySent'))
     } catch (e) {
-      showError(e?.message || 'Failed to send reply.')
+      showError(e?.message || t('bugReports.replyFailed'))
     } finally {
       replySavingId.value = null
     }
@@ -754,7 +781,7 @@ export const BugReport = (props) => {
     ...noteThread,
     // Constants
     MAX_SCREENSHOTS,
-    SEVERITIES,
-    STATUS_LABEL
+    SEVERITIES: severities,
+    STATUS_LABEL: statusLabel
   }
 }

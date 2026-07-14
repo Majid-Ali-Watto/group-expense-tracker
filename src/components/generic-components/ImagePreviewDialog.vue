@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     :model-value="modelValue"
-    :title="title"
+    :title="resolvedTitle"
     :width="width"
     append-to-body
     @update:model-value="$emit('update:modelValue', $event)"
@@ -9,37 +9,43 @@
   >
     <div class="ipd-shell">
       <div v-if="hasMultiple" class="ipd-toolbar ipd-toolbar--top">
-        <el-button size="small" :disabled="currentIndex <= 0" @click="previous">
-          Previous
+        <el-button
+          size="medium"
+          :disabled="currentIndex <= 0"
+          @click="previous"
+        >
+          {{ t('imagePreview.previous') }}
         </el-button>
         <span class="ipd-counter">
           {{ currentIndex + 1 }} / {{ normalizedImages.length }}
         </span>
         <el-button
-          size="small"
+          size="medium"
           :disabled="currentIndex >= normalizedImages.length - 1"
           @click="next"
         >
-          Next
+          {{ t('imagePreview.next') }}
         </el-button>
       </div>
 
       <div class="ipd-toolbar">
-        <el-button size="small" :disabled="zoom <= minZoom" @click="zoomOut">
+        <el-button size="medium" :disabled="zoom <= minZoom" @click="zoomOut">
           -
         </el-button>
         <span class="ipd-zoom">{{ Math.round(zoom * 100) }}%</span>
-        <el-button size="small" :disabled="zoom >= maxZoom" @click="zoomIn">
+        <el-button size="medium" :disabled="zoom >= maxZoom" @click="zoomIn">
           +
         </el-button>
-        <el-button size="small" @click="resetZoom">Reset</el-button>
+        <el-button size="medium" @click="resetZoom">{{
+          t('common.reset')
+        }}</el-button>
       </div>
 
       <div class="ipd-stage">
         <AppImage
           v-if="currentImage"
           :src="currentImage.url"
-          :alt="currentImage.name || 'Preview image'"
+          :alt="currentImage.name || t('imagePreview.defaultAlt')"
           class="ipd-image"
           fit="contain"
           :style="{ transform: `scale(${zoom})` }"
@@ -51,17 +57,24 @@
 
 <script setup>
 import { computed, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import AppImage from './AppImage.vue'
+
+const { t } = useI18n()
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
   images: { type: Array, default: () => [] },
   initialIndex: { type: Number, default: 0 },
-  title: { type: String, default: 'Image Preview' },
+  title: { type: String, default: '' },
   width: { type: String, default: 'min(92vw, 720px)' }
 })
 
 defineEmits(['update:modelValue'])
+
+const resolvedTitle = computed(
+  () => props.title || t('imagePreview.defaultTitle')
+)
 
 const minZoom = 1
 const maxZoom = 3

@@ -1,4 +1,5 @@
 import { computed, inject, ref, onMounted, watch, onUnmounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { onSnapshot } from '@/firebase'
 import { useAuthStore, useDataStore } from '@/stores'
@@ -19,6 +20,7 @@ import { showError } from '@/utils/showAlerts'
 
 export const PersonalExpenseList = () => {
   const formatAmount = inject('formatAmount')
+  const { t } = useI18n()
   const { dbRef, read, readShallow } = useFireBase()
   const authStore = useAuthStore()
   const dataStore = useDataStore()
@@ -84,7 +86,7 @@ export const PersonalExpenseList = () => {
       monthsRef: months,
       loadedRef: monthsLoaded,
       errorHandler: (error) => {
-        showError('Failed to load months. Please try again.')
+        showError(t('personalExpenses.failedLoadMonths'))
         console.error(error)
       },
       onResolved: (resolvedMonths) => {
@@ -129,7 +131,7 @@ export const PersonalExpenseList = () => {
       (error) => {
         salaryLoaded.value = true
         if (activeUserUid.value) {
-          showError('Failed to load salary. Please try again.')
+          showError(t('personalExpenses.failedLoadSalary'))
           console.error(error)
         }
       }
@@ -187,7 +189,7 @@ export const PersonalExpenseList = () => {
       (error) => {
         expensesLoaded.value = true
         if (activeUserUid.value) {
-          showError('Failed to load expenses. Please try again.')
+          showError(t('personalExpenses.failedLoadExpenses'))
           console.error(error)
         }
       }
@@ -265,8 +267,8 @@ export const PersonalExpenseList = () => {
   const filterFields = computed(() => [
     {
       key: 'month',
-      label: 'Month',
-      placeholder: 'Select month',
+      label: t('common.month'),
+      placeholder: t('common.selectMonth'),
       modelValue: selectedMonth.value,
       options: months.value,
       onChange: (v) => {
@@ -276,8 +278,8 @@ export const PersonalExpenseList = () => {
     },
     {
       key: 'category',
-      label: 'Category',
-      placeholder: 'All Categories',
+      label: t('common.category'),
+      placeholder: t('common.allCategories'),
       modelValue: selectedCategory.value,
       options: categoryOptions.value,
       onChange: (v) => {

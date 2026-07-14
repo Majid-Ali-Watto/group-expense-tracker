@@ -26,7 +26,7 @@
           }})</span
         >
       </div>
-      <el-button size="small" text @click="dismissNotification(notif.id)">
+      <el-button size="medium" text @click="dismissNotification(notif.id)">
         ✕
       </el-button>
     </div>

@@ -1,4 +1,5 @@
 import { ref, watch, computed, nextTick } from 'vue'
+import { useI18n } from 'vue-i18n'
 import {
   useUsersOptions,
   useFireBase,
@@ -24,6 +25,7 @@ import { DB_NODES } from '@/constants'
 import { invalidateByPrefix } from '@/utils/queryCache'
 
 export const LoanForm = (props, emit) => {
+  const { t } = useI18n()
   const authStore = useAuthStore()
   const groupStore = useGroupStore()
   const userStore = useUserStore()
@@ -120,7 +122,7 @@ export const LoanForm = (props, emit) => {
     if (data.date) formData.value.date = data.date
 
     await nextTick()
-    showSuccess('Receipt data extracted and filled into the form.')
+    showSuccess(t('common.receiptExtracted'))
   }
 
   // ========== Copy to Personal Expenses ==========
@@ -225,7 +227,7 @@ export const LoanForm = (props, emit) => {
     }
     if (props.isPersonal && uid === getCurrentReceiverIdentity()) {
       selectedGiverUser.value = ''
-      showError('Giver and Receiver cannot be the same person.')
+      showError(t('sharedLoans.giverReceiverSame'))
       return
     }
     const user = userStore.getUserByUid(uid)
@@ -233,7 +235,7 @@ export const LoanForm = (props, emit) => {
     if (isCurrentUserIdentity(uid)) {
       if (props.isPersonal && isMeReceiver.value) {
         selectedGiverUser.value = ''
-        showError('If you are the receiver, you cannot also be the giver.')
+        showError(t('sharedLoans.ifReceiverCantBeGiver'))
         return
       }
       // Let isMeGiver watcher handle field setting
@@ -258,7 +260,7 @@ export const LoanForm = (props, emit) => {
     }
     if (props.isPersonal && uid === getCurrentGiverIdentity()) {
       selectedReceiverUser.value = ''
-      showError('Giver and Receiver cannot be the same person.')
+      showError(t('sharedLoans.giverReceiverSame'))
       return
     }
     const user = userStore.getUserByUid(uid)
@@ -266,7 +268,7 @@ export const LoanForm = (props, emit) => {
     if (isCurrentUserIdentity(uid)) {
       if (props.isPersonal && isMeGiver.value) {
         selectedReceiverUser.value = ''
-        showError('If you are the giver, you cannot also be the receiver.')
+        showError(t('sharedLoans.ifGiverCantBeReceiver'))
         return
       }
       isMeReceiver.value = true
@@ -407,7 +409,7 @@ export const LoanForm = (props, emit) => {
             formData.value.loanGiver &&
             formData.value.loanGiver === formData.value.loanReceiver
           ) {
-            showError('Giver and Receiver cannot be the same person.')
+            showError(t('sharedLoans.giverReceiverSame'))
             return
           }
         }
@@ -423,7 +425,7 @@ export const LoanForm = (props, emit) => {
             formData.value.loanReceiverMobile ||
             formData.value.loanReceiver
           if (giverMobile === receiverMobile) {
-            showError('Giver and Receiver cannot be the same person.')
+            showError(t('sharedLoans.giverReceiverSame'))
             return
           }
           const isMe = (val) =>
@@ -431,25 +433,19 @@ export const LoanForm = (props, emit) => {
             (activeUserMobile.value && val === activeUserMobile.value)
 
           if (!isMe(giverMobile) && !isMe(receiverMobile)) {
-            showError(
-              'For personal loans, either Giver or Receiver must be your own mobile.'
-            )
+            showError(t('sharedLoans.personalMustBeYou'))
             return
           }
 
           if (isMe(giverMobile) && formData.value.loanGiver) {
             if (formData.value.loanGiver !== activeUserName.value) {
-              showError(
-                'Giver name must match your account name when using your mobile.'
-              )
+              showError(t('sharedLoans.giverNameMismatch'))
               return
             }
           }
           if (isMe(receiverMobile) && formData.value.loanReceiver) {
             if (formData.value.loanReceiver !== activeUserName.value) {
-              showError(
-                'Receiver name must match your account name when using your mobile.'
-              )
+              showError(t('sharedLoans.receiverNameMismatch'))
               return
             }
           }
@@ -498,8 +494,8 @@ export const LoanForm = (props, emit) => {
             () => loanData,
             loanForm,
             whatTask === 'Duplicate'
-              ? 'Loan duplicated successfully.'
-              : 'Loan added successfully.',
+              ? t('sharedLoans.loanDuplicated')
+              : t('sharedLoans.loanAdded'),
             async (createdDoc) => {
               if (!props.isPersonal) {
                 sendSharedActivityEmail({
@@ -516,7 +512,7 @@ export const LoanForm = (props, emit) => {
                   `${DB_NODES.PERSONAL_EXPENSES}/${expenseCopy.payer}/months/${expenseCopyMonth}/expenses`,
                   () => expenseCopy,
                   mockFormRef,
-                  'Expense copy added to Personal Expenses.',
+                  t('sharedLoans.expenseCopyAdded'),
                   null
                 )
               }
@@ -550,7 +546,7 @@ export const LoanForm = (props, emit) => {
             updateData(
               `${personalUpdatePath}/${props.row.id}`,
               () => getLoanData(receiptUrls, receiptMeta),
-              `Loan updated successfully`
+              t('sharedLoans.loanUpdated')
             )
             emit('closeModal')
           }
@@ -566,7 +562,7 @@ export const LoanForm = (props, emit) => {
             deleteExistingReceipts()
             deleteData(
               `${personalDeletePath}/${props.row.id}`,
-              'Loan deleted successfully'
+              t('sharedLoans.loanDeleted')
             )
             emit('closeModal')
           }
@@ -581,7 +577,7 @@ export const LoanForm = (props, emit) => {
     updateData(
       loanPath,
       () => ({ deleteRequest }),
-      'Delete request sent. Waiting for approval from all group members.'
+      t('approval.deleteRequestSent')
     )
     emit('closeModal')
   }
@@ -599,7 +595,7 @@ export const LoanForm = (props, emit) => {
     updateData(
       loanPath,
       () => ({ updateRequest }),
-      'Update request sent. Waiting for approval from all group members.'
+      t('approval.updateRequestSent')
     )
     emit('closeModal')
   }

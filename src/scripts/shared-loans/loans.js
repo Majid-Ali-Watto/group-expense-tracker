@@ -1,4 +1,5 @@
 import { ref, computed, onMounted, onUnmounted, inject, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { onSnapshot } from '@/firebase'
 import {
@@ -29,6 +30,7 @@ import { createUserDisplayStoreProxy } from '@/composables'
 import { cleanupOldReceipts, deleteReceipt } from '@/utils/uploadReceipt'
 
 export const Loans = () => {
+  const { t } = useI18n()
   const authStore = useAuthStore()
   const groupStore = useGroupStore()
   const userStore = useUserStore()
@@ -119,7 +121,7 @@ export const Loans = () => {
       monthsRef: months,
       loadedRef: monthsLoaded,
       errorHandler: () => {
-        showError('Failed to load months. Please try again.')
+        showError(t('sharedLoans.failedLoadMonths'))
       },
       onResolved: (resolvedMonths) => {
         if (resolvedMonths.length) selectedMonth.value = getCurrentMonth()
@@ -169,7 +171,7 @@ export const Loans = () => {
         // Ignore permission errors that fire after logout — Firebase revokes the
         // auth token before this listener is detached (on component unmount).
         if (activeGroup.value && authStore.getActiveUserUid)
-          showError('Failed to load loans. Please try again.')
+          showError(t('sharedLoans.failedLoadLoans'))
       }
     )
     loansListener = unsubscribe
@@ -324,11 +326,11 @@ export const Loans = () => {
   const loanBalanceColumns = computed(() => [
     {
       key: 'name',
-      label: 'Member'
+      label: t('sharedLoans.member')
     },
     {
       key: 'status',
-      label: 'Status',
+      label: t('sharedLoans.status'),
       class: (row) =>
         row.amount < 0
           ? 'text-red-500 font-semibold'
@@ -337,14 +339,14 @@ export const Loans = () => {
             : 'text-gray-400',
       format: (row) =>
         row.amount < 0
-          ? 'Will Pay'
+          ? t('sharedLoans.willPay')
           : row.amount > 0
-            ? 'Will Receive'
-            : 'Settled'
+            ? t('sharedLoans.willReceive')
+            : t('sharedLoans.settled')
     },
     {
       key: 'amount',
-      label: 'Amount',
+      label: t('common.amount'),
       format: (row) => formatAmount(Math.abs(row.amount))
     }
   ])
@@ -358,8 +360,8 @@ export const Loans = () => {
   const filterFields = computed(() => [
     {
       key: 'month',
-      label: 'Month',
-      placeholder: 'Select Month',
+      label: t('common.month'),
+      placeholder: t('common.selectMonth'),
       modelValue: selectedMonth.value,
       options: months.value,
       onChange: (v) => {
@@ -368,18 +370,18 @@ export const Loans = () => {
     },
     {
       key: 'giver',
-      label: 'Giver',
-      placeholder: 'Select Giver',
+      label: t('sharedLoans.giver'),
+      placeholder: t('sharedLoans.selectGiver'),
       modelValue: selectedGiver.value,
-      options: [{ label: 'All Givers', value: 'All' }, ...usersOptions.value],
+      options: [{ label: t('sharedLoans.allGivers'), value: 'All' }, ...usersOptions.value],
       onChange: (v) => {
         selectedGiver.value = v
       }
     },
     {
       key: 'category',
-      label: 'Category',
-      placeholder: 'All Categories',
+      label: t('common.category'),
+      placeholder: t('common.allCategories'),
       modelValue: selectedCategory.value,
       options: categoryOptions.value,
       onChange: (v) => {

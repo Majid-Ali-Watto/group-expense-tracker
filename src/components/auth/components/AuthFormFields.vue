@@ -2,9 +2,9 @@
   <GenericInputField
     v-if="mode === 'register'"
     :model-value="modelValue.name"
-    label="Full Name"
+    :label="t('auth.formFields.nameLabel')"
     prop="name"
-    placeholder="Enter your full name"
+    :placeholder="t('auth.formFields.namePlaceholder')"
     :maxlength="50"
     @update:modelValue="updateField('name', $event.toCapitalize())"
   />
@@ -12,28 +12,28 @@
   <GenericInputField
     v-if="mode === 'register'"
     :model-value="modelValue.mobile"
-    label="Mobile Number"
+    :label="t('auth.formFields.mobileLabel')"
     prop="mobile"
-    placeholder="Enter your mobile number"
+    :placeholder="t('auth.formFields.mobilePlaceholder')"
     :maxlength="11"
     @update:modelValue="updateField('mobile', sanitizeMobile($event))"
   />
 
   <GenericInputField
     :model-value="modelValue.email"
-    label="Email"
+    :label="t('auth.formFields.emailLabel')"
     prop="email"
     type="email"
-    placeholder="Enter your email address"
+    :placeholder="t('auth.formFields.emailPlaceholder')"
     @update:modelValue="updateField('email', $event)"
   />
 
   <GenericInputField
     :model-value="modelValue.password"
-    label="Password"
+    :label="t('auth.formFields.passwordLabel')"
     prop="password"
     type="password"
-    placeholder="Enter your password (6-15 characters)"
+    :placeholder="t('auth.formFields.passwordPlaceholder')"
     :show-password="true"
     :maxlength="15"
     @update:modelValue="updateField('password', $event)"
@@ -41,7 +41,10 @@
 </template>
 
 <script setup>
+import { useI18n } from 'vue-i18n'
 import { GenericInputField } from '@/components/generic-components'
+
+const { t } = useI18n()
 
 const props = defineProps({
   mode: { type: String, required: true },

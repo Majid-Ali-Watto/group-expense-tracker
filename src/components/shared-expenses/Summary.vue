@@ -5,7 +5,7 @@
     <el-collapse-item name="expense-summary">
       <template #title>
         <span class="font-semibold text-sm lg:text-base px-2"
-          >Expense Summary</span
+          >{{ t('sharedExpenses.expenseSummary') }}</span
         >
       </template>
 
@@ -16,12 +16,12 @@
           :column="isMobileScreen ? 1 : 2"
           :border="true"
         >
-          <el-descriptions-item label="Total Spent">
+          <el-descriptions-item :label="t('sharedExpenses.totalSpent')">
             {{ formatAmount(totalSpent) }}
           </el-descriptions-item>
           <el-descriptions-item
             v-if="!hasCustomSplits"
-            label="Average Per Person"
+            :label="t('sharedExpenses.averagePerPerson')"
           >
             {{ formatAmount(averageSpent) }}
           </el-descriptions-item>
@@ -29,13 +29,13 @@
             <el-descriptions-item
               v-for="(person, i) in perPersonOwed"
               :key="i"
-              :label="`${person.name}'s Expense`"
+              :label="t('sharedExpenses.personExpense', { name: person.name })"
             >
               {{ formatAmount(person.amount) }}
             </el-descriptions-item>
           </template>
           <template v-for="(friend, index) in friendTotals" :key="index">
-            <el-descriptions-item :label="`${friend.name} Paid`">
+            <el-descriptions-item :label="t('sharedExpenses.personPaid', { name: friend.name })">
               {{ formatAmount(friend.total) }}
             </el-descriptions-item>
           </template>
@@ -47,12 +47,12 @@
           class="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2"
         >
           <div class="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
-            <DonutChart title="Who Paid" :segments="chartPayerSegments" />
+            <DonutChart :title="t('sharedExpenses.whoPaid')" :segments="chartPayerSegments" />
           </div>
           <div class="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
             <BarChart
               :title="
-                hasCustomSplits ? 'Each Person Pays' : 'Amount Paid per Person'
+                hasCustomSplits ? t('sharedExpenses.eachPersonPays') : t('sharedExpenses.amountPaidPerPerson')
               "
               :items="chartBarItems"
             />
@@ -89,7 +89,7 @@
               letter-spacing: 0.04em;
             "
           >
-            Expense Summary
+            {{ t('sharedExpenses.expenseSummary') }}
           </th>
         </tr>
       </thead>
@@ -107,7 +107,7 @@
               width: 40%;
             "
           >
-            Total Spent
+            {{ t('sharedExpenses.totalSpent') }}
           </th>
           <td
             style="
@@ -133,7 +133,7 @@
               text-align: left;
             "
           >
-            Average Per Person
+            {{ t('sharedExpenses.averagePerPerson') }}
           </th>
           <td
             style="
@@ -160,7 +160,7 @@
                 text-align: left;
               "
             >
-              {{ person.name }}'s Expense
+              {{ t('sharedExpenses.personExpense', { name: person.name }) }}
             </th>
             <td
               style="
@@ -187,7 +187,7 @@
               text-align: left;
             "
           >
-            {{ friend.name }} Paid
+            {{ t('sharedExpenses.personPaid', { name: friend.name }) }}
           </th>
           <td
             style="
@@ -208,6 +208,7 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useMobileScreen } from '@/composables'
 import { Summary } from '@/scripts/shared-expenses'
 import { loadAsyncComponent } from '@/utils'
@@ -223,6 +224,7 @@ const props = defineProps({
 })
 
 const activePanel = ref([])
+const { t } = useI18n()
 const { isMobileScreen } = useMobileScreen()
 
 const {

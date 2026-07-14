@@ -5,7 +5,7 @@
     <AddNewTransactionButton
       v-if="!isEditMode"
       :form-open="showForm"
-      text="Want to add a new loan?"
+      :text="t('sharedLoans.newLoan')"
       @click="openForm"
       @close="closeForm"
     />
@@ -16,20 +16,19 @@
         v-if="showForm || isEditMode"
         class="border border-gray-300 rounded-lg p-4"
       >
-        <legend>Loan Details</legend>
+        <legend>{{ t('sharedLoans.loanDetails') }}</legend>
 
         <!-- Warning Alert for Shared Loans -->
         <el-alert
           v-if="!isPersonal && !isEditMode"
           class="mb-4"
-          title="Important Notice"
+          :title="t('common.importantNotice')"
           type="warning"
           :closable="false"
           show-icon
         >
           <template #default>
-            Please verify the loan details carefully. Once added, any changes or
-            deletions will require approval from all group members.
+            {{ t('approval.verifyWarning', { type: t('sharedLoans.loanDetails') }) }}
           </template>
         </el-alert>
 
@@ -48,7 +47,7 @@
               :uploading="receiptUploading"
               :extracting="receiptExtracting"
               :multiple="false"
-              helper-text="Only image files (JPG, PNG, GIF, BMP, WEBP) are allowed. Max size: 1MB per file."
+              :helper-text="t('common.receiptHelperDefault')"
               @files-selected="setSelectedFiles"
               @remove="removeReceipt"
               @extract="extractTextFromReceipt"
@@ -62,11 +61,11 @@
             <el-col :xs="24" :sm="12" :md="12" :lg="12">
               <GenericDropDown
                 v-model="formData.category"
-                label="Category"
+                :label="t('common.category')"
                 :options="categoryOptions"
                 :allow-create="isPersonal"
                 :placeholder="
-                  isPersonal ? 'Add or select category' : 'Select category'
+                  isPersonal ? t('sharedLoans.addOrSelectCategory') : t('common.selectCategory')
                 "
               />
             </el-col>
@@ -77,11 +76,11 @@
               <GenericInput
                 :rows="1"
                 v-model="formData.description"
-                label="Description"
+                :label="t('common.description')"
                 prop="description"
                 required
                 type="textarea"
-                placeholder="Loan details"
+                :placeholder="t('sharedLoans.loanDescription')"
                 :maxlength="200"
                 :autosize="{ minRows: 1, maxRows: 3 }"
               />
@@ -91,7 +90,7 @@
                 v-model="formData.date"
                 required
                 type="date"
-                placeholder="Select date"
+                :placeholder="t('common.selectDate')"
                 format="YYYY-MM-DD"
                 value-format="YYYY-MM-DD"
               />
@@ -106,14 +105,14 @@
                   :disabled="isMeReceiver"
                   size="small"
                   class="absolute top-0 right-0 z-10 text-xs"
-                  >ME?</el-checkbox
+                  >{{ t('common.me') }}</el-checkbox
                 >
                 <GenericDropDown
                   v-model="formData.loanGiver"
-                  label="Loan Giver"
+                  :label="t('sharedLoans.loanGiver')"
                   prop="loanGiver"
                   :options="options"
-                  placeholder="Select loan giver"
+                  :placeholder="t('sharedLoans.selectLoanGiver')"
                   :disabled="isMeGiver"
                   required
                 />
@@ -124,7 +123,7 @@
                   :disabled="isMeReceiver"
                   size="small"
                   class="absolute top-0 right-0 z-10 text-xs"
-                  >ME?</el-checkbox
+                  >{{ t('common.me') }}</el-checkbox
                 >
                 <div v-if="!isMeGiver" class="mb-1">
                   <button
@@ -134,16 +133,16 @@
                   >
                     {{
                       showGiverDropdown
-                        ? 'Hide user selector'
-                        : 'Select from Users'
+                        ? t('sharedLoans.hideUserSelector')
+                        : t('sharedLoans.selectFromUsers')
                     }}
                   </button>
                   <GenericDropDown
                     v-if="showGiverDropdown"
                     v-model="selectedGiverUser"
                     :options="usersForDropdown"
-                    placeholder="Pick a user (optional)"
-                    size="small"
+                    :placeholder="t('sharedLoans.pickUserOptional')"
+                    size="medium"
                     :wrap-form-item="false"
                   />
                 </div>
@@ -151,11 +150,11 @@
                   v-if="!selectedGiverUser"
                   :rows="1"
                   v-model="formData.loanGiverMobile"
-                  label="Loan Giver Mobile"
+                  :label="t('sharedLoans.loanGiverMobile')"
                   prop="loanGiverMobile"
                   required
                   type="textarea"
-                  placeholder="e.g. 03001234567"
+                  :placeholder="t('sharedLoans.mobilePlaceholder')"
                   :maxlength="15"
                   :disabled="isMeGiver"
                   @blur="onGiverMobileBlur"
@@ -164,11 +163,11 @@
                   v-if="!selectedGiverUser"
                   :rows="1"
                   :model-value="formData.loanGiver"
-                  label="Loan Giver"
+                  :label="t('sharedLoans.loanGiverName')"
                   prop="loanGiver"
                   required
                   type="textarea"
-                  placeholder="Loan Giver Name"
+                  :placeholder="t('sharedLoans.giverNamePlaceholder')"
                   :maxlength="50"
                   :disabled="isMeGiver"
                   @update:modelValue="
@@ -188,7 +187,7 @@
                     class="ml-auto text-xs text-red-400 hover:text-red-500"
                     @click="selectedGiverUser = ''"
                   >
-                    ✕ Change
+                    ✕ {{ t('common.change') }}
                   </button>
                 </div>
               </div>
@@ -200,14 +199,14 @@
                   :disabled="isMeGiver"
                   size="small"
                   class="absolute top-0 right-0 z-10 text-xs"
-                  >ME?</el-checkbox
+                  >{{ t('common.me') }}</el-checkbox
                 >
                 <GenericDropDown
                   v-model="formData.loanReceiver"
-                  label="Loan Receiver"
+                  :label="t('sharedLoans.loanReceiver')"
                   prop="loanReceiver"
                   :options="options"
-                  placeholder="Select loan receiver"
+                  :placeholder="t('sharedLoans.selectLoanReceiver')"
                   :disabled="isMeReceiver"
                   required
                 />
@@ -218,7 +217,7 @@
                   :disabled="isMeGiver"
                   size="small"
                   class="absolute top-0 right-0 z-10 text-xs"
-                  >ME?</el-checkbox
+                  >{{ t('common.me') }}</el-checkbox
                 >
                 <div v-if="!isMeReceiver" class="mb-1">
                   <button
@@ -228,16 +227,16 @@
                   >
                     {{
                       showReceiverDropdown
-                        ? 'Hide user selector'
-                        : 'Select from Users'
+                        ? t('sharedLoans.hideUserSelector')
+                        : t('sharedLoans.selectFromUsers')
                     }}
                   </button>
                   <GenericDropDown
                     v-if="showReceiverDropdown"
                     v-model="selectedReceiverUser"
                     :options="usersForDropdown"
-                    placeholder="Pick a user (optional)"
-                    size="small"
+                    :placeholder="t('sharedLoans.pickUserOptional')"
+                    size="medium"
                     :wrap-form-item="false"
                   />
                 </div>
@@ -245,11 +244,11 @@
                   v-if="!selectedReceiverUser"
                   :rows="1"
                   v-model="formData.loanReceiverMobile"
-                  label="Loan Receiver Mobile"
+                  :label="t('sharedLoans.loanReceiverMobile')"
                   prop="loanReceiverMobile"
                   required
                   type="textarea"
-                  placeholder="e.g. 03001234567"
+                  :placeholder="t('sharedLoans.mobilePlaceholder')"
                   :maxlength="15"
                   :disabled="isMeReceiver"
                   @blur="onReceiverMobileBlur"
@@ -258,11 +257,11 @@
                   v-if="!selectedReceiverUser"
                   :rows="1"
                   :model-value="formData.loanReceiver"
-                  label="Loan Receiver"
+                  :label="t('sharedLoans.loanReceiverName')"
                   prop="loanReceiver"
                   required
                   type="textarea"
-                  placeholder="Loan Receiver Name"
+                  :placeholder="t('sharedLoans.receiverNamePlaceholder')"
                   :maxlength="50"
                   :disabled="isMeReceiver"
                   @update:modelValue="
@@ -282,7 +281,7 @@
                     class="ml-auto text-xs text-red-400 hover:text-red-500"
                     @click="selectedReceiverUser = ''"
                   >
-                    ✕ Change
+                    ✕ {{ t('common.change') }}
                   </button>
                 </div>
               </div>
@@ -291,25 +290,25 @@
 
           <div v-if="!isEditMode" class="mb-3">
             <el-checkbox v-model="copyToExpenses" size="small">
-              Also add a copy to Personal Expenses
+              {{ t('sharedLoans.copyToExpenses') }}
             </el-checkbox>
           </div>
           <div v-if="!isEditMode" class="flex justify-end gap-2">
-            <el-button type="default" size="small" @click="handleResetForm">
-              Reset
+            <el-button type="default" size="medium" @click="handleResetForm">
+              {{ t('common.reset') }}
             </el-button>
-            <el-button type="info" plain size="small" @click="closeForm">
-              Cancel
+            <el-button type="info" plain size="medium" @click="closeForm">
+              {{ t('common.cancel') }}
             </el-button>
             <el-button
               v-if="isVisible"
               type="success"
-              size="small"
+              size="medium"
               :loading="receiptUploading || receiptExtracting || isSubmitting"
               :disabled="receiptUploading || receiptExtracting || isSubmitting"
               @click="() => validateForm()"
             >
-              {{ receiptUploading ? 'Uploading...' : 'Add Loan' }}
+              {{ receiptUploading ? t('common.uploading') : t('sharedLoans.addLoan') }}
             </el-button>
           </div>
         </el-form>
@@ -320,6 +319,7 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { rules } from '@/assets'
 import { maskMobile } from '@/utils'
 import {
@@ -333,6 +333,7 @@ import { LoanForm } from '@/scripts/shared-loans'
 import { DB_NODES } from '@/constants'
 import { AddNewTransactionButton } from '@/components/generic-components'
 
+const { t } = useI18n()
 const emit = defineEmits(['closeModal', 'closeForm'])
 const props = defineProps({
   row: Object,

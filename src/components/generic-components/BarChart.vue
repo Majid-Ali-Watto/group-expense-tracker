@@ -15,7 +15,7 @@
       >
         <!-- Label -->
         <span
-          v-overflow-popup="{ title: title || 'Chart Label' }"
+          v-overflow-popup="{ title: title || t('charts.labelFallback') }"
           class="w-24 text-right text-gray-600 dark:text-gray-400 shrink-0 truncate"
           >{{ item.label }}</span
         >
@@ -39,11 +39,14 @@
       </div>
     </div>
   </div>
-  <p v-else class="text-xs text-gray-400 italic">No data to display</p>
+  <p v-else class="text-xs text-gray-400 italic">{{ t('charts.noData') }}</p>
 </template>
 
 <script setup>
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const COLORS = [
   '#3b82f6',

@@ -1,5 +1,6 @@
 import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { database, doc, deleteDoc, updateDoc, deleteField } from '@/firebase'
 import {
   getManageTabsConfig,
@@ -12,6 +13,7 @@ import { confirmAction } from '@/utils/confirmAction'
 import { useAuthStore, useDataStore, useUserStore } from '@/stores'
 
 export const Header = (props, emit, options = {}) => {
+  const { t } = useI18n()
   const route = useRoute()
   const router = useRouter()
   const authStore = useAuthStore()
@@ -40,6 +42,11 @@ export const Header = (props, emit, options = {}) => {
       !props.loggedIn &&
       (route.meta?.publicPage === true || route.meta?.requiresGuest === true)
   )
+  // True for any route that participates in the locale system — the 6
+  // public marketing pages plus /login and /register — used to gate the
+  // language switcher. Plain app routes never set `meta.locale` at all.
+  const hasLocaleVariant = computed(() => route.meta?.locale !== undefined)
+  const currentLocale = computed(() => route.meta?.locale || 'en')
   // True when the user has a stale session: on a protected route but not logged in.
   // This can happen when a Firebase token expires mid-session or after a hard reload
   // with a corrupted auth state. We show a Sign In button so they aren't stuck.
@@ -51,10 +58,10 @@ export const Header = (props, emit, options = {}) => {
 
   async function confirmLogout() {
     const confirmed = await confirmAction({
-      message: 'Are you sure you want to logout?',
-      title: 'Confirm Logout',
-      confirmButtonText: 'Logout',
-      cancelButtonText: 'Stay Logged In',
+      message: t('headerActions.confirmLogoutMessage'),
+      title: t('headerActions.confirmLogoutTitle'),
+      confirmButtonText: t('headerActions.logout'),
+      cancelButtonText: t('headerActions.stayLoggedIn'),
       type: 'info'
     })
     if (confirmed) setLoggedInStatus()
@@ -68,14 +75,13 @@ export const Header = (props, emit, options = {}) => {
     return share(
       {
         title: document.title || 'Kharchafy',
-        text: 'Open this page in Kharchafy.',
+        text: t('layout.shareText'),
         url: window.location.href
       },
       {
-        copySuccessMessage: 'Link copied to clipboard!',
-        manualPromptLabel: 'Copy this link:',
-        manualPromptErrorMessage:
-          'Native share is unavailable, so the link was opened for manual copy.'
+        copySuccessMessage: t('layout.linkCopied'),
+        manualPromptLabel: t('layout.copyThisLink'),
+        manualPromptErrorMessage: t('layout.nativeShareUnavailable')
       }
     )
   }
@@ -118,9 +124,17 @@ export const Header = (props, emit, options = {}) => {
     emit('navigate-to-tab', { tab: notif.tab, groupId: notif.groupId })
   }
 
+  // Login/register are emitted as bare paths by header buttons that don't
+  // know about locales — preserve the current /ur context when navigating
+  // to them so an Urdu marketing/guest page doesn't drop back to English.
   function navigateTo(path) {
-    if (route.path === path) return
-    router.push(path)
+    const target =
+      (path === '/login' || path === '/register') &&
+      route.meta?.locale === 'ur'
+        ? `/ur${path}`
+        : path
+    if (route.path === target) return
+    router.push(target)
   }
 
   return {
@@ -131,8 +145,10 @@ export const Header = (props, emit, options = {}) => {
     canShowManageTabs,
     canShowAdmin,
     isPublicPage,
+    hasLocaleVariant,
+    currentLocale,
     isStuckState,
-    publicNavLinks: PUBLIC_NAV_LINKS,
+    publicNavLinks: computed(() => PUBLIC_NAV_LINKS[currentLocale.value]),
     setLoggedInStatus,
     confirmLogout,
     handleNetPosition,

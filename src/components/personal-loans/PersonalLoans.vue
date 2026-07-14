@@ -22,33 +22,40 @@
           <el-collapse-item name="summary">
             <template #title>
               <span class="font-semibold text-sm lg:text-base px-2"
-                >Loan Summary</span
+                >{{ t('personalLoans.loanSummary') }}</span
               >
             </template>
             <div class="space-y-4 pb-2">
               <el-descriptions :column="isMobileScreen ? 1 : 2" :border="true">
-                <el-descriptions-item label="Total Lent">
+                <el-descriptions-item :label="t('personalLoans.totalLent')">
                   <span class="text-green-500 font-bold">{{
                     formatAmount(totalLending)
                   }}</span>
                 </el-descriptions-item>
-                <el-descriptions-item label="Total Borrowed">
+                <el-descriptions-item :label="t('personalLoans.totalBorrowed')">
                   <span class="text-red-500 font-bold">{{
                     formatAmount(totalDebting)
                   }}</span>
                 </el-descriptions-item>
-                <el-descriptions-item label="Overall Balance">
+                <el-descriptions-item :label="t('personalLoans.overallBalance')">
                   <span
                     :class="
                       netPosition >= 0 ? 'text-green-500' : 'text-red-500'
                     "
                     class="font-bold"
                   >
-                    {{ netPosition >= 0 ? 'Will Receive' : 'Will Pay' }} -
+                    {{
+                      netPosition >= 0
+                        ? t('sharedLoans.willReceive')
+                        : t('sharedLoans.willPay')
+                    }}
+                    -
                     {{ formatAmount(Math.abs(netPosition)) }}
                   </span>
                 </el-descriptions-item>
-                <el-descriptions-item label="Total Transactions">
+                <el-descriptions-item
+                  :label="t('personalLoans.totalTransactions')"
+                >
                   <span class="font-bold">{{ filteredLoans.length }}</span>
                 </el-descriptions-item>
               </el-descriptions>
@@ -61,7 +68,7 @@
                 <!-- Lending vs Debting donut -->
                 <div class="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
                   <DonutChart
-                    title="Lent vs Borrowed"
+                    :title="t('personalLoans.lentVsBorrowed')"
                     :segments="lendingDebtingSegments"
                   />
                 </div>
@@ -69,7 +76,7 @@
                 <!-- Per-person settlement bar -->
                 <div class="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
                   <BarChart
-                    title="Settlement per Person"
+                    :title="t('personalLoans.settlementPerPerson')"
                     :items="settlementBarItems"
                   />
                 </div>
@@ -81,7 +88,7 @@
           <el-collapse-item name="settlements">
             <template #title>
               <span class="font-semibold text-sm lg:text-base px-2"
-                >Who Pays Whom</span
+                >{{ t('personalLoans.whoPaysWhom') }}</span
               >
             </template>
             <BalanceSummaryCard
@@ -92,10 +99,10 @@
         </el-collapse>
 
         <!-- ===== LOANS ===== -->
-        <h2 class="mt-6">Loan Records</h2>
+        <h2 class="mt-6">{{ t('personalLoans.loanRecords') }}</h2>
 
         <Table
-          downloadTitle="Personal_Loans"
+          :downloadTitle="t('personalLoans.personalLoansDownload')"
           :rows="filteredLoans"
           :keys="loanKeys"
           :dataRef="loanContent"
@@ -109,6 +116,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useMobileScreen } from '@/composables'
 import { Table, BalanceSummaryCard, LoadingSkeleton } from '@/components/shared'
 import { FilterBar } from '@/components/generic-components'
@@ -123,6 +131,7 @@ const DonutChart = loadAsyncComponent(
 const BarChart = loadAsyncComponent(
   () => import('../generic-components/BarChart.vue')
 )
+const { t } = useI18n()
 
 const {
   formatAmount,
@@ -154,12 +163,12 @@ const { isMobileScreen } = useMobileScreen()
 
 const lendingDebtingSegments = computed(() => [
   {
-    label: 'You Lent',
+    label: t('personalLoans.youLent'),
     value: totalLending.value,
     formatted: formatAmount(totalLending.value)
   },
   {
-    label: 'You Borrowed',
+    label: t('personalLoans.youBorrowed'),
     value: totalDebting.value,
     formatted: formatAmount(totalDebting.value)
   }
@@ -173,24 +182,24 @@ const settlementBarItems = computed(() =>
   }))
 )
 
-const settlementColumns = [
+const settlementColumns = computed(() => [
   {
     key: 'from',
-    label: 'Pays',
+    label: t('personalLoans.pays'),
     class: 'text-red-500 font-medium'
   },
   {
     key: 'to',
-    label: 'Receives',
+    label: t('personalLoans.receives'),
     class: 'text-green-600 font-medium'
   },
   {
     key: 'amount',
-    label: 'Amount',
+    label: t('common.amount'),
     class: 'text-orange-500 font-bold',
     format: (row) => formatAmount(row.amount)
   }
-]
+])
 </script>
 
 <style scoped>

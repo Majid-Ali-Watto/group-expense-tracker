@@ -3,7 +3,7 @@
     <el-select
       v-model="internalValue"
       :filterable="filterable"
-      :placeholder="placeholder"
+      :placeholder="resolvedPlaceholder"
       :class="selectClass"
       :clearable="clearable"
       :disabled="disabled"
@@ -28,12 +28,15 @@
 
 <script setup>
 import { computed, onErrorCaptured } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 onErrorCaptured((err) => {
   if (err instanceof TypeError && err.message.includes('scrollTop'))
     return false
 })
 import { GenericDropDown } from '@/scripts/shared'
+
+const { t } = useI18n()
 
 const props = defineProps({
   modelValue: {
@@ -50,7 +53,7 @@ const props = defineProps({
   },
   placeholder: {
     type: String,
-    default: 'Select an option'
+    default: ''
   },
   required: {
     type: Boolean,
@@ -86,7 +89,7 @@ const props = defineProps({
   },
   size: {
     type: String,
-    default: 'small'
+    default: 'medium'
   },
   selectClass: {
     type: String,
@@ -125,6 +128,10 @@ const props = defineProps({
 defineEmits(['update:modelValue'])
 
 const { internalValue, getLabel, getValue } = GenericDropDown(props)
+
+const resolvedPlaceholder = computed(
+  () => props.placeholder || t('common.selectOption')
+)
 
 const mappedOptions = computed(
   () =>

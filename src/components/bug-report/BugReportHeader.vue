@@ -5,13 +5,17 @@
     </div>
     <div class="flex-1">
       <h1 class="bug-title">
-        {{ activeView === 'my-reports' ? 'My Reports' : 'Report a Bug' }}
+        {{
+          activeView === 'my-reports'
+            ? t('bugReports.myReports')
+            : t('bugReports.reportBug')
+        }}
       </h1>
       <p class="bug-subtitle">
         {{
           activeView === 'my-reports'
-            ? 'Status updates for your submitted reports'
-            : 'Help us improve Kharchafy by describing what went wrong'
+            ? t('bugReports.statusUpdates')
+            : t('bugReports.improveApp')
         }}
       </p>
     </div>
@@ -22,14 +26,14 @@
         :class="{ 'is-active': activeView === 'form' }"
         @click="$emit('update:activeView', 'form')"
       >
-        New Report
+        {{ t('bugReports.newReport') }}
       </button>
       <button
         class="bug-view-btn"
         :class="{ 'is-active': activeView === 'my-reports' }"
         @click="$emit('update:activeView', 'my-reports')"
       >
-        My Reports
+        {{ t('bugReports.myReports') }}
         <span v-if="reportCount" class="bug-view-count">{{ reportCount }}</span>
       </button>
     </div>
@@ -38,6 +42,9 @@
 
 <script setup>
 import { AlertTriangleIcon } from '@/components/icons'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 defineProps({
   activeView: { type: String, required: true },

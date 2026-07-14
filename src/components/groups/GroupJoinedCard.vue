@@ -22,14 +22,14 @@
           <h3 class="font-semibold text-lg">{{ group.name }}</h3>
           <!-- Pin button — desktop only -->
           <el-button
-            size="small"
+            size="medium"
             text
             class="hidden sm:inline-flex"
-            :title="pinned ? 'Unpin group' : 'Pin to top'"
+            :title="pinned ? t('groups.unpinGroup') : t('groups.pinToTop')"
             :type="pinned ? 'warning' : 'info'"
             @click="$emit('toggle-pin', group.id)"
           >
-            {{ pinned ? '⭐ Pinned' : '☆ Pin' }}
+            {{ pinned ? t('groups.pinnedTag') : t('groups.pinTag') }}
           </el-button>
           <!-- Dropdown menu — mobile -->
           <el-dropdown trigger="click" class="sm:hidden">
@@ -39,11 +39,13 @@
             <template #dropdown>
               <el-dropdown-item @click="$emit('toggle-pin', group.id)">
                 <span :class="pinned ? 'text-orange-500' : ''">
-                  {{ pinned ? '⭐ Unpin' : '☆ Pin' }}
+                  {{ pinned ? t('groups.unpinTag') : t('groups.pinTag') }}
                 </span>
               </el-dropdown-item>
               <el-dropdown-item divided disabled>
-                <span class="text-xs text-gray-400">Actions</span>
+                <span class="text-xs text-gray-400">{{
+                  t('groups.actionsLabel')
+                }}</span>
               </el-dropdown-item>
               <el-dropdown-item
                 v-for="action in actions"
@@ -62,15 +64,18 @@
           class="flex flex-wrap items-center justify-between gap-y-0.5 mt-0.5"
         >
           <p class="text-xs text-gray-500 dark:text-gray-400">
-            Owner: {{ ownerName }} ({{
-              displayMobileForGroup(group.ownerUid, group)
-            }})
+            {{
+              t('groups.ownerLabel', {
+                name: ownerName,
+                mobile: displayMobileForGroup(group.ownerUid, group)
+              })
+            }}
           </p>
           <p
             v-if="group.category"
             class="text-xs text-gray-500 dark:text-gray-400"
           >
-            Category: {{ group.category }}
+            {{ t('groups.categoryInline', { category: group.category }) }}
           </p>
         </div>
       </div>
@@ -123,6 +128,7 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { MoreFilled } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores'
 import {
@@ -158,6 +164,7 @@ const props = defineProps({
 
 defineEmits(['toggle-pin'])
 
+const { t } = useI18n()
 const userStore = useUserStore()
 
 const ownerName = computed(
@@ -170,8 +177,8 @@ const isInteractionBlocked = computed(
 
 const blockedMessage = computed(() =>
   props.group?.blocked === true
-    ? 'This group is blocked by admin. Do not interact with it.'
-    : 'Your account is blocked by admin. Group actions are disabled.'
+    ? t('groups.groupBlockedByAdmin')
+    : t('groups.accountBlockedActionsDisabled')
 )
 </script>
 

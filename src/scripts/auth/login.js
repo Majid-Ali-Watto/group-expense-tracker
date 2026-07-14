@@ -1,6 +1,8 @@
 import { onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { ElMessageBox } from 'element-plus'
+import { stripLocalePrefix } from '@/utils/seo'
 import {
   useFireBase,
   checkForAppUpdate,
@@ -55,6 +57,7 @@ import {
 export const Login = () => {
   const route = useRoute()
   const router = useRouter()
+  const { t } = useI18n()
   const authStore = useAuthStore()
   const groupStore = useGroupStore()
   const userStore = useUserStore()
@@ -79,21 +82,25 @@ export const Login = () => {
   const form = ref(createInitialForm())
 
   const loginForm = ref(null)
-  // Initialize mode from the current URL path
-  const mode = ref(route.path === '/register' ? 'register' : 'login')
+  // Initialize mode from the current URL path (ignoring an optional /ur prefix)
+  const mode = ref(
+    stripLocalePrefix(route.path) === '/register' ? 'register' : 'login'
+  )
 
   // When the URL changes (e.g. browser back/forward), sync the mode
   watch(
     () => route.path,
     (path) => {
-      const next = path === '/register' ? 'register' : 'login'
+      const next = stripLocalePrefix(path) === '/register' ? 'register' : 'login'
       if (mode.value !== next) mode.value = next
     }
   )
 
-  // When user clicks the Login/Register toggle, update the URL to match
+  // When user clicks the Login/Register toggle, update the URL to match,
+  // preserving the current locale prefix (e.g. /ur/login <-> /ur/register)
   watch(mode, (val) => {
-    const target = val === 'register' ? '/register' : '/login'
+    const localePrefix = route.meta?.locale === 'ur' ? '/ur' : ''
+    const target = `${localePrefix}${val === 'register' ? '/register' : '/login'}`
     if (route.path !== target) router.push(target)
   })
 
@@ -159,10 +166,10 @@ export const Login = () => {
       mode.value = 'login'
 
       await ElMessageBox.alert(
-        'Your password has been reset successfully! You can now login with your new code.',
-        'Password Reset Complete',
+        t('authMessages.passwordResetCompleteBody'),
+        t('authMessages.passwordResetCompleteTitle'),
         {
-          confirmButtonText: 'OK',
+          confirmButtonText: t('authMessages.ok'),
           type: 'success'
         }
       )
@@ -212,7 +219,7 @@ export const Login = () => {
     activateUserGroup(payload.uid)
     loadAppConfig() // fire-and-forget: load remote config flags after login
     trackAnalyticsEvent('login', { method: 'password' })
-    showSuccess(message || 'Login successful!')
+    showSuccess(message || t('authMessages.loginSuccessful'))
   }
 
   function resetFeatureSelectionDialog() {
@@ -274,10 +281,9 @@ export const Login = () => {
     try {
       const sel = featureSelection.value
       if (!sel.shared && !sel.personal) {
-        return showError(
-          'Please select at least one feature group — Shared or Personal — to continue.',
-          { duration: 0 }
-        )
+        return showError(t('authMessages.selectFeatureGroup'), {
+          duration: 0
+        })
       }
       if (
         sel.shared &&
@@ -285,24 +291,22 @@ export const Login = () => {
         !sel[USER_TAB_KEYS.SHARED_LOANS] &&
         !sel[USER_TAB_KEYS.USERS]
       ) {
-        return showError(
-          'You selected Shared features but no shared tabs are enabled. Please select at least one shared tab (Shared Expenses, Shared Loans, or Users).',
-          { duration: 0 }
-        )
+        return showError(t('authMessages.sharedNoTabsEnabled'), {
+          duration: 0
+        })
       }
       if (
         sel.personal &&
         !sel[USER_TAB_KEYS.PERSONAL_EXPENSES] &&
         !sel[USER_TAB_KEYS.PERSONAL_LOANS]
       ) {
-        return showError(
-          'You selected Personal features but no personal tabs are enabled. Please select at least one personal tab (Personal Expenses or Personal Loans).',
-          { duration: 0 }
-        )
+        return showError(t('authMessages.personalNoTabsEnabled'), {
+          duration: 0
+        })
       }
       const userTabConfig = buildUserTabConfig(sel)
       if (!hasEnabledUserTabs(userTabConfig)) {
-        return showError('Select at least one actual tab to continue.')
+        return showError(t('authMessages.selectAtLeastOneTab'))
       }
       const { uid, name, mobile, email, password, existingTabConfig } =
         pendingLoginContext.value
@@ -316,17 +320,21 @@ export const Login = () => {
       })
 
       featureSelectionDialogVisible.value = false
-      await completeLogin(
-        { uid, name, mobile, email, password, userTabConfig: payload },
-        'Login successful!'
-      )
+      await completeLogin({
+        uid,
+        name,
+        mobile,
+        email,
+        password,
+        userTabConfig: payload
+      })
       pendingLoginContext.value = null
     } catch (error) {
       console.error('Failed to save initial tab selection:', error)
       showError(
         error?.code === 'permission-denied'
-          ? 'You do not have permission to save tab settings.'
-          : error?.message || 'Failed to save tab settings.'
+          ? t('authMessages.noPermissionSaveTabs')
+          : error?.message || t('authMessages.saveTabSettingsFailed')
       )
     } finally {
       isSavingFeatureSelection.value = false
@@ -350,14 +358,14 @@ export const Login = () => {
     const minutesLocked = isLoginLocked()
     if (minutesLocked) {
       return showError(
-        `Too many failed attempts. Try again in ${minutesLocked} minute(s).`
+        t('authMessages.tooManyFailedAttempts', { minutes: minutesLocked })
       )
     }
 
     try {
       await loginForm.value.validate()
     } catch {
-      return showError('Please fill in all required fields correctly')
+      return showError(t('authMessages.fillRequiredFields'))
     }
 
     isSubmitting.value = true
@@ -382,15 +390,15 @@ export const Login = () => {
     const mobileValue = mobile.trim()
 
     if (!normalizedName || !mobileValue || !emailValue || !password) {
-      return showError('All fields are required for registration')
+      return showError(t('authMessages.allFieldsRequired'))
     }
 
     if (!validateEmail(emailValue)) {
-      return showError('Please enter a valid email address')
+      return showError(t('authMessages.invalidEmail'))
     }
 
     if (password.length < 6 || password.length > 15) {
-      return showError('Password must be between 6 and 15 characters')
+      return showError(t('authMessages.passwordLength'))
     }
 
     try {
@@ -407,7 +415,7 @@ export const Login = () => {
       if (existingUserByMobile) {
         // Mobile taken — roll back the Auth user we just created
         await userCredential.user.delete()
-        return showError('An account with this mobile number already exists')
+        return showError(t('authMessages.mobileExists'))
       }
 
       // Update profile with display name
@@ -416,9 +424,11 @@ export const Login = () => {
       })
 
       // Send email verification — always redirect to /login after verification,
-      // not the current path (which may be /register).
+      // not the current path (which may be /register). Preserve the current
+      // locale prefix so the post-verification redirect stays in Urdu.
+      const localePrefix = route.meta?.locale === 'ur' ? '/ur' : ''
       const actionCodeSettings = {
-        url: `${window.location.origin}/login`,
+        url: `${window.location.origin}${localePrefix}/login`,
         handleCodeInApp: false
       }
 
@@ -455,10 +465,10 @@ export const Login = () => {
       lastRegisteredEmail.value = emailValue
 
       await ElMessageBox.alert(
-        `Account created successfully!<br><br>A verification email has been sent to <strong>${emailValue}</strong>.<br><br><strong>Important:</strong> You must verify your email within 48 hours by clicking the link in the email. After verification, you can login.<br><br>If you don't receive the email, please check your <strong>spam or junk folder</strong>.<br><br>If you don't verify within 48 hours, you may need to contact support to complete registration.`,
-        'Registration Successful - Verify Your Email',
+        t('authMessages.registrationSuccessBody', { email: emailValue }),
+        t('authMessages.registrationSuccessTitle'),
         {
-          confirmButtonText: 'OK',
+          confirmButtonText: t('authMessages.ok'),
           type: 'success',
           dangerouslyUseHTMLString: true
         }
@@ -482,15 +492,13 @@ export const Login = () => {
       }
 
       if (error.code === 'auth/email-already-in-use') {
-        showError(
-          "This email is already registered. If you registered recently but haven't verified, check your email for the verification link. If the email doesn't belong to you or you need help, please contact support."
-        )
+        showError(t('authMessages.emailAlreadyRegistered'))
       } else if (error.code === 'auth/weak-password') {
-        showError('Password is too weak. Please use at least 6 characters.')
+        showError(t('authMessages.weakPassword'))
       } else if (error.code === 'auth/invalid-email') {
-        showError('Invalid email format')
+        showError(t('authMessages.invalidEmailFormat'))
       } else {
-        showError(error.message || 'Registration failed. Please try again.')
+        showError(error.message || t('authMessages.registrationFailed'))
       }
     }
   }
@@ -503,18 +511,16 @@ export const Login = () => {
     const emailValue = email.trim().toLowerCase()
 
     if (!emailValue || !password) {
-      return showError('Email and password are required')
+      return showError(t('authMessages.emailPasswordRequired'))
     }
 
     if (!validateEmail(emailValue)) {
-      return showError('Please enter a valid email address')
+      return showError(t('authMessages.invalidEmail'))
     }
 
     const signInMethods = await getSignInMethods(emailValue)
     if (isGoogleOnlyAccount(signInMethods)) {
-      return showError(
-        `This account was created with Continue with Google. Please sign in using Google instead of email and password.\nOR\n If you want to use email and password, please reset your password to set it up first.`
-      )
+      return showError(t('authMessages.googleOnlyAccount'))
     }
 
     try {
@@ -538,16 +544,12 @@ export const Login = () => {
       if (!userCredential.user.emailVerified) {
         lastRegisteredEmail.value = emailValue
         showResendVerification.value = true
-        return showError(
-          'Your email is not verified. Please check your inbox and click the verification link. Use "Resend Verification Email" if needed.'
-        )
+        return showError(t('authMessages.emailNotVerified'))
       }
 
       const resolvedUser = await resolveUserFromAuth(userCredential.user)
       if (!resolvedUser) {
-        return showError(
-          'No account found with this email. Please register first or check your email address.'
-        )
+        return showError(t('authMessages.noAccountFound'))
       }
 
       // Hide resend verification option on successful login
@@ -568,24 +570,21 @@ export const Login = () => {
       }
 
       // Complete login
-      await completeLogin(
-        {
-          name: resolvedUser.name,
-          mobile: resolvedUser.mobile,
-          email: resolvedUser.email,
-          photoUrl: resolvedUser.photoUrl || '',
-          photoMeta: resolvedUser.photoMeta || null,
-          uid: resolvedUser.uid,
-          emailVerified: true,
-          blocked: resolvedUser.blocked === true,
-          billedUser: resolvedUser.billedUser === true,
-          bugResolver: resolvedUser.bugResolver === true,
-          isAdmin: resolvedUser.isAdmin === true,
-          password,
-          userTabConfig: tabConfigDoc
-        },
-        'Login successful!'
-      )
+      await completeLogin({
+        name: resolvedUser.name,
+        mobile: resolvedUser.mobile,
+        email: resolvedUser.email,
+        photoUrl: resolvedUser.photoUrl || '',
+        photoMeta: resolvedUser.photoMeta || null,
+        uid: resolvedUser.uid,
+        emailVerified: true,
+        blocked: resolvedUser.blocked === true,
+        billedUser: resolvedUser.billedUser === true,
+        bugResolver: resolvedUser.bugResolver === true,
+        isAdmin: resolvedUser.isAdmin === true,
+        password,
+        userTabConfig: tabConfigDoc
+      })
     } catch (error) {
       console.error('Login error:', error)
       recordFailedAttempt()
@@ -600,13 +599,13 @@ export const Login = () => {
         const left = MAX_ATTEMPTS - count
         showError(
           left > 0
-            ? `Incorrect email or password. ${left} attempt(s) remaining. If you don't have an account, please register first.`
-            : "Incorrect email or password. If you don't have an account, please register first."
+            ? t('authMessages.incorrectCredentialsWithAttempts', { left })
+            : t('authMessages.incorrectCredentials')
         )
       } else if (error.code === 'auth/too-many-requests') {
-        showError('Too many failed attempts. Please try again later.')
+        showError(t('authMessages.tooManyFailedLoginAttempts'))
       } else {
-        showError(error.message || 'Login failed. Please try again.')
+        showError(error.message || t('authMessages.loginFailed'))
       }
     }
   }
@@ -618,7 +617,7 @@ export const Login = () => {
       lastRegisteredEmail.value || form.value.email.trim().toLowerCase()
 
     if (!email) {
-      return showError('Email address not found. Please enter your email.')
+      return showError(t('authMessages.emailNotFound'))
     }
 
     try {
@@ -629,32 +628,27 @@ export const Login = () => {
         form.value.password
       )
 
+      const localePrefix = route.meta?.locale === 'ur' ? '/ur' : ''
       const actionCodeSettings = {
-        url: `${window.location.origin}/login`,
+        url: `${window.location.origin}${localePrefix}/login`,
         handleCodeInApp: false
       }
 
       await sendEmailVerification(userCredential.user, actionCodeSettings)
 
-      showSuccess(
-        `Verification email has been resent to ${email}. Please check your inbox.`
-      )
+      showSuccess(t('authMessages.verificationResent', { email }))
     } catch (error) {
       console.error('Error resending verification email:', error)
 
       if (error.code === 'auth/too-many-requests') {
-        showError(
-          'Too many requests. Please wait a few minutes before trying again.'
-        )
+        showError(t('authMessages.tooManyRequestsWait'))
       } else if (
         error.code === 'auth/wrong-password' ||
         error.code === 'auth/invalid-credential'
       ) {
-        showError(
-          'Incorrect password. Please enter your correct password to resend verification.'
-        )
+        showError(t('authMessages.incorrectPasswordResend'))
       } else {
-        showError(error.message || 'Failed to resend verification email.')
+        showError(error.message || t('authMessages.resendFailed'))
       }
     }
   }
@@ -668,11 +662,11 @@ export const Login = () => {
     const email = resetEmail.value?.trim() || ''
 
     if (!email) {
-      return showError('Please enter your email address')
+      return showError(t('authMessages.enterEmailAddress'))
     }
 
     if (!validateEmail(email)) {
-      return showError('Please enter a valid email address')
+      return showError(t('authMessages.invalidEmail'))
     }
 
     isEmailResetLoading.value = true
@@ -693,10 +687,10 @@ export const Login = () => {
       resetEmail.value = ''
 
       await ElMessageBox.alert(
-        `A password reset link has been sent to <strong>${email}</strong>.<br><br>Click the link in your email to reset your password on the secure Firebase page. You'll be redirected back to this page when done.`,
-        'Reset Email Sent',
+        t('authMessages.resetEmailSentBody', { email }),
+        t('authMessages.resetEmailSentTitle'),
         {
-          confirmButtonText: 'OK',
+          confirmButtonText: t('authMessages.ok'),
           type: 'success',
           dangerouslyUseHTMLString: true
         }
@@ -706,15 +700,13 @@ export const Login = () => {
       console.error('Error sending reset email:', error)
 
       if (error.code === 'auth/user-not-found') {
-        showError('No account found with this email address.')
+        showError(t('authMessages.noAccountForEmail'))
       } else if (error.code === 'auth/invalid-email') {
-        showError('Invalid email address format.')
+        showError(t('authMessages.invalidEmailAddressFormat'))
       } else if (error.code === 'auth/too-many-requests') {
-        showError('Too many requests. Please try again later.')
+        showError(t('authMessages.tooManyRequests'))
       } else {
-        showError(
-          error.message || 'Failed to send reset email. Please try again.'
-        )
+        showError(error.message || t('authMessages.resetEmailFailed'))
       }
     }
   }
@@ -739,17 +731,14 @@ export const Login = () => {
           openFeatureSelectionDialog(existingUser, null, tabConfigDoc)
           return
         }
-        await completeLogin(
-          {
-            name: existingUser.name,
-            mobile: existingUser.mobile,
-            email: existingUser.email,
-            uid: existingUser.uid,
-            password: null,
-            userTabConfig: tabConfigDoc
-          },
-          'Login successful!'
-        )
+        await completeLogin({
+          name: existingUser.name,
+          mobile: existingUser.mobile,
+          email: existingUser.email,
+          uid: existingUser.uid,
+          password: null,
+          userTabConfig: tabConfigDoc
+        })
       } else {
         // New Google user — collect mobile number before saving to DB
         googlePendingFirebaseUser.value = firebaseUser
@@ -765,13 +754,11 @@ export const Login = () => {
         return
       }
       if (error.code === 'auth/account-exists-with-different-credential') {
-        showError(
-          'This email is already registered with email and password. Please login using your email and password instead.'
-        )
+        showError(t('authMessages.googleAccountExistsDifferentCred'))
         return
       }
       console.error('Google sign-in error:', error)
-      showError(error.message || 'Google sign-in failed. Please try again.')
+      showError(error.message || t('authMessages.googleSignInFailed'))
     } finally {
       isSubmitting.value = false
     }
@@ -782,16 +769,16 @@ export const Login = () => {
       return
 
     const mobile = googleMobileInput.value.replace(/\D/g, '').trim()
-    if (!mobile) return showError('Please enter your mobile number.')
+    if (!mobile) return showError(t('authMessages.enterMobileNumber'))
     if (mobile.length < 10 || mobile.length > 11) {
-      return showError('Please enter a valid mobile number (10-11 digits).')
+      return showError(t('authMessages.invalidMobileNumber'))
     }
 
     isGoogleMobileSubmitting.value = true
     try {
       const existingByMobile = await findUserByMobile(mobile)
       if (existingByMobile) {
-        return showError('An account with this mobile number already exists.')
+        return showError(t('authMessages.mobileExists'))
       }
 
       const firebaseUser = googlePendingFirebaseUser.value
@@ -818,9 +805,7 @@ export const Login = () => {
       openFeatureSelectionDialog({ uid, name, mobile, email }, null, null)
     } catch (error) {
       console.error('Google mobile submit error:', error)
-      showError(
-        error.message || 'Failed to save your details. Please try again.'
-      )
+      showError(error.message || t('authMessages.saveDetailsFailed'))
     } finally {
       isGoogleMobileSubmitting.value = false
     }

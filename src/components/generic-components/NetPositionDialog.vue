@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="visible"
-    title="Your Expenses Summary"
+    :title="t('netPosition.dialogTitle')"
     :width="isMobile ? '95%' : '600px'"
     append-to-body
     :close-on-click-modal="false"
@@ -11,28 +11,32 @@
     <div v-if="summary" ref="netPositionContent" class="net-position-content">
       <!-- Overall Summary -->
       <div class="section-card">
-        <div class="section-header">Overall Summary</div>
+        <div class="section-header">{{ t('netPosition.overallSummary') }}</div>
         <div class="summary-row">
-          <span class="label">You Will Receive</span>
+          <span class="label">{{ t('netPosition.youWillReceive') }}</span>
           <span class="amount positive">{{
             formatAmount(summary.totalLender)
           }}</span>
         </div>
         <div class="summary-row">
-          <span class="label">You Will Pay</span>
+          <span class="label">{{ t('netPosition.youWillPay') }}</span>
           <span class="amount negative">{{
             formatAmount(summary.totalDebtor)
           }}</span>
         </div>
         <div class="summary-row net-row">
-          <span class="label">Net Position</span>
+          <span class="label">{{ t('netPosition.netPositionLabel') }}</span>
           <span
             class="amount"
             :class="summary.netPosition >= 0 ? 'positive' : 'negative'"
           >
             {{ formatAmount(Math.abs(summary.netPosition)) }}
             <span class="position-label">
-              {{ summary.netPosition >= 0 ? '(You Get)' : '(You Pay)' }}
+              {{
+                summary.netPosition >= 0
+                  ? `(${t('groups.youGet')})`
+                  : `(${t('groups.youPay')})`
+              }}
             </span>
           </span>
         </div>
@@ -50,21 +54,21 @@
         v-if="summary.includedSections?.sharedExpenses !== false"
         class="section-card"
       >
-        <div class="section-header">Shared Expenses</div>
+        <div class="section-header">{{ t('groups.sharedExpensesLabel') }}</div>
         <div class="summary-row">
-          <span class="label">You Will Receive:</span>
+          <span class="label">{{ t('netPosition.receiveColon') }}</span>
           <span class="amount positive">{{
             formatAmount(summary.sharedExpenses.lenderAmount)
           }}</span>
         </div>
         <div class="summary-row">
-          <span class="label">You Will Pay:</span>
+          <span class="label">{{ t('netPosition.payColon') }}</span>
           <span class="amount negative">{{
             formatAmount(summary.sharedExpenses.debtorAmount)
           }}</span>
         </div>
         <div class="summary-row net-row">
-          <span class="label">Net for Shared Expenses:</span>
+          <span class="label">{{ t('netPosition.netForSharedExpenses') }}</span>
           <span
             class="amount"
             :class="
@@ -88,8 +92,8 @@
                 summary.sharedExpenses.lenderAmount -
                   summary.sharedExpenses.debtorAmount >=
                 0
-                  ? '(You Get)'
-                  : '(You Pay)'
+                  ? `(${t('groups.youGet')})`
+                  : `(${t('groups.youPay')})`
               }}
             </span>
           </span>
@@ -101,21 +105,21 @@
         v-if="summary.includedSections?.sharedLoans !== false"
         class="section-card"
       >
-        <div class="section-header">Shared Loans</div>
+        <div class="section-header">{{ t('groups.sharedLoansLabel') }}</div>
         <div class="summary-row">
-          <span class="label">You Lent:</span>
+          <span class="label">{{ t('personalLoans.youLent') }}:</span>
           <span class="amount positive">{{
             formatAmount(summary.sharedLoans.lenderAmount)
           }}</span>
         </div>
         <div class="summary-row">
-          <span class="label">You Borrowed:</span>
+          <span class="label">{{ t('personalLoans.youBorrowed') }}:</span>
           <span class="amount negative">{{
             formatAmount(summary.sharedLoans.debtorAmount)
           }}</span>
         </div>
         <div class="summary-row net-row">
-          <span class="label">Net for Shared Loans:</span>
+          <span class="label">{{ t('netPosition.netForSharedLoans') }}</span>
           <span
             class="amount"
             :class="
@@ -139,8 +143,8 @@
                 summary.sharedLoans.lenderAmount -
                   summary.sharedLoans.debtorAmount >=
                 0
-                  ? '(You Get)'
-                  : '(You Pay)'
+                  ? `(${t('groups.youGet')})`
+                  : `(${t('groups.youPay')})`
               }}
             </span>
           </span>
@@ -152,21 +156,21 @@
         v-if="summary.includedSections?.personalLoans !== false"
         class="section-card"
       >
-        <div class="section-header">Personal Loans</div>
+        <div class="section-header">{{ t('tabs.personalLoans') }}</div>
         <div class="summary-row">
-          <span class="label">You Lent:</span>
+          <span class="label">{{ t('personalLoans.youLent') }}:</span>
           <span class="amount positive">{{
             formatAmount(summary.personalLoans.lenderAmount)
           }}</span>
         </div>
         <div class="summary-row">
-          <span class="label">You Borrowed:</span>
+          <span class="label">{{ t('personalLoans.youBorrowed') }}:</span>
           <span class="amount negative">{{
             formatAmount(summary.personalLoans.debtorAmount)
           }}</span>
         </div>
         <div class="summary-row net-row">
-          <span class="label">Net for Personal Loans:</span>
+          <span class="label">{{ t('netPosition.netForPersonalLoans') }}</span>
           <span
             class="amount"
             :class="
@@ -190,8 +194,8 @@
                 summary.personalLoans.lenderAmount -
                   summary.personalLoans.debtorAmount >=
                 0
-                  ? '(You Get)'
-                  : '(You Pay)'
+                  ? `(${t('groups.youGet')})`
+                  : `(${t('groups.youPay')})`
               }}
             </span>
           </span>
@@ -203,25 +207,25 @@
         v-if="summary.totalLender + summary.totalDebtor > 0"
         class="section-card"
       >
-        <div class="section-header">Category Breakdown</div>
+        <div class="section-header">{{ t('netPosition.categoryBreakdown') }}</div>
         <BarChart
-          title="To Receive (↑) vs To Pay (↓) per Category"
+          :title="t('netPosition.categoryChartTitle')"
           :items="categoryBarItems"
         />
       </div>
     </div>
 
     <template #footer>
-      <GenericButton type="default" size="small" @click="handleClose"
-        >Close</GenericButton
+      <GenericButton type="default" size="medium" @click="handleClose"
+        >{{ t('common.close') }}</GenericButton
       >
       <GenericButton
         type="success"
-        size="small"
+        size="medium"
         :disabled="!summary"
         @click="downloadPdf"
       >
-        Download PDF
+        {{ t('netPosition.downloadPdf') }}
       </GenericButton>
     </template>
   </el-dialog>
@@ -229,10 +233,13 @@
 
 <script setup>
 import { inject } from 'vue'
+import { useI18n } from 'vue-i18n'
 import DonutChart from './DonutChart.vue'
 import BarChart from './BarChart.vue'
 import GenericButton from './GenericButton.vue'
 import { NetPositionDialog } from '@/scripts/generic'
+
+const { t } = useI18n()
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },

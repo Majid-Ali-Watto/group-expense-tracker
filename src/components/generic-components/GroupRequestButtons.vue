@@ -5,7 +5,7 @@
     class="mt-3 pt-3 border-t border-gray-200"
   >
     <div class="text-sm font-medium text-gray-700 mb-2">
-      Join Requests ({{ getJoinRequests(group.id).length }}):
+      {{ t('groups.joinRequestsCount', { count: getJoinRequests(group.id).length }) }}
     </div>
     <div class="space-y-2">
       <div
@@ -20,9 +20,12 @@
         </div>
         <!-- Show approval progress -->
         <div class="text-xs text-gray-600 mb-1">
-          Approvals:
-          {{ getJoinRequestApprovals(group, request.uid).length }} /
-          {{ group.members.length }}
+          {{
+            t('groups.approvalsCount', {
+              approved: getJoinRequestApprovals(group, request.uid).length,
+              total: group.members.length
+            })
+          }}
         </div>
         <div class="flex flex-wrap gap-1 mb-2">
           <el-tag
@@ -48,29 +51,29 @@
           class="flex gap-1"
         >
           <el-button
-            size="small"
+            size="medium"
             type="success"
             @click="approveMemberJoinRequest(group.id, request.uid)"
           >
-            Approve
+            {{ t('common.approve') }}
           </el-button>
           <el-button
-            size="small"
+            size="medium"
             type="danger"
             @click="rejectJoinRequest(group.id, request.uid)"
           >
-            Reject
+            {{ t('common.reject') }}
           </el-button>
         </div>
         <div v-else class="text-xs text-green-700">
-          ✓ You have approved this request
+          {{ t('groups.approvedThisRequest') }}
           <span
             v-if="
               group.ownerUid === authStore.getActiveUserUid &&
               !allMembersApprovedJoinRequest(group, request.uid)
             "
           >
-            - Waiting for all members to approve
+            {{ t('groups.waitingForAllApprove') }}
           </span>
         </div>
       </div>
@@ -83,15 +86,18 @@
     class="mt-3 pt-3 border-t border-red-200 bg-red-50 p-3 rounded"
   >
     <div class="text-sm font-medium text-red-800 mb-2">
-      ⚠️ Group Deletion Request
+      {{ t('groups.groupDeletionRequestTitle') }}
     </div>
     <div class="text-xs text-red-700 mb-2">
-      Owner has requested to delete this group. All members must approve before
-      deletion.
+      {{ t('groups.deletionRequestNotice') }}
     </div>
     <div class="text-sm text-red-700 mb-2">
-      Approvals: {{ getDeleteApprovals(group).length }} /
-      {{ group.members.length }}
+      {{
+        t('groups.approvalsCount', {
+          approved: getDeleteApprovals(group).length,
+          total: group.members.length
+        })
+      }}
     </div>
     <!-- Show who has approved -->
     <div class="flex flex-wrap gap-1 mb-2">
@@ -115,22 +121,22 @@
     <!-- Approve/Reject buttons for current user -->
     <div v-if="!hasUserApprovedDeletion(group)" class="flex gap-2">
       <el-button
-        size="small"
+        size="medium"
         type="success"
         @click="approveGroupDeletion(group.id)"
       >
-        Approve Deletion
+        {{ t('groups.approveDeletion') }}
       </el-button>
       <el-button
-        size="small"
+        size="medium"
         type="danger"
         @click="rejectGroupDeletion(group.id)"
       >
-        Reject Deletion
+        {{ t('groups.rejectDeletion') }}
       </el-button>
     </div>
     <div v-else class="text-xs text-green-700">
-      ✓ You have approved this deletion request
+      {{ t('groups.approvedThisDeletion') }}
     </div>
   </div>
 
@@ -140,20 +146,20 @@
     class="mt-3 pt-3 border-t border-blue-200 bg-blue-50 p-3 rounded"
   >
     <div class="text-sm font-medium text-blue-800 mb-2">
-      📝 Group Edit Request
+      {{ t('groups.groupEditRequestTitle') }}
     </div>
     <div class="text-xs text-blue-700 mb-2">
-      Requested by: {{ formatUser(group.editRequest.requestedBy) }}
+      {{ t('groups.requestedByLabel', { name: formatUser(group.editRequest.requestedBy) }) }}
     </div>
 
     <!-- Show what's changing -->
     <div class="text-xs text-gray-700 mb-2">
       <div v-if="group.name !== group.editRequest.name" class="mb-1">
-        <strong>Name:</strong> {{ group.name }} →
+        <strong>{{ t('groups.nameChangeLabel') }}</strong> {{ group.name }} →
         {{ group.editRequest.name }}
       </div>
       <div v-if="group.editRequest.addedMembers?.length > 0" class="mb-1">
-        <strong>Adding:</strong>
+        <strong>{{ t('groups.addingLabel') }}</strong>
         <span
           v-for="(member, i) in group.editRequest.addedMembers"
           :key="member.uid"
@@ -163,7 +169,7 @@
         </span>
       </div>
       <div v-if="group.editRequest.removedMembers?.length > 0" class="mb-1">
-        <strong>Removing:</strong>
+        <strong>{{ t('groups.removingLabel') }}</strong>
         <span
           v-for="(member, i) in group.editRequest.removedMembers"
           :key="member.uid"
@@ -175,8 +181,12 @@
     </div>
 
     <div class="text-sm text-blue-700 mb-2">
-      Approvals: {{ getEditApprovals(group).length }} /
-      {{ getAllAffectedMembers(group).length }}
+      {{
+        t('groups.approvalsCount', {
+          approved: getEditApprovals(group).length,
+          total: getAllAffectedMembers(group).length
+        })
+      }}
     </div>
     <div class="flex flex-wrap gap-1 mb-2">
       <el-tag
@@ -190,22 +200,22 @@
     </div>
     <div v-if="!hasUserApprovedEditRequest(group)" class="flex gap-2">
       <el-button
-        size="small"
+        size="medium"
         type="success"
         @click="approveEditRequest(group.id)"
       >
-        Approve
+        {{ t('common.approve') }}
       </el-button>
       <el-button
-        size="small"
+        size="medium"
         type="danger"
         @click="rejectEditRequest(group.id)"
       >
-        Reject
+        {{ t('common.reject') }}
       </el-button>
     </div>
     <div v-else class="text-xs text-green-700">
-      ✓ You have approved this edit
+      {{ t('groups.approvedThisEdit') }}
     </div>
   </div>
 
@@ -215,20 +225,24 @@
     class="mt-3 pt-3 border-t border-green-200 bg-green-50 p-3 rounded"
   >
     <div class="text-sm font-medium text-green-800 mb-2">
-      ➕ Add Member Request
+      {{ t('groups.addMemberRequestTitle') }}
     </div>
     <div class="text-xs text-green-700 mb-2">
-      Requested by: {{ formatUser(group.addMemberRequest.requestedBy) }}
+      {{ t('groups.requestedByLabel', { name: formatUser(group.addMemberRequest.requestedBy) }) }}
     </div>
     <div class="text-xs text-gray-700 mb-2">
-      <strong>New Member:</strong>
+      <strong>{{ t('groups.newMemberLabel') }}</strong>
       {{
         formatMember(group.addMemberRequest.newMember, { preferMasked: true })
       }}
     </div>
     <div class="text-sm text-green-700 mb-2">
-      Approvals: {{ getAddMemberRequestApprovals(group).length }} /
-      {{ group.members.length }}
+      {{
+        t('groups.approvalsCount', {
+          approved: getAddMemberRequestApprovals(group).length,
+          total: group.members.length
+        })
+      }}
     </div>
     <div class="flex flex-wrap gap-1 mb-2">
       <el-tag
@@ -244,22 +258,22 @@
     <!-- Non-admin approval/reject -->
     <div v-if="!hasUserApprovedAddMemberRequest(group)" class="flex gap-2">
       <el-button
-        size="small"
+        size="medium"
         type="success"
         @click="approveAddMemberRequest(group.id)"
       >
-        Approve
+        {{ t('common.approve') }}
       </el-button>
       <el-button
-        size="small"
+        size="medium"
         type="danger"
         @click="rejectAddMemberRequest(group.id)"
       >
-        Reject
+        {{ t('common.reject') }}
       </el-button>
     </div>
     <div v-else class="text-xs text-green-700 mb-2">
-      ✓ You have approved this request
+      {{ t('groups.approvedThisAddRequest') }}
     </div>
 
     <!-- Admin finalize button when all approved -->
@@ -272,10 +286,10 @@
     >
       <el-button
         type="primary"
-        size="small"
+        size="medium"
         @click="finalizeAddMember(group.id)"
       >
-        Add Member Now
+        {{ t('groups.addMemberNow') }}
       </el-button>
     </div>
   </div>
@@ -286,39 +300,40 @@
     class="mt-3 pt-3 border-t border-purple-200 bg-purple-50 p-3 rounded"
   >
     <div class="text-sm font-medium text-purple-800 mb-2">
-      👑 Ownership Transfer Request
+      {{ t('groups.ownershipTransferRequestTitle') }}
     </div>
     <div class="text-xs text-purple-700 mb-2">
-      Current ownership:
+      {{ t('groups.currentOwnershipLabel') }}
       {{ formatUser(group.transferOwnershipRequest.requestedBy) }}
     </div>
     <div class="text-xs text-purple-700 mb-2">
-      Transfer ownership to:
+      {{ t('groups.transferOwnershipToLabel') }}
       {{ formatUser(group.transferOwnershipRequest.newOwner) }}
     </div>
     <div class="text-xs text-purple-600 mb-2">
-      Awaiting acceptance from the designated new owner.
+      {{ t('groups.awaitingNewOwnerAcceptance') }}
     </div>
     <div v-if="isCurrentUserPendingOwner(group)" class="flex gap-2">
       <el-button
-        size="small"
+        size="medium"
         type="success"
         @click="approveOwnershipTransfer(group.id)"
       >
-        Accept Ownership
+        {{ t('groups.acceptOwnership') }}
       </el-button>
       <el-button
-        size="small"
+        size="medium"
         type="danger"
         @click="rejectOwnershipTransfer(group.id)"
       >
-        Decline
+        {{ t('groups.declineOwnership') }}
       </el-button>
     </div>
   </div>
 </template>
 
 <script setup>
+import { useI18n } from 'vue-i18n'
 import {
   isMemberOfGroup,
   getJoinRequestApprovals,
@@ -342,8 +357,11 @@ import {
 } from '@/helpers'
 import { formatMemberDisplay, formatUserDisplay } from '@/utils'
 import { useStoreProxy } from '@/composables'
+import { useAuthStore } from '@/stores'
 
+const { t } = useI18n()
 const storeProxy = useStoreProxy()
+const authStore = useAuthStore()
 
 const props = defineProps({
   group: {

@@ -1,17 +1,14 @@
 <template>
   <main class="public-page inner-page">
     <section class="title-section">
-      <p class="eyebrow">Feature overview</p>
-      <h1>Everything Kharchafy can handle in the current app</h1>
-      <p>
-        Kharchafy combines shared expense tracking, shared loans, personal
-        budgeting, and approval-driven collaboration in one product.
-      </p>
+      <p class="eyebrow">{{ t('features.eyebrow') }}</p>
+      <h1>{{ t('features.title') }}</h1>
+      <p>{{ t('features.intro') }}</p>
     </section>
 
     <section class="stacked-grid">
       <article
-        v-for="section in FEATURE_SECTIONS"
+        v-for="section in featureSections"
         :key="section.title"
         class="feature-card"
       >
@@ -25,7 +22,12 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { FEATURE_SECTIONS } from '@/constants'
+
+const { t, locale } = useI18n()
+const featureSections = computed(() => FEATURE_SECTIONS[locale.value])
 </script>
 
 <style scoped>
@@ -87,7 +89,7 @@ h1 {
 
 .feature-card ul {
   margin: 0;
-  padding-left: 18px;
+  padding-inline-start: 18px;
 }
 
 .feature-card li {

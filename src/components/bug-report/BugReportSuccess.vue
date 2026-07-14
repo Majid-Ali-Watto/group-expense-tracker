@@ -1,15 +1,13 @@
 <template>
   <div class="bug-success">
     <CheckIcon class="w-8 h-8 success-icon" />
-    <p class="bug-success-title">Report submitted successfully!</p>
+    <p class="bug-success-title">{{ t('bugReports.reportSubmitted') }}</p>
     <p v-if="bugNumber" class="bug-success-number">
-      Bug Number: <strong>#{{ bugNumber }}</strong>
+      {{ t('bugReports.bugNumber') }} <strong>#{{ bugNumber }}</strong>
     </p>
-    <p class="bug-success-text">
-      Thank you for helping us improve. We'll look into it as soon as possible.
-    </p>
-    <GenericButton type="default" size="small" @click="$emit('reset')"
-      >Submit another report</GenericButton
+    <p class="bug-success-text">{{ t('bugReports.thankYou') }}</p>
+    <GenericButton type="default" size="medium" @click="$emit('reset')"
+      >{{ t('bugReports.submitAnother') }}</GenericButton
     >
   </div>
 </template>
@@ -17,6 +15,9 @@
 <script setup>
 import { GenericButton } from '@/components/generic-components'
 import { CheckIcon } from '@/components/icons'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 defineProps({
   bugNumber: { type: [String, Number], default: null }

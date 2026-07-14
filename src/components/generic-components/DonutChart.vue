@@ -59,11 +59,14 @@
       </div>
     </div>
   </div>
-  <p v-else class="text-xs text-gray-400 italic">No data to display</p>
+  <p v-else class="text-xs text-gray-400 italic">{{ t('charts.noData') }}</p>
 </template>
 
 <script setup>
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const COLORS = [
   '#3b82f6',

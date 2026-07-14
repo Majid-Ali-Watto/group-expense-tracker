@@ -6,7 +6,7 @@
       <AddNewTransactionButton
         v-if="!isEditMode"
         :form-open="showTransactionForm"
-        text="Want to create a new transaction?"
+        :text="t('sharedExpenses.newTransaction')"
         @click="openForm"
         @close="closeForm"
       />
@@ -17,20 +17,19 @@
           v-if="showTransactionForm || isEditMode"
           class="border border-gray-300 rounded-lg p-4"
         >
-          <legend>Transaction Details</legend>
+          <legend>{{ t('sharedExpenses.transactionDetails') }}</legend>
 
           <!-- Warning Alert -->
           <el-alert
             v-if="!isEditMode"
             class="mb-4"
-            title="Important Notice"
+            :title="t('common.importantNotice')"
             type="warning"
             :closable="false"
             show-icon
           >
             <template #default>
-              Please verify the transaction details carefully. Once added, any
-              changes or deletions will require approval from all group members.
+              {{ t('approval.verifyWarning', { type: t('sharedExpenses.transactionDetails') }) }}
             </template>
           </el-alert>
 
@@ -50,8 +49,8 @@
                 :multiple="allowsMultiple"
                 :helper-text="
                   allowsMultiple
-                    ? 'Only image files (JPG, PNG, GIF, BMP, WEBP) are allowed. Max size: 1MB per file. You can upload multiple files.'
-                    : 'Only image files (JPG, PNG, GIF, BMP, WEBP) are allowed. Max size: 1MB per file. Single file only.'
+                    ? t('common.receiptHelperMultiple')
+                    : t('common.receiptHelperSingle')
                 "
                 @files-selected="setSelectedFiles"
                 @remove="removeReceipt"
@@ -66,11 +65,11 @@
                 <!-- Payer Mode Toggle -->
                 <div class="flex items-center justify-between mb-4">
                   <span class="text-sm font-medium text-gray-700"
-                    >Payer Mode</span
+                    >{{ t('sharedExpenses.payerMode') }}</span
                   >
                   <el-radio-group v-model="formData.payerMode" size="small">
-                    <el-radio-button value="single">Single</el-radio-button>
-                    <el-radio-button value="multiple">Multiple</el-radio-button>
+                    <el-radio-button value="single">{{ t('common.single') }}</el-radio-button>
+                    <el-radio-button value="multiple">{{ t('common.multiple') }}</el-radio-button>
                   </el-radio-group>
                 </div>
 
@@ -80,13 +79,13 @@
                     v-model="isMePayer"
                     size="small"
                     class="absolute top-0 right-0 z-10 text-xs"
-                    >ME?</el-checkbox
+                    >{{ t('common.me') }}</el-checkbox
                   >
                   <GenericDropDown
-                    label="Payer"
+                    :label="t('sharedExpenses.payer')"
                     prop="payer"
                     v-model="formData.payer"
-                    placeholder="Select payer"
+                    :placeholder="t('sharedExpenses.selectPayer')"
                     :options="usersOptions"
                     :disabled="isMePayer"
                     required
@@ -97,10 +96,10 @@
                 <div v-else class="space-y-2 mb-4">
                   <div class="flex items-center justify-between">
                     <span class="text-sm font-medium text-gray-700"
-                      >Payers</span
+                      >{{ t('sharedExpenses.payers') }}</span
                     >
-                    <el-button size="small" type="primary" @click="addPayer">
-                      + Add Payer
+                    <el-button size="medium" type="primary" @click="addPayer">
+                      {{ t('sharedExpenses.addPayer') }}
                     </el-button>
                   </div>
 
@@ -113,8 +112,8 @@
                       <GenericDropDown
                         v-model="p.uid"
                         :options="usersOptions"
-                        placeholder="Select payer"
-                        size="small"
+                        :placeholder="t('sharedExpenses.selectPayer')"
+                        size="medium"
                         select-class="w-full"
                         :wrap-form-item="false"
                       />
@@ -128,7 +127,7 @@
                       style="width: 120px; flex-shrink: 0"
                     />
                     <el-button
-                      size="small"
+                      size="medium"
                       type="danger"
                       plain
                       style="flex-shrink: 0; padding: 5px 8px"
@@ -143,7 +142,7 @@
                     v-if="formData.payers.length > 0"
                     class="flex items-center gap-2 text-sm"
                   >
-                    <span class="text-gray-600">Payers total:</span>
+                    <span class="text-gray-600">{{ t('sharedExpenses.payersTotal') }}</span>
                     <span
                       :class="
                         payersTotal === parseFloat(formData.amount || 0)
@@ -159,19 +158,19 @@
                       type="success"
                       size="small"
                     >
-                      Balanced
+                      {{ t('common.balanced') }}
                     </el-tag>
-                    <el-tag v-else type="warning" size="small">Mismatch</el-tag>
+                    <el-tag v-else type="warning" size="small">{{ t('common.mismatch') }}</el-tag>
                   </div>
                 </div>
 
                 <GenericDropDown
                   v-model="formData.participants"
-                  label="Participants"
+                  :label="t('sharedExpenses.participants')"
                   prop="participants"
                   :options="usersOptions"
-                  placeholder="Select participants"
-                  size="small"
+                  :placeholder="t('sharedExpenses.selectParticipants')"
+                  size="medium"
                   multiple
                   disabled
                   required
@@ -181,27 +180,27 @@
               <el-col :xs="24" :sm="12" :md="12" :lg="12">
                 <GenericInput
                   v-model="formData.location"
-                  label="Location"
-                  placeholder="Enter location"
+                  :label="t('common.location')"
+                  :placeholder="t('common.enterLocation')"
                   :maxlength="100"
                 />
                 <GenericDropDown
                   v-model="formData.category"
-                  label="Category"
+                  :label="t('common.category')"
                   prop="category"
                   :options="categoryOptions"
-                  placeholder="Select category"
+                  :placeholder="t('common.selectCategory')"
                   required
                 />
 
                 <GenericInput
                   :rows="1"
                   v-model="formData.description"
-                  label="Description"
+                  :label="t('common.description')"
                   prop="description"
                   required
                   type="textarea"
-                  placeholder="Enter description"
+                  :placeholder="t('common.enterDescription')"
                   :maxlength="200"
                   :autosize="{ minRows: 1, maxRows: 3 }"
                 />
@@ -210,7 +209,7 @@
                   v-model="formData.date"
                   required
                   type="date"
-                  placeholder="Select date"
+                  :placeholder="t('common.selectDate')"
                   format="YYYY-MM-DD"
                   value-format="YYYY-MM-DD"
                 />
@@ -219,10 +218,10 @@
 
             <!-- Split Mode -->
             <div class="flex items-center justify-between mb-4">
-              <span class="text-sm font-medium text-gray-700">Split Mode</span>
+              <span class="text-sm font-medium text-gray-700">{{ t('sharedExpenses.splitMode') }}</span>
               <el-radio-group v-model="formData.splitMode" size="small">
-                <el-radio-button value="equal">Equal</el-radio-button>
-                <el-radio-button value="custom">Custom</el-radio-button>
+                <el-radio-button value="equal">{{ t('common.equal') }}</el-radio-button>
+                <el-radio-button value="custom">{{ t('common.custom') }}</el-radio-button>
               </el-radio-group>
             </div>
             <!-- Custom Split Items -->
@@ -234,29 +233,29 @@
               >
                 <div class="flex items-center justify-between">
                   <span class="text-xs font-medium text-gray-500"
-                    >Item {{ index + 1 }}</span
+                    >{{ t('sharedExpenses.item', { index: index + 1 }) }}</span
                   >
                   <el-button
-                    size="small"
+                    size="medium"
                     type="danger"
                     text
                     @click="removeSplitItem(index)"
                   >
-                    ✕ Remove
+                    ✕ {{ t('common.remove') }}
                   </el-button>
                 </div>
 
                 <div class="flex gap-2 items-end mb-1">
-                  <el-form-item label="Description" class="mb-0 flex-1 min-w-0">
+                  <el-form-item :label="t('sharedExpenses.itemDescription')" class="mb-0 flex-1 min-w-0">
                     <GenericInputField
                       v-model="item.description"
-                      placeholder="e.g. Burger, Cake..."
+                      :placeholder="t('sharedExpenses.itemPlaceholder')"
                       :maxlength="100"
                       :wrap-form-item="false"
                     />
                   </el-form-item>
                   <el-form-item
-                    label="Amount"
+                    :label="t('sharedExpenses.itemAmount')"
                     class="mb-0"
                     style="width: 120px; flex-shrink: 0"
                   >
@@ -270,12 +269,12 @@
                   </el-form-item>
                 </div>
 
-                <el-form-item label="Participants" class="mb-0">
+                <el-form-item :label="t('sharedExpenses.itemParticipants')" class="mb-0">
                   <GenericDropDown
                     v-model="item.participants"
                     :options="usersOptions"
-                    placeholder="Who shared this item?"
-                    size="small"
+                    :placeholder="t('sharedExpenses.whoSharedThisItem')"
+                    size="medium"
                     multiple
                     :wrap-form-item="false"
                   />
@@ -287,7 +286,7 @@
                 v-show="receiptTax != null"
                 class="flex items-center gap-2 border border-dashed border-gray-300 rounded-lg px-3 py-2 bg-gray-50"
               >
-                <span class="text-sm text-gray-600 flex-1">Tax</span>
+                <span class="text-sm text-gray-600 flex-1">{{ t('common.tax') }}</span>
                 <GenericInputNumber
                   v-model="receiptTax"
                   :min="0"
@@ -297,11 +296,11 @@
                   style="width: 120px; flex-shrink: 0"
                 />
                 <el-button
-                  size="small"
+                  size="medium"
                   type="danger"
                   text
                   style="flex-shrink: 0"
-                  title="Remove tax"
+                  :title="t('common.removeTax')"
                   @click="receiptTax = null"
                 >
                   ✕
@@ -314,8 +313,10 @@
                 class="flex items-center gap-2 text-sm"
               >
                 <span class="text-gray-600"
-                  >Items total{{
-                    receiptTax != null && receiptTax > 0 ? ' + tax' : ''
+                  >{{
+                    receiptTax != null && receiptTax > 0
+                      ? t('sharedExpenses.itemsTotalPlusTax')
+                      : t('sharedExpenses.itemsTotal')
                   }}:</span
                 >
                 <span
@@ -333,36 +334,36 @@
                   type="success"
                   size="small"
                 >
-                  Balanced
+                  {{ t('common.balanced') }}
                 </el-tag>
-                <el-tag v-else type="warning" size="small">Mismatch</el-tag>
+                <el-tag v-else type="warning" size="small">{{ t('common.mismatch') }}</el-tag>
               </div>
               <div class="flex items-center justify-between">
                 <span class="text-sm font-semibold text-gray-700"
-                  >Split Items</span
+                  >{{ t('sharedExpenses.splitItems') }}</span
                 >
-                <el-button size="small" type="primary" @click="addSplitItem">
-                  + Add Item
+                <el-button size="medium" type="primary" @click="addSplitItem">
+                  {{ t('sharedExpenses.addItem') }}
                 </el-button>
               </div>
             </div>
 
             <!-- Buttons (only for add mode, not dialog edit mode) -->
             <div v-if="!isEditMode" class="flex justify-end gap-2">
-              <el-button type="default" size="small" @click="resetForm">
-                Reset
+              <el-button type="default" size="medium" @click="resetForm">
+                {{ t('common.reset') }}
               </el-button>
-              <el-button type="info" plain size="small" @click="closeForm">
-                Cancel
+              <el-button type="info" plain size="medium" @click="closeForm">
+                {{ t('common.cancel') }}
               </el-button>
               <el-button
                 type="success"
-                size="small"
+                size="medium"
                 :loading="receiptUploading || isSubmitting"
                 :disabled="receiptUploading || isSubmitting"
                 @click="() => validateForm()"
               >
-                {{ receiptUploading ? 'Uploading...' : 'Add Payment' }}
+                {{ receiptUploading ? t('common.uploading') : t('sharedExpenses.addPayment') }}
               </el-button>
             </div>
           </el-form>
@@ -376,6 +377,7 @@
 </template>
 
 <script setup>
+import { useI18n } from 'vue-i18n'
 import { HOC } from '@/components/layout'
 import { GroupAccessGuard } from '@/components/shared'
 import {
@@ -394,6 +396,7 @@ import { rules } from '@/assets'
 import { SharedExpenses } from '@/scripts/shared-expenses'
 import { loadAsyncComponent } from '@/utils'
 
+const { t } = useI18n()
 const ExpenseList = loadAsyncComponent(() => import('./ExpenseList.vue'))
 const emit = defineEmits(['closeModal'])
 const props = defineProps({

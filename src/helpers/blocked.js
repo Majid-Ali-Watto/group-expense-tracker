@@ -1,5 +1,8 @@
-export const ACTIVE_USER_BLOCKED_MESSAGE =
-  'Your account is blocked by admin. Users and groups are disabled.'
+import i18n from '@/i18n'
+
+export function getActiveUserBlockedMessage() {
+  return i18n.global.t('common.activeUserBlocked')
+}
 
 export function isBlockedRecord(record) {
   return record?.blocked === true
@@ -13,6 +16,14 @@ export function isGroupBlocked(group) {
   return isBlockedRecord(group)
 }
 
+const ENTITY_LABEL_KEYS = {
+  group: 'common.entityGroup',
+  user: 'common.entityUser'
+}
+
 export function getBlockedEntityMessage(entityLabel = 'item') {
-  return `This ${entityLabel} is blocked by admin. Do not interact with it.`
+  const label = ENTITY_LABEL_KEYS[entityLabel]
+    ? i18n.global.t(ENTITY_LABEL_KEYS[entityLabel])
+    : entityLabel
+  return i18n.global.t('common.entityBlocked', { entity: label })
 }

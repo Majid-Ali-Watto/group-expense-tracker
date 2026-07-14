@@ -1,4 +1,5 @@
 import { ref, computed, onMounted, onUnmounted, inject, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ElMessageBox } from 'element-plus'
 import { onSnapshot } from '@/firebase'
 import { getCurrentMonth, showError, showSuccess } from '@/utils'
@@ -7,18 +8,18 @@ import { useAuthStore, useDataStore } from '@/stores'
 import { DB_NODES } from '@/constants'
 
 const MONTH_OPTIONS = [
-  { label: 'January', value: '01' },
-  { label: 'February', value: '02' },
-  { label: 'March', value: '03' },
-  { label: 'April', value: '04' },
-  { label: 'May', value: '05' },
-  { label: 'June', value: '06' },
-  { label: 'July', value: '07' },
-  { label: 'August', value: '08' },
-  { label: 'September', value: '09' },
-  { label: 'October', value: '10' },
-  { label: 'November', value: '11' },
-  { label: 'December', value: '12' }
+  { key: 'january', value: '01' },
+  { key: 'february', value: '02' },
+  { key: 'march', value: '03' },
+  { key: 'april', value: '04' },
+  { key: 'may', value: '05' },
+  { key: 'june', value: '06' },
+  { key: 'july', value: '07' },
+  { key: 'august', value: '08' },
+  { key: 'september', value: '09' },
+  { key: 'october', value: '10' },
+  { key: 'november', value: '11' },
+  { key: 'december', value: '12' }
 ]
 
 function parseMonthKey(monthKey) {
@@ -31,6 +32,7 @@ function parseMonthKey(monthKey) {
 
 export const SalaryForm = () => {
   const formatAmount = inject('formatAmount')
+  const { t } = useI18n()
   const authStore = useAuthStore()
   const dataStore = useDataStore()
   const { read, dbRef, setData, updateData } = useFireBase()
@@ -58,7 +60,12 @@ export const SalaryForm = () => {
   const selectedMonth = computed(
     () => `${selectedYear.value}-${selectedMonthValue.value}`
   )
-  const monthOptions = MONTH_OPTIONS
+  const monthOptions = computed(() =>
+    MONTH_OPTIONS.map((option) => ({
+      label: t(`months.${option.key}`),
+      value: option.value
+    }))
+  )
   const yearOptions = computed(() => {
     const currentYear = new Date().getFullYear()
     const years = []
@@ -107,9 +114,9 @@ export const SalaryForm = () => {
         { salary: form.value.salary, month: selectedMonth.value }
       )
       form.value.salary = null
-      showSuccess('Salary added successfully!')
+      showSuccess(t('personalExpenses.salaryAdded'))
     } catch {
-      showError('Failed to add salary. Please try again.')
+      showError(t('personalExpenses.salaryAddFailed'))
     } finally {
       isSubmitting.value = false
     }
@@ -122,11 +129,11 @@ export const SalaryForm = () => {
 
     try {
       await ElMessageBox.confirm(
-        'Are you sure to update Salary. Continue?',
-        'Warning',
+        t('personalExpenses.salaryUpdateConfirm'),
+        t('common.warning'),
         {
-          confirmButtonText: 'OK',
-          cancelButtonText: 'Cancel',
+          confirmButtonText: t('common.ok'),
+          cancelButtonText: t('common.cancel'),
           type: 'warning'
         }
       )
@@ -140,15 +147,15 @@ export const SalaryForm = () => {
         await updateData(
           `${DB_NODES.SALARIES}/${activeUserUid.value}/months/${selectedMonth.value}`,
           () => ({ salary: form.value.salary, month: selectedMonth.value }),
-          'Salary updated successfully!'
+          t('personalExpenses.salaryUpdated')
         )
         form.value.salary = null
       } else {
-        throw new Error('No existing salary to update for this month.')
+        throw new Error(t('personalExpenses.noSalaryToUpdate'))
       }
     } catch (error) {
       if (error !== 'cancel') {
-        showError(error.message || 'An unexpected error occurred.')
+        showError(error.message || t('personalExpenses.unexpectedError'))
       }
     } finally {
       isSubmitting.value = false
@@ -181,7 +188,7 @@ export const SalaryForm = () => {
       },
       (error) => {
         if (error?.code !== 'permission-denied') {
-          showError('Failed to load salary data. Please try again.')
+          showError(t('personalExpenses.failedLoadSalaryData'))
         }
         console.error('Salary listener error:', error)
       }

@@ -4,7 +4,7 @@
       <el-button
         v-for="action in actions"
         :key="action.label"
-        size="small"
+        size="medium"
         :type="action.type"
         :disabled="action.disabled"
         @click="action.onClick"

@@ -1,19 +1,21 @@
 <template>
   <div>
     <div class="flex items-center justify-between mb-2">
-      <span class="text-sm font-semibold text-gray-700">Filters</span>
+      <span class="text-sm font-semibold text-gray-700">{{
+        t('filterBar.title')
+      }}</span>
       <div class="flex items-center gap-2">
         <button
           v-show="showFilters || !isMobileScreen"
           class="clear-filter-link"
           @click="$emit('clear')"
         >
-          Clear
+          {{ t('common.clear') }}
         </button>
         <el-button
           circle
           :type="showFilters ? 'danger' : 'primary'"
-          size="small"
+          size="medium"
           class="sm:hidden"
           :icon="showFilters ? Close : Filter"
           @click="showFilters = !showFilters"
@@ -34,7 +36,7 @@
             :options="field.options"
             :filterable="field.filterable !== false"
             :label-position="isMobileScreen ? 'top' : undefined"
-            size="small"
+            size="medium"
             @update:model-value="field.onChange"
           />
         </div>
@@ -45,6 +47,7 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Filter, Close } from '@element-plus/icons-vue'
 import { useMobileScreen } from '@/composables'
 import GenericDropDown from './GenericDropDown.vue'
@@ -55,6 +58,7 @@ defineProps({
 
 defineEmits(['clear'])
 
+const { t } = useI18n()
 const showFilters = ref(false)
 const { isMobileScreen } = useMobileScreen()
 </script>

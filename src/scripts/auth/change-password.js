@@ -1,4 +1,5 @@
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import {
   auth,
   updatePassword,
@@ -9,6 +10,7 @@ import { useAuthStore } from '@/stores'
 import { showError, showSuccess } from '@/utils'
 
 export const ChangePassword = () => {
+  const { t } = useI18n()
   const authStore = useAuthStore()
 
   const dialogVisible = ref(true)
@@ -26,29 +28,33 @@ export const ChangePassword = () => {
     currentPassword: [
       {
         required: true,
-        message: 'Current password is required',
+        message: t('authMessages.changePasswordCurrentRequired'),
         trigger: 'blur'
       }
     ],
     newPassword: [
-      { required: true, message: 'New password is required', trigger: 'blur' },
+      {
+        required: true,
+        message: t('authMessages.changePasswordNewRequired'),
+        trigger: 'blur'
+      },
       {
         min: 6,
         max: 15,
-        message: 'Password must be between 6 and 15 characters',
+        message: t('authMessages.passwordLength'),
         trigger: 'blur'
       }
     ],
     confirmPassword: [
       {
         required: true,
-        message: 'Please confirm your new password',
+        message: t('authMessages.changePasswordConfirmRequired'),
         trigger: 'blur'
       },
       {
         validator: (_, value, callback) => {
           if (value !== form.value.newPassword) {
-            callback(new Error('Passwords do not match'))
+            callback(new Error(t('authMessages.changePasswordMismatch')))
           } else {
             callback()
           }
@@ -80,13 +86,11 @@ export const ChangePassword = () => {
 
     const user = auth.currentUser
     if (!user || !user.email) {
-      return showError('No authenticated user found. Please log in again.')
+      return showError(t('authMessages.noAuthenticatedUser'))
     }
 
     if (form.value.newPassword === form.value.currentPassword) {
-      return showError(
-        'New password must be different from your current password.'
-      )
+      return showError(t('authMessages.changePasswordSameAsCurrent'))
     }
 
     isSubmitting.value = true
@@ -101,24 +105,20 @@ export const ChangePassword = () => {
       // Keep the stored password in sync so session remains valid
       authStore.setActivePassword(form.value.newPassword)
 
-      showSuccess('Password changed successfully!')
+      showSuccess(t('authMessages.changePasswordSuccess'))
       closeDialog()
     } catch (error) {
       if (
         error.code === 'auth/wrong-password' ||
         error.code === 'auth/invalid-credential'
       ) {
-        showError('Current password is incorrect.')
+        showError(t('authMessages.changePasswordIncorrect'))
       } else if (error.code === 'auth/too-many-requests') {
-        showError('Too many attempts. Please try again later.')
+        showError(t('authMessages.tooManyRequests'))
       } else if (error.code === 'auth/requires-recent-login') {
-        showError(
-          'Session expired. Please log out and log back in before changing your password.'
-        )
+        showError(t('authMessages.changePasswordSessionExpired'))
       } else {
-        showError(
-          error.message || 'Failed to change password. Please try again.'
-        )
+        showError(error.message || t('authMessages.changePasswordFailed'))
       }
     } finally {
       isSubmitting.value = false

@@ -1,4 +1,5 @@
 import { computed, inject, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore, useGroupStore, useUserStore } from '@/stores'
 import { useFireBase } from '@/composables'
 import { showError, showSuccess } from '@/utils'
@@ -8,6 +9,7 @@ import { DB_NODES } from '@/constants'
 import { database, writeBatch, doc, deleteField } from '@/firebase'
 
 export const Settlement = (props) => {
+  const { t } = useI18n()
   const { updateData } = useFireBase()
   const formatAmount = inject('formatAmount')
   const authStore = useAuthStore()
@@ -74,17 +76,17 @@ export const Settlement = (props) => {
   async function requestSettlement() {
     try {
       await ElMessageBox.confirm(
-        'This will send a settlement request to all group members. All members must approve before settlement can be finalized.',
-        'Request Settlement',
+        t('sharedExpenses.requestSettlementConfirm'),
+        t('sharedExpenses.requestSettlementTitle'),
         {
-          confirmButtonText: 'Send Request',
-          cancelButtonText: 'Cancel',
+          confirmButtonText: t('sharedExpenses.sendRequest'),
+          cancelButtonText: t('common.cancel'),
           type: 'info'
         }
       )
 
       if (!activeGroup.value) {
-        return showError('No active group selected')
+        return showError(t('sharedExpenses.noActiveGroup'))
       }
 
       const uid = authStore.getActiveUserUid
@@ -101,7 +103,7 @@ export const Settlement = (props) => {
       await updateData(
         `${DB_NODES.GROUPS}/${groupId}`,
         () => ({ settlementRequest: newSettlementRequest }),
-        'Settlement request sent successfully'
+        t('sharedExpenses.settlementRequestSent')
       )
     } catch (error) {
       if (error !== 'cancel') showError(error.message || error)
@@ -129,7 +131,7 @@ export const Settlement = (props) => {
         ''
       )
 
-      showSuccess('You have approved the settlement request')
+      showSuccess(t('sharedExpenses.youApprovedSettlementMsg'))
     } catch (error) {
       showError(error.message || error)
     }
@@ -139,11 +141,11 @@ export const Settlement = (props) => {
   async function rejectSettlement() {
     try {
       await ElMessageBox.confirm(
-        'This will cancel the settlement request.',
-        'Reject Settlement Request',
+        t('sharedExpenses.rejectSettlementConfirm'),
+        t('sharedExpenses.rejectSettlementTitle'),
         {
-          confirmButtonText: 'Reject',
-          cancelButtonText: 'Cancel',
+          confirmButtonText: t('sharedExpenses.rejectBtn'),
+          cancelButtonText: t('common.cancel'),
           type: 'warning'
         }
       )
@@ -157,7 +159,7 @@ export const Settlement = (props) => {
         ''
       )
 
-      showSuccess('Settlement request rejected')
+      showSuccess(t('sharedExpenses.settlementRejected'))
     } catch (error) {
       if (error !== 'cancel') showError(error.message || error)
     }
@@ -167,17 +169,15 @@ export const Settlement = (props) => {
   async function addPaymentsBatch() {
     try {
       if (activeGroup.value && !allMembersApprovedSettlement.value) {
-        return showError(
-          'All group members must approve before settlement can be finalized'
-        )
+        return showError(t('sharedExpenses.allMustApproveFirst'))
       }
 
       await ElMessageBox.confirm(
-        'Are you sure to move expenses to backup and finalize settlement?',
-        'Finalize Settlement',
+        t('sharedExpenses.finalizeConfirm'),
+        t('sharedExpenses.finalizeTitle'),
         {
-          confirmButtonText: 'OK',
-          cancelButtonText: 'Cancel',
+          confirmButtonText: t('sharedExpenses.ok'),
+          cancelButtonText: t('common.cancel'),
           type: 'warning'
         }
       )
@@ -237,9 +237,7 @@ export const Settlement = (props) => {
         await batch.commit()
       }
       showSuccess(
-        'Expenses added to Backup successfully! ' +
-          selectedMonth +
-          ' data cleared.'
+        t('sharedExpenses.finalizeSuccess', { month: selectedMonth })
       )
     } catch (error) {
       if (error != 'cancel') showError(error)

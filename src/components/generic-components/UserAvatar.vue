@@ -10,7 +10,7 @@
       <AppImage
         v-if="imageUrl"
         :src="imageUrl"
-        :alt="alt"
+        :alt="resolvedAlt"
         :class="imageClasses"
         :fit="fit"
       />
@@ -32,22 +32,25 @@
     v-if="canPreview"
     v-model="previewVisible"
     :images="previewImages"
-    :title="previewTitle"
+    :title="resolvedPreviewTitle"
     :width="previewWidth"
   />
 </template>
 
 <script setup>
 import { computed, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { UserIcon } from '@/components/icons'
 import AppImage from './AppImage.vue'
 import ImagePreviewDialog from './ImagePreviewDialog.vue'
 
+const { t } = useI18n()
+
 const props = defineProps({
   imageUrl: { type: String, default: '' },
   previewUrl: { type: String, default: '' },
-  alt: { type: String, default: 'Profile' },
-  previewTitle: { type: String, default: 'Profile Photo' },
+  alt: { type: String, default: '' },
+  previewTitle: { type: String, default: '' },
   previewWidth: { type: String, default: 'min(92vw, 560px)' },
   previewOnClick: { type: Boolean, default: false },
   showZoomButton: { type: Boolean, default: false },
@@ -67,6 +70,10 @@ const props = defineProps({
 
 const previewVisible = ref(false)
 
+const resolvedAlt = computed(() => props.alt || t('common.profileAlt'))
+const resolvedPreviewTitle = computed(
+  () => props.previewTitle || t('common.profilePhotoTitle')
+)
 const resolvedPreviewUrl = computed(
   () => props.previewUrl || props.imageUrl || ''
 )
@@ -77,7 +84,12 @@ const canPreviewOnClick = computed(
 const avatarTag = computed(() => (canPreviewOnClick.value ? 'button' : 'div'))
 const previewImages = computed(() =>
   resolvedPreviewUrl.value
-    ? [{ url: resolvedPreviewUrl.value, name: props.previewTitle || props.alt }]
+    ? [
+        {
+          url: resolvedPreviewUrl.value,
+          name: resolvedPreviewTitle.value || resolvedAlt.value
+        }
+      ]
     : []
 )
 const avatarClasses = computed(() => [

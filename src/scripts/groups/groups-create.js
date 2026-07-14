@@ -1,11 +1,13 @@
 import { computed, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore, useGroupStore, useUserStore } from '@/stores'
 import { useFireBase, useUsersOptions } from '@/composables'
 import { showError } from '@/utils'
 import { DB_NODES } from '@/constants'
-import { ACTIVE_USER_BLOCKED_MESSAGE, isUserBlocked } from '@/helpers'
+import { getActiveUserBlockedMessage, isUserBlocked } from '@/helpers'
 
 export const GroupsCreate = (emit, props) => {
+  const { t } = useI18n()
   const MAX_GROUP_MEMBERS = 30
   const authStore = useAuthStore()
   const groupStore = useGroupStore()
@@ -70,19 +72,19 @@ export const GroupsCreate = (emit, props) => {
   async function doCreateGroup() {
     const creatorId = authStore.getActiveUserUid
     if (isUserBlocked(userStore.getUserByUid(creatorId))) {
-      return showError(ACTIVE_USER_BLOCKED_MESSAGE)
+      return showError(getActiveUserBlockedMessage())
     }
 
     groupForm.value.members = ensureCreatorSelected(groupForm.value.members)
 
     if (groupForm.value.members.length > MAX_GROUP_MEMBERS) {
       return showError(
-        `A group can have a maximum of ${MAX_GROUP_MEMBERS} members`
+        t('groupsMessages.maxMembersError', { max: MAX_GROUP_MEMBERS })
       )
     }
 
     if (groupForm.value.members.length < 2) {
-      return showError('At least two members are required to create a group')
+      return showError(t('groupsMessages.atLeastTwoMembersToCreate'))
     }
 
     const newName = groupForm.value.name.trim().toLowerCase()
@@ -93,7 +95,7 @@ export const GroupsCreate = (emit, props) => {
       (g) => g.ownerUid === creatorId && g.name.trim().toLowerCase() === newName
     )
     if (ownerDuplicate) {
-      return showError('You already have a group with this name')
+      return showError(t('groupsMessages.ownerDuplicateNameError'))
     }
 
     // Rule 2: none of the other members (excluding creator) can already be
@@ -112,9 +114,7 @@ export const GroupsCreate = (emit, props) => {
       return otherMembers.some((m) => existingIds.includes(m))
     })
     if (memberConflict) {
-      return showError(
-        'One or more members are already in a group with this name'
-      )
+      return showError(t('groupsMessages.memberConflictNameError'))
     }
 
     const id = Date.now().toString()
@@ -140,7 +140,7 @@ export const GroupsCreate = (emit, props) => {
       await setData(
         `${DB_NODES.GROUPS}/${id}`,
         payload,
-        'Group created — invitations sent to selected members'
+        t('groupsMessages.groupCreatedToast')
       )
       resetCreateForm()
       if (emit) emit('groupCreated', payload)
@@ -170,7 +170,9 @@ export const GroupsCreate = (emit, props) => {
       }
 
       if (exceededLimit) {
-        showError(`Maximum ${MAX_GROUP_MEMBERS} members are allowed in a group`)
+        showError(
+          t('groupsMessages.maxMembersAllowedError', { max: MAX_GROUP_MEMBERS })
+        )
       }
     },
     { deep: true }

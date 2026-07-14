@@ -6,7 +6,9 @@
     <template #dropdown>
       <el-dropdown-menu class="mobile-dropdown-menu">
         <template v-if="loggedIn && tabs.length">
-          <div class="mobile-menu-section-label">Navigation</div>
+          <div class="mobile-menu-section-label">
+            {{ t('headerActions.navigation') }}
+          </div>
           <el-dropdown-item
             v-for="tab in tabs"
             :key="tab"
@@ -19,14 +21,16 @@
               <el-icon class="menu-icon" :size="20"
                 ><component :is="TAB_ICONS[tab] || ChevronRightIcon"
               /></el-icon>
-              <span>{{ tab }}</span>
+              <span>{{ tabLabel(tab) }}</span>
             </div>
           </el-dropdown-item>
           <div class="mobile-menu-divider" />
         </template>
 
         <template v-if="isPublicPage">
-          <div class="mobile-menu-section-label">Explore</div>
+          <div class="mobile-menu-section-label">
+            {{ t('headerActions.explore') }}
+          </div>
           <el-dropdown-item
             v-for="link in publicNavLinks"
             :key="link.to"
@@ -37,7 +41,7 @@
               :class="{ 'is-active-tab': routePath === link.to }"
             >
               <el-icon class="menu-icon" :size="20"
-                ><component :is="NAV_ICONS[link.to] || ChevronRightIcon"
+                ><component :is="navIconFor(link.to)"
               /></el-icon>
               <span>{{ link.label }}</span>
             </div>
@@ -45,34 +49,49 @@
           <el-dropdown-item @click="emit('navigate', '/login')">
             <div class="flex items-center gap-3">
               <el-icon class="menu-icon" :size="20"><SwitchButton /></el-icon>
-              <span>Login</span>
+              <span>{{ t('nav.login') }}</span>
             </div>
           </el-dropdown-item>
           <el-dropdown-item @click="emit('navigate', '/register')">
             <div class="flex items-center gap-3">
               <el-icon class="menu-icon" :size="20"><UserFilled /></el-icon>
-              <span>Create Account</span>
+              <span>{{ t('nav.createAccount') }}</span>
+            </div>
+          </el-dropdown-item>
+          <el-dropdown-item
+            v-if="hasLocaleVariant"
+            @click="emit('navigate', alternateLocalePath)"
+          >
+            <div class="flex items-center gap-3">
+              <span class="menu-icon lang-badge">{{
+                alternateLocaleCode
+              }}</span>
+              <span>{{ alternateLocaleLabel }}</span>
             </div>
           </el-dropdown-item>
           <div class="mobile-menu-divider" />
         </template>
 
         <template v-if="isStuckState">
-          <div class="mobile-menu-section-label">Account</div>
+          <div class="mobile-menu-section-label">
+            {{ t('headerActions.account') }}
+          </div>
           <el-dropdown-item @click="emit('navigate', '/login')">
             <div class="flex items-center gap-3">
               <el-icon class="menu-icon" :size="20"><SwitchButton /></el-icon>
-              <span>Sign In</span>
+              <span>{{ t('headerActions.signIn') }}</span>
             </div>
           </el-dropdown-item>
           <div class="mobile-menu-divider" />
         </template>
 
-        <div class="mobile-menu-section-label">Actions</div>
+        <div class="mobile-menu-section-label">
+          {{ t('headerActions.actions') }}
+        </div>
         <el-dropdown-item v-if="!isPublicPage" @click="emit('open-help')">
           <div class="flex items-center gap-3">
             <QuestionCircleIcon class="w-5 h-5 menu-icon" />
-            <span>Help</span>
+            <span>{{ t('headerActions.help') }}</span>
           </div>
         </el-dropdown-item>
 
@@ -82,38 +101,40 @@
         >
           <div class="flex items-center gap-3">
             <AlertTriangleIcon class="w-5 h-5 menu-icon" />
-            <span>Report a Bug</span>
+            <span>{{ t('headerActions.reportBug') }}</span>
           </div>
         </el-dropdown-item>
 
         <el-dropdown-item @click="emit('share')">
           <div class="flex items-center gap-3">
             <ShareIcon class="w-5 h-5 menu-icon" />
-            <span>Share This Page</span>
+            <span>{{ t('headerActions.shareThisPage') }}</span>
           </div>
         </el-dropdown-item>
         <div class="mobile-menu-divider" />
 
         <template v-if="loggedIn || canShowManageTabs || canShowAdmin">
-          <div class="mobile-menu-section-label">Workspace</div>
+          <div class="mobile-menu-section-label">
+            {{ t('headerActions.workspace') }}
+          </div>
           <el-dropdown-item v-if="loggedIn" @click="emit('open-profile')">
             <div class="flex items-center gap-3">
               <UserAvatar
                 :image-url="activeUserPhotoUrl"
-                alt="Profile"
+                :alt="t('headerActions.profile')"
                 size="xs"
                 variant="profile"
                 icon-size="md"
                 icon-tone="current"
               />
-              <span>Profile</span>
+              <span>{{ t('headerActions.profile') }}</span>
             </div>
           </el-dropdown-item>
 
           <el-dropdown-item v-if="loggedIn" @click="emit('show-net-position')">
             <div class="flex items-center gap-3">
               <el-icon class="menu-icon" :size="20"><DataAnalysis /></el-icon>
-              <span>Expenses Summary</span>
+              <span>{{ t('headerActions.expensesSummary') }}</span>
             </div>
           </el-dropdown-item>
 
@@ -123,7 +144,7 @@
           >
             <div class="flex items-center gap-3">
               <el-icon class="menu-icon" :size="20"><Tools /></el-icon>
-              <span>Admin Config</span>
+              <span>{{ t('headerActions.adminConfig') }}</span>
             </div>
           </el-dropdown-item>
 
@@ -133,26 +154,39 @@
           >
             <div class="flex items-center gap-3">
               <el-icon class="menu-icon" :size="20"><Setting /></el-icon>
-              <span>Manage Tabs</span>
+              <span>{{ t('headerActions.manageTabs') }}</span>
             </div>
           </el-dropdown-item>
 
           <div class="mobile-menu-divider" />
         </template>
 
-        <div class="mobile-menu-section-label">Preferences</div>
+        <div class="mobile-menu-section-label">
+          {{ t('headerActions.preferences') }}
+        </div>
         <el-dropdown-item @click="emit('toggle-theme')">
           <div class="flex items-center gap-3">
             <MoonIcon v-if="!isDarkTheme" class="w-5 h-5" />
             <SunIcon v-else class="w-5 h-5" />
-            <span>{{ isDarkTheme ? 'Light Mode' : 'Dark Mode' }}</span>
+            <span>{{
+              isDarkTheme
+                ? t('headerActions.lightMode')
+                : t('headerActions.darkMode')
+            }}</span>
+          </div>
+        </el-dropdown-item>
+
+        <el-dropdown-item v-if="loggedIn" @click="toggleLocale">
+          <div class="flex items-center gap-3">
+            <span class="menu-icon lang-badge">{{ toggleLocaleCode }}</span>
+            <span>{{ toggleLocaleLabel }}</span>
           </div>
         </el-dropdown-item>
 
         <el-dropdown-item v-if="loggedIn" @click="emit('logout')">
           <div class="flex items-center gap-3">
             <el-icon class="menu-icon" :size="20"><SwitchButton /></el-icon>
-            <span>Logout</span>
+            <span>{{ t('headerActions.logout') }}</span>
           </div>
         </el-dropdown-item>
       </el-dropdown-menu>
@@ -161,6 +195,7 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import {
   DataAnalysis,
   Setting,
@@ -185,6 +220,10 @@ import {
   UsersIcon
 } from '@/components/icons'
 import { UserAvatar } from '@/components/generic-components'
+import { Tabs } from '@/assets'
+import { getAlternateLocalePath } from '@/utils/seo'
+import { setStoredLocale } from '@/i18n'
+import { useI18n } from 'vue-i18n'
 
 // Tab name → icon component
 const TAB_ICONS = {
@@ -197,7 +236,18 @@ const TAB_ICONS = {
   'Bug Reports': AlertTriangleIcon
 }
 
-// Public nav path → icon component
+const TAB_LABEL_KEYS = {
+  [Tabs.GROUPS]: 'tabs.groups',
+  [Tabs.USERS]: 'tabs.users',
+  [Tabs.SHARED_EXPENSES]: 'tabs.sharedExpenses',
+  [Tabs.SHARED_LOANS]: 'tabs.sharedLoans',
+  [Tabs.PERSONAL_EXPENSES]: 'tabs.personalExpenses',
+  [Tabs.PERSONAL_LOANS]: 'tabs.personalLoans',
+  [Tabs.BUG_RESOLVER]: 'tabs.bugReports'
+}
+
+// Public nav path → icon component (keyed by the unprefixed English path;
+// Urdu links are stripped of their /ur prefix before lookup)
 const NAV_ICONS = {
   '/features': Star,
   '/group-expense-tracker': UserFilled,
@@ -206,11 +256,17 @@ const NAV_ICONS = {
   '/faq': ChatDotRound
 }
 
-defineProps({
+function navIconFor(path) {
+  const enPath = path.startsWith('/ur/') ? path.slice(3) : path
+  return NAV_ICONS[enPath] || ChevronRightIcon
+}
+
+const props = defineProps({
   loggedIn: { type: Boolean, default: false },
   tabs: { type: Array, default: () => [] },
   activeTab: { type: String, default: '' },
   isPublicPage: { type: Boolean, default: false },
+  hasLocaleVariant: { type: Boolean, default: false },
   publicNavLinks: { type: Array, default: () => [] },
   routePath: { type: String, default: '' },
   isStuckState: { type: Boolean, default: false },
@@ -220,6 +276,38 @@ defineProps({
   isDarkTheme: { type: Boolean, default: false },
   activeUserPhotoUrl: { type: String, default: '' }
 })
+
+const { t, locale } = useI18n()
+const alternateLocale = computed(() => getAlternateLocalePath(props.routePath || '/'))
+const alternateLocalePath = computed(() => alternateLocale.value.path)
+const alternateLocaleCode = computed(() =>
+  alternateLocale.value.locale.toUpperCase()
+)
+const alternateLocaleLabel = computed(() =>
+  t(`languageSwitcher.${alternateLocale.value.locale}`)
+)
+
+// Logged-in app pages have no /ur URL to link to (no SEO benefit), so they
+// get an in-place toggle of the saved language preference instead — mirrors
+// LanguageSwitcher.vue's useToggle mode.
+const toggleLocaleCode = computed(() =>
+  (locale.value === 'ur' ? 'en' : 'ur').toUpperCase()
+)
+const toggleLocaleLabel = computed(() =>
+  t(`languageSwitcher.${locale.value === 'ur' ? 'en' : 'ur'}`)
+)
+
+function tabLabel(tab) {
+  return TAB_LABEL_KEYS[tab] ? t(TAB_LABEL_KEYS[tab]) : tab
+}
+
+function toggleLocale() {
+  const next = locale.value === 'ur' ? 'en' : 'ur'
+  locale.value = next
+  setStoredLocale(next)
+  document.documentElement.lang = next
+  document.documentElement.dir = next === 'ur' ? 'rtl' : 'ltr'
+}
 
 const emit = defineEmits([
   'tab-change',
@@ -292,6 +380,16 @@ const emit = defineEmits([
   height: 20px;
 }
 
+.lang-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+}
+
 .mobile-dropdown-menu .is-active-tab {
   color: var(--el-color-primary);
   font-weight: 600;
@@ -303,8 +401,8 @@ const emit = defineEmits([
 
 .mobile-dropdown-menu .el-dropdown-menu__item:has(.is-active-tab) {
   background-color: var(--el-color-primary-light-9);
-  border-left: 3px solid var(--el-color-primary);
-  padding-left: 17px;
+  border-inline-start: 3px solid var(--el-color-primary);
+  padding-inline-start: 17px;
 }
 
 .mobile-dropdown-menu .el-dropdown-menu__item:not(.is-disabled):hover {
@@ -360,7 +458,7 @@ const emit = defineEmits([
   .mobile-dropdown-menu
   .el-dropdown-menu__item:has(.is-active-tab) {
   background-color: #1e3a5f !important;
-  border-left-color: #93c5fd !important;
+  border-inline-start-color: #93c5fd !important;
 }
 
 :root.dark-theme

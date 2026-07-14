@@ -1,9 +1,32 @@
 import {
   DEFAULT_OG_IMAGE,
+  OG_LOCALES,
   PRIVATE_ROBOTS,
   SITE_NAME,
   SITE_URL
 } from '@/constants/seo'
+import { getStoredLocale } from '@/i18n'
+
+// Maps a public page's path to its counterpart in the other supported
+// locale (e.g. '/features' <-> '/ur/features', '/' <-> '/ur'). Shared by
+// the hreflang alternate links below and the header language switcher.
+export function getAlternateLocalePath(path) {
+  if (path === '/ur' || path.startsWith('/ur/')) {
+    const enPath = path.slice(3)
+    return { locale: 'en', path: enPath || '/' }
+  }
+
+  return { locale: 'ur', path: path === '/' ? '/ur' : `/ur${path}` }
+}
+
+// Strips a leading /ur prefix from a path (e.g. '/ur/login' -> '/login',
+// '/ur' -> '/'). Used where a route's locale-agnostic base path is needed,
+// such as deriving login/register mode from the current URL.
+export function stripLocalePrefix(path) {
+  if (path === '/ur') return '/'
+  if (path.startsWith('/ur/')) return path.slice(3)
+  return path
+}
 
 function upsertMeta(key, value, attr = 'name') {
   if (typeof document === 'undefined') return
@@ -34,6 +57,23 @@ function upsertCanonical(href) {
   }
 
   canonical.setAttribute('href', href)
+}
+
+function upsertAlternateLinks(links) {
+  if (typeof document === 'undefined') return
+
+  document
+    .querySelectorAll('link[rel="alternate"][data-route-seo]')
+    .forEach((el) => el.remove())
+
+  links.forEach(({ hreflang, href }) => {
+    const link = document.createElement('link')
+    link.setAttribute('rel', 'alternate')
+    link.setAttribute('hreflang', hreflang)
+    link.setAttribute('href', href)
+    link.setAttribute('data-route-seo', 'true')
+    document.head.appendChild(link)
+  })
 }
 
 function upsertStructuredData(data) {
@@ -99,8 +139,10 @@ export function applySeoForRoute(route) {
   const path = seo.canonicalPath || route.fullPath || route.path || '/'
   const canonicalUrl = new URL(path, origin).toString()
   const imageUrl = resolveAbsoluteUrl(seo.image, origin)
+  const locale = route.meta?.locale ?? getStoredLocale()
 
-  document.documentElement.lang = 'en'
+  document.documentElement.lang = locale
+  document.documentElement.dir = locale === 'ur' ? 'rtl' : 'ltr'
   document.title = seo.title || SITE_NAME
 
   upsertMeta('description', seo.description)
@@ -115,6 +157,7 @@ export function applySeoForRoute(route) {
   upsertMeta('og:url', canonicalUrl, 'property')
   upsertMeta('og:site_name', SITE_NAME, 'property')
   upsertMeta('og:image', imageUrl, 'property')
+  upsertMeta('og:locale', OG_LOCALES[locale] || OG_LOCALES.en, 'property')
 
   upsertMeta('twitter:card', 'summary_large_image')
   upsertMeta('twitter:title', seo.twitterTitle || seo.title || SITE_NAME)
@@ -122,6 +165,21 @@ export function applySeoForRoute(route) {
   upsertMeta('twitter:image', imageUrl)
 
   upsertCanonical(canonicalUrl)
+
+  if (route.meta?.publicPage === true) {
+    const alternate = getAlternateLocalePath(route.path || '/')
+    const alternateUrl = new URL(alternate.path, origin).toString()
+    upsertAlternateLinks([
+      { hreflang: locale, href: canonicalUrl },
+      { hreflang: alternate.locale, href: alternateUrl },
+      {
+        hreflang: 'x-default',
+        href: locale === 'en' ? canonicalUrl : alternateUrl
+      }
+    ])
+  } else {
+    upsertAlternateLinks([])
+  }
 
   const structuredData = replaceSeoTokens(seo.structuredData, {
     PAGE_URL: canonicalUrl,

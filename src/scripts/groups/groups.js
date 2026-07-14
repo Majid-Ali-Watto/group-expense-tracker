@@ -1,5 +1,6 @@
 import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { GROUP_CATEGORIES } from '@/assets'
 import { useAuthStore, useGroupStore, useUserStore } from '@/stores'
 import {
@@ -58,7 +59,7 @@ import {
   hasUserApprovedDeletion,
   hasUserApprovedJoinRequest,
   isCurrentUserPendingOwner,
-  ACTIVE_USER_BLOCKED_MESSAGE,
+  getActiveUserBlockedMessage,
   getBlockedEntityMessage,
   isGroupBlocked,
   isUserBlocked,
@@ -68,6 +69,7 @@ import {
 } from '@/helpers'
 
 export const Groups = () => {
+  const { t } = useI18n()
   const AVAILABLE_GROUP_BATCH_SIZE = 5
   const AVAILABLE_GROUP_QUERY_SIZE = 15
   const isPageLoading = ref(true)
@@ -90,7 +92,7 @@ export const Groups = () => {
 
   const openCreateGroup = () => {
     if (activeUserIsBlocked.value) {
-      showError(ACTIVE_USER_BLOCKED_MESSAGE)
+      showError(getActiveUserBlockedMessage())
       return
     }
     showCreateGroup.value = true
@@ -154,7 +156,7 @@ export const Groups = () => {
 
   function ensureGroupInteractionAllowed(group = null) {
     if (activeUserIsBlocked.value) {
-      showError(ACTIVE_USER_BLOCKED_MESSAGE)
+      showError(getActiveUserBlockedMessage())
       return false
     }
 
@@ -235,7 +237,7 @@ export const Groups = () => {
 
   // All categories for the filter dropdown
   const allCategoryOptions = computed(() => [
-    { label: '🗂️ All', value: '' },
+    { label: t('groups.allCategoriesOption'), value: '' },
     ...GROUP_CATEGORIES
   ])
 
@@ -448,7 +450,7 @@ export const Groups = () => {
         : [...availableGroups.value, ...loaded]
       syncGroupStoreCache()
     } catch (error) {
-      showError('Failed to load available groups. Please try again.')
+      showError(t('groupsMessages.loadAvailableGroupsFailed'))
       console.error('Error loading available groups:', error)
     } finally {
       availableGroupsLoading.value = false
@@ -475,7 +477,11 @@ export const Groups = () => {
       updatedGroup = appendNotificationForUser(updatedGroup, group.ownerUid, {
         id: Date.now().toString() + Math.random(),
         type: 'invitation-accepted',
-        message: `${myName} (${maskMobile(myMobile)}) accepted your invitation to join "${group.name}"`,
+        message: t('groupsMessages.acceptedInvitationNotif', {
+          name: myName,
+          mobile: maskMobile(myMobile),
+          groupName: group.name
+        }),
         updatedBy: me,
         timestamp: Date.now()
       })
@@ -490,7 +496,7 @@ export const Groups = () => {
     await updateData(
       `${DB_NODES.GROUPS}/${groupId}`,
       () => payload,
-      'You have joined the group!'
+      t('groupsMessages.joinedGroupSuccess')
     )
     groupStore.addGroup(updatedGroup)
 
@@ -535,7 +541,11 @@ export const Groups = () => {
       updatedGroup = appendNotificationForUser(updatedGroup, group.ownerUid, {
         id: Date.now().toString() + Math.random(),
         type: 'invitation-declined',
-        message: `${myName} (${maskMobile(myMobile)}) declined your invitation to join "${group.name}"`,
+        message: t('groupsMessages.declinedInvitationNotif', {
+          name: myName,
+          mobile: maskMobile(myMobile),
+          groupName: group.name
+        }),
         updatedBy: me,
         timestamp: Date.now()
       })
@@ -549,7 +559,7 @@ export const Groups = () => {
     await updateData(
       `${DB_NODES.GROUPS}/${groupId}`,
       () => payload,
-      'Invitation declined.'
+      t('groupsMessages.invitationDeclined')
     )
     groupStore.addGroup(updatedGroup)
   }
@@ -608,7 +618,7 @@ export const Groups = () => {
 
   async function shareGroups(groupList, label = 'groups') {
     if (activeUserIsBlocked.value) {
-      showError(ACTIVE_USER_BLOCKED_MESSAGE)
+      showError(getActiveUserBlockedMessage())
       return
     }
 
@@ -618,7 +628,7 @@ export const Groups = () => {
     }
 
     if (!groupList.length) {
-      showError(`No ${label} available to share`)
+      showError(t('groupsMessages.noGroupsToShare', { label }))
       return
     }
 
@@ -627,32 +637,38 @@ export const Groups = () => {
     const sharePayload = {
       title:
         groupList.length === 1
-          ? `Shared group: ${groupList[0].name}`
-          : `Shared ${label}`,
+          ? t('groupsMessages.sharedGroupTitle', { name: groupList[0].name })
+          : t('groupsMessages.sharedGroupsTitleShare', { label }),
       text:
         groupList.length === 1
-          ? `Open "${groupList[0].name}" in Kharchafy.`
-          : `Open these ${label} in Kharchafy: ${names}`,
+          ? t('groupsMessages.openGroupText', { name: groupList[0].name })
+          : t('groupsMessages.openGroupsText', { label, names }),
       url
     }
 
     await share(sharePayload, {
-      copySuccessMessage: 'Share link copied to clipboard!',
-      manualPromptLabel: 'Copy this share link:',
-      manualPromptErrorMessage: 'Failed to share group link.'
+      copySuccessMessage: t('groupsMessages.shareLinkCopied'),
+      manualPromptLabel: t('groupsMessages.copyShareLinkLabel'),
+      manualPromptErrorMessage: t('groupsMessages.shareLinkFailed')
     })
   }
 
   function shareJoinedGroups() {
-    return shareGroups(joinedGroupsForShare.value, 'joined groups')
+    return shareGroups(
+      joinedGroupsForShare.value,
+      t('groupsMessages.joinedGroupsShareLabel')
+    )
   }
 
   function sharePinnedGroups() {
-    return shareGroups(pinnedGroupsForShare.value, 'pinned groups')
+    return shareGroups(
+      pinnedGroupsForShare.value,
+      t('groupsMessages.pinnedGroupsShareLabel')
+    )
   }
 
   function shareSingleGroup(group) {
-    return shareGroups([group], 'group')
+    return shareGroups([group], t('groupsMessages.groupShareLabel'))
   }
 
   // Get join requests for a group
@@ -1040,12 +1056,12 @@ export const Groups = () => {
 
   async function submitAddMemberRequest() {
     if (!selectedMemberToAdd.value) {
-      return showError('Please select a member to add')
+      return showError(t('groupsMessages.selectMemberToAddError'))
     }
 
     const user = userStore.getUserByUid(selectedMemberToAdd.value)
     if (!user) {
-      return showError('User not found')
+      return showError(t('groupsMessages.userNotFound'))
     }
     if (isUserBlocked(user)) {
       return showError(getBlockedEntityMessage('user'))
@@ -1083,7 +1099,7 @@ export const Groups = () => {
           matchesActiveUserIdentity(request.mobile)
       )
       if (alreadyRequested) {
-        return showSuccess('Join request already pending')
+        return showSuccess(t('groupsMessages.joinRequestAlreadyPending'))
       }
 
       // Add request with empty approvals array
@@ -1096,13 +1112,13 @@ export const Groups = () => {
       await updateData(
         `${DB_NODES.GROUPS}/${groupId}`,
         () => group,
-        'Join request sent'
+        t('groupsMessages.joinRequestSent')
       )
 
       groupStore.updateGroup(group)
       upsertAvailableGroup(group)
 
-      showSuccess('Join request sent to group owner')
+      showSuccess(t('groupsMessages.joinRequestSentToOwner'))
     } catch (err) {
       showError(err.message || err)
     }
@@ -1123,7 +1139,7 @@ export const Groups = () => {
       )
 
       if (nextRequests.length === currentRequests.length) {
-        return showError('No pending join request found to cancel')
+        return showError(t('groupsMessages.noPendingJoinRequestToCancel'))
       }
 
       // Remove from join requests
@@ -1132,7 +1148,7 @@ export const Groups = () => {
       await updateData(
         `${DB_NODES.GROUPS}/${groupId}`,
         () => group,
-        'Request cancelled'
+        t('groupsMessages.requestCancelled')
       )
 
       groupStore.updateGroup(group)
@@ -1184,13 +1200,15 @@ export const Groups = () => {
         await updateData(
           `${DB_NODES.GROUPS}/${groupId}`,
           () => group,
-          'Member added'
+          t('groupsMessages.memberAdded')
         )
 
         groupStore.updateGroup(group)
 
         showSuccess(
-          `${userStore.getUserByUid(requestMobile)?.name || requestMobile} has been added to the group`
+          t('groupsMessages.memberAddedToGroup', {
+            name: userStore.getUserByUid(requestMobile)?.name || requestMobile
+          })
         )
         return
       }
@@ -1198,12 +1216,12 @@ export const Groups = () => {
       await updateData(
         `${DB_NODES.GROUPS}/${groupId}`,
         () => group,
-        'Approval recorded'
+        t('groupsMessages.approvalRecorded')
       )
 
       groupStore.updateGroup(group)
 
-      showSuccess('You have approved this join request')
+      showSuccess(t('groupsMessages.approvedJoinRequest'))
     } catch (err) {
       showError(err.message || err)
     }
@@ -1219,7 +1237,7 @@ export const Groups = () => {
 
       // Verify all members have approved
       if (!allMembersApprovedJoinRequest(group, request.uid)) {
-        return showError('All members must approve before adding to group')
+        return showError(t('groupsMessages.allMustApproveBeforeAdding'))
       }
 
       // Add user to members
@@ -1242,13 +1260,15 @@ export const Groups = () => {
       await updateData(
         `${DB_NODES.GROUPS}/${groupId}`,
         () => group,
-        'Member added'
+        t('groupsMessages.memberAdded')
       )
 
       groupStore.updateGroup(group)
 
       showSuccess(
-        `${userStore.getUserByUid(request.uid)?.name || request.mobile} has been added to the group`
+        t('groupsMessages.memberAddedToGroup', {
+          name: userStore.getUserByUid(request.uid)?.name || request.mobile
+        })
       )
     } catch (err) {
       showError(err.message || err)
@@ -1272,14 +1292,19 @@ export const Groups = () => {
       // Create notification for members
       createNotification(
         group,
-        `Join request from ${requestUserName} (${maskMobile(userStore.getUserByUid(uid)?.mobile || '')}) was rejected`
+        t('groupsMessages.joinRequestFromRejected', {
+          name: requestUserName,
+          mobile: maskMobile(userStore.getUserByUid(uid)?.mobile || '')
+        })
       )
 
       // Notify the requester
       appendNotificationForUser(group, uid, {
         id: Date.now().toString() + Math.random(),
         type: 'rejection',
-        message: `Your request to join "${group.name}" was rejected`,
+        message: t('groupsMessages.yourJoinRequestRejected', {
+          groupName: group.name
+        }),
         rejectedBy: authStore.getActiveUserUid,
         timestamp: Date.now()
       })
@@ -1287,12 +1312,12 @@ export const Groups = () => {
       await updateData(
         `${DB_NODES.GROUPS}/${groupId}`,
         () => group,
-        'Request rejected'
+        t('groupsMessages.requestRejected')
       )
 
       groupStore.updateGroup(group)
 
-      showSuccess('Join request rejected')
+      showSuccess(t('groupsMessages.requestRejected'))
     } catch (err) {
       showError(err.message || err)
     }
@@ -1305,11 +1330,11 @@ export const Groups = () => {
 
     // Check if user is a member
     if (!isMemberOfGroup(group)) {
-      return showError('You must be a member of this group to select it')
+      return showError(t('groupsMessages.mustBeMemberToSelect'))
     }
 
     groupStore.setActiveGroup(id)
-    showSuccess(`Selected group: ${group.name}`)
+    showSuccess(t('groupsMessages.selectedGroupSuccess', { name: group.name }))
   }
 
   function removeGroupLocally(groupId) {
@@ -1333,27 +1358,27 @@ export const Groups = () => {
 
       if (group.members.length === 1) {
         await ElMessageBox.confirm(
-          'You are the only member in this group. It will be deleted immediately without any approval step.',
-          'Delete Group',
+          t('groupsMessages.soleMemberDeleteConfirm'),
+          t('groupsMessages.deleteGroupTitle'),
           {
-            confirmButtonText: 'Delete Group',
-            cancelButtonText: 'Cancel',
+            confirmButtonText: t('groupsMessages.deleteGroupButton'),
+            cancelButtonText: t('common.cancel'),
             type: 'error'
           }
         )
 
         await removeData(`${DB_NODES.GROUPS}/${groupId}`)
         removeGroupLocally(groupId)
-        showSuccess('Group deleted successfully')
+        showSuccess(t('groupsMessages.groupDeletedSuccess'))
         return
       }
 
       await ElMessageBox.confirm(
-        'This will send a deletion request to all group members. The group can only be deleted after all members approve.',
-        'Request Group Deletion',
+        t('groupsMessages.deletionRequestConfirmBody'),
+        t('groupsMessages.requestGroupDeletionTitle'),
         {
-          confirmButtonText: 'Send Request',
-          cancelButtonText: 'Cancel',
+          confirmButtonText: t('groupsMessages.sendRequestButton'),
+          cancelButtonText: t('common.cancel'),
           type: 'error'
         }
       )
@@ -1369,12 +1394,12 @@ export const Groups = () => {
       await updateData(
         `${DB_NODES.GROUPS}/${groupId}`,
         () => group,
-        'Deletion request sent'
+        t('groupsMessages.deletionRequestSent')
       )
 
       groupStore.updateGroup(group)
 
-      showSuccess('Deletion request sent to all members')
+      showSuccess(t('groupsMessages.deletionRequestSentToAll'))
     } catch (err) {
       if (err !== 'cancel') {
         showError(err.message || err)
@@ -1406,7 +1431,7 @@ export const Groups = () => {
         // All members approved — delete the group immediately
         await removeData(`${DB_NODES.GROUPS}/${groupId}`)
         removeGroupLocally(groupId)
-        showSuccess('All members approved. Group has been deleted.')
+        showSuccess(t('groupsMessages.allApprovedGroupDeleted'))
         return
       }
 
@@ -1418,7 +1443,7 @@ export const Groups = () => {
 
       groupStore.updateGroup({ ...group })
 
-      showSuccess('You have approved the deletion request')
+      showSuccess(t('groupsMessages.approvedDeletionRequest'))
     } catch (err) {
       showError(err.message || err)
     }
@@ -1432,11 +1457,11 @@ export const Groups = () => {
       if (!ensureGroupInteractionAllowed(group)) return
 
       await ElMessageBox.confirm(
-        'This will cancel the deletion request. The owner will need to create a new request if they want to delete the group.',
-        'Reject Deletion Request',
+        t('groupsMessages.rejectDeletionConfirmBody'),
+        t('groupsMessages.rejectDeletionRequestTitle'),
         {
-          confirmButtonText: 'Reject',
-          cancelButtonText: 'Cancel',
+          confirmButtonText: t('groupsMessages.rejectButton'),
+          cancelButtonText: t('common.cancel'),
           type: 'warning'
         }
       )
@@ -1448,7 +1473,10 @@ export const Groups = () => {
       // Create notification for members
       createNotification(
         group,
-        `Group deletion request cancelled by ${myName} (${maskMobile(myMobile)})`
+        t('groupsMessages.deletionCancelledBy', {
+          name: myName,
+          mobile: maskMobile(myMobile)
+        })
       )
 
       // Remove deletion request from local object
@@ -1470,7 +1498,7 @@ export const Groups = () => {
 
       groupStore.updateGroup({ ...group })
 
-      showSuccess('Deletion request has been rejected and cancelled')
+      showSuccess(t('groupsMessages.deletionRejectedAndCancelled'))
     } catch (err) {
       if (err !== 'cancel') {
         showError(err.message || err)
@@ -1487,15 +1515,15 @@ export const Groups = () => {
 
       // Verify all members have approved
       if (!allMembersApproved(group)) {
-        return showError('Cannot delete group until all members approve')
+        return showError(t('groupsMessages.cannotDeleteUntilAllApprove'))
       }
 
       await ElMessageBox.confirm(
-        'All members have approved. This will permanently delete the group and all its data. This action cannot be undone.',
-        'Confirm Final Deletion',
+        t('groupsMessages.finalDeleteConfirmBody'),
+        t('groupsMessages.confirmFinalDeletionTitle'),
         {
-          confirmButtonText: 'Delete Permanently',
-          cancelButtonText: 'Cancel',
+          confirmButtonText: t('groupsMessages.deletePermanentlyButton'),
+          cancelButtonText: t('common.cancel'),
           type: 'error'
         }
       )
@@ -1503,7 +1531,7 @@ export const Groups = () => {
       // Delete from Firebase
       await removeData(`${DB_NODES.GROUPS}/${groupId}`)
       removeGroupLocally(groupId)
-      showSuccess('Group deleted successfully')
+      showSuccess(t('groupsMessages.groupDeletedSuccess'))
     } catch (err) {
       if (err !== 'cancel') {
         showError(err.message || err)
@@ -1518,7 +1546,7 @@ export const Groups = () => {
 
     // Only owner can edit
     if (group.ownerUid !== authStore.getActiveUserUid) {
-      return showError('Only group owner can edit this group')
+      return showError(t('groupsMessages.onlyOwnerCanEdit'))
     }
 
     editingGroupId.value = groupId
@@ -1540,11 +1568,11 @@ export const Groups = () => {
   async function updateGroup() {
     try {
       if (!editForm.value.name) {
-        return showError('Group name is required')
+        return showError(t('groupsMessages.groupNameRequired'))
       }
 
       if (editForm.value.members.length < 2) {
-        return showError('At least two members are required')
+        return showError(t('groupsMessages.atLeastTwoMembersRequired'))
       }
 
       const groupIndex = groups.value.findIndex(
@@ -1579,17 +1607,28 @@ export const Groups = () => {
         }
 
         // Create notification for members
+        const emptyPlaceholder = t('groupsMessages.emptyPlaceholder')
         const changeParts = []
         if (nameChanged)
-          changeParts.push(`Name: "${group.name}" → "${editForm.value.name}"`)
+          changeParts.push(
+            t('groupsMessages.nameChangedNotif', {
+              oldName: group.name,
+              newName: editForm.value.name
+            })
+          )
         if (descriptionChanged)
           changeParts.push(
-            `Description: "${group.description || '(empty)'}" → "${editForm.value.description || '(empty)'}"`
+            t('groupsMessages.descriptionChangedNotif', {
+              oldDescription: group.description || emptyPlaceholder,
+              newDescription: editForm.value.description || emptyPlaceholder
+            })
           )
         const notification = {
           id: Date.now().toString(),
           type: 'group_updated',
-          message: `Group updated — ${changeParts.join(' | ')}`,
+          message: t('groupsMessages.groupUpdatedNotif', {
+            changes: changeParts.join(' | ')
+          }),
           updatedBy: authStore.getActiveUserUid,
           timestamp: Date.now()
         }
@@ -1611,23 +1650,23 @@ export const Groups = () => {
         await updateData(
           `${DB_NODES.GROUPS}/${editingGroupId.value}`,
           () => updatedGroup,
-          'Group updated'
+          t('groupsMessages.groupUpdatedToast')
         )
 
         groupStore.updateGroup(updatedGroup)
         editDialogVisible.value = false
-        showSuccess('Group updated and members notified')
+        showSuccess(t('groupsMessages.groupUpdatedAndNotified'))
         return
       }
 
       // If members changed, create edit request
       if (membersChanged) {
         await ElMessageBox.confirm(
-          `This will send an edit request to existing and newly added members for approval. Removed members will be notified. The changes will be applied after all remaining members approve.`,
-          'Confirm Edit Request',
+          t('groupsMessages.editRequestConfirmBody'),
+          t('groupsMessages.confirmEditRequestTitle'),
           {
-            confirmButtonText: 'Send Request',
-            cancelButtonText: 'Cancel',
+            confirmButtonText: t('groupsMessages.sendRequestButton'),
+            cancelButtonText: t('common.cancel'),
             type: 'warning'
           }
         )
@@ -1650,7 +1689,9 @@ export const Groups = () => {
           updatedGroup = appendNotificationForUser(updatedGroup, uid, {
             id: Date.now().toString() + Math.random(),
             type: 'removal-pending',
-            message: `You have been proposed for removal from "${group.name}". This will take effect once existing members approve.`,
+            message: t('groupsMessages.proposedRemovalNotif', {
+              groupName: group.name
+            }),
             updatedBy: requestedBy,
             timestamp: Date.now()
           })
@@ -1659,12 +1700,12 @@ export const Groups = () => {
         await updateData(
           `${DB_NODES.GROUPS}/${editingGroupId.value}`,
           () => updatedGroup,
-          'Edit request sent'
+          t('groupsMessages.editRequestSentToast')
         )
 
         groupStore.updateGroup(updatedGroup)
         editDialogVisible.value = false
-        showSuccess('Edit request sent to members for approval')
+        showSuccess(t('groupsMessages.editRequestSentToMembers'))
       } else if (nameChanged) {
         // Just name changed (already handled above, but this is a fallback)
         const updatedGroup = {
@@ -1675,16 +1716,16 @@ export const Groups = () => {
         await updateData(
           `${DB_NODES.GROUPS}/${editingGroupId.value}`,
           () => updatedGroup,
-          'Group name updated'
+          t('groupsMessages.groupNameUpdatedToast')
         )
 
         groupStore.updateGroup(updatedGroup)
         editDialogVisible.value = false
-        showSuccess('Group name updated successfully')
+        showSuccess(t('groupsMessages.groupNameUpdatedSuccess'))
       } else {
         // No changes
         editDialogVisible.value = false
-        showSuccess('No changes to save')
+        showSuccess(t('groupsMessages.noChangesToSave'))
       }
     } catch (err) {
       if (err !== 'cancel') {
@@ -1707,7 +1748,7 @@ export const Groups = () => {
 
       // Check if user already approved
       if (currentApprovals.some((a) => a.uid === uid)) {
-        return showSuccess('You have already approved this request')
+        return showSuccess(t('groupsMessages.alreadyApprovedRequest'))
       }
 
       const newApprovals = [...currentApprovals, { uid }]
@@ -1738,9 +1779,9 @@ export const Groups = () => {
         await setData(
           `${DB_NODES.GROUPS}/${groupId}`,
           finalGroup,
-          'Edit applied'
+          t('groupsMessages.editAppliedToast')
         )
-        showSuccess('Edit changes applied successfully')
+        showSuccess(t('groupsMessages.editChangesApplied'))
       } else {
         // Just save the approval
         await updateData(
@@ -1748,7 +1789,7 @@ export const Groups = () => {
           () => ({ editRequest: updatedEditRequest }),
           ''
         )
-        showSuccess('Your approval has been recorded')
+        showSuccess(t('groupsMessages.approvalHasBeenRecorded'))
       }
     } catch (err) {
       showError(err.message || err)
@@ -1762,11 +1803,11 @@ export const Groups = () => {
       if (!ensureGroupInteractionAllowed(group)) return
 
       await ElMessageBox.confirm(
-        'Are you sure you want to reject this edit request? The request will be cancelled.',
-        'Reject Edit Request',
+        t('groupsMessages.rejectEditConfirmBody'),
+        t('groupsMessages.rejectEditRequestTitle'),
         {
-          confirmButtonText: 'Reject',
-          cancelButtonText: 'Cancel',
+          confirmButtonText: t('groupsMessages.rejectButton'),
+          cancelButtonText: t('common.cancel'),
           type: 'warning'
         }
       )
@@ -1776,21 +1817,30 @@ export const Groups = () => {
       const myMobile = myUser?.mobile || me
       const er = group.editRequest
       const erParts = []
-      if (er.name && er.name !== group.name) erParts.push(`name → "${er.name}"`)
+      if (er.name && er.name !== group.name)
+        erParts.push(t('groupsMessages.nameArrow', { name: er.name }))
       if ((er.addedMembers || []).length)
         erParts.push(
-          `+${er.addedMembers.length} member${er.addedMembers.length > 1 ? 's' : ''}`
+          t('groupsMessages.addedMembersCount', {
+            count: er.addedMembers.length
+          })
         )
       if ((er.removedMembers || []).length)
         erParts.push(
-          `-${er.removedMembers.length} member${er.removedMembers.length > 1 ? 's' : ''}`
+          t('groupsMessages.removedMembersCount', {
+            count: er.removedMembers.length
+          })
         )
       const erDetail = erParts.length ? ` [${erParts.join(' | ')}]` : ''
 
       // Create notification for members
       createNotification(
         group,
-        `Group edit request cancelled by ${myName} (${maskMobile(myMobile)})${erDetail}`
+        t('groupsMessages.editCancelledBy', {
+          name: myName,
+          mobile: maskMobile(myMobile),
+          detail: erDetail
+        })
       )
 
       // Remove the edit request from local object
@@ -1812,7 +1862,7 @@ export const Groups = () => {
 
       groupStore.updateGroup({ ...group })
 
-      showSuccess('Edit request rejected')
+      showSuccess(t('groupsMessages.editRequestRejectedToast'))
     } catch (err) {
       if (err !== 'cancel') {
         showError(err.message || err)
@@ -1824,7 +1874,7 @@ export const Groups = () => {
   async function requestAddMember(groupId, newMember) {
     try {
       const group = groups.value.find((g) => g.id === groupId)
-      if (!group) return showError('Group not found')
+      if (!group) return showError(t('groupsMessages.groupNotFound'))
       if (!ensureGroupInteractionAllowed(group)) return
       if (isUserBlocked(userStore.getUserByUid(newMember.uid))) {
         return showError(getBlockedEntityMessage('user'))
@@ -1832,7 +1882,7 @@ export const Groups = () => {
 
       // Check if member already exists
       if (group.members.some((m) => m.uid === newMember.uid)) {
-        return showError('This member is already in the group')
+        return showError(t('groupsMessages.memberAlreadyInGroup'))
       }
 
       const uid = authStore.getActiveUserUid
@@ -1847,7 +1897,7 @@ export const Groups = () => {
       await updateData(
         `${DB_NODES.GROUPS}/${groupId}`,
         () => ({ addMemberRequest }),
-        'Add member request sent to all members'
+        t('groupsMessages.addMemberRequestSentToAll')
       )
     } catch (err) {
       showError(err.message || err)
@@ -1865,7 +1915,7 @@ export const Groups = () => {
       const currentApprovals = group.addMemberRequest.approvals || []
 
       if (currentApprovals.some((a) => a.uid === uid)) {
-        return showSuccess('You have already approved this request')
+        return showSuccess(t('groupsMessages.alreadyApprovedRequest'))
       }
 
       const updatedRequest = {
@@ -1879,7 +1929,7 @@ export const Groups = () => {
         ''
       )
 
-      showSuccess('Your approval has been recorded')
+      showSuccess(t('groupsMessages.approvalHasBeenRecorded'))
     } catch (err) {
       showError(err.message || err)
     }
@@ -1892,7 +1942,7 @@ export const Groups = () => {
       if (!ensureGroupInteractionAllowed(group)) return
 
       if (!allMembersApprovedAddMember(group)) {
-        return showError('All members must approve before adding new member')
+        return showError(t('groupsMessages.allMustApproveBeforeAddingNew'))
       }
 
       const newMember = group.addMemberRequest.newMember
@@ -1908,7 +1958,7 @@ export const Groups = () => {
       await setData(
         `${DB_NODES.GROUPS}/${groupId}`,
         updatedGroup,
-        'New member added successfully'
+        t('groupsMessages.newMemberAddedSuccess')
       )
     } catch (err) {
       showError(err.message || err)
@@ -1922,11 +1972,11 @@ export const Groups = () => {
       if (!ensureGroupInteractionAllowed(group)) return
 
       await ElMessageBox.confirm(
-        'Are you sure you want to reject this add member request?',
-        'Reject Add Member Request',
+        t('groupsMessages.rejectAddMemberConfirmBody'),
+        t('groupsMessages.rejectAddMemberRequestTitle'),
         {
-          confirmButtonText: 'Reject',
-          cancelButtonText: 'Cancel',
+          confirmButtonText: t('groupsMessages.rejectButton'),
+          cancelButtonText: t('common.cancel'),
           type: 'warning'
         }
       )
@@ -1935,7 +1985,7 @@ export const Groups = () => {
         () => ({ addMemberRequest: deleteField() }),
         ''
       )
-      showSuccess('Add member request rejected')
+      showSuccess(t('groupsMessages.addMemberRequestRejected'))
     } catch (err) {
       if (err !== 'cancel') {
         showError(err.message || err)
@@ -1975,16 +2025,20 @@ export const Groups = () => {
 
     // Block if any group-level request is pending
     const openRequests = [
-      group.editRequest && 'a membership edit is pending',
-      group.deleteRequest && 'a group deletion request is pending',
-      group.addMemberRequest && 'an add-member request is pending',
-      group.transferOwnershipRequest && 'an ownership transfer is pending',
-      group.settlementRequest && 'a settlement request is pending',
-      (group.joinRequests || []).length > 0 && 'a join request is pending'
+      group.editRequest && t('groupsMessages.membershipEditPending'),
+      group.deleteRequest && t('groupsMessages.groupDeletionPending'),
+      group.addMemberRequest && t('groupsMessages.addMemberPending'),
+      group.transferOwnershipRequest &&
+        t('groupsMessages.ownershipTransferPending'),
+      group.settlementRequest && t('groupsMessages.settlementRequestPending'),
+      (group.joinRequests || []).length > 0 &&
+        t('groupsMessages.joinRequestPendingReason')
     ].filter(Boolean)
 
     if (openRequests.length > 0) {
-      return `Cannot leave while ${openRequests[0]}. Resolve it first.`
+      return t('groupsMessages.cannotLeaveWhileReason', {
+        reason: openRequests[0]
+      })
     }
 
     try {
@@ -2003,7 +2057,7 @@ export const Groups = () => {
         const payment = { id: paymentDoc.id, ...paymentDoc.data() }
 
         if (payment?.deleteRequest || payment?.updateRequest) {
-          return 'Cannot leave while a shared expense change request is pending. Resolve it first.'
+          return t('groupsMessages.cannotLeaveExpenseChangePending')
         }
 
         if (paymentIncludesUser(payment)) hasActiveUserTransactions = true
@@ -2046,7 +2100,7 @@ export const Groups = () => {
         const loan = { id: loanDoc.id, ...loanDoc.data() }
 
         if (loan?.deleteRequest || loan?.updateRequest) {
-          return 'Cannot leave while a shared loan change request is pending. Resolve it first.'
+          return t('groupsMessages.cannotLeaveLoanChangePending')
         }
 
         if (loan?.giver === mobile || loan?.receiver === mobile)
@@ -2072,9 +2126,7 @@ export const Groups = () => {
         Object.values(loansByMonth).forEach((loan) => {
           if (loan?.group) return // already counted via collectionGroup above
           if (loan?.deleteRequest || loan?.updateRequest) {
-            throw new Error(
-              'Cannot leave while a shared loan change request is pending. Resolve it first.'
-            )
+            throw new Error(t('groupsMessages.cannotLeaveLoanChangePending'))
           }
           if (loan?.giver === mobile || loan?.receiver === mobile)
             hasActiveUserTransactions = true
@@ -2087,15 +2139,17 @@ export const Groups = () => {
 
       const roundedNet = parseFloat(net.toFixed(2))
       if (hasActiveUserTransactions) {
-        return 'Cannot leave while you still have active shared expenses or loans in this group. Finalize settlement first.'
+        return t('groupsMessages.cannotLeaveActiveTransactions')
       }
       if (roundedNet !== 0) {
-        return `Cannot leave while you have an unsettled balance (${roundedNet > 0 ? '+' : ''}${roundedNet}). Settle up first.`
+        return t('groupsMessages.cannotLeaveUnsettledBalance', {
+          amount: `${roundedNet > 0 ? '+' : ''}${roundedNet}`
+        })
       }
     } catch (err) {
       if (err instanceof Error && err.message) return err.message
       console.error('Balance check failed during leave', err)
-      return 'Could not verify your balance. Please try again.'
+      return t('groupsMessages.couldNotVerifyBalance')
     }
 
     return null
@@ -2113,28 +2167,28 @@ export const Groups = () => {
 
       if (memberCount === 1) {
         await ElMessageBox.confirm(
-          'You are the only member in this group. Leaving will immediately delete the empty group.',
-          'Leave Group',
+          t('groupsMessages.soleMemberLeaveConfirmBody'),
+          t('groupsMessages.leaveGroupTitle'),
           {
-            confirmButtonText: 'Leave and Delete Group',
-            cancelButtonText: 'Cancel',
+            confirmButtonText: t('groupsMessages.leaveAndDeleteGroupButton'),
+            cancelButtonText: t('common.cancel'),
             type: 'error'
           }
         )
         await removeData(`${DB_NODES.GROUPS}/${groupId}`)
         removeGroupLocally(groupId)
-        showSuccess('You left the group and it was deleted automatically.')
+        showSuccess(t('groupsMessages.leftGroupAutoDeleted'))
         return
       }
 
       // Owner with more than 2 members must transfer ownership first
       if (isOwner && memberCount > 2) {
         await ElMessageBox.confirm(
-          'You are the group owner. You must transfer ownership to another member before leaving the group.',
-          'Transfer Ownership Required',
+          t('groupsMessages.ownerMustTransferBeforeLeaving'),
+          t('groupsMessages.transferOwnershipRequiredTitle'),
           {
-            confirmButtonText: 'Transfer Ownership',
-            cancelButtonText: 'Cancel',
+            confirmButtonText: t('groupsMessages.transferOwnershipButton'),
+            cancelButtonText: t('common.cancel'),
             type: 'info'
           }
         )
@@ -2150,7 +2204,7 @@ export const Groups = () => {
 
       const leavingMember = findActiveUserMemberRecord(group)
       if (!leavingMember) {
-        return showError('Could not find your membership record in this group.')
+        return showError(t('groupsMessages.couldNotFindMembershipRecord'))
       }
 
       const leavingIdentities = getMemberIdentitySet(leavingMember)
@@ -2162,14 +2216,20 @@ export const Groups = () => {
       })
       const confirmMessage =
         isOwner && memberCount === 2
-          ? `You are the owner. Ownership will be transferred to ${userStore.getUserByUid(otherMember.uid)?.name || otherMember.uid} when you leave.`
-          : 'Are you sure you want to leave this group?'
+          ? t('groupsMessages.ownershipWillTransferTo', {
+              name: userStore.getUserByUid(otherMember.uid)?.name || otherMember.uid
+            })
+          : t('groupsMessages.confirmLeaveGroupBody')
 
-      await ElMessageBox.confirm(confirmMessage, 'Leave Group', {
-        confirmButtonText: 'Leave',
-        cancelButtonText: 'Cancel',
-        type: 'info'
-      })
+      await ElMessageBox.confirm(
+        confirmMessage,
+        t('groupsMessages.leaveGroupTitle'),
+        {
+          confirmButtonText: t('groupsMessages.leaveButton'),
+          cancelButtonText: t('common.cancel'),
+          type: 'info'
+        }
+      )
 
       // Transfer ownership if leaving owner with 2 members
       const updatedGroup = { ...group }
@@ -2188,7 +2248,7 @@ export const Groups = () => {
       await updateData(
         `${DB_NODES.GROUPS}/${groupId}`,
         () => updatedGroup,
-        'You have left the group'
+        t('groupsMessages.youHaveLeftGroup')
       )
       removeGroupLocally(groupId)
 
@@ -2222,7 +2282,7 @@ export const Groups = () => {
   async function requestOwnershipTransfer() {
     try {
       if (!newOwnerUid.value) {
-        return showError('Please select a new owner')
+        return showError(t('groupsMessages.selectNewOwnerError'))
       }
 
       const group = groups.value.find(
@@ -2232,11 +2292,11 @@ export const Groups = () => {
       if (!ensureGroupInteractionAllowed(group)) return
 
       await ElMessageBox.confirm(
-        'This will send an ownership transfer request to the selected member. The transfer will happen once they accept.',
-        'Request Ownership Transfer',
+        t('groupsMessages.transferRequestConfirmBody'),
+        t('groupsMessages.requestOwnershipTransferTitle'),
         {
-          confirmButtonText: 'Send Request',
-          cancelButtonText: 'Cancel',
+          confirmButtonText: t('groupsMessages.sendRequestButton'),
+          cancelButtonText: t('common.cancel'),
           type: 'warning'
         }
       )
@@ -2249,13 +2309,13 @@ export const Groups = () => {
       await updateData(
         `${DB_NODES.GROUPS}/${transferOwnershipGroupId.value}`,
         () => group,
-        'Transfer request sent'
+        t('groupsMessages.transferRequestSentToast')
       )
 
       groupStore.updateGroup(group)
 
       transferDialogVisible.value = false
-      showSuccess('Ownership transfer request sent to the selected member')
+      showSuccess(t('groupsMessages.transferRequestSentToMember'))
     } catch (err) {
       if (err !== 'cancel') {
         showError(err.message || err)
@@ -2273,9 +2333,7 @@ export const Groups = () => {
 
       // Only the designated new owner may accept
       if (group.transferOwnershipRequest?.newOwner !== uid) {
-        return showError(
-          'Only the designated new owner can accept this transfer'
-        )
+        return showError(t('groupsMessages.onlyDesignatedOwnerCanAccept'))
       }
 
       // Transfer ownership immediately upon new owner's acceptance
@@ -2292,7 +2350,7 @@ export const Groups = () => {
       )
 
       groupStore.updateGroup({ ...group })
-      showSuccess('Ownership has been transferred successfully')
+      showSuccess(t('groupsMessages.ownershipTransferredSuccess'))
     } catch (err) {
       showError(err.message || err)
     }
@@ -2305,11 +2363,11 @@ export const Groups = () => {
       if (!ensureGroupInteractionAllowed(group)) return
 
       await ElMessageBox.confirm(
-        'This will cancel the ownership transfer request.',
-        'Reject Transfer Request',
+        t('groupsMessages.cancelTransferConfirmBody'),
+        t('groupsMessages.rejectTransferRequestTitle'),
         {
-          confirmButtonText: 'Reject',
-          cancelButtonText: 'Cancel',
+          confirmButtonText: t('groupsMessages.rejectButton'),
+          cancelButtonText: t('common.cancel'),
           type: 'warning'
         }
       )
@@ -2320,7 +2378,10 @@ export const Groups = () => {
       // Create notification for members
       createNotification(
         group,
-        `Ownership transfer request to ${newOwnerName} (${maskMobile(userStore.getUserByUid(newOwnerUid)?.mobile || '')}) was rejected`
+        t('groupsMessages.transferRequestToRejected', {
+          name: newOwnerName,
+          mobile: maskMobile(userStore.getUserByUid(newOwnerUid)?.mobile || '')
+        })
       )
 
       // Remove transfer request from local object
@@ -2338,7 +2399,7 @@ export const Groups = () => {
 
       groupStore.updateGroup({ ...group })
 
-      showSuccess('Ownership transfer request rejected')
+      showSuccess(t('groupsMessages.transferRequestRejectedToast'))
     } catch (err) {
       if (err !== 'cancel') {
         showError(err.message || err)
@@ -2368,7 +2429,7 @@ export const Groups = () => {
         label: `${formatUserDisplay(storeProxy, user.uid, {
           name: user.name,
           preferMasked: true
-        })}${isUserBlocked(user) ? ' (Blocked)' : ''}`,
+        })}${isUserBlocked(user) ? t('groupsMessages.blockedSuffix') : ''}`,
         value: user.uid
       }))
   })
@@ -2388,7 +2449,7 @@ export const Groups = () => {
             groupId: group.id,
             groupName: group.name,
             icon: '👋',
-            label: `${req.name} wants to join`
+            label: t('groupsMessages.wantsToJoin', { name: req.name })
           })
         }
       })
@@ -2399,7 +2460,7 @@ export const Groups = () => {
           groupId: group.id,
           groupName: group.name,
           icon: '⚠️',
-          label: 'Group deletion request'
+          label: t('groupsMessages.groupDeletionRequestLabel')
         })
       }
 
@@ -2415,7 +2476,7 @@ export const Groups = () => {
           groupId: group.id,
           groupName: group.name,
           icon: '📝',
-          label: 'Group edit request'
+          label: t('groupsMessages.groupEditRequestLabel')
         })
       }
 
@@ -2429,7 +2490,11 @@ export const Groups = () => {
           groupId: group.id,
           groupName: group.name,
           icon: '➕',
-          label: `Add ${userStore.getUserByUid(group.addMemberRequest.newMember.uid)?.name || group.addMemberRequest.newMember.uid}`
+          label: t('groupsMessages.addMemberNotifLabel', {
+            name:
+              userStore.getUserByUid(group.addMemberRequest.newMember.uid)
+                ?.name || group.addMemberRequest.newMember.uid
+          })
         })
       }
 
@@ -2443,7 +2508,7 @@ export const Groups = () => {
           groupId: group.id,
           groupName: group.name,
           icon: '👑',
-          label: 'Ownership transfer request'
+          label: t('groupsMessages.ownershipTransferRequestLabel')
         })
       }
     }
@@ -2589,42 +2654,42 @@ export const Groups = () => {
     return [
       // MEMBER ACTIONS
       {
-        label: 'Select',
+        label: t('groups.select'),
         show: isMember,
         type: 'primary',
         disabled: interactionsBlocked,
         onClick: () => selectGroup(group.id)
       },
       {
-        label: 'Share',
+        label: t('groupsMessages.shareButton'),
         show: true,
         type: 'success',
         disabled: interactionsBlocked,
         onClick: () => shareSingleGroup(group)
       },
       {
-        label: 'Leave',
+        label: t('groupsMessages.leaveButton'),
         show: isMember,
         type: 'warning',
         disabled: interactionsBlocked,
         onClick: () => requestLeaveGroup(group.id)
       },
       {
-        label: 'Add Member',
+        label: t('groupsMessages.addMemberButton'),
         show: isMember && !isOwner && !hasAddMemberRequest(group),
         type: 'success',
         disabled: interactionsBlocked,
         onClick: () => showAddMemberDialog(group.id)
       },
       {
-        label: 'Edit',
+        label: t('groupsMessages.editButton'),
         show: isMember,
         disabled: interactionsBlocked || !isOwner,
         type: '',
         onClick: () => editGroup(group.id)
       },
       {
-        label: 'Transfer Ownership',
+        label: t('groupsMessages.transferOwnershipButton'),
         show: isMember && isOwner && group.members.length > 1,
         disabled: interactionsBlocked,
         type: '',
@@ -2632,14 +2697,14 @@ export const Groups = () => {
       },
       // REQUEST ACTIONS
       {
-        label: 'Cancel Request',
+        label: t('groupsMessages.cancelRequestButton'),
         show: !isMember && hasJoinReq,
         type: 'warning',
         disabled: interactionsBlocked,
         onClick: () => cancelJoinRequest(group.id)
       },
       {
-        label: 'Request to Join',
+        label: t('groupsMessages.requestToJoinButton'),
         show: !isMember && !hasJoinReq,
         type: 'success',
         disabled: interactionsBlocked,
@@ -2647,13 +2712,19 @@ export const Groups = () => {
       },
       // OWNER DELETE ACTIONS
       {
-        label: `Delete Pending (${getDeleteApprovals(group).length}/${group.members.length})`,
+        label: t('groupsMessages.deletePendingButton', {
+          approved: getDeleteApprovals(group).length,
+          total: group.members.length
+        }),
         show: isOwner && hasDeleteRequest(group),
         disabled: true,
         type: ''
       },
       {
-        label: group.members.length === 1 ? 'Delete Group' : 'Request Delete',
+        label:
+          group.members.length === 1
+            ? t('groupsMessages.deleteGroupButton')
+            : t('groupsMessages.requestDeleteButton'),
         show: isOwner && !hasDeleteRequest(group),
         type: 'danger',
         disabled: interactionsBlocked,

@@ -3,7 +3,7 @@
     <div
       class="text-xs font-medium text-orange-500 mb-2 flex items-center gap-1"
     >
-      <span>⏳ Pending Invitations ({{ pendingMemberCount }})</span>
+      <span>{{ t('groups.pendingInvitationsCount', { count: pendingMemberCount }) }}</span>
     </div>
     <div class="flex flex-wrap gap-2">
       <el-tag
@@ -25,13 +25,13 @@
         class="cursor-pointer"
         @click="showDialog = true"
       >
-        +{{ pendingMemberCount - initialMemberLoadCount }} more
+        {{ t('groups.moreCount', { count: pendingMemberCount - initialMemberLoadCount }) }}
       </el-tag>
     </div>
 
     <el-dialog
       v-model="showDialog"
-      :title="`Pending Invitations (${pendingMemberCount})`"
+      :title="t('groups.pendingInvitationsDialogTitle', { count: pendingMemberCount })"
       width="340px"
       append-to-body
       align-center
@@ -58,7 +58,7 @@
             </span>
           </div>
           <el-tag size="small" type="warning" class="ml-auto shrink-0"
-            >Pending</el-tag
+            >{{ t('groups.pendingTag') }}</el-tag
           >
         </div>
       </div>
@@ -68,8 +68,10 @@
 
 <script setup>
 import { computed, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useUserStore } from '@/stores'
 
+const { t } = useI18n()
 const showDialog = ref(false)
 const userStore = useUserStore()
 

@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     :model-value="modelValue"
-    title="Create Group"
+    :title="t('users.createGroupDialog')"
     width="90%"
     append-to-body
     style="max-width: 500px"
@@ -18,8 +18,8 @@
       "
     >
       <template #clear>
-        <el-button size="small" @click="$emit('update:modelValue', false)">
-          Cancel
+        <el-button size="medium" @click="$emit('update:modelValue', false)">
+          {{ t('common.cancel') }}
         </el-button>
       </template>
     </GroupsCreate>
@@ -27,7 +27,10 @@
 </template>
 
 <script setup>
+import { useI18n } from 'vue-i18n'
 import { loadAsyncComponent } from '@/utils'
+
+const { t } = useI18n()
 
 defineProps({
   modelValue: { type: Boolean, required: true },

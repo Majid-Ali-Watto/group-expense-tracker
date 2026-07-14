@@ -7,14 +7,16 @@
       <template #title>
         <span class="px-2 text-sm font-medium text-gray-600">
           <InfoCircleIcon class="inline-block w-4 h-4 mr-1" />
-          View Details
+          {{ t('groups.viewDetails') }}
         </span>
       </template>
 
       <div class="space-y-3 pt-2 px-2">
         <!-- Description -->
         <div v-if="group.description">
-          <div class="text-xs font-medium text-gray-500 mb-1">Description</div>
+          <div class="text-xs font-medium text-gray-500 mb-1">
+            {{ t('common.description') }}
+          </div>
           <div class="text-xs text-gray-500 dark:text-gray-400">
             {{ group.description }}
           </div>
@@ -26,7 +28,7 @@
           <div
             class="text-xs font-medium text-gray-500 mb-2 flex items-center justify-between"
           >
-            <span>Members ({{ memberCount }})</span>
+            <span>{{ t('groups.membersCount', { count: memberCount }) }}</span>
           </div>
           <div class="flex flex-wrap gap-2">
             <el-tag
@@ -48,7 +50,7 @@
               class="cursor-pointer"
               @click="showMembersDialog = true"
             >
-              +{{ memberCount - initialMemberLoadCount }} more
+              {{ t('groups.moreCount', { count: memberCount - initialMemberLoadCount }) }}
             </el-tag>
           </div>
         </div>
@@ -62,7 +64,7 @@
         <!-- Members Dialog -->
         <el-dialog
           v-model="showMembersDialog"
-          :title="`Members (${memberCount})`"
+          :title="t('groups.membersDialogTitle', { count: memberCount })"
           width="340px"
           append-to-body
           align-center
@@ -97,10 +99,12 @@
 </template>
 <script setup>
 import { computed, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { InfoCircleIcon } from '@/components/icons'
 import { useUserStore } from '@/stores'
 import GroupPendingMembersList from './GroupPendingMembersList.vue'
 
+const { t } = useI18n()
 const showMembersDialog = ref(false)
 
 const userStore = useUserStore()

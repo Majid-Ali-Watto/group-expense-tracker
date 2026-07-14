@@ -3,7 +3,7 @@
     <button
       v-if="canShowBugReport"
       class="theme-btn"
-      title="Report a Bug"
+      :title="t('headerActions.reportBug')"
       @click="emit('open-bug-report')"
     >
       <AlertTriangleIcon class="w-5 h-5" />
@@ -12,7 +12,7 @@
     <button
       v-if="!isPublicPage"
       class="theme-btn"
-      title="Help"
+      :title="t('headerActions.help')"
       @click="emit('open-help')"
     >
       <QuestionCircleIcon class="w-5 h-5" />
@@ -23,7 +23,7 @@
       class="guest-link-btn"
       @click="emit('navigate', '/login')"
     >
-      Login
+      {{ t('nav.login') }}
     </button>
 
     <button
@@ -31,7 +31,7 @@
       class="guest-cta-btn"
       @click="emit('navigate', '/register')"
     >
-      Create Account
+      {{ t('nav.createAccount') }}
     </button>
 
     <button
@@ -39,16 +39,24 @@
       class="guest-cta-btn"
       @click="emit('navigate', '/login')"
     >
-      Sign In
+      {{ t('headerActions.signIn') }}
     </button>
 
-    <button class="theme-btn" title="Share current page" @click="emit('share')">
+    <button
+      class="theme-btn"
+      :title="t('headerActions.shareCurrentPage')"
+      @click="emit('share')"
+    >
       <ShareIcon class="w-5 h-5" />
     </button>
 
     <button
       class="theme-btn"
-      :title="isDarkTheme ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
+      :title="
+        isDarkTheme
+          ? t('headerActions.switchToLightMode')
+          : t('headerActions.switchToDarkMode')
+      "
       @click="emit('toggle-theme')"
     >
       <MoonIcon v-if="!isDarkTheme" class="w-5 h-5" />
@@ -58,12 +66,12 @@
     <button
       v-if="loggedIn"
       class="theme-btn"
-      title="Profile"
+      :title="t('headerActions.profile')"
       @click="emit('open-profile')"
     >
       <UserAvatar
         :image-url="activeUserPhotoUrl"
-        alt="Profile"
+        :alt="t('headerActions.profile')"
         size="fill"
         variant="profile"
         icon-size="md"
@@ -74,7 +82,7 @@
     <button
       v-if="loggedIn"
       class="theme-btn"
-      title="Expenses Summary"
+      :title="t('headerActions.expensesSummary')"
       @click="emit('show-net-position')"
     >
       <el-icon :size="18"><DataAnalysis /></el-icon>
@@ -83,7 +91,7 @@
     <button
       v-if="canShowAdmin"
       class="theme-btn"
-      title="Admin Config"
+      :title="t('headerActions.adminConfig')"
       @click="emit('navigate', '/admin')"
     >
       <el-icon :size="18"><Tools /></el-icon>
@@ -92,7 +100,7 @@
     <button
       v-if="canShowManageTabs"
       class="theme-btn"
-      title="Manage Tabs"
+      :title="t('headerActions.manageTabs')"
       @click="emit('open-manage-tabs')"
     >
       <el-icon :size="18"><Setting /></el-icon>
@@ -101,7 +109,7 @@
     <button
       v-if="loggedIn"
       class="theme-btn"
-      title="Logout"
+      :title="t('headerActions.logout')"
       @click="emit('logout')"
     >
       <el-icon :size="18"><SwitchButton /></el-icon>
@@ -110,6 +118,7 @@
 </template>
 
 <script setup>
+import { useI18n } from 'vue-i18n'
 import {
   DataAnalysis,
   Setting,
@@ -124,6 +133,8 @@ import {
   ShareIcon,
   SunIcon
 } from '@/components/icons'
+
+const { t } = useI18n()
 
 defineProps({
   loggedIn: { type: Boolean, default: false },

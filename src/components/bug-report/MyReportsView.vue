@@ -5,7 +5,7 @@
     </div>
     <div v-else-if="!myReports.length" class="bug-mr-empty">
       <ClipboardDocumentIcon class="w-10 h-10" />
-      <p>You haven't submitted any bug reports yet.</p>
+      <p>{{ t('bugReports.submittedEmpty') }}</p>
     </div>
     <div v-else class="bug-mr-list">
       <div
@@ -24,16 +24,16 @@
               class="bug-mr-sev-badge"
               :class="`mr-sev-badge-${r.severity}`"
             >
-              {{ r.severity }}
+              {{ severityLabel(r.severity) }}
             </span>
-            <span class="bug-mr-cat">{{ r.category }}</span>
+            <span class="bug-mr-cat">{{ categoryLabel(r.category) }}</span>
           </div>
           <div class="bug-mr-actions">
             <!-- Re-open — only for resolved -->
             <button
               v-if="r.status === 'resolved'"
               class="bug-mr-action-btn reopen"
-              title="Re-open"
+              :title="t('bugReports.reOpen')"
               :disabled="actionLoading === r.id"
               @click="$emit('reopen', r)"
             >
@@ -42,7 +42,7 @@
             <!-- Edit -->
             <button
               class="bug-mr-action-btn edit"
-              title="Edit"
+              :title="t('common.edit')"
               :disabled="actionLoading === r.id"
               @click="$emit('edit', r)"
             >
@@ -51,7 +51,7 @@
             <!-- Delete -->
             <button
               class="bug-mr-action-btn delete"
-              title="Delete"
+              :title="t('common.delete')"
               :disabled="actionLoading === r.id"
               @click="$emit('delete', r)"
             >
@@ -60,7 +60,11 @@
             <!-- Expand / Collapse -->
             <button
               class="bug-mr-action-btn expand"
-              :title="expandedIds.has(r.id) ? 'Collapse' : 'View details'"
+              :title="
+                expandedIds.has(r.id)
+                  ? t('bugReports.collapse')
+                  : t('bugReports.viewDetails')
+              "
               @click="$emit('toggle-expand', r.id)"
             >
               <ChevronDownIcon
@@ -77,7 +81,7 @@
           <p class="bug-mr-title">{{ r.title }}</p>
           <button
             class="bug-mr-copy-btn"
-            title="Copy title"
+            :title="t('bugReports.copyTitle')"
             @click.stop="copyText(r.title)"
           >
             <CopyIcon class="w-3.5 h-3.5" />
@@ -94,7 +98,7 @@
             ></div>
             <button
               class="bug-mr-copy-btn bug-mr-copy-btn--desc"
-              title="Copy description"
+              :title="t('bugReports.copyDescription')"
               @click.stop="copyText(r.description)"
             >
               <CopyIcon class="w-3.5 h-3.5" />
@@ -102,20 +106,23 @@
           </div>
           <div v-if="r.screenshots?.length" class="bug-mr-screenshots">
             <div v-for="(ss, i) in r.screenshots" :key="i" class="bug-mr-thumb">
-              <AppImage :src="ss.url" :alt="`Screenshot ${i + 1}`" />
+              <AppImage
+                :src="ss.url"
+                :alt="t('bugReports.screenshotAlt', { index: i + 1 })"
+              />
               <span class="bug-mr-thumb-overlay">
                 <a
                   :href="ss.url"
                   target="_blank"
                   rel="noopener"
                   class="bug-mr-img-action-btn"
-                  title="Open"
+                  :title="t('common.open')"
                 >
                   <ExternalLinkIcon class="w-3.5 h-3.5" />
                 </a>
                 <button
                   class="bug-mr-img-action-btn"
-                  title="Download"
+                  :title="t('common.download')"
                   @click.prevent="downloadImage(ss.url, `screenshot-${i + 1}`)"
                 >
                   <DownloadIcon class="w-3.5 h-3.5" />
@@ -132,7 +139,8 @@
             >
               <span class="bug-mr-notes-toggle-left">
                 <ChatBubbleIcon class="w-3.5 h-3.5" />
-                Notes{{ notesOf(r).length ? ` (${notesOf(r).length})` : '' }}
+                {{ t('bugReports.notes')
+                }}{{ notesOf(r).length ? ` (${notesOf(r).length})` : '' }}
               </span>
               <ChevronDownIcon
                 class="bug-mr-notes-chevron"
@@ -146,12 +154,19 @@
                 id-prefix="bug-mr-note"
                 :avatar-char-fn="
                   (note) =>
-                    (note.authorType === 'admin' ? 'A' : note.authorName || '?')
+                    (
+                      note.authorType === 'admin'
+                        ? t('bugReports.admin')
+                        : note.authorName || '?'
+                    )
                       .charAt(0)
                       .toUpperCase()
                 "
                 :author-label-fn="
-                  (note) => (note.authorType === 'admin' ? 'Admin' : 'You')
+                  (note) =>
+                    note.authorType === 'admin'
+                      ? t('bugReports.admin')
+                      : t('bugReports.you')
                 "
                 :can-edit="(note) => note.authorType === 'reporter'"
                 :can-delete="(note) => note.authorType === 'reporter'"
@@ -170,8 +185,8 @@
                 :compose-error="replyErrors[r.id] || ''"
                 :compose-placeholder="
                   notesOf(r).length
-                    ? 'Reply to admin… Ctrl+Enter to send'
-                    : 'Add a comment for admin…'
+                    ? t('bugReports.replyToAdmin')
+                    : t('bugReports.addCommentForAdmin')
                 "
                 :sending="replySavingId === r.id"
                 @toggle-picker="
@@ -198,7 +213,9 @@
         </template>
 
         <!-- Footer -->
-        <p class="bug-mr-date">Submitted {{ formatDate(r.submittedAt) }}</p>
+        <p class="bug-mr-date">
+          {{ t('bugReports.submitted', { date: formatDate(r.submittedAt) }) }}
+        </p>
       </div>
     </div>
   </div>
@@ -207,6 +224,7 @@
 <script setup>
 import { NoteThread } from '@/components/bug-reports'
 import { AppImage } from '@/components/generic-components'
+import { useI18n } from 'vue-i18n'
 import {
   ChatBubbleIcon,
   ChevronDownIcon,
@@ -218,6 +236,30 @@ import {
   RefreshIcon,
   TrashIcon
 } from '@/components/icons'
+
+const { t } = useI18n()
+
+const CATEGORY_LABEL_KEYS = {
+  'shared-expenses': 'bugReports.categories.sharedExpenses',
+  'shared-loans': 'bugReports.categories.sharedLoans',
+  'personal-loans': 'bugReports.categories.personalLoans',
+  'personal-expenses': 'bugReports.categories.personalExpenses',
+  groups: 'bugReports.categories.groups',
+  notifications: 'bugReports.categories.notifications',
+  auth: 'bugReports.categories.auth',
+  settlement: 'bugReports.categories.settlement',
+  export: 'bugReports.categories.export',
+  charts: 'bugReports.categories.charts',
+  other: 'bugReports.categories.other'
+}
+
+function categoryLabel(value) {
+  return CATEGORY_LABEL_KEYS[value] ? t(CATEGORY_LABEL_KEYS[value]) : value
+}
+
+function severityLabel(value) {
+  return value ? t(`bugReports.severities.${value}`) : value
+}
 
 defineProps({
   myReports: { type: Array, default: () => [] },

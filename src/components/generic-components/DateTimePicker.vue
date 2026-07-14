@@ -1,5 +1,10 @@
 <template>
-  <el-form-item :label="label" class="w-full" :prop="prop" :required="required">
+  <el-form-item
+    :label="resolvedLabel"
+    class="w-full"
+    :prop="prop"
+    :required="required"
+  >
     <el-date-picker
       clearable
       :disabled-date="disabledFutureDates"
@@ -10,12 +15,17 @@
       :format="format"
       :value-format="valueFormat"
       style="width: 100%"
-      size="small"
+      size="medium"
     />
   </el-form-item>
 </template>
 
 <script setup>
+import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
+
 const props = defineProps({
   modelValue: {
     type: [String, Date],
@@ -23,7 +33,7 @@ const props = defineProps({
   },
   label: {
     type: String,
-    default: 'Date'
+    default: ''
   },
   prop: {
     type: String,
@@ -56,6 +66,8 @@ const props = defineProps({
 })
 
 defineEmits(['update:modelValue'])
+
+const resolvedLabel = computed(() => props.label || t('common.date'))
 
 function disabledFutureDates(time) {
   return props.disableFuture && time.getTime() > Date.now()

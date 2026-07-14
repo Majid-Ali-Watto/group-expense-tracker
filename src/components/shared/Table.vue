@@ -8,7 +8,7 @@
         <div class="min-w-0 flex-1">
           <GenericInputField
             v-model="filterText"
-            placeholder="Search all columns..."
+            :placeholder="t('table.searchPlaceholder')"
             :prefix-icon="SearchIcon"
             :wrap-form-item="false"
             input-class="table-filter-input"
@@ -19,28 +19,29 @@
           class="text-sm flex-shrink-0"
           style="color: var(--text-secondary)"
         >
-          {{ filteredSortedRows.length }} / {{ rows.length }} rows
+          {{ filteredSortedRows.length }} / {{ rows.length }}
+          {{ t('table.rowsSuffix') }}
         </span>
         <el-button
           v-if="sortKey"
-          size="small"
+          size="medium"
           link
           class="flex-shrink-0"
           style="color: var(--text-secondary)"
           @click="clearSort"
         >
-          Clear sort
+          {{ t('table.clearSort') }}
         </el-button>
         <el-button
           v-if="tableColumns.length > 1"
-          size="small"
+          size="medium"
           link
           class="flex-shrink-0"
           style="color: var(--text-secondary)"
           @click="openColumnSettings"
-          title="Reorder columns"
+          :title="t('table.reorderColumnsTooltip')"
         >
-          ⚙ Columns
+          {{ t('table.columnsButton') }}
         </el-button>
       </div>
 
@@ -52,30 +53,34 @@
         >
           <el-button
             v-if="showPopup"
-            size="small"
+            size="medium"
             type="danger"
             plain
             @click="bulkDeleteSelected"
           >
-            {{ isBulkDeleteDirectly ? 'Delete' : 'Request Delete' }}
+            {{
+              isBulkDeleteDirectly
+                ? t('common.delete')
+                : t('table.requestDelete')
+            }}
           </el-button>
           <el-button
             v-if="canDownloadExcel"
-            size="small"
+            size="medium"
             plain
             @click="downloadSelectedExcel"
-            >Excel</el-button
+            >{{ t('table.excel') }}</el-button
           >
           <el-button
             v-if="canDownloadPdf"
-            size="small"
+            size="medium"
             plain
             @click="downloadSelectedPdf"
-            >PDF</el-button
+            >{{ t('table.pdf') }}</el-button
           >
-          <span class="bulk-count flex-shrink-0"
-            >{{ selectedKeys.length }} selected</span
-          >
+          <span class="bulk-count flex-shrink-0">{{
+            t('table.selectedCount', { count: selectedKeys.length })
+          }}</span>
         </div>
       </Transition>
     </div>
@@ -116,7 +121,7 @@
             <span
               class="text-sm font-semibold uppercase tracking-wide"
               style="color: #ffffff !important"
-              >Actions</span
+              >{{ t('table.actions') }}</span
             >
           </div>
           <!-- Regular sortable + draggable header -->
@@ -154,7 +159,7 @@
                 >⠿</span
               >
               <span
-                v-overflow-popup="{ title: 'Column Name' }"
+                v-overflow-popup="{ title: t('table.columnNameTooltip') }"
                 class="text-sm font-semibold uppercase tracking-wide"
                 style="
                   color: #ffffff !important;
@@ -236,13 +241,16 @@
               <el-button
                 v-if="rowData.split.length > 1"
                 link
-                size="small"
+                size="medium"
                 class="ml-2 flex-shrink-0"
                 @click.stop="
-                  openShowMore('Split Details', rowData.split.map(formatSplit))
+                  openShowMore(
+                    t('table.splitDetailsTitle'),
+                    rowData.split.map(formatSplit)
+                  )
                 "
               >
-                +{{ rowData.split.length - 1 }} more
+                {{ t('table.more', { count: rowData.split.length - 1 }) }}
               </el-button>
             </template>
             <span
@@ -277,13 +285,16 @@
               <el-button
                 v-if="rowData.payers.length > 1"
                 link
-                size="small"
+                size="medium"
                 class="ml-2 flex-shrink-0"
                 @click.stop="
-                  openShowMore('Payers', rowData.payers.map(formatPayer))
+                  openShowMore(
+                    t('table.payersTitle'),
+                    rowData.payers.map(formatPayer)
+                  )
                 "
               >
-                +{{ rowData.payers.length - 1 }} more
+                {{ t('table.more', { count: rowData.payers.length - 1 }) }}
               </el-button>
             </template>
             <span
@@ -365,16 +376,16 @@
               <el-button
                 v-if="rowData.splitItems.length > 1"
                 link
-                size="small"
+                size="medium"
                 class="ml-2 flex-shrink-0"
                 @click.stop="
                   openShowMore(
-                    'Split Items',
+                    t('table.splitItemsTitle'),
                     rowData.splitItems.map(formatSplitItem)
                   )
                 "
               >
-                +{{ rowData.splitItems.length - 1 }} more
+                {{ t('table.more', { count: rowData.splitItems.length - 1 }) }}
               </el-button>
             </template>
             <span
@@ -405,22 +416,26 @@
                   class="receipt-link hover:underline"
                   @click.stop
                 >
-                  {{ `Receipt${rowData.receiptUrls.length > 1 ? ' 1' : ''}` }}
+                  {{
+                    rowData.receiptUrls.length > 1
+                      ? `${t('table.receipt')} 1`
+                      : t('table.receipt')
+                  }}
                 </a>
               </span>
               <el-button
                 v-if="rowData.receiptUrls.length > 1"
                 link
-                size="small"
+                size="medium"
                 class="ml-1 flex-shrink-0"
                 @click.stop="
                   openShowMore(
-                    'Receipts',
+                    t('table.receiptsTitle'),
                     rowData.receiptUrls.map((u, i) => formatReceipt(u, i))
                   )
                 "
               >
-                +{{ rowData.receiptUrls.length - 1 }} more
+                {{ t('table.more', { count: rowData.receiptUrls.length - 1 }) }}
               </el-button>
             </template>
             <template v-else>-</template>
@@ -441,16 +456,16 @@
               <template #dropdown>
                 <el-dropdown-menu>
                   <el-dropdown-item v-if="showPopup" command="edit"
-                    >&#9998; Edit / Duplicate</el-dropdown-item
+                    >&#9998; {{ t('table.editDuplicate') }}</el-dropdown-item
                   >
                   <el-dropdown-item
                     v-if="showPopup"
                     command="delete"
                     class="et-action-delete"
-                    >&#128465; Delete</el-dropdown-item
+                    >&#128465; {{ t('common.delete') }}</el-dropdown-item
                   >
                   <el-dropdown-item command="info"
-                    >&#128712; Added By</el-dropdown-item
+                    >&#128712; {{ t('table.addedBy') }}</el-dropdown-item
                   >
                 </el-dropdown-menu>
               </template>
@@ -473,16 +488,16 @@
     <div v-else class="et-empty">
       <template v-if="filterText.trim()">
         <span class="et-empty__icon">🔍</span>
-        <p class="et-empty__title">No results found</p>
+        <p class="et-empty__title">{{ t('table.noResultsFound') }}</p>
         <p class="et-empty__sub">
-          No rows match <strong>"{{ filterText.trim() }}"</strong>. Try a
-          different search.
+          {{ t('table.noResultsMatch', { search: filterText.trim() }) }}
+          {{ t('table.tryDifferentSearch') }}
         </p>
       </template>
       <template v-else>
         <span class="et-empty__icon">📭</span>
-        <p class="et-empty__title">No data</p>
-        <p class="et-empty__sub">There are no records to display yet.</p>
+        <p class="et-empty__title">{{ t('table.noData') }}</p>
+        <p class="et-empty__sub">{{ t('table.noRecordsYet') }}</p>
       </template>
     </div>
 
@@ -499,8 +514,8 @@
     >
       <template #header>
         <div class="dialog-header">
-          <strong v-if="deleteMode">Confirm Delete</strong>
-          <strong v-else>Edit Record</strong>
+          <strong v-if="deleteMode">{{ t('table.confirmDeleteTitle') }}</strong>
+          <strong v-else>{{ t('table.editRecordTitle') }}</strong>
         </div>
       </template>
 
@@ -509,9 +524,9 @@
         <div class="et-delete-confirm">
           <div class="et-delete-confirm__icon">🗑️</div>
           <p class="et-delete-confirm__msg">
-            Are you sure you want to delete this record?<br /><span
+            {{ t('table.confirmDeleteMessage') }}<br /><span
               class="et-delete-confirm__sub"
-              >This action cannot be undone.</span
+              >{{ t('table.actionCannotBeUndone') }}</span
             >
           </p>
         </div>
@@ -549,22 +564,24 @@
         <div class="dialog-footer">
           <!-- Delete mode footer -->
           <template v-if="deleteMode">
-            <el-button type="danger" size="small" @click="remove"
-              >Yes, Delete</el-button
-            >
-            <el-button size="small" @click="closeDialog">Cancel</el-button>
+            <el-button type="danger" size="medium" @click="remove">{{
+              t('table.yesDelete')
+            }}</el-button>
+            <el-button size="medium" @click="closeDialog">{{
+              t('common.cancel')
+            }}</el-button>
           </template>
           <!-- Edit mode footer -->
           <template v-else>
-            <el-button type="warning" size="small" @click="update"
-              >Update</el-button
-            >
-            <el-button type="primary" size="small" @click="duplicate"
-              >Duplicate</el-button
-            >
-            <el-button type="success" size="small" @click="closeDialog"
-              >Cancel</el-button
-            >
+            <el-button type="warning" size="medium" @click="update">{{
+              t('common.update')
+            }}</el-button>
+            <el-button type="primary" size="medium" @click="duplicate">{{
+              t('common.duplicate')
+            }}</el-button>
+            <el-button type="success" size="medium" @click="closeDialog">{{
+              t('common.cancel')
+            }}</el-button>
           </template>
         </div>
       </template>
@@ -575,17 +592,17 @@
   <div v-if="isDownloadAvailable" class="mt-2 flex justify-between">
     <GenericButton
       v-if="canDownloadExcel"
-      size="small"
+      size="medium"
       type=""
       @click="downloadExcelData"
-      >Download Excel</GenericButton
+      >{{ t('table.downloadExcel') }}</GenericButton
     >
     <GenericButton
       v-if="canDownloadPdf"
-      size="small"
+      size="medium"
       type="success"
       @click="downloadPdfData"
-      >Download PDF</GenericButton
+      >{{ t('table.downloadPdf') }}</GenericButton
     >
   </div>
 
@@ -613,13 +630,13 @@
   <!-- Column settings dialog -->
   <el-dialog
     v-model="columnSettingsVisible"
-    title="Reorder Columns"
+    :title="t('table.reorderColumnsTitle')"
     width="320px"
     append-to-body
     top="96px"
     destroy-on-close
   >
-    <p class="col-settings-hint">Drag rows to reorder columns.</p>
+    <p class="col-settings-hint">{{ t('table.dragToReorderHint') }}</p>
     <ul class="col-settings-list">
       <li
         v-for="key in columnOrder"
@@ -643,6 +660,7 @@
 
 <script setup>
 import { watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Search as SearchIcon } from '@element-plus/icons-vue'
 import {
   GenericButton,
@@ -650,6 +668,8 @@ import {
 } from '@/components/generic-components'
 import { HOC } from '@/components/layout'
 import { Table } from '@/scripts/shared'
+
+const { t } = useI18n()
 
 const props = defineProps({
   rows: { type: Array, required: true },

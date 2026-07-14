@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     :model-value="modelValue"
-    title="Edit Group"
+    :title="t('groups.editGroupTitle')"
     width="90%"
     append-to-body
     style="max-width: 500px"
@@ -15,26 +15,26 @@
     >
       <GenericInputField
         v-model="localForm.name"
-        label="Group Name"
+        :label="t('groups.groupNameLabel')"
         prop="name"
-        placeholder="Enter group name"
+        :placeholder="t('groups.namePlaceholder')"
         :maxlength="50"
       />
       <GenericInputField
         v-model="localForm.description"
-        label="Description"
+        :label="t('common.description')"
         type="textarea"
         :rows="3"
-        placeholder="Enter group description (optional)"
+        :placeholder="t('groups.descriptionPlaceholder')"
         :maxlength="100"
       />
       <GenericDropDown
         v-model="localForm.members"
-        label="Members"
+        :label="t('groups.membersLabelPlain')"
         prop="members"
         :options="memberOptions"
-        placeholder="Select members"
-        size="small"
+        :placeholder="t('groups.membersPlaceholder')"
+        size="medium"
         multiple
       />
     </el-form>
@@ -42,19 +42,19 @@
     <template #footer>
       <div class="flex justify-end gap-2">
         <el-button
-          size="small"
+          size="medium"
           style="min-width: 80px"
           @click="$emit('update:modelValue', false)"
         >
-          Cancel
+          {{ t('common.cancel') }}
         </el-button>
         <el-button
           type="primary"
-          size="small"
+          size="medium"
           style="min-width: 80px"
           @click="handleSave"
         >
-          Save
+          {{ t('groups.save') }}
         </el-button>
       </div>
     </template>
@@ -63,11 +63,14 @@
 
 <script setup>
 import { ref, reactive, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { groupRules } from '@/assets'
 import {
   GenericInputField,
   GenericDropDown
 } from '@/components/generic-components'
+
+const { t } = useI18n()
 
 const props = defineProps({
   modelValue: { type: Boolean, required: true },

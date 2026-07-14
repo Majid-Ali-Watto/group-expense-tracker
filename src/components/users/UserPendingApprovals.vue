@@ -1,6 +1,6 @@
 <template>
   <div v-if="approvals.length > 0" class="mb-4">
-    <h4 class="pending-title mb-2">Pending Approvals</h4>
+    <h4 class="pending-title mb-2">{{ t('users.pendingApprovals') }}</h4>
     <div
       v-for="item in approvals"
       :key="`${item.user.uid}-${item.type}`"
@@ -13,7 +13,7 @@
           </div>
           <div class="text-xs text-gray-600 mt-1">
             <span>
-              Delete request by
+              {{ t('users.deleteRequestBy') }}
               <strong>
                 {{ getRequesterName(item.request.requestedBy) }}
                 ({{ displayMobile(item.request.requestedBy) }})
@@ -21,24 +21,23 @@
             </span>
           </div>
           <div class="text-xs text-gray-500 mt-1">
-            Approvals: {{ item.request.approvals?.length || 0 }} /
-            {{ item.request.requiredApprovals?.length || 0 }}
+            {{ t('users.approvals', { approved: item.request.approvals?.length || 0, required: item.request.requiredApprovals?.length || 0 }) }}
           </div>
         </div>
         <div class="flex gap-1 flex-shrink-0">
           <el-button
-            size="small"
+            size="medium"
             type="success"
             @click="$emit('approve', item.user.uid, item.type)"
           >
-            Approve
+            {{ t('users.approve') }}
           </el-button>
           <el-button
-            size="small"
+            size="medium"
             type="danger"
             @click="$emit('reject', item.user.uid, item.type, item.user.name)"
           >
-            Reject
+            {{ t('users.reject') }}
           </el-button>
         </div>
       </div>
@@ -47,7 +46,10 @@
 </template>
 
 <script setup>
+import { useI18n } from 'vue-i18n'
 import { useUserStore } from '@/stores'
+
+const { t } = useI18n()
 
 defineProps({
   approvals: { type: Array, required: true },

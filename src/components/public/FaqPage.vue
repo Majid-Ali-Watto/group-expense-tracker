@@ -1,16 +1,13 @@
 <template>
   <main class="public-page inner-page">
     <section class="title-section">
-      <p class="eyebrow">Frequently asked questions</p>
-      <h1>Questions people ask before using Kharchafy</h1>
-      <p>
-        These answers explain what the app does, who it is for, and what parts
-        of the product should be public versus private in search.
-      </p>
+      <p class="eyebrow">{{ t('faq.eyebrow') }}</p>
+      <h1>{{ t('faq.title') }}</h1>
+      <p>{{ t('faq.intro') }}</p>
     </section>
 
     <section class="faq-list">
-      <article v-for="item in FAQ_ITEMS" :key="item.question" class="faq-card">
+      <article v-for="item in faqItems" :key="item.question" class="faq-card">
         <h2>{{ item.question }}</h2>
         <p>{{ item.answer }}</p>
       </article>
@@ -19,7 +16,12 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { FAQ_ITEMS } from '@/constants'
+
+const { t, locale } = useI18n()
+const faqItems = computed(() => FAQ_ITEMS[locale.value])
 </script>
 
 <style scoped>

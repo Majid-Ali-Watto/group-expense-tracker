@@ -17,12 +17,12 @@
       class="flex flex-col items-center justify-center py-24 gap-4 text-center px-4"
     >
       <div class="text-5xl">🔍</div>
-      <h2 class="text-xl font-semibold">Group Not Found</h2>
+      <h2 class="text-xl font-semibold">{{ t('shared.groupNotFound') }}</h2>
       <p class="text-sm text-gray-500 max-w-xs">
-        This group doesn't exist or has been deleted.
+        {{ t('shared.groupNotFoundText') }}
       </p>
       <el-button type="primary" @click="router.push('/groups')">
-        Go to Groups
+        {{ t('shared.goToGroups') }}
       </el-button>
     </div>
 
@@ -33,7 +33,7 @@
       <div class="text-5xl">⛔</div>
       <div>
         <h2 class="text-xl font-semibold">
-          {{ group?.name || 'Blocked Access' }}
+          {{ group?.name || t('shared.blockedAccessFallback') }}
         </h2>
         <p class="text-sm text-gray-400 mt-1">
           {{ blockedMessage }}
@@ -41,7 +41,7 @@
       </div>
 
       <el-button type="primary" @click="router.push('/groups')">
-        Go to Groups
+        {{ t('shared.goToGroups') }}
       </el-button>
     </div>
 
@@ -58,18 +58,17 @@
 
       <el-alert type="warning" :closable="false" class="max-w-sm text-left">
         <template #default>
-          You are not a member of this group. Request to join or ask the group
-          owner to invite you.
+          {{ t('shared.notMemberNotice') }}
         </template>
       </el-alert>
 
       <!-- Pending invitation: accept or decline -->
       <div v-if="isInvited" class="flex gap-3">
         <el-button type="success" :loading="actioning" @click="accept">
-          Accept Invitation
+          {{ t('shared.acceptInvitation') }}
         </el-button>
         <el-button type="danger" plain :loading="actioning" @click="decline">
-          Decline
+          {{ t('groups.decline') }}
         </el-button>
       </div>
 
@@ -79,24 +78,28 @@
         class="flex flex-col items-center gap-2"
       >
         <el-tag type="warning" size="large"
-          >⏳ Join request pending approval</el-tag
+          >⏳ {{ t('groups.joinRequestPending') }}</el-tag
         >
         <p class="text-xs text-gray-400">
-          {{ joinRequestApprovals }} of
-          {{ group.members?.length ?? 0 }} member(s) approved
+          {{
+            t('groups.approvalsCount', {
+              approved: joinRequestApprovals,
+              total: group.members?.length ?? 0
+            })
+          }}
         </p>
       </div>
 
       <!-- No relationship yet — send join request -->
       <div v-else class="flex flex-col items-center gap-3">
         <el-button type="primary" :loading="actioning" @click="sendJoinRequest">
-          Request to Join
+          {{ t('shared.requestToJoin') }}
         </el-button>
       </div>
 
-      <el-button text @click="router.push('/groups')"
-        >← Back to Groups</el-button
-      >
+      <el-button text @click="router.push('/groups')">{{
+        t('shared.backToGroupsArrow')
+      }}</el-button>
     </div>
   </div>
 </template>
@@ -104,12 +107,13 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore, useGroupStore, useUserStore } from '@/stores'
 import { useFireBase } from '@/composables'
 import { DB_NODES } from '@/constants'
 import { maskMobile, appendNotificationForUser, showError } from '@/utils'
 import {
-  ACTIVE_USER_BLOCKED_MESSAGE,
+  getActiveUserBlockedMessage,
   getBlockedEntityMessage,
   isGroupBlocked,
   isUserBlocked
@@ -124,6 +128,7 @@ const props = defineProps({
 })
 
 const router = useRouter()
+const { t } = useI18n()
 const authStore = useAuthStore()
 const groupStore = useGroupStore()
 const userStore = useUserStore()
@@ -169,7 +174,7 @@ const isInteractionBlocked = computed(
 const blockedMessage = computed(() =>
   isGroupBlockedState.value
     ? getBlockedEntityMessage('group')
-    : ACTIVE_USER_BLOCKED_MESSAGE
+    : getActiveUserBlockedMessage()
 )
 
 const isMember = computed(() =>
@@ -224,7 +229,11 @@ async function accept() {
         {
           id: `${Date.now()}-${Math.random()}`,
           type: 'invitation-accepted',
-          message: `${myName} (${maskMobile(myMobile)}) accepted your invitation to join "${group.value.name}"`,
+          message: t('groupsMessages.acceptedInvitationNotif', {
+            name: myName,
+            mobile: maskMobile(myMobile),
+            groupName: group.value.name
+          }),
           updatedBy: me.value,
           timestamp: Date.now()
         }
@@ -236,10 +245,10 @@ async function accept() {
     await updateData(
       `${DB_NODES.GROUPS}/${props.groupId}`,
       () => payload,
-      'You have joined the group!'
+      t('groupsMessages.joinedGroupSuccess')
     )
   } catch {
-    showError('Failed to accept invitation. Please try again.')
+    showError(t('shared.acceptInvitationFailed'))
   } finally {
     actioning.value = false
   }
@@ -272,7 +281,11 @@ async function decline() {
         {
           id: `${Date.now()}-${Math.random()}`,
           type: 'invitation-declined',
-          message: `${myName} (${maskMobile(myMobile)}) declined your invitation to join "${group.value.name}"`,
+          message: t('groupsMessages.declinedInvitationNotif', {
+            name: myName,
+            mobile: maskMobile(myMobile),
+            groupName: group.value.name
+          }),
           updatedBy: me.value,
           timestamp: Date.now()
         }
@@ -284,10 +297,10 @@ async function decline() {
     await updateData(
       `${DB_NODES.GROUPS}/${props.groupId}`,
       () => payload,
-      'Invitation declined.'
+      t('groupsMessages.invitationDeclined')
     )
   } catch {
-    showError('Failed to decline invitation. Please try again.')
+    showError(t('shared.declineInvitationFailed'))
   } finally {
     actioning.value = false
   }
@@ -307,7 +320,7 @@ async function sendJoinRequest() {
     const myMobile = myUser?.mobile || me.value
     const existing = group.value.joinRequests || []
     if (existing.some((r) => r.uid === me.value)) {
-      showError('You already have a pending join request.')
+      showError(t('shared.pendingJoinRequestExists'))
       return
     }
 
@@ -324,7 +337,11 @@ async function sendJoinRequest() {
         updatedGroup = appendNotificationForUser(updatedGroup, member.uid, {
           id: `${Date.now()}-${Math.random()}`,
           type: 'join-request',
-          message: `${myName} (${maskMobile(myMobile)}) wants to join "${group.value.name}"`,
+          message: t('groupsMessages.wantsToJoinNotif', {
+            name: myName,
+            mobile: maskMobile(myMobile),
+            groupName: group.value.name
+          }),
           updatedBy: me.value,
           timestamp: Date.now()
         })
@@ -336,10 +353,10 @@ async function sendJoinRequest() {
     await updateData(
       `${DB_NODES.GROUPS}/${props.groupId}`,
       () => payload,
-      'Join request sent! Waiting for member approval.'
+      t('shared.joinRequestSent')
     )
   } catch {
-    showError('Failed to send join request. Please try again.')
+    showError(t('shared.joinRequestFailed'))
   } finally {
     actioning.value = false
   }

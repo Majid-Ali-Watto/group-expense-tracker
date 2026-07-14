@@ -7,19 +7,19 @@
       <GenericButton
         v-if="showResendVerification"
         type="link"
-        size="small"
+        size="medium"
         @click="$emit('resend-verification')"
       >
-        Resend Verification Email
+        {{ t('auth.actions.resendVerification') }}
       </GenericButton>
-      <GenericButton type="link" size="small" @click="$emit('forgot-code')">
-        Forgot Password?
+      <GenericButton type="link" size="medium" @click="$emit('forgot-code')">
+        {{ t('auth.actions.forgotPassword') }}
       </GenericButton>
     </div>
 
     <el-checkbox
       :model-value="rememberMe"
-      label="Remember Me"
+      :label="t('auth.actions.rememberMe')"
       class="text-sm text-gray-700 mb-4"
       @update:modelValue="$emit('update:rememberMe', $event)"
     />
@@ -28,18 +28,22 @@
       <GenericButton
         @click="$emit('submit')"
         type="success"
-        size="small"
+        size="medium"
         custom-class="flex-1"
         :loading="isSubmitting"
         :disabled="isSubmitting"
       >
-        {{ mode === 'register' ? 'Register' : 'Login' }}
+        {{
+          mode === 'register'
+            ? t('auth.actions.submitRegister')
+            : t('auth.actions.submitLogin')
+        }}
       </GenericButton>
     </div>
 
     <div class="flex items-center gap-2 my-3">
       <div class="flex-1 h-px bg-gray-200" />
-      <span class="text-xs text-gray-400">or</span>
+      <span class="text-xs text-gray-400">{{ t('auth.actions.or') }}</span>
       <div class="flex-1 h-px bg-gray-200" />
     </div>
 
@@ -71,21 +75,21 @@
           fill="#EA4335"
         />
       </svg>
-      Continue with Google
+      {{ t('auth.actions.continueWithGoogle') }}
     </button>
 
     <p
       v-if="mode === 'login'"
       class="text-center text-xs text-gray-500 mt-3 pt-3"
     >
-      New to Kharchafy?
+      {{ t('auth.actions.newToApp') }}
       <GenericButton
         type="link"
-        size="small"
+        size="medium"
         custom-class="font-medium"
         @click="$emit('update:mode', 'register')"
       >
-        Register
+        {{ t('auth.actions.submitRegister') }}
       </GenericButton>
     </p>
 
@@ -93,21 +97,24 @@
       v-if="mode === 'register'"
       class="text-center text-xs text-gray-500 mt-3 pt-3"
     >
-      Already have an account?
+      {{ t('auth.actions.alreadyHaveAccount') }}
       <GenericButton
         type="link"
-        size="small"
+        size="medium"
         custom-class="font-medium"
         @click="$emit('update:mode', 'login')"
       >
-        Login
+        {{ t('auth.actions.submitLogin') }}
       </GenericButton>
     </p>
   </div>
 </template>
 
 <script setup>
+import { useI18n } from 'vue-i18n'
 import { GenericButton } from '@/components/generic-components'
+
+const { t } = useI18n()
 
 defineProps({
   mode: { type: String, required: true },

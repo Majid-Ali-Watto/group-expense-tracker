@@ -1,4 +1,5 @@
 import { ref, watch, computed, nextTick } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import {
   useUsersOptions,
@@ -23,6 +24,7 @@ import { useAuthStore, useGroupStore, useUserStore } from '@/stores'
 import { DB_NODES } from '@/constants'
 
 export const SharedExpenses = (props, emit) => {
+  const { t } = useI18n()
   const { updateData, saveData, isSubmitting } = useFireBase()
   const isVisible = ref(true)
   const authStore = useAuthStore()
@@ -240,9 +242,7 @@ export const SharedExpenses = (props, emit) => {
     if (formData.value.payerMode === 'multiple') {
       const validPayers = formData.value.payers.filter((p) => p.uid)
       if (validPayers.length === 0) {
-        ElMessage.error(
-          'Please add at least one payer when using Multiple payer mode.'
-        )
+        ElMessage.error(t('sharedExpenses.addPayerError'))
         return
       }
       const payerSum = validPayers.reduce(
@@ -252,7 +252,10 @@ export const SharedExpenses = (props, emit) => {
       const total = parseFloat(formData.value.amount || 0)
       if (total > 0 && Math.abs(payerSum - total) > 0.01) {
         ElMessage.error(
-          `Payers total (${payerSum.toFixed(2)}) must equal the transaction amount (${total.toFixed(2)}).`
+          t('sharedExpenses.payersTotalMismatch', {
+            payersTotal: payerSum.toFixed(2),
+            amount: total.toFixed(2)
+          })
         )
         return
       }
@@ -262,9 +265,7 @@ export const SharedExpenses = (props, emit) => {
       formData.value.splitMode === 'custom' &&
       formData.value.splitItems.length === 0
     ) {
-      ElMessage.error(
-        'Please add at least one split item when using Custom split mode.'
-      )
+      ElMessage.error(t('sharedExpenses.splitItemError'))
       return
     }
 
@@ -288,8 +289,8 @@ export const SharedExpenses = (props, emit) => {
             () => paymentData,
             transactionForm,
             whatTask === 'Duplicate'
-              ? 'Transaction duplicated successfully.'
-              : 'Transaction successfully saved.',
+              ? t('sharedExpenses.transactionDuplicated')
+              : t('sharedExpenses.transactionSaved'),
             (createdDoc) => {
               sendSharedActivityEmail({
                 type: 'shared-expense',
@@ -356,7 +357,7 @@ export const SharedExpenses = (props, emit) => {
     receiptTax.value = data.tax != null && data.tax > 0 ? data.tax : null
 
     await nextTick()
-    showSuccess('Receipt data extracted and filled into the form.')
+    showSuccess(t('common.receiptExtracted'))
   }
 
   const createDeleteRequest = (paymentPath) => {
@@ -365,7 +366,7 @@ export const SharedExpenses = (props, emit) => {
     updateData(
       paymentPath,
       () => ({ deleteRequest }),
-      'Delete request sent. Waiting for approval from all group members.'
+      t('approval.deleteRequestSent')
     )
     emit('closeModal')
   }
@@ -383,7 +384,7 @@ export const SharedExpenses = (props, emit) => {
     updateData(
       paymentPath,
       () => ({ updateRequest }),
-      'Update request sent. Waiting for approval from all group members.'
+      t('approval.updateRequestSent')
     )
     emit('closeModal')
   }

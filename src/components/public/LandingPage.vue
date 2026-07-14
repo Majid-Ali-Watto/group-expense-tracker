@@ -2,29 +2,21 @@
   <main class="public-page">
     <section class="hero-section">
       <div class="hero-copy">
-        <p class="eyebrow">Shared spending made clearer</p>
-        <h1>
-          Group expense tracking for trips, roommates, and monthly budgets
-        </h1>
-        <p class="hero-text">
-          Kharchafy helps you split bills, track shared loans, store receipts,
-          and manage personal budgets without losing track of who paid, who
-          owes, or what changed.
-        </p>
+        <p class="eyebrow">{{ t('landing.eyebrow') }}</p>
+        <h1>{{ t('landing.heroTitle') }}</h1>
+        <p class="hero-text">{{ t('landing.heroText') }}</p>
         <div class="hero-actions">
-          <RouterLink class="cta-primary" to="/register"
-            >Create account</RouterLink
-          >
-          <RouterLink class="cta-secondary" to="/login">Open app</RouterLink>
+          <RouterLink class="cta-primary" :to="withLocale('/register')">{{
+            t('landing.createAccount')
+          }}</RouterLink>
+          <RouterLink class="cta-secondary" :to="withLocale('/login')">{{
+            t('landing.openApp')
+          }}</RouterLink>
         </div>
       </div>
 
       <div class="hero-panel">
-        <div
-          v-for="item in LANDING_HIGHLIGHTS"
-          :key="item.title"
-          class="hero-card"
-        >
+        <div v-for="item in highlights" :key="item.title" class="hero-card">
           <h2>{{ item.title }}</h2>
           <p>{{ item.description }}</p>
         </div>
@@ -33,12 +25,12 @@
 
     <section class="content-section">
       <div class="section-heading">
-        <p class="eyebrow">Common use cases</p>
+        <p class="eyebrow">{{ t('landing.useCasesEyebrow') }}</p>
       </div>
 
       <div class="card-grid">
         <article
-          v-for="item in PUBLIC_USE_CASES"
+          v-for="item in useCases"
           :key="item.title"
           class="content-card"
         >
@@ -50,30 +42,31 @@
 
     <section class="content-section accent-section">
       <div class="section-heading">
-        <p class="eyebrow">Explore more</p>
+        <p class="eyebrow">{{ t('landing.exploreEyebrow') }}</p>
       </div>
 
       <div class="card-grid">
-        <RouterLink class="content-card link-card" to="/features">
-          <h3>Features</h3>
-          <p>See shared expense, loan, approval, and export capabilities.</p>
-        </RouterLink>
-        <RouterLink class="content-card link-card" to="/group-expense-tracker">
-          <h3>Group expense tracker</h3>
-          <p>Learn how Kharchafy handles roommates, trips, and shared bills.</p>
+        <RouterLink class="content-card link-card" :to="withLocale('/features')">
+          <h3>{{ t('landing.explore.features.title') }}</h3>
+          <p>{{ t('landing.explore.features.description') }}</p>
         </RouterLink>
         <RouterLink
           class="content-card link-card"
-          to="/personal-budget-tracker"
+          :to="withLocale('/group-expense-tracker')"
         >
-          <h3>Personal budget tracker</h3>
-          <p>
-            Review salary, monthly expenses, and personal finance workflows.
-          </p>
+          <h3>{{ t('landing.explore.groupExpenseTracker.title') }}</h3>
+          <p>{{ t('landing.explore.groupExpenseTracker.description') }}</p>
         </RouterLink>
-        <RouterLink class="content-card link-card" to="/faq">
-          <h3>FAQ</h3>
-          <p>Read practical answers before you create an account.</p>
+        <RouterLink
+          class="content-card link-card"
+          :to="withLocale('/personal-budget-tracker')"
+        >
+          <h3>{{ t('landing.explore.personalBudgetTracker.title') }}</h3>
+          <p>{{ t('landing.explore.personalBudgetTracker.description') }}</p>
+        </RouterLink>
+        <RouterLink class="content-card link-card" :to="withLocale('/faq')">
+          <h3>{{ t('landing.explore.faq.title') }}</h3>
+          <p>{{ t('landing.explore.faq.description') }}</p>
         </RouterLink>
       </div>
     </section>
@@ -81,8 +74,18 @@
 </template>
 
 <script setup>
-import { RouterLink } from 'vue-router'
+import { computed } from 'vue'
+import { RouterLink, useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { LANDING_HIGHLIGHTS, PUBLIC_USE_CASES } from '@/constants'
+
+const route = useRoute()
+const { t, locale } = useI18n()
+
+const highlights = computed(() => LANDING_HIGHLIGHTS[locale.value])
+const useCases = computed(() => PUBLIC_USE_CASES[locale.value])
+const withLocale = (path) =>
+  route.meta?.locale === 'ur' ? `/ur${path}` : path
 </script>
 
 <style scoped>

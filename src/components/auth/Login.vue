@@ -6,7 +6,7 @@
     >
       <el-form
         :model="form"
-        :rules="rules"
+        :rules="loginRules"
         ref="loginForm"
         label-position="top"
         class="w-full"
@@ -53,9 +53,9 @@
         :visible="featureSelectionDialogVisible"
         :selection="featureSelection"
         :loading="isSavingFeatureSelection"
-        title="Choose Your Tabs"
-        confirm-text="Continue"
-        cancel-text="Sign out"
+        :title="t('auth.tabConfig.title')"
+        :confirm-text="t('auth.tabConfig.confirm')"
+        :cancel-text="t('auth.tabConfig.cancelSignOut')"
         @update:visible="
           (value) => {
             if (!value) cancelFeatureSelection()
@@ -68,19 +68,19 @@
 
       <el-dialog
         v-model="googleMobileDialogVisible"
-        title="One more step"
+        :title="t('auth.googleMobileDialog.title')"
         width="320px"
         :close-on-click-modal="false"
         :close-on-press-escape="false"
         :show-close="false"
       >
         <p class="text-sm text-gray-600 mb-4">
-          Please enter your mobile number to complete registration.<br />
-          <span>Priortize <b> (Easypaisa/Jazzcash)</b>, not mandatory </span>
+          {{ t('auth.googleMobileDialog.instructions') }}<br />
+          <span>{{ t('auth.googleMobileDialog.prioritize') }}</span>
         </p>
         <el-input
           v-model="googleMobileInput"
-          placeholder="Mobile number (11 digits)"
+          :placeholder="t('auth.googleMobileDialog.placeholder')"
           maxlength="11"
           @input="googleMobileInput = googleMobileInput.replace(/\D/g, '')"
           @keyup.enter="submitGoogleMobile"
@@ -88,20 +88,20 @@
         <template #footer>
           <GenericButton
             type="default"
-            size="small"
+            size="medium"
             :disabled="isGoogleMobileSubmitting"
             @click="cancelGoogleMobileDialog"
           >
-            Cancel
+            {{ t('auth.googleMobileDialog.cancel') }}
           </GenericButton>
           <GenericButton
             type="success"
-            size="small"
+            size="medium"
             :loading="isGoogleMobileSubmitting"
             :disabled="isGoogleMobileSubmitting"
             @click="submitGoogleMobile"
           >
-            Continue
+            {{ t('auth.googleMobileDialog.continue') }}
           </GenericButton>
         </template>
       </el-dialog>
@@ -110,7 +110,9 @@
 </template>
 
 <script setup>
-import { loginRules as rules } from '@/assets'
+import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { getLoginRules } from '@/assets'
 import { Login } from '@/scripts/auth'
 import { loadAsyncComponent } from '@/utils/async-component'
 import { GenericButton } from '@/components/generic-components'
@@ -120,6 +122,9 @@ import {
   AuthInfoAlert,
   AuthModeToggle
 } from '@/components/auth/components'
+
+const { t, locale } = useI18n()
+const loginRules = computed(() => getLoginRules(locale.value))
 const PasswordResetDialog = loadAsyncComponent(
   () => import('./components/PasswordResetDialog.vue')
 )

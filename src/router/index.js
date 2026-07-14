@@ -3,7 +3,7 @@ import { useGroupStore } from '../stores/groupStore'
 import { useAuthStore } from '../stores/authStore'
 import { useUserStore } from '../stores/userStore'
 import { Tabs } from '../assets/enums'
-import { SEO_PAGES } from '@/constants'
+import { SEO_PAGES, getSeoPages } from '@/constants'
 import {
   resolveUserFromAuth,
   canAccessTab,
@@ -81,49 +81,66 @@ const authReady = new Promise((resolve) => {
   })
 })
 
-const routes = [
-  // Public marketing pages
-  {
-    path: '/',
-    component: LandingPage,
-    meta: { publicPage: true, seo: SEO_PAGES.home }
-  },
-  {
-    path: '/features',
-    component: FeaturesPage,
-    meta: { publicPage: true, seo: SEO_PAGES.features }
-  },
+// Public marketing pages — each exists at one URL per supported locale
+// (e.g. /features and /ur/features) so Urdu content is independently
+// crawlable/indexable rather than a client-side toggle on the English URL.
+const PUBLIC_PAGES = [
+  { path: '/', component: LandingPage, seoKey: 'home' },
+  { path: '/features', component: FeaturesPage, seoKey: 'features' },
   {
     path: '/group-expense-tracker',
     component: GroupExpenseTrackerPage,
-    meta: { publicPage: true, seo: SEO_PAGES.groupExpenseTracker }
+    seoKey: 'groupExpenseTracker'
   },
   {
     path: '/personal-budget-tracker',
     component: PersonalBudgetTrackerPage,
-    meta: { publicPage: true, seo: SEO_PAGES.personalBudgetTracker }
+    seoKey: 'personalBudgetTracker'
+  },
+  { path: '/help', component: HelpPage, seoKey: 'help' },
+  { path: '/faq', component: FaqPage, seoKey: 'faq' }
+]
+
+const SEO_PAGES_BY_LOCALE = { en: getSeoPages('en'), ur: getSeoPages('ur') }
+
+const publicRoutes = PUBLIC_PAGES.flatMap(({ path, component, seoKey }) => [
+  {
+    path,
+    component,
+    meta: { publicPage: true, locale: 'en', seo: SEO_PAGES_BY_LOCALE.en[seoKey] }
   },
   {
-    path: '/help',
-    component: HelpPage,
-    meta: { publicPage: true, seo: SEO_PAGES.help }
-  },
+    path: path === '/' ? '/ur' : `/ur${path}`,
+    component,
+    meta: { publicPage: true, locale: 'ur', seo: SEO_PAGES_BY_LOCALE.ur[seoKey] }
+  }
+])
+
+// Auth routes — Login.vue handles both modes; mode is derived from route
+// path. Not `publicPage` (not indexed, no hreflang/footer), but still
+// locale-aware so a user coming from an Urdu marketing page can register
+// in Urdu too — see `locale` meta.
+const GUEST_PAGES = [
+  { path: '/login', seoKey: 'login' },
+  { path: '/register', seoKey: 'register' }
+]
+
+const guestRoutes = GUEST_PAGES.flatMap(({ path, seoKey }) => [
   {
-    path: '/faq',
-    component: FaqPage,
-    meta: { publicPage: true, seo: SEO_PAGES.faq }
-  },
-  // Auth routes — Login.vue handles both modes; mode is derived from route path
-  {
-    path: '/login',
+    path,
     component: Login,
-    meta: { requiresGuest: true, seo: SEO_PAGES.login }
+    meta: { requiresGuest: true, locale: 'en', seo: SEO_PAGES_BY_LOCALE.en[seoKey] }
   },
   {
-    path: '/register',
+    path: `/ur${path}`,
     component: Login,
-    meta: { requiresGuest: true, seo: SEO_PAGES.register }
-  },
+    meta: { requiresGuest: true, locale: 'ur', seo: SEO_PAGES_BY_LOCALE.ur[seoKey] }
+  }
+])
+
+const routes = [
+  ...publicRoutes,
+  ...guestRoutes,
   // App routes
   {
     path: '/groups',
@@ -284,7 +301,7 @@ function getFallbackPath(userTabConfig, groupId = null) {
 router.beforeEach(async (to) => {
   const session = hasSession()
 
-  if (to.path === '/' && session) {
+  if ((to.path === '/' || to.path === '/ur') && session) {
     const user = await getCurrentUserProfile()
     const tabConfig = await getCurrentUserTabConfig(user?.uid)
     return getFallbackPath(tabConfig, useGroupStore().getActiveGroup)

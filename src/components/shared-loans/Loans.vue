@@ -33,7 +33,7 @@
                 >({{ getUserName(notif.byMobile) }})</span
               >
             </div>
-            <el-button size="small" text @click="dismissNotification(notif.id)">
+            <el-button size="medium" text @click="dismissNotification(notif.id)">
               ✕
             </el-button>
           </div>
@@ -42,7 +42,7 @@
         <!-- Pending Approval Requests Section -->
         <div v-if="pendingRequests && pendingRequests.length > 0" class="mb-6">
           <h3 class="pending-title text-lg font-semibold mb-3 text-orange-600">
-            ⚠️ Pending Approval Requests
+            {{ t('approval.pendingTitle') }}
           </h3>
           <div
             v-for="(request, index) in pendingRequests"
@@ -52,28 +52,28 @@
             <div class="flex justify-between items-start mb-2">
               <div>
                 <strong class="text-gray-800">
-                  {{ request.type === 'delete' ? 'Delete' : 'Update' }} Request
+                  {{ request.type === 'delete' ? t('approval.deleteRequest') : t('approval.updateRequest') }}
                 </strong>
                 <p class="text-sm text-gray-600">
-                  Requested by:
+                  {{ t('approval.requestedBy') }}
                   <strong>{{ getUserName(request.requestedBy) }}</strong>
                   <span v-if="request.requestedAt">
-                    on {{ request.requestedAt }}</span
+                    {{ t('approval.on') }} {{ request.requestedAt }}</span
                   >
                 </p>
               </div>
               <el-tag :type="request.type === 'delete' ? 'danger' : 'warning'">
                 {{ request.approvals.length }} /
-                {{ getTotalMembers() }} Approved
+                {{ getTotalMembers() }} {{ t('approval.approved') }}
               </el-tag>
             </div>
 
             <!-- Show loan details -->
             <div class="text-sm text-gray-700 mb-2">
               <p v-if="request.type === 'update'">
-                <strong>Proposed Changes:</strong><br />
+                <strong>{{ t('approval.proposedChanges') }}</strong><br />
                 <template v-if="request.changes.amount !== undefined">
-                  Amount:
+                  {{ t('sharedLoans.proposedAmount') }}
                   <span
                     v-if="
                       request.current?.amount !== undefined &&
@@ -92,7 +92,7 @@
                   ><br />
                 </template>
                 <template v-if="request.changes.giver !== undefined">
-                  Giver:
+                  {{ t('sharedLoans.proposedGiver') }}
                   <span
                     v-if="
                       request.current?.giver &&
@@ -110,7 +110,7 @@
                   ><br />
                 </template>
                 <template v-if="request.changes.receiver !== undefined">
-                  Receiver:
+                  {{ t('sharedLoans.proposedReceiver') }}
                   <span
                     v-if="
                       request.current?.receiver &&
@@ -128,7 +128,7 @@
                   ><br />
                 </template>
                 <template v-if="request.changes.description !== undefined">
-                  Description:
+                  {{ t('sharedLoans.proposedDescription') }}
                   <span
                     v-if="
                       request.current?.description !== undefined &&
@@ -147,7 +147,7 @@
                   <br />
                 </template>
                 <template v-if="request.changes.category !== undefined">
-                  Category:
+                  {{ t('sharedLoans.proposedCategory') }}
                   <span
                     v-if="
                       request.current?.category !== undefined &&
@@ -155,21 +155,21 @@
                     "
                   >
                     <span class="line-through text-gray-400">{{
-                      request.current.category || 'None'
+                      request.current.category || t('common.none')
                     }}</span>
                     &nbsp;→&nbsp;
                   </span>
                   <span class="font-medium">{{
-                    request.changes.category || 'None'
+                    request.changes.category || t('common.none')
                   }}</span>
                 </template>
               </p>
               <p v-else>
-                <strong>Loan to be deleted:</strong><br />
-                Amount: {{ formatAmount(request.loan.amount) }}<br />
-                Giver: {{ getUserName(request.loan.giver) }}<br />
-                Receiver: {{ getUserName(request.loan.receiver) }}<br />
-                Category: {{ request.loan.category || 'None' }}
+                <strong>{{ t('sharedLoans.loanToBeDeleted') }}</strong><br />
+                {{ t('sharedLoans.proposedAmount') }} {{ formatAmount(request.loan.amount) }}<br />
+                {{ t('sharedLoans.proposedGiver') }} {{ getUserName(request.loan.giver) }}<br />
+                {{ t('sharedLoans.proposedReceiver') }} {{ getUserName(request.loan.receiver) }}<br />
+                {{ t('sharedLoans.proposedCategory') }} {{ request.loan.category || t('common.none') }}
               </p>
             </div>
 
@@ -179,30 +179,30 @@
               v-if="request.requestedBy === activeUserUid"
             >
               <span class="text-blue-600 text-sm font-semibold">
-                ✓ You requested this {{ request.type }}
+                {{ t('approval.youRequestedThis', { type: request.type }) }}
               </span>
               <el-button
                 type="warning"
-                size="small"
+                size="medium"
                 @click="cancelRequest(request)"
               >
-                Cancel Request
+                {{ t('approval.cancelRequest') }}
               </el-button>
             </div>
             <div class="flex gap-2 mt-3" v-else-if="!hasUserApproved(request)">
               <el-button
                 type="success"
-                size="small"
+                size="medium"
                 @click="approveRequest(request)"
               >
-                Approve
+                {{ t('common.approve') }}
               </el-button>
               <el-button
                 type="danger"
-                size="small"
+                size="medium"
                 @click="rejectRequest(request)"
               >
-                Reject
+                {{ t('common.reject') }}
               </el-button>
             </div>
             <div
@@ -210,18 +210,18 @@
               class="flex gap-2 mt-3 items-center"
             >
               <span class="text-green-600 text-sm font-semibold">
-                ✓ All members approved
+                {{ t('approval.allMembersApproved') }}
               </span>
               <el-button
                 type="primary"
-                size="small"
+                size="medium"
                 @click="executeRequestManually(request)"
               >
-                Complete Request
+                {{ t('approval.completeRequest') }}
               </el-button>
             </div>
             <div v-else class="text-green-600 text-sm font-semibold">
-              ✓ You have approved this request
+              {{ t('approval.youApprovedRequest') }}
             </div>
           </div>
         </div>
@@ -229,16 +229,16 @@
         <FilterBar :fields="filterFields" class="mt-4" @clear="clearFilters" />
         <div ref="loanContent">
           <!-- Display Final Balances -->
-          <h3 class="mb-2">Loan Details</h3>
+          <h3 class="mb-2">{{ t('sharedLoans.loanDetails') }}</h3>
           <BalanceSummaryCard
             :columns="loanBalanceColumns"
             :rows="balances"
             class="mb-4"
           />
 
-          <h2>Loan Records</h2>
+          <h2>{{ t('sharedLoans.loanRecords') }}</h2>
           <Table
-            downloadTitle="Shared Loans"
+            :downloadTitle="t('sharedLoans.sharedLoansDownload')"
             :rows="filteredLoans"
             :keys="loanKeys"
             :dataRef="loanContent"
@@ -251,11 +251,14 @@
 </template>
 
 <script setup>
+import { useI18n } from 'vue-i18n'
 import { Table, BalanceSummaryCard, LoadingSkeleton } from '@/components/shared'
 import { FilterBar } from '@/components/generic-components'
 import { Loans } from '@/scripts/shared-loans'
 import { loadAsyncComponent } from '@/utils'
 const LoanForm = loadAsyncComponent(() => import('./LoanForm.vue'))
+
+const { t } = useI18n()
 
 const {
   formatAmount,

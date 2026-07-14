@@ -1,4 +1,5 @@
 import { computed, onMounted, onUnmounted, ref, watch, inject } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { useApprovalRequests } from '@/composables/useApprovalRequests'
 import useFireBase from '@/composables/useFirebase'
@@ -24,6 +25,7 @@ import { createUserDisplayStoreProxy } from '@/composables'
 import { cleanupOldReceipts, deleteReceipt } from '@/utils/uploadReceipt'
 
 export const ExpenseList = (props) => {
+  const { t } = useI18n()
   const authStore = useAuthStore()
   const groupStore = useGroupStore()
   const userStore = useUserStore()
@@ -133,7 +135,7 @@ export const ExpenseList = (props) => {
       monthsRef: months,
       loadedRef: monthsLoaded,
       errorHandler: () => {
-        showError('Failed to load months. Please try again.')
+        showError(t('sharedExpenses.failedLoadMonths'))
       },
       onResolved: (resolvedMonths) => {
         if (resolvedMonths.length) selectedMonth.value = getCurrentMonth()
@@ -180,7 +182,7 @@ export const ExpenseList = (props) => {
       () => {
         paymentsLoaded.value = true
         if (activeGroup.value)
-          showError('Failed to load expenses. Please try again.')
+          showError(t('sharedExpenses.failedLoadExpenses'))
       }
     )
   }
@@ -314,8 +316,8 @@ export const ExpenseList = (props) => {
   const filterFields = computed(() => [
     {
       key: 'month',
-      label: 'Month',
-      placeholder: 'Select Month',
+      label: t('common.month'),
+      placeholder: t('common.selectMonth'),
       modelValue: selectedMonth.value,
       options: months.value,
       onChange: (v) => {
@@ -324,23 +326,23 @@ export const ExpenseList = (props) => {
     },
     {
       key: 'payer',
-      label: 'Payer',
-      placeholder: 'Select Payer',
+      label: t('sharedExpenses.payer'),
+      placeholder: t('sharedExpenses.selectPayer_filter'),
       modelValue: selectedFriend.value,
-      options: [{ label: 'All', value: 'All' }, ...usersOptions.value],
+      options: [{ label: t('common.all'), value: 'All' }, ...usersOptions.value],
       onChange: (v) => {
         selectedFriend.value = v
       }
     },
     {
       key: 'payerMode',
-      label: 'Payer Mode',
+      label: t('sharedExpenses.payerModeFilter'),
       filterable: false,
       modelValue: selectedPayerMode.value,
       options: [
-        { label: 'All', value: 'all' },
-        { label: 'Single', value: 'single' },
-        { label: 'Multiple', value: 'multiple' }
+        { label: t('common.all'), value: 'all' },
+        { label: t('common.single'), value: 'single' },
+        { label: t('common.multiple'), value: 'multiple' }
       ],
       onChange: (v) => {
         selectedPayerMode.value = v
@@ -348,13 +350,13 @@ export const ExpenseList = (props) => {
     },
     {
       key: 'splitMode',
-      label: 'Split Mode',
+      label: t('sharedExpenses.splitModeFilter'),
       filterable: false,
       modelValue: selectedSplitMode.value,
       options: [
-        { label: 'All', value: 'all' },
-        { label: 'Equal', value: 'equal' },
-        { label: 'Custom', value: 'custom' }
+        { label: t('common.all'), value: 'all' },
+        { label: t('common.equal'), value: 'equal' },
+        { label: t('common.custom'), value: 'custom' }
       ],
       onChange: (v) => {
         selectedSplitMode.value = v
@@ -362,8 +364,8 @@ export const ExpenseList = (props) => {
     },
     {
       key: 'category',
-      label: 'Category',
-      placeholder: 'All Categories',
+      label: t('common.category'),
+      placeholder: t('common.allCategories'),
       modelValue: selectedCategory.value,
       options: categoryOptions.value,
       onChange: (v) => {

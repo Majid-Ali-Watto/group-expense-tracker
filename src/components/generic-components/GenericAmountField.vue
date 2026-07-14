@@ -1,5 +1,10 @@
 <template>
-  <el-form-item :label="label" :prop="prop" :required="required" class="w-full">
+  <el-form-item
+    :label="resolvedLabel"
+    :prop="prop"
+    :required="required"
+    class="w-full"
+  >
     <el-input
       v-model.number="internalValue"
       type="number"
@@ -9,14 +14,17 @@
       :max="max"
       :step="step"
       clearable
-      size="small"
+      size="medium"
       @input="$emit('update:modelValue', internalValue)"
     />
   </el-form-item>
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 // Props for flexibility and customization
 const props = defineProps({
@@ -26,7 +34,7 @@ const props = defineProps({
   },
   label: {
     type: String,
-    default: 'Amount'
+    default: ''
   },
   prop: {
     type: String,
@@ -56,6 +64,8 @@ const props = defineProps({
 
 // Emit event for two-way binding
 defineEmits(['update:modelValue'])
+
+const resolvedLabel = computed(() => props.label || t('common.amount'))
 
 // Internal value to sync with the parent
 const internalValue = ref(props.modelValue)

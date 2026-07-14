@@ -8,20 +8,21 @@
     <template #default>
       <span class="text-sm">
         <template v-if="mode === 'register'">
-          Create a new account with your name, mobile, email, and login code.
-          <strong
-            >You must verify your email within 48 hours to activate your
-            account.</strong
-          >
+          {{ t('auth.infoAlert.registerText') }}
+          <strong>{{ t('auth.infoAlert.registerWarning') }}</strong>
         </template>
-        <template v-else> Login with your email and password. </template>
+        <template v-else>{{ t('auth.infoAlert.loginText') }}</template>
       </span>
     </template>
   </el-alert>
 </template>
 
 <script setup>
+import { useI18n } from 'vue-i18n'
+
 defineProps({
   mode: { type: String, required: true }
 })
+
+const { t } = useI18n()
 </script>

@@ -12,8 +12,8 @@
       <XIcon class="ant-icon" />
     </div>
     <div class="ant-body">
-      <span class="ant-label">Close Form</span>
-      <span class="ant-hint">Tap to discard and close</span>
+      <span class="ant-label">{{ t('common.closeForm') }}</span>
+      <span class="ant-hint">{{ t('common.closeFormHint') }}</span>
     </div>
     <span class="ant-arrow ant-arrow--close">&#8249;</span>
   </div>
@@ -31,17 +31,22 @@
       <PlusIcon class="ant-icon" />
     </div>
     <div class="ant-body">
-      <span v-overflow-popup="{ title: 'Action' }" class="ant-label">{{
-        text
-      }}</span>
-      <span class="ant-hint">Tap to open the form</span>
+      <span
+        v-overflow-popup="{ title: t('common.actionLabel') }"
+        class="ant-label"
+        >{{ text }}</span
+      >
+      <span class="ant-hint">{{ t('common.openFormHint') }}</span>
     </div>
     <span class="ant-arrow">&#8250;</span>
   </div>
 </template>
 
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 import { PlusIcon, XIcon } from '@/components/icons'
+
+const { t } = useI18n()
 
 defineProps({
   text: { type: String, required: true },

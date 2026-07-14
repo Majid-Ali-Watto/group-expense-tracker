@@ -1,21 +1,23 @@
 import { markRaw } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Delete } from '@element-plus/icons-vue'
 import { confirmAction } from '@/utils/confirmAction'
 
 export const BottomButtons = (emit) => {
+  const { t } = useI18n()
+
   const confirmUpdate = async () => {
     const confirmed = await confirmAction({
-      message: 'Are you sure you want to update this item?',
-      title: 'Warning'
+      message: t('shared.confirmUpdateMessage'),
+      title: t('common.warning')
     })
     if (confirmed) emit('update')
   }
 
   const confirmDelete = async () => {
     const confirmed = await confirmAction({
-      message:
-        'Are you sure you want to delete this item? This action cannot be undone.',
-      title: 'Danger',
+      message: t('shared.confirmDeleteMessage'),
+      title: t('shared.dangerTitle'),
       type: 'error',
       icon: markRaw(Delete)
     })
@@ -24,9 +26,9 @@ export const BottomButtons = (emit) => {
 
   const confirmDuplicate = async () => {
     const confirmed = await confirmAction({
-      message: 'Save the current values as a new record?',
-      title: 'Duplicate',
-      confirmButtonText: 'Duplicate',
+      message: t('shared.confirmDuplicateMessage'),
+      title: t('common.duplicate'),
+      confirmButtonText: t('common.duplicate'),
       type: 'info'
     })
     if (confirmed) emit('duplicate')

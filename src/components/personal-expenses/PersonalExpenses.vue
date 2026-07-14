@@ -4,7 +4,7 @@
     <div class="flex flex-col gap-3 sm:gap-5">
       <div class="min-w-0">
         <AddNewTransactionButton
-          text="Want to add a new expense?"
+          :text="t('personalExpenses.addNewExpensePrompt')"
           :form-open="showForm"
           @click="openExpenseForm"
           @close="handleExpenseFormClose"
@@ -32,6 +32,7 @@
 import { AddNewTransactionButton } from '@/components/generic-components'
 import { HOC } from '@/components/layout'
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { loadAsyncComponent } from '@/utils'
 
 const AddSalary = loadAsyncComponent(() => import('./SalaryForm.vue'))
@@ -42,6 +43,7 @@ const ExpenseList = loadAsyncComponent(
 
 const showForm = ref(false)
 const expenseFormHostRef = ref(null)
+const { t } = useI18n()
 
 const setShowForm = () => {
   showForm.value = !showForm.value

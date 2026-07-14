@@ -5,7 +5,7 @@
     <template v-else>
       <el-alert
         v-if="activeUserIsBlocked"
-        title="Your account is blocked by admin. Users are visible for reference only."
+        :title="t('users.blockedAccountWarning')"
         type="warning"
         :closable="false"
         class="mb-4"
@@ -19,10 +19,10 @@
         @reject="rejectRequest"
       />
 
-      <h3>Existing Users (only verified)</h3>
+      <h3>{{ t('users.existingUsers') }}</h3>
       <GenericInputField
         v-model="searchQuery"
-        placeholder="Search by name, mobile, or group..."
+        :placeholder="t('users.searchPlaceholder')"
         :maxlength="50"
         :wrap-form-item="false"
         input-class="mb-2"
@@ -32,30 +32,30 @@
 
       <!-- Sort & Filter controls -->
       <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-        <el-button-group size="small">
+        <el-button-group size="medium">
           <el-button
             :type="sortOrder === '' ? 'primary' : ''"
             @click="sortOrder = ''"
-            >Default</el-button
+            >{{ t('users.default') }}</el-button
           >
           <el-button
             :type="sortOrder === 'asc' ? 'primary' : ''"
             @click="sortOrder = 'asc'"
-            >A→Z</el-button
+            >{{ t('groups.sortAsc') }}</el-button
           >
           <el-button
             :type="sortOrder === 'desc' ? 'primary' : ''"
             @click="sortOrder = 'desc'"
-            >Z→A</el-button
+            >{{ t('groups.sortDesc') }}</el-button
           >
         </el-button-group>
         <el-checkbox v-model="sharedGroupsOnly" size="small"
-          >Shared groups only</el-checkbox
+          >{{ t('users.sharedGroupsOnly') }}</el-checkbox
         >
       </div>
       <div class="mb-3">
         <el-checkbox v-model="hideBlockedUsers" size="small">
-          Hide blocked users
+          {{ t('users.hideBlockedUsers') }}
         </el-checkbox>
       </div>
 
@@ -63,9 +63,9 @@
       <div
         class="hidden sm:flex sm:items-center gap-3 px-3 mt-3 text-xs font-semibold text-gray-500 uppercase tracking-wide"
       >
-        <div class="flex-1 min-w-0">Name / Mobile</div>
-        <div class="flex-1">Groups</div>
-        <div class="flex-shrink-0 w-48">Actions</div>
+        <div class="flex-1 min-w-0">{{ t('users.nameMobile') }}</div>
+        <div class="flex-1">{{ t('users.groups') }}</div>
+        <div class="flex-shrink-0 w-48">{{ t('users.actions') }}</div>
       </div>
 
       <div v-if="filteredUsers.length > 0" class="space-y-3 mt-1">
@@ -88,9 +88,9 @@
       </div>
       <div v-else class="user-empty">
         <div class="user-empty__icon">👥</div>
-        <div class="user-empty__title">No users match the current filters</div>
+        <div class="user-empty__title">{{ t('users.noUsersMatch') }}</div>
         <div class="user-empty__copy">
-          Try clearing the search or removing the shared-group filter.
+          {{ t('users.clearSearchHint') }}
         </div>
       </div>
 
@@ -121,6 +121,7 @@
 </template>
 
 <script setup>
+import { useI18n } from 'vue-i18n'
 import { LoadingSkeleton } from '@/components/shared'
 import { Users } from '@/scripts/users'
 import { GenericInputField } from '@/components/generic-components'
@@ -129,6 +130,8 @@ import UserCard from './UserCard.vue'
 import UserEditDialog from './UserEditDialog.vue'
 import UserGroupsDialog from './UserGroupsDialog.vue'
 import UserCreateGroupDialog from './UserCreateGroupDialog.vue'
+
+const { t } = useI18n()
 
 const {
   searchQuery,

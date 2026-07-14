@@ -1,57 +1,59 @@
 <template>
   <div>
     <fieldset class="border border-gray-300 rounded-lg p-4">
-      <legend class="font-medium">Create Group</legend>
+      <legend class="font-medium">{{ t('groups.createGroupLegend') }}</legend>
       <el-form :model="groupForm" :rules="groupRules" ref="groupFormRef">
         <GenericInputField
           v-model="groupForm.name"
-          label="Name"
+          :label="t('groups.nameLabel')"
           prop="name"
           label-position="top"
-          placeholder="Enter group name"
+          :placeholder="t('groups.namePlaceholder')"
           :maxlength="50"
         />
         <GenericInputField
           v-model="groupForm.description"
-          label="Description"
+          :label="t('common.description')"
           label-position="top"
           type="textarea"
           :rows="3"
-          placeholder="Enter group description (optional)"
+          :placeholder="t('groups.descriptionPlaceholder')"
           :maxlength="100"
         />
         <GenericDropDown
           v-model="groupForm.members"
-          label="Members (max. 30)"
+          :label="t('groups.membersLabel')"
           prop="members"
           label-position="top"
           :options="usersOptions"
-          placeholder="Select members"
-          size="small"
+          :placeholder="t('groups.membersPlaceholder')"
+          size="medium"
           multiple
           required
         />
         <p class="text-xs text-gray-500 -mt-2 mb-2">
-          Selected: {{ memberCount }}/{{ MAX_GROUP_MEMBERS }}
+          {{ t('groups.selectedCount', { count: memberCount, max: MAX_GROUP_MEMBERS }) }}
         </p>
         <GenericDropDown
           v-model="groupForm.category"
-          label="Category"
+          :label="t('common.category')"
           label-position="top"
           :options="categoryOptions"
-          placeholder="Select a category (optional)"
-          size="small"
+          :placeholder="t('groups.categoryOptionalPlaceholder')"
+          size="medium"
         />
         <div class="flex flex-row justify-end gap-2">
           <slot name="clear"></slot>
-          <el-button size="small" @click="resetCreateForm">Reset</el-button>
+          <el-button size="medium" @click="resetCreateForm">{{
+            t('common.reset')
+          }}</el-button>
           <el-button
             type="primary"
-            size="small"
+            size="medium"
             :loading="isSubmitting"
             :disabled="isSubmitting"
             @click="createGroup"
-            >Create</el-button
+            >{{ t('groups.create') }}</el-button
           >
         </div>
       </el-form>
@@ -60,10 +62,13 @@
 </template>
 
 <script setup>
+import { useI18n } from 'vue-i18n'
 import { groupRules, GROUP_CATEGORIES } from '@/assets'
 import { GroupsCreate } from '@/scripts/groups'
 import { GenericDropDown } from '@/components/generic-components'
 import { GenericInputField } from '@/components/generic-components'
+
+const { t } = useI18n()
 
 const emit = defineEmits(['groupCreated'])
 const props = defineProps({

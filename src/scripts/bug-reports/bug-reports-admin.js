@@ -1,4 +1,5 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessageBox } from 'element-plus'
 import {
@@ -20,21 +21,21 @@ import { showError, showSuccess } from '@/utils'
 import { NoteThread } from './note-thread'
 
 export const STATUS_OPTIONS = [
-  { label: '🔴 Open', value: 'open' },
-  { label: '🟡 In Progress', value: 'in-progress' },
-  { label: '🔵 Needs Info', value: 'needs-info' },
-  { label: '🟣 Duplicate', value: 'duplicate' },
-  { label: "⚪ Won't Fix", value: 'wont-fix' },
-  { label: '🟢 Resolved', value: 'resolved' },
-  { label: '⬛ Closed', value: 'closed' }
+  { icon: '🔴', labelKey: 'bugReports.statuses.open', value: 'open' },
+  { icon: '🟡', labelKey: 'bugReports.statuses.inProgress', value: 'in-progress' },
+  { icon: '🔵', labelKey: 'bugReports.statuses.needsInfo', value: 'needs-info' },
+  { icon: '🟣', labelKey: 'bugReports.statuses.duplicate', value: 'duplicate' },
+  { icon: '⚪', labelKey: 'bugReports.statuses.wontFix', value: 'wont-fix' },
+  { icon: '🟢', labelKey: 'bugReports.statuses.resolved', value: 'resolved' },
+  { icon: '⬛', labelKey: 'bugReports.statuses.closed', value: 'closed' }
 ]
 
 export const SEVERITY_OPTIONS = [
-  { label: 'All Severities', value: 'all' },
-  { label: 'Critical', value: 'critical' },
-  { label: 'High', value: 'high' },
-  { label: 'Medium', value: 'medium' },
-  { label: 'Low', value: 'low' }
+  { labelKey: 'bugReports.allSeverities', value: 'all' },
+  { labelKey: 'bugReports.severities.critical', value: 'critical' },
+  { labelKey: 'bugReports.severities.high', value: 'high' },
+  { labelKey: 'bugReports.severities.medium', value: 'medium' },
+  { labelKey: 'bugReports.severities.low', value: 'low' }
 ]
 
 const STATUS_ORDER = {
@@ -52,6 +53,7 @@ const STATUS_ORDER = {
  * Follows the project's factory-function pattern (see scripts/shared-expenses/expense-list.js).
  */
 export const BugReportsAdmin = () => {
+  const { t } = useI18n()
   // ── Report list state ─────────────────────────────────────────────────────
   const route = useRoute()
   const router = useRouter()
@@ -76,52 +78,52 @@ export const BugReportsAdmin = () => {
 
   const statusFilters = computed(() => [
     {
-      label: 'All',
+      label: t('common.all'),
       value: 'all',
       count: reports.value.length,
-      selectLabel: `All (${reports.value.length})`
+      selectLabel: `${t('common.all')} (${reports.value.length})`
     },
     {
-      label: 'Open',
+      label: t('bugReports.statuses.open'),
       value: 'open',
       count: reports.value.filter((r) => r.status === 'open').length,
-      selectLabel: `Open (${reports.value.filter((r) => r.status === 'open').length})`
+      selectLabel: `${t('bugReports.statuses.open')} (${reports.value.filter((r) => r.status === 'open').length})`
     },
     {
-      label: 'In Progress',
+      label: t('bugReports.statuses.inProgress'),
       value: 'in-progress',
       count: reports.value.filter((r) => r.status === 'in-progress').length,
-      selectLabel: `In Progress (${reports.value.filter((r) => r.status === 'in-progress').length})`
+      selectLabel: `${t('bugReports.statuses.inProgress')} (${reports.value.filter((r) => r.status === 'in-progress').length})`
     },
     {
-      label: 'Needs Info',
+      label: t('bugReports.statuses.needsInfo'),
       value: 'needs-info',
       count: reports.value.filter((r) => r.status === 'needs-info').length,
-      selectLabel: `Needs Info (${reports.value.filter((r) => r.status === 'needs-info').length})`
+      selectLabel: `${t('bugReports.statuses.needsInfo')} (${reports.value.filter((r) => r.status === 'needs-info').length})`
     },
     {
-      label: 'Duplicate',
+      label: t('bugReports.statuses.duplicate'),
       value: 'duplicate',
       count: reports.value.filter((r) => r.status === 'duplicate').length,
-      selectLabel: `Duplicate (${reports.value.filter((r) => r.status === 'duplicate').length})`
+      selectLabel: `${t('bugReports.statuses.duplicate')} (${reports.value.filter((r) => r.status === 'duplicate').length})`
     },
     {
-      label: "Won't Fix",
+      label: t('bugReports.statuses.wontFix'),
       value: 'wont-fix',
       count: reports.value.filter((r) => r.status === 'wont-fix').length,
-      selectLabel: `Won't Fix (${reports.value.filter((r) => r.status === 'wont-fix').length})`
+      selectLabel: `${t('bugReports.statuses.wontFix')} (${reports.value.filter((r) => r.status === 'wont-fix').length})`
     },
     {
-      label: 'Resolved',
+      label: t('bugReports.statuses.resolved'),
       value: 'resolved',
       count: reports.value.filter((r) => r.status === 'resolved').length,
-      selectLabel: `Resolved (${reports.value.filter((r) => r.status === 'resolved').length})`
+      selectLabel: `${t('bugReports.statuses.resolved')} (${reports.value.filter((r) => r.status === 'resolved').length})`
     },
     {
-      label: 'Closed',
+      label: t('bugReports.statuses.closed'),
       value: 'closed',
       count: reports.value.filter((r) => r.status === 'closed').length,
-      selectLabel: `Closed (${reports.value.filter((r) => r.status === 'closed').length})`
+      selectLabel: `${t('bugReports.statuses.closed')} (${reports.value.filter((r) => r.status === 'closed').length})`
     }
   ])
 
@@ -129,6 +131,22 @@ export const BugReportsAdmin = () => {
   const openCount = computed(
     () => reports.value.filter((r) => r.status === 'open').length
   )
+  const statusOptions = computed(() =>
+    STATUS_OPTIONS.map((option) => ({
+      ...option,
+      label: `${option.icon} ${t(option.labelKey)}`
+    }))
+  )
+  const severityOptions = computed(() =>
+    SEVERITY_OPTIONS.map((option) => ({
+      ...option,
+      label: t(option.labelKey)
+    }))
+  )
+  const statusLabelFor = (status) => {
+    const option = STATUS_OPTIONS.find((item) => item.value === status)
+    return option ? t(option.labelKey) : status
+  }
 
   const filteredReports = computed(() => {
     const q = searchQuery.value.trim().toLowerCase()
@@ -172,7 +190,7 @@ export const BugReportsAdmin = () => {
       },
       (err) => {
         reports.value = []
-        showError('Failed to load bug reports: ' + err.message)
+        showError(t('bugReports.failedLoadReports', { message: err.message }))
         loading.value = false
       }
     )
@@ -214,9 +232,11 @@ export const BugReportsAdmin = () => {
           }
         )
       }
-      showSuccess(`Status updated to "${newStatus}"`)
+      showSuccess(
+        t('bugReports.statusUpdated', { status: statusLabelFor(newStatus) })
+      )
     } catch (err) {
-      showError('Failed to update status: ' + err.message)
+      showError(t('bugReports.failedUpdateStatus', { message: err.message }))
     }
   }
 
@@ -224,11 +244,14 @@ export const BugReportsAdmin = () => {
   async function deleteReport(report) {
     try {
       await ElMessageBox.confirm(
-        `Permanently delete report <strong>${report.bugNumber ? '#' + report.bugNumber + ' — ' : ''}"${report.title}"</strong>? This cannot be undone.`,
-        'Delete Bug Report',
+        t('bugReports.deleteAdminConfirm', {
+          label: report.bugNumber ? `#${report.bugNumber} — ` : '',
+          title: report.title
+        }),
+        t('bugReports.deleteAdminTitle'),
         {
-          confirmButtonText: 'Delete',
-          cancelButtonText: 'Cancel',
+          confirmButtonText: t('common.delete'),
+          cancelButtonText: t('common.cancel'),
           type: 'error',
           dangerouslyUseHTMLString: true
         }
@@ -262,9 +285,9 @@ export const BugReportsAdmin = () => {
           )
         ).catch(() => {})
       }
-      showSuccess('Report deleted.')
+      showSuccess(t('bugReports.reportDeleted'))
     } catch (err) {
-      showError('Failed to delete: ' + err.message)
+      showError(t('bugReports.deleteAdminFailed', { message: err.message }))
     } finally {
       deletingId.value = null
     }
@@ -308,7 +331,7 @@ export const BugReportsAdmin = () => {
     const text = (noteInputs.value[report.id] || '').trim()
     const editorImages = noteEditorRefs[report.id]?.images || []
     if (!text && !editorImages.length) {
-      noteErrors.value[report.id] = 'Message cannot be empty.'
+      noteErrors.value[report.id] = t('bugReports.messageEmpty')
       return
     }
     noteSavingId.value = report.id
@@ -319,7 +342,7 @@ export const BugReportsAdmin = () => {
       await noteThread.pushNote(report, {
         text,
         authorType: 'admin',
-        authorName: 'Admin',
+        authorName: t('bugReports.admin'),
         createdAt: new Date().toISOString(),
         ...(uploadedImages.length ? { images: uploadedImages } : {}),
         ...noteThread.buildReplyTo(report.id)
@@ -351,9 +374,9 @@ export const BugReportsAdmin = () => {
       noteInputs.value[report.id] = ''
       noteEditorRefs[report.id]?.clearImages()
       noteThread.cancelReply()
-      showSuccess('Note sent.')
+      showSuccess(t('bugReports.noteSent'))
     } catch (err) {
-      showError('Failed to send note: ' + err.message)
+      showError(t('bugReports.noteSendFailed', { message: err.message }))
     } finally {
       noteSavingId.value = null
     }
@@ -417,7 +440,7 @@ export const BugReportsAdmin = () => {
     // NoteThread (spread all shared state/functions)
     ...noteThread,
     // Named re-exports for template use
-    STATUS_OPTIONS,
-    SEVERITY_OPTIONS
+    statusOptions,
+    severityOptions
   }
 }

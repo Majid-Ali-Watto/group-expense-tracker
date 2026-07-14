@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     :model-value="visible"
-    title="Edit Bug Report"
+    :title="t('bugReports.editBugReport')"
     :width="'min(95vw, 620px)'"
     append-to-body
     :close-on-click-modal="false"
@@ -16,7 +16,7 @@
       :rules="rules"
       label-position="top"
     >
-      <el-form-item label="Bug category" prop="category">
+      <el-form-item :label="t('bugReports.category')" prop="category">
         <el-select
           :model-value="editForm.category"
           class="w-full"
@@ -32,7 +32,7 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item label="Title" prop="title">
+      <el-form-item :label="t('bugReports.title')" prop="title">
         <el-input
           :model-value="editForm.title"
           maxlength="120"
@@ -42,7 +42,7 @@
           "
         />
       </el-form-item>
-      <el-form-item label="Description" prop="description">
+      <el-form-item :label="t('common.description')" prop="description">
         <MarkdownEditor
           :model-value="editForm.description"
           :rows="4"
@@ -53,7 +53,7 @@
           "
         />
       </el-form-item>
-      <el-form-item label="Severity">
+      <el-form-item :label="t('bugReports.severity')">
         <div class="bug-severity-group">
           <button
             v-for="s in severities"
@@ -76,7 +76,7 @@
       <!-- Existing screenshots -->
       <el-form-item
         v-if="editForm.screenshots?.length"
-        label="Current screenshots"
+        :label="t('bugReports.currentScreenshots')"
       >
         <div class="bug-edit-existing-screenshots">
           <div
@@ -87,7 +87,7 @@
             <AppImage
               :src="ss.url"
               class="bug-edit-ss-thumb"
-              :alt="`Screenshot ${i + 1}`"
+              :alt="t('bugReports.screenshotAlt', { index: i + 1 })"
             />
             <button
               type="button"
@@ -106,11 +106,11 @@
           (editForm.screenshots?.length ?? 0) + editNewScreenshots.length <
           maxScreenshots
         "
-        label="Add screenshots"
+        :label="t('bugReports.addScreenshots')"
       >
         <label class="bug-upload-btn" :class="{ 'is-disabled': editSaving }">
           <PhotoIcon class="w-4 h-4" />
-          Attach Screenshot
+          {{ t('bugReports.attachScreenshot') }}
           <input
             ref="localEditFileInputRef"
             type="file"
@@ -154,16 +154,16 @@
         type="default"
         :disabled="editSaving"
         @click="$emit('reset')"
-        >Reset</GenericButton
+        >{{ t('common.reset') }}</GenericButton
       >
       <GenericButton
         type="default"
         :disabled="editSaving"
         @click="$emit('close')"
-        >Cancel</GenericButton
+        >{{ t('common.cancel') }}</GenericButton
       >
       <GenericButton type="primary" :loading="editSaving" @click="$emit('save')"
-        >Save changes</GenericButton
+        >{{ t('bugReports.saveChanges') }}</GenericButton
       >
     </template>
   </el-dialog>
@@ -171,6 +171,7 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { PhotoIcon, XIcon } from '@/components/icons'
 import {
   AppImage,
@@ -180,6 +181,7 @@ import {
 
 const localEditFormRef = ref(null)
 const localEditFileInputRef = ref(null)
+const { t } = useI18n()
 
 defineExpose({
   validate: (...a) => localEditFormRef.value?.validate(...a),

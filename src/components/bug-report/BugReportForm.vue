@@ -6,10 +6,10 @@
     label-position="top"
     class="bug-form"
   >
-    <el-form-item label="Bug category" prop="category">
+    <el-form-item :label="t('bugReports.category')" prop="category">
       <el-select
         :model-value="form.category"
-        placeholder="Select a category"
+        :placeholder="t('bugReports.selectCategory')"
         class="w-full"
         @update:model-value="
           $emit('update:form', { ...form, category: $event })
@@ -24,21 +24,21 @@
       </el-select>
     </el-form-item>
 
-    <el-form-item label="Title" prop="title">
+    <el-form-item :label="t('bugReports.title')" prop="title">
       <el-input
         :model-value="form.title"
-        placeholder="Brief summary of the issue"
+        :placeholder="t('bugReports.titlePlaceholder')"
         maxlength="120"
         show-word-limit
         @update:model-value="$emit('update:form', { ...form, title: $event })"
       />
     </el-form-item>
 
-    <el-form-item label="Description" prop="description">
+    <el-form-item :label="t('common.description')" prop="description">
       <MarkdownEditor
         :model-value="form.description"
         :rows="8"
-        placeholder="Describe what happened, what you expected, and the steps to reproduce."
+        :placeholder="t('bugReports.descriptionPlaceholder')"
         :maxlength="1000"
         :show-word-limit="true"
         :show-template="true"
@@ -51,9 +51,9 @@
 
     <GenericDropDown
       :model-value="form.severity"
-      label="Severity"
+      :label="t('bugReports.severity')"
       :options="severities"
-      placeholder="Select severity"
+      :placeholder="t('bugReports.selectSeverity')"
       :filterable="false"
       :clearable="false"
       select-class="w-full"
@@ -61,11 +61,15 @@
     />
 
     <!-- Screenshots upload -->
-    <el-form-item label="Screenshots">
+    <el-form-item :label="t('bugReports.screenshots')">
       <div class="bug-upload-area">
         <p class="bug-upload-hint">
-          Up to {{ maxScreenshots }} images &nbsp;·&nbsp; JPG, PNG, WebP, GIF
-          &nbsp;·&nbsp; Max {{ maxSizeMb }}MB each
+          {{
+            t('bugReports.uploadHint', {
+              max: maxScreenshots,
+              size: maxSizeMb
+            })
+          }}
         </p>
 
         <label
@@ -75,7 +79,7 @@
           }"
         >
           <PhotoIcon class="w-4 h-4" />
-          Attach Screenshot
+          {{ t('bugReports.attachScreenshot') }}
           <input
             ref="localFileInputRef"
             type="file"
@@ -133,14 +137,14 @@
 
     <div class="bug-form-actions">
       <GenericButton
-        size="small"
+        size="medium"
         type="default"
         :disabled="isClean || submitting"
         @click="$emit('reset')"
-        >Reset</GenericButton
+        >{{ t('common.reset') }}</GenericButton
       >
       <GenericButton
-        size="small"
+        size="medium"
         type="warning"
         :loading="submitting"
         @click="$emit('submit')"
@@ -148,9 +152,9 @@
         {{
           submitting
             ? uploadingScreenshots
-              ? 'Uploading screenshots…'
-              : 'Submitting…'
-            : 'Submit Report'
+              ? t('bugReports.uploadingScreenshots')
+              : t('bugReports.submitting')
+            : t('bugReports.submitReport')
         }}
       </GenericButton>
     </div>
@@ -159,6 +163,7 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { PhotoIcon, XIcon } from '@/components/icons'
 import {
   AppImage,
@@ -169,6 +174,7 @@ import {
 
 const localFormRef = ref(null)
 const localFileInputRef = ref(null)
+const { t } = useI18n()
 
 defineExpose({
   validate: (...a) => localFormRef.value?.validate(...a),

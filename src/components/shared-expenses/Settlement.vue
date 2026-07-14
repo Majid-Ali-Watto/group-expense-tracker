@@ -2,16 +2,16 @@
 <template>
   <div class="my-4">
     <div>
-      <h3 class="mb-2">Pairwise Settlements (Who pays whom)</h3>
+      <h3 class="mb-2">{{ t('sharedExpenses.pairwiseSettlements') }}</h3>
 
       <!-- Show message when no settlements -->
       <div
         v-if="settlements.length === 0"
         class="settled-message text-center py-8 rounded-lg border"
       >
-        <p class="settled-title text-lg mb-2">✅ All Settled!</p>
+        <p class="settled-title text-lg mb-2">{{ t('sharedExpenses.allSettled') }}</p>
         <p class="settled-text text-sm">
-          No pending settlements. Everyone's balance is zero.
+          {{ t('sharedExpenses.allSettledText') }}
         </p>
       </div>
 
@@ -29,17 +29,16 @@
       class="pending-card mt-4 pt-3 p-3 rounded"
     >
       <div class="pending-title text-sm font-medium mb-2">
-        📋 Settlement Request
+        {{ t('sharedExpenses.settlementRequest') }}
       </div>
       <div class="text-xs mb-2">
-        Requested by: {{ formatUser(group.settlementRequest.requestedBy) }} for
-        {{ group.settlementRequest.month }}
+        {{ t('sharedExpenses.settlementRequestedBy', { user: formatUser(group.settlementRequest.requestedBy), month: group.settlementRequest.month }) }}
       </div>
       <div class="text-xs mb-2">
-        All members must approve before settlement can be finalized.
+        {{ t('sharedExpenses.settlementAllMustApprove') }}
       </div>
       <div class="text-sm mb-2">
-        Approvals: {{ getSettlementApprovals.length }} /
+        {{ t('sharedExpenses.approvals') }} {{ getSettlementApprovals.length }} /
         {{ getAllSettlementMembers.length }}
       </div>
       <!-- Show who has approved -->
@@ -66,31 +65,31 @@
 
       <!-- Approve/Reject buttons for members who haven't approved -->
       <div v-if="!hasUserApprovedSettlement" class="flex gap-2">
-        <el-button size="small" type="success" @click="approveSettlement">
-          Approve Settlement
+        <el-button size="medium" type="success" @click="approveSettlement">
+          {{ t('sharedExpenses.approveSettlement') }}
         </el-button>
         <!-- Show Cancel for the requester -->
         <el-button
           v-if="group.settlementRequest.requestedBy === user"
-          size="small"
+          size="medium"
           type="warning"
           plain
           @click="rejectSettlement"
         >
-          Cancel Settlement Request
+          {{ t('sharedExpenses.cancelSettlementRequest') }}
         </el-button>
         <!-- Show Reject only for admin who is NOT the requester -->
         <!-- v-else-if="isAdmin" -->
-        <el-button size="small" type="danger" @click="rejectSettlement">
-          Reject Settlement
+        <el-button size="medium" type="danger" @click="rejectSettlement">
+          {{ t('sharedExpenses.rejectSettlement') }}
         </el-button>
       </div>
 
       <!-- Show approved status -->
       <div v-else class="text-xs text-green-700 dark:text-green-300">
-        ✓ You have approved this settlement request
+        {{ t('sharedExpenses.youApprovedSettlement') }}
         <span v-if="isAdmin && !allMembersApprovedSettlement">
-          - Waiting for all members to approve
+          {{ t('sharedExpenses.waitingForMembers') }}
         </span>
       </div>
 
@@ -99,11 +98,11 @@
         v-if="isAdmin && allMembersApprovedSettlement"
         class="mt-2 flex gap-2"
       >
-        <el-button type="primary" size="small" @click="addPaymentsBatch">
-          Finalize Settlement Now
+        <el-button type="primary" size="medium" @click="addPaymentsBatch">
+          {{ t('sharedExpenses.finalizeSettlement') }}
         </el-button>
-        <el-button type="warning" plain size="small" @click="rejectSettlement">
-          Cancel Settlement Request
+        <el-button type="warning" plain size="medium" @click="rejectSettlement">
+          {{ t('sharedExpenses.cancelSettlementRequest') }}
         </el-button>
       </div>
 
@@ -116,8 +115,8 @@
         "
         class="mt-2"
       >
-        <el-button size="small" type="warning" plain @click="rejectSettlement">
-          Cancel Settlement Request
+        <el-button size="medium" type="warning" plain @click="rejectSettlement">
+          {{ t('sharedExpenses.cancelSettlementRequest') }}
         </el-button>
       </div>
     </div>
@@ -137,9 +136,9 @@
         v-if="activeGroup"
         @click="requestSettlement"
         type="success"
-        size="small"
+        size="medium"
       >
-        Request Settlement
+        {{ t('sharedExpenses.requestSettlement') }}
       </GenericButton>
 
       <!-- Settlement Done for non-group expenses -->
@@ -148,7 +147,7 @@
         @click="addPaymentsBatch"
         type="success"
       >
-        Settlement Done
+        {{ t('sharedExpenses.settlementDone') }}
       </GenericButton>
     </div>
   </div>
@@ -156,11 +155,13 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { GenericButton } from '@/components/generic-components'
 import { BalanceSummaryCard } from '@/components/shared'
 import { Settlement } from '@/scripts/shared-expenses'
 import { formatMemberDisplay, formatUserDisplay } from '@/utils'
 
+const { t } = useI18n()
 const props = defineProps({
   payments: Array,
   keys: Array,
@@ -201,19 +202,19 @@ const formatMember = (member) =>
 const settlementColumns = computed(() => [
   {
     key: 'from',
-    label: 'Pays',
+    label: t('sharedExpenses.pays'),
     class: 'text-red-500 font-medium',
     format: (row) => formatUser(row.from)
   },
   {
     key: 'to',
-    label: 'Receives',
+    label: t('sharedExpenses.receives'),
     class: 'text-green-600 font-medium',
     format: (row) => formatUser(row.to)
   },
   {
     key: 'amount',
-    label: 'Amount',
+    label: t('common.amount'),
     class: 'font-bold',
     format: (row) => formatAmount(row.amount)
   }

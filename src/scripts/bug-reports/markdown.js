@@ -1,5 +1,6 @@
 import { useClipboard } from '@/composables'
 import { showError } from '@/utils'
+import i18n from '@/i18n'
 
 const { copyTextWithFeedback } = useClipboard()
 
@@ -141,7 +142,7 @@ export async function downloadImage(url, filename) {
     a.click()
     URL.revokeObjectURL(a.href)
   } catch {
-    showError('Download failed. Try opening the image in a new tab.')
+    showError(i18n.global.t('bugReports.downloadFailed'))
   }
 }
 

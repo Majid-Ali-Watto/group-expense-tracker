@@ -16,6 +16,7 @@ import GroupNotificationsForCurrentUser from './GroupNotificationsForCurrentUser
 import GroupPendingMembersList from './GroupPendingMembersList.vue'
 import GroupRequestButtons from './GroupRequestButtons.vue'
 import HelpDialog from './HelpDialog.vue'
+import ImageCropEditorDialog from './ImageCropEditorDialog.vue'
 import ImagePreviewDialog from './ImagePreviewDialog.vue'
 import MarkdownEditor from './MarkdownEditor.vue'
 import NetPositionDialog from './NetPositionDialog.vue'
@@ -51,6 +52,7 @@ export {
   GroupPendingMembersList,
   GroupRequestButtons,
   HelpDialog,
+  ImageCropEditorDialog,
   ImagePreviewDialog,
   MarkdownEditor,
   NetPositionDialog,

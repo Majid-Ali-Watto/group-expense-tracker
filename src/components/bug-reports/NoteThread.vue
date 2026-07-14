@@ -16,7 +16,9 @@
         <div class="nt-meta">
           <span class="nt-author">{{ authorLabel(note) }}</span>
           <span class="nt-time">{{ formatDate(note.createdAt) }}</span>
-          <span v-if="note.editedAt" class="nt-edited">(edited)</span>
+          <span v-if="note.editedAt" class="nt-edited"
+            >({{ t('bugReports.edited') }})</span
+          >
         </div>
 
         <!-- Edit mode -->
@@ -33,14 +35,18 @@
           <p v-if="noteEditError" class="nt-edit-error">{{ noteEditError }}</p>
           <div class="nt-edit-actions">
             <button class="nt-edit-cancel" @click="$emit('cancel-edit')">
-              Cancel
+              {{ t('common.cancel') }}
             </button>
             <button
               class="nt-edit-save"
               :disabled="noteEditSavingId === note.id"
               @click="$emit('save-edit', note, localEditText)"
             >
-              {{ noteEditSavingId === note.id ? 'Saving…' : 'Save' }}
+              {{
+                noteEditSavingId === note.id
+                  ? t('bugReports.saving')
+                  : t('common.save')
+              }}
             </button>
           </div>
         </template>
@@ -69,7 +75,7 @@
             <p class="nt-text" v-html="markdownToHtml(note.text)"></p>
             <button
               class="nt-copy-btn"
-              title="Copy note"
+              :title="t('bugReports.copyNote')"
               @click.stop="copyText(note.text)"
             >
               <CopyIcon class="w-3 h-3" />
@@ -83,20 +89,23 @@
               :key="ni"
               class="nt-img-thumb"
             >
-              <AppImage :src="img.url" :alt="`Image ${ni + 1}`" />
+              <AppImage
+                :src="img.url"
+                :alt="t('bugReports.imageAlt', { index: ni + 1 })"
+              />
               <span class="nt-img-overlay">
                 <a
                   :href="img.url"
                   target="_blank"
                   rel="noopener noreferrer"
                   class="nt-img-action-btn"
-                  title="Open"
+                  :title="t('common.open')"
                 >
                   <ExternalLinkIcon class="w-3.5 h-3.5" />
                 </a>
                 <button
                   class="nt-img-action-btn"
-                  title="Download"
+                  :title="t('common.download')"
                   @click.prevent="
                     downloadImage(img.url, `note-image-${ni + 1}`)
                   "
@@ -114,7 +123,11 @@
               :key="rx.emoji"
               class="nt-reaction-chip"
               :class="{ 'is-mine': rx.mine }"
-              :title="rx.mine ? 'Remove reaction' : 'Add reaction'"
+              :title="
+                rx.mine
+                  ? t('bugReports.removeReaction')
+                  : t('bugReports.addReaction')
+              "
               @click="$emit('toggle-reaction', note, rx.emoji)"
             >
               {{ rx.emoji }} {{ rx.count }}
@@ -126,7 +139,7 @@
             <!-- Reply -->
             <button
               class="nt-action-btn"
-              title="Reply to this note"
+              :title="t('bugReports.replyToThisNote')"
               @click="$emit('reply', note)"
             >
               <ReplyIcon class="w-3 h-3" />
@@ -136,7 +149,7 @@
             <div class="nt-reaction-wrap">
               <button
                 class="nt-action-btn"
-                title="React"
+                :title="t('bugReports.react')"
                 @click.stop="$emit('toggle-picker', note.id, $event)"
               >
                 <SmileIcon class="w-3 h-3" />
@@ -162,7 +175,7 @@
             <button
               v-if="canEdit(note)"
               class="nt-action-btn"
-              title="Edit"
+              :title="t('common.edit')"
               @click="$emit('start-edit', note)"
             >
               <EditIcon class="w-3 h-3" />
@@ -172,7 +185,7 @@
             <button
               v-if="canDelete(note)"
               class="nt-action-btn nt-action-btn--del"
-              title="Delete"
+              :title="t('common.delete')"
               @click="$emit('delete', note)"
             >
               <TrashIcon class="w-3 h-3" />
@@ -188,15 +201,15 @@
     <!-- Reply banner -->
     <div v-if="replyingTo" class="nt-reply-banner">
       <span class="nt-reply-banner-label">
-        Replying to <strong>{{ replyingTo.authorName }}</strong
-        >:
+        {{ t('bugReports.replyingTo') }}
+        <strong>{{ replyingTo.authorName }}</strong>:
         <span class="nt-reply-banner-preview">{{
           replyingTo.text.slice(0, 80)
         }}</span>
       </span>
       <button
         class="nt-reply-banner-dismiss"
-        title="Cancel reply"
+        :title="t('bugReports.cancelReply')"
         @click="$emit('cancel-reply')"
       >
         ✕
@@ -219,7 +232,7 @@
     <div class="nt-compose-actions">
       <span class="nt-charcount">{{ (composeText || '').length }}/1000</span>
       <button class="nt-send-btn" :disabled="sending" @click="$emit('send')">
-        {{ sending ? 'Sending…' : 'Send' }}
+        {{ sending ? t('bugReports.sending') : t('bugReports.send') }}
       </button>
     </div>
   </div>
@@ -227,6 +240,7 @@
 
 <script setup>
 import { ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import {
   REACTION_EMOJIS,
   markdownToHtml,
@@ -244,6 +258,8 @@ import {
   SmileIcon,
   TrashIcon
 } from '@/components/icons'
+
+const { t } = useI18n()
 
 const props = defineProps({
   notes: { type: Array, default: () => [] },

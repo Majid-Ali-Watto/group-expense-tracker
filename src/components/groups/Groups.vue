@@ -5,7 +5,7 @@
     <template v-else>
       <el-alert
         v-if="activeUserIsBlocked"
-        title="Your account is blocked by admin. Groups are visible for reference only."
+        :title="t('groups.blockedNotice')"
         type="warning"
         :closable="false"
       />
@@ -17,7 +17,7 @@
             :class="{ 'pointer-events-none opacity-60': activeUserIsBlocked }"
           >
             <AddNewTransactionButton
-              text="Want to create a new group?"
+              :text="t('groups.createPrompt')"
               @click="openCreateGroup"
             />
           </div>
@@ -28,10 +28,10 @@
               <el-button
                 type="info"
                 plain
-                size="small"
+                size="medium"
                 @click="closeCreateGroup"
               >
-                Cancel
+                {{ t('common.cancel') }}
               </el-button>
             </template>
           </GroupsCreate>
@@ -42,7 +42,7 @@
       <div class="mb-2">
         <GenericInputField
           v-model="searchQuery"
-          placeholder="Search by group name, code, owner, or member..."
+          :placeholder="t('groups.searchPlaceholder')"
           :maxlength="50"
           :wrap-form-item="false"
         >
@@ -54,28 +54,28 @@
 
       <!-- Sort & Filter controls -->
       <div class="flex items-center gap-2 mb-2 min-w-0">
-        <el-button-group size="small" class="flex-shrink-0">
+        <el-button-group size="medium" class="flex-shrink-0">
           <el-button
             :type="sortOrder === '' ? 'primary' : ''"
             @click="sortOrder = ''"
-            >Default</el-button
+            >{{ t('groups.sortDefault') }}</el-button
           >
           <el-button
             :type="sortOrder === 'asc' ? 'primary' : ''"
             @click="sortOrder = 'asc'"
-            >A→Z</el-button
+            >{{ t('groups.sortAsc') }}</el-button
           >
           <el-button
             :type="sortOrder === 'desc' ? 'primary' : ''"
             @click="sortOrder = 'desc'"
-            >Z→A</el-button
+            >{{ t('groups.sortDesc') }}</el-button
           >
         </el-button-group>
         <GenericDropDown
           v-model="filterByCategory"
           :options="allCategoryOptions"
-          placeholder="Category"
-          size="small"
+          :placeholder="t('groups.categoryPlaceholder')"
+          size="medium"
           select-class="w-full"
           class="flex-1 min-w-0"
           :wrap-form-item="false"
@@ -83,8 +83,8 @@
         <GenericDropDown
           v-model="filterByUser"
           :options="allGroupMemberOptions"
-          placeholder="Member"
-          size="small"
+          :placeholder="t('groups.memberPlaceholder')"
+          size="medium"
           select-class="w-full"
           class="flex-1 min-w-0"
           :wrap-form-item="false"
@@ -92,7 +92,7 @@
       </div>
       <div class="mb-4">
         <el-checkbox v-model="hideBlockedEntities" size="small">
-          Hide blocked groups
+          {{ t('groups.hideBlockedGroups') }}
         </el-checkbox>
       </div>
 
@@ -108,27 +108,27 @@
 
       <!-- Joined Groups -->
       <div class="flex items-center justify-between gap-1">
-        <h4 class="mb-0">Joined Groups</h4>
+        <h4 class="mb-0">{{ t('groups.joinedGroupsHeading') }}</h4>
         <div class="flex items-center gap-1">
           <GenericButton
-            size="small"
+            size="medium"
             plain
             type="warning"
             :disabled="pinnedGroupsForShare.length === 0"
             custom-class="!w-fit !px-1"
             @click="sharePinnedGroups"
           >
-            Share Pinned
+            {{ t('groups.sharePinned') }}
           </GenericButton>
           <GenericButton
-            size="small"
+            size="medium"
             plain
             type="primary"
             :disabled="joinedGroupsForShare.length === 0"
             custom-class="!w-fit !px-1"
             @click="shareJoinedGroups"
           >
-            Share Joined
+            {{ t('groups.shareJoined') }}
           </GenericButton>
         </div>
       </div>
@@ -167,7 +167,7 @@
       </div>
 
       <!-- Available Groups -->
-      <h4 class="mt-6">Available Groups</h4>
+      <h4 class="mt-6">{{ t('groups.availableGroupsHeading') }}</h4>
       <NoGroupFound
         v-if="otherGroups.length === 0"
         :search-query="searchQuery"
@@ -190,7 +190,7 @@
           :loading="availableGroupsLoading"
           @click="loadMoreAvailableGroups()"
         >
-          Load More Groups
+          {{ t('groups.loadMoreGroups') }}
         </GenericButton>
       </div>
 
@@ -222,6 +222,7 @@
 </template>
 
 <script setup>
+import { useI18n } from 'vue-i18n'
 import { LoadingSkeleton } from '@/components/shared'
 import { Groups } from '@/scripts/groups'
 import {
@@ -244,6 +245,8 @@ const AddNewTransactionButton = loadAsyncComponent(
 const NoGroupFound = loadAsyncComponent(
   () => import('../generic-components/NoGroupFound.vue')
 )
+
+const { t } = useI18n()
 
 const {
   showCreateGroup,

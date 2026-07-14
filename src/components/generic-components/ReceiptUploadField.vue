@@ -1,12 +1,12 @@
 <template>
   <div class="mb-4">
     <p class="mb-1 text-sm font-medium text-slate-900 dark:text-slate-300">
-      Receipt
+      {{ t('receiptUpload.label') }}
       <span class="text-gray-400 dark:text-gray-500 font-normal text-xs">
-        (optional)
+        ({{ t('common.optional') }})
       </span>
       <span class="block text-xs text-gray-500 dark:text-gray-400 mt-1">
-        {{ helperText }}
+        {{ resolvedHelperText }}
       </span>
     </p>
 
@@ -33,8 +33,10 @@
       <div class="mb-2 text-xs text-slate-500 dark:text-slate-400">
         {{
           existingUrls.length > 1
-            ? `Current receipts (${existingUrls.length})`
-            : 'Current receipt'
+            ? t('receiptUpload.currentReceiptsCount', {
+                count: existingUrls.length
+              })
+            : t('receiptUpload.currentReceipt')
         }}
       </div>
 
@@ -52,7 +54,7 @@
           >
             <AppImage
               :src="url"
-              :alt="`Current receipt ${index + 1}`"
+              :alt="t('receiptUpload.currentReceiptAlt', { index: index + 1 })"
               class="block h-full w-full object-contain"
               fit="contain"
             />
@@ -68,7 +70,7 @@
       >
         <AppImage
           :src="existingUrls[0]"
-          alt="Current receipt"
+          :alt="t('receiptUpload.currentReceipt')"
           class="block h-full w-full object-contain"
           fit="contain"
         />
@@ -79,16 +81,33 @@
       v-model="dialogVisible"
       :images="previewImages"
       :initial-index="dialogInitialIndex"
-      title="Receipt Preview"
+      :title="t('receiptUpload.previewTitle')"
+    />
+
+    <ImageCropEditorDialog
+      :visible="editorVisible"
+      :source-url="editorSourceUrl"
+      :submitting="false"
+      :title="t('receiptUpload.editorTitle')"
+      :confirm-label="t('receiptUpload.editorConfirmLabel')"
+      :image-alt="t('receiptUpload.editorAlt')"
+      preview-shape="square"
+      :hint-text="t('receiptUpload.editorHint')"
+      @update:visible="handleEditorVisibilityChange"
+      @confirm="handleEditorConfirm"
     />
   </div>
 </template>
 
 <script setup>
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Plus } from '@element-plus/icons-vue'
 import AppImage from './AppImage.vue'
+import ImageCropEditorDialog from './ImageCropEditorDialog.vue'
 import ImagePreviewDialog from './ImagePreviewDialog.vue'
+
+const { t } = useI18n()
 
 const props = defineProps({
   selectedFiles: {
@@ -109,10 +128,13 @@ const props = defineProps({
   },
   helperText: {
     type: String,
-    default:
-      'Only image files (JPG, PNG, GIF, BMP, WEBP) are allowed. Max size: 1MB per file.'
+    default: ''
   }
 })
+
+const resolvedHelperText = computed(
+  () => props.helperText || t('common.receiptHelperDefault')
+)
 
 const emit = defineEmits(['files-selected', 'remove'])
 
@@ -121,12 +143,22 @@ const fileList = ref([])
 const dialogVisible = ref(false)
 const previewImages = ref([])
 const dialogInitialIndex = ref(0)
+const editorVisible = ref(false)
+const editorSourceUrl = ref('')
 const objectUrlMap = new Map()
+const cropQueue = ref([])
+const cropBaseFiles = ref([])
+const croppedFiles = ref([])
+const activeEditorFile = ref(null)
 
 const isAtLimit = computed(() => !props.multiple && fileList.value.length >= 1)
 
 function getFileKey(file, index = 0) {
   return `${file.name}-${file.size}-${file.lastModified}-${index}`
+}
+
+function getFileSignature(file) {
+  return `${file.name}-${file.size}-${file.lastModified}`
 }
 
 function getObjectUrl(file, index = 0) {
@@ -161,12 +193,93 @@ function syncFileList(files = []) {
   }))
 }
 
+function revokeEditorSourceUrl() {
+  if (editorSourceUrl.value) {
+    URL.revokeObjectURL(editorSourceUrl.value)
+  }
+  editorSourceUrl.value = ''
+}
+
+function resetEditorQueue() {
+  cropQueue.value = []
+  cropBaseFiles.value = []
+  croppedFiles.value = []
+  activeEditorFile.value = null
+  editorVisible.value = false
+  revokeEditorSourceUrl()
+}
+
+function buildReplacementFile(blob, originalFile) {
+  const extension = blob.type === 'image/png' ? 'png' : 'jpg'
+  const safeBaseName =
+    originalFile?.name?.replace(/\.[^.]+$/, '') || 'receipt-image'
+
+  return new File([blob], `${safeBaseName}.${extension}`, {
+    type: blob.type || 'image/jpeg',
+    lastModified: Date.now()
+  })
+}
+
+function emitSelectedFiles(files = []) {
+  if (files.length) {
+    emit('files-selected', files)
+  } else {
+    emit('remove')
+  }
+}
+
+function openNextEditor() {
+  const [nextFile, ...remaining] = cropQueue.value
+  if (!nextFile) {
+    const nextFiles = props.multiple
+      ? [...cropBaseFiles.value, ...croppedFiles.value]
+      : croppedFiles.value.slice(0, 1)
+
+    emitSelectedFiles(nextFiles)
+    resetEditorQueue()
+    return
+  }
+
+  cropQueue.value = remaining
+  activeEditorFile.value = nextFile
+  revokeEditorSourceUrl()
+  editorSourceUrl.value = URL.createObjectURL(nextFile)
+  editorVisible.value = true
+}
+
 function handleChange(file, files) {
-  fileList.value = files
-  emit(
-    'files-selected',
-    files.map((f) => f.raw)
+  const normalizedFiles = files.map((entry) => entry.raw).filter(Boolean)
+  const existingFiles = Array.isArray(props.selectedFiles)
+    ? props.selectedFiles
+    : []
+
+  const normalizedKeys = new Set(
+    normalizedFiles.map((selectedFile) => getFileSignature(selectedFile))
   )
+  const existingKeys = new Set(
+    existingFiles.map((selectedFile) => getFileSignature(selectedFile))
+  )
+  const newFiles = normalizedFiles.filter(
+    (selectedFile) => !existingKeys.has(getFileSignature(selectedFile))
+  )
+
+  if (!newFiles.length) {
+    syncFileList(existingFiles)
+    return
+  }
+
+  const newFileKeys = new Set(
+    newFiles.map((selectedFile) => getFileSignature(selectedFile))
+  )
+  cropBaseFiles.value = props.multiple
+    ? existingFiles.filter((selectedFile) => {
+        const key = getFileSignature(selectedFile)
+        return normalizedKeys.has(key) && !newFileKeys.has(key)
+      })
+    : []
+  croppedFiles.value = []
+  cropQueue.value = [...newFiles]
+  openNextEditor()
 }
 
 function handleRemove(file, files) {
@@ -186,7 +299,7 @@ function handlePictureCardPreview(file) {
   previewImages.value = fileList.value
     .map((item) => ({
       url: item.url,
-      name: item.name || 'Receipt preview'
+      name: item.name || t('receiptUpload.previewFallbackName')
     }))
     .filter((item) => item.url)
 
@@ -200,10 +313,33 @@ function handlePictureCardPreview(file) {
 function openExistingPreview(index = 0) {
   previewImages.value = props.existingUrls.map((url, imageIndex) => ({
     url,
-    name: `Receipt ${imageIndex + 1}`
+    name: t('receiptUpload.receiptIndexName', { index: imageIndex + 1 })
   }))
   dialogInitialIndex.value = index
   dialogVisible.value = previewImages.value.length > 0
+}
+
+function handleEditorVisibilityChange(visible) {
+  if (visible) {
+    editorVisible.value = true
+    return
+  }
+
+  const nextFiles = props.multiple
+    ? [...cropBaseFiles.value, ...croppedFiles.value]
+    : croppedFiles.value.slice(0, 1)
+  emitSelectedFiles(nextFiles)
+  resetEditorQueue()
+}
+
+function handleEditorConfirm(blob) {
+  if (!activeEditorFile.value) return
+
+  croppedFiles.value.push(buildReplacementFile(blob, activeEditorFile.value))
+  activeEditorFile.value = null
+  editorVisible.value = false
+  revokeEditorSourceUrl()
+  openNextEditor()
 }
 
 watch(
@@ -221,5 +357,6 @@ watch(
 onBeforeUnmount(() => {
   objectUrlMap.forEach((url) => URL.revokeObjectURL(url))
   objectUrlMap.clear()
+  revokeEditorSourceUrl()
 })
 </script>

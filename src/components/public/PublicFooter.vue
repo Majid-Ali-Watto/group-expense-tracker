@@ -2,31 +2,37 @@
   <footer class="public-footer">
     <div class="public-footer__inner">
       <div>
-        <p class="public-footer__brand">Kharchafy</p>
-        <p class="public-footer__copy">
-          Shared expense tracking, shared loans, and personal budgeting in one
-          place.
-        </p>
+        <p class="public-footer__brand">{{ t('footer.brand') }}</p>
+        <p class="public-footer__copy">{{ t('footer.tagline') }}</p>
       </div>
 
-      <nav class="public-footer__links" aria-label="Public pages">
-        <RouterLink
-          v-for="link in PUBLIC_NAV_LINKS"
-          :key="link.to"
-          :to="link.to"
-        >
+      <nav
+        class="public-footer__links"
+        :aria-label="t('footer.publicNavLabel')"
+      >
+        <RouterLink v-for="link in navLinks" :key="link.to" :to="link.to">
           {{ link.label }}
         </RouterLink>
-        <RouterLink to="/login">Login</RouterLink>
-        <RouterLink to="/register">Register</RouterLink>
+        <RouterLink :to="withLocale('/login')">{{ t('nav.login') }}</RouterLink>
+        <RouterLink :to="withLocale('/register')">{{
+          t('nav.register')
+        }}</RouterLink>
       </nav>
     </div>
   </footer>
 </template>
 
 <script setup>
-import { RouterLink } from 'vue-router'
+import { computed } from 'vue'
+import { RouterLink, useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { PUBLIC_NAV_LINKS } from '@/constants'
+
+const route = useRoute()
+const { t, locale } = useI18n()
+const navLinks = computed(() => PUBLIC_NAV_LINKS[locale.value])
+const withLocale = (path) =>
+  route.meta?.locale === 'ur' ? `/ur${path}` : path
 </script>
 
 <style scoped>

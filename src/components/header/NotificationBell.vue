@@ -11,7 +11,9 @@
       <template #reference>
         <button
           class="bell-btn"
-          :title="`${notificationCount} pending actions`"
+          :title="
+            t('headerActions.pendingActions', { count: notificationCount })
+          "
         >
           <BellIcon class="w-5 h-5" />
           <span v-if="notificationCount > 0" class="notif-badge">
@@ -22,17 +24,19 @@
 
       <div class="notif-panel">
         <div class="notif-panel-header">
-          <span class="font-semibold text-sm">Notifications</span>
+          <span class="font-semibold text-sm">{{
+            t('headerActions.notifications')
+          }}</span>
           <span
             v-if="notificationCount > 0"
             class="text-xs text-amber-600 font-medium"
           >
-            {{ notificationCount }} pending
+            {{ t('headerActions.pending', { count: notificationCount }) }}
           </span>
         </div>
 
         <div v-if="notifications.length === 0" class="notif-empty">
-          ✅ No pending actions
+          ✅ {{ t('headerActions.noPendingActions') }}
         </div>
 
         <div v-else class="notif-list">
@@ -47,13 +51,13 @@
               <span class="notif-icon">{{ notif.icon }}</span>
               <div class="notif-text">
                 <div
-                  v-overflow-popup="{ title: 'Notification' }"
+                  v-overflow-popup="{ title: t('headerActions.notification') }"
                   class="notif-desc"
                 >
                   {{ notif.description }}
                 </div>
                 <div
-                  v-overflow-popup="{ title: 'Related Section' }"
+                  v-overflow-popup="{ title: t('headerActions.relatedSection') }"
                   class="notif-group"
                 >
                   {{ notif.title }}
@@ -70,6 +74,7 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { BellIcon } from '@/components/icons'
 
 const props = defineProps({
@@ -79,6 +84,7 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['update:visible', 'navigate'])
+const { t } = useI18n()
 
 const notifsByCategory = computed(() => {
   const map = {}

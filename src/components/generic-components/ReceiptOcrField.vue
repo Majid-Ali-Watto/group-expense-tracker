@@ -16,7 +16,7 @@
           <el-button
             type="primary"
             plain
-            size="small"
+            size="medium"
             :loading="extracting"
             :disabled="
               uploading ||
@@ -25,15 +25,14 @@
             "
             @click="$emit('extract')"
           >
-            {{ extracting ? 'Extracting...' : 'Extract Text' }}
+            {{ extracting ? t('receiptOcr.extracting') : t('receiptOcr.extractText') }}
           </el-button>
         </div>
         <p
           v-if="selectedFiles.length || existingUrls.length"
           class="mt-2 text-xs text-amber-600"
         >
-          Verify the extracted data before saving. Receipt extraction can make
-          mistakes.
+          {{ t('receiptOcr.verifyWarning') }}
         </p>
       </template>
       <p v-else class="mt-2 text-xs text-orange-500 text-right">
@@ -42,16 +41,19 @@
     </template>
 
     <p v-else class="mt-2 text-xs text-gray-400 dark:text-gray-500 text-right">
-      Receipt text extraction coming soon.
+      {{ t('receiptOcr.comingSoon') }}
     </p>
   </div>
 </template>
 
 <script setup>
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { getOcrConfig, getStorageConfig } from '@/composables/useAppConfig'
 import { useOcrLimit } from '@/composables/useOcrLimit'
 import ReceiptUploadField from './ReceiptUploadField.vue'
+
+const { t } = useI18n()
 
 defineProps({
   selectedFiles: { type: Array, default: () => [] },

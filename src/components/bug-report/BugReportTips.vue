@@ -1,15 +1,17 @@
 <template>
   <div class="bug-tips">
-    <p class="bug-tips-title">Tips for a great bug report</p>
+    <p class="bug-tips-title">{{ t('bugReports.tipsTitle') }}</p>
     <ul class="bug-tips-list">
-      <li>Include the tab or section where the issue occurred.</li>
-      <li>Mention the steps you took before the bug appeared.</li>
-      <li>Describe what you expected vs. what actually happened.</li>
-      <li>Attach a screenshot to make the issue immediately clear.</li>
-      <li>Note whether the issue happens consistently or only sometimes.</li>
+      <li v-for="tip in tm('bugReports.tips')" :key="tip">{{ tip }}</li>
     </ul>
   </div>
 </template>
+
+<script setup>
+import { useI18n } from 'vue-i18n'
+
+const { t, tm } = useI18n()
+</script>
 
 <style scoped>
 .bug-tips {

@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="visible"
-    title="How to Use Kharchafy"
+    :title="t('help.dialogTitle')"
     :width="isMobile ? '95%' : '680px'"
     append-to-body
     :close-on-click-modal="true"
@@ -9,7 +9,7 @@
     @close="handleClose"
     class="help-dialog"
   >
-    <HelpContent />
+    <HelpContent :locale="locale" />
 
     <template #footer>
       <div class="help-footer">
@@ -21,31 +21,39 @@
               @click="toggleTheme"
               size="small"
               :title="
-                isDarkTheme ? 'Switch to Light Mode' : 'Switch to Dark Mode'
+                isDarkTheme
+                  ? t('headerActions.switchToLightMode')
+                  : t('headerActions.switchToDarkMode')
               "
             >
               <MoonIcon v-if="!isDarkTheme" class="w-4 h-4" />
               <SunIcon v-else class="w-4 h-4" />
-              {{ isDarkTheme ? 'Light Mode' : 'Dark Mode' }}
+              {{
+                isDarkTheme
+                  ? t('headerActions.lightMode')
+                  : t('headerActions.darkMode')
+              }}
             </button>
             <el-button
               v-if="loggedIn"
               type="warning"
               plain
-              size="small"
+              size="medium"
               @click="handleLogout"
-              >Logout</el-button
+              >{{ t('headerActions.logout') }}</el-button
             >
           </div>
-          <el-button size="small" @click="handleClose">Close</el-button>
+          <el-button size="medium" @click="handleClose">{{
+            t('common.close')
+          }}</el-button>
         </div>
         <!-- Row 2: Email -->
         <div class="help-footer-row2">
-          <span class="help-email-label">Need help?</span>
+          <span class="help-email-label">{{ t('help.needHelp') }}</span>
           <a
             :href="`mailto:${supportEmail}`"
             class="help-email-link"
-            title="Email support"
+            :title="t('help.emailSupportTitle')"
           >
             <EmailIcon class="w-4 h-4" />
             {{ supportEmail }}
@@ -57,6 +65,7 @@
 </template>
 
 <script setup>
+import { useI18n } from 'vue-i18n'
 import HelpContent from './HelpContent.vue'
 import { EmailIcon, MoonIcon, SunIcon } from '@/components/icons'
 import { HelpDialog } from '@/scripts/generic'
@@ -70,6 +79,7 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'logout'])
 
+const { t, locale } = useI18n()
 const { isMobile, visible, handleClose, handleLogout } = HelpDialog(props, emit)
 
 const supportEmail = import.meta.env.VITE_BUG_REPORT_HELP_EMAIL

@@ -21,9 +21,12 @@
           </div>
           <div class="min-w-0 flex-1">
             <p class="text-xs sm:text-sm text-gray-500 font-medium mb-0.5">
-              Welcome back
+              {{ t('welcomeBanner.welcomeBack') }}
             </p>
-            <p v-overflow-popup="{ title: 'User Name' }" class="truncate">
+            <p
+              v-overflow-popup="{ title: t('welcomeBanner.userNameLabel') }"
+              class="truncate"
+            >
               <span class="text-base font-bold text-gray-800">{{
                 displayName
               }}</span>
@@ -49,12 +52,12 @@
           </div>
           <div class="min-w-0 flex-1">
             <p class="text-xs sm:text-sm text-gray-500 font-medium mb-0.5">
-              Active Group (joined groups)
+              {{ t('welcomeBanner.activeGroupLabel') }}
             </p>
             <GenericDropDown
               v-model="selectedGroupId"
-              placeholder="No Group Selected"
-              size="small"
+              :placeholder="t('welcomeBanner.noGroupSelected')"
+              size="medium"
               select-class="min-w-0 font-bold"
               :class="joinedGroups.length === 0 ? 'opacity-50' : ''"
               :disabled="joinedGroups.length === 0"
@@ -74,6 +77,7 @@
 
 <script setup>
 import { ref, computed, watch, nextTick } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { UsersIcon } from '@/components/icons'
 import { UserAvatar } from '@/components/generic-components'
 import GenericDropDown from './GenericDropDown.vue'
@@ -88,6 +92,7 @@ defineProps({
   isAdminActive: Boolean
 })
 
+const { t } = useI18n()
 const groupStore = useGroupStore()
 const authStore = useAuthStore()
 const userStore = useUserStore()
@@ -129,7 +134,7 @@ function handleSelectGroup(id) {
   const group = groupStore.getGroupById(id)
   if (!group) return
   groupStore.setActiveGroup(id)
-  showSuccess(`Selected group: ${group.name}`)
+  showSuccess(t('groupsMessages.selectedGroupSuccess', { name: group.name }))
 }
 </script>
 

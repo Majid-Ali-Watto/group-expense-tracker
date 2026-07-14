@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     :model-value="visible"
-    :title="title"
+    :title="resolvedTitle"
     width="min(92vw, 560px)"
     :close-on-click-modal="false"
     :close-on-press-escape="false"
@@ -11,8 +11,7 @@
   >
     <div class="space-y-5">
       <p class="text-sm text-gray-600 dark:text-gray-300">
-        Select the features you want to use. You can keep only the tabs you
-        actually need.
+        {{ t('auth.tabConfig.intro') }}
       </p>
 
       <section
@@ -23,22 +22,22 @@
           :model-value="selection.shared"
           @update:model-value="updateSelection('shared', $event)"
         >
-          Shared features
+          {{ t('auth.tabConfig.sharedFeatures') }}
         </el-checkbox>
-        <div v-if="selection.shared" class="mt-3 space-y-2 pl-6 text-sm">
+        <div v-if="selection.shared" class="mt-3 space-y-2 ps-6 text-sm">
           <el-checkbox
             class="!whitespace-normal"
             :model-value="selection[USER_TAB_KEYS.GROUPS]"
             disabled
           >
-            Groups
+            {{ t('auth.tabConfig.groups') }}
           </el-checkbox>
           <el-checkbox
             class="!whitespace-normal"
             :model-value="selection[USER_TAB_KEYS.USERS]"
             @update:model-value="updateSelection(USER_TAB_KEYS.USERS, $event)"
           >
-            Users
+            {{ t('auth.tabConfig.users') }}
           </el-checkbox>
           <el-checkbox
             class="!whitespace-normal"
@@ -47,7 +46,7 @@
               updateSelection(USER_TAB_KEYS.SHARED_EXPENSES, $event)
             "
           >
-            Shared Expenses
+            {{ t('auth.tabConfig.sharedExpenses') }}
           </el-checkbox>
           <el-checkbox
             class="!whitespace-normal"
@@ -56,7 +55,7 @@
               updateSelection(USER_TAB_KEYS.SHARED_LOANS, $event)
             "
           >
-            Shared Loans
+            {{ t('auth.tabConfig.sharedLoans') }}
           </el-checkbox>
         </div>
 
@@ -69,9 +68,9 @@
           class="mt-4 border-t border-gray-100 pt-3 dark:border-gray-700"
         >
           <p class="mb-2 text-xs font-medium text-gray-500 dark:text-gray-400">
-            Email notifications
+            {{ t('auth.tabConfig.emailNotifications') }}
           </p>
-          <div class="space-y-2 pl-6 text-sm">
+          <div class="space-y-2 ps-6 text-sm">
             <el-checkbox
               class="!whitespace-normal"
               v-if="selection[USER_TAB_KEYS.SHARED_EXPENSES]"
@@ -80,7 +79,7 @@
                 updateSelection('emailSharedExpenses', $event)
               "
             >
-              Notify group when I add a shared expense
+              {{ t('auth.tabConfig.notifySharedExpense') }}
             </el-checkbox>
             <el-checkbox
               class="!whitespace-normal"
@@ -88,7 +87,7 @@
               :model-value="selection.emailSharedLoans"
               @update:model-value="updateSelection('emailSharedLoans', $event)"
             >
-              Notify group when I add a shared loan
+              {{ t('auth.tabConfig.notifySharedLoan') }}
             </el-checkbox>
           </div>
         </div>
@@ -102,9 +101,9 @@
           :model-value="selection.personal"
           @update:model-value="updateSelection('personal', $event)"
         >
-          Personal features
+          {{ t('auth.tabConfig.personalFeatures') }}
         </el-checkbox>
-        <div v-if="selection.personal" class="mt-3 space-y-2 pl-6 text-sm">
+        <div v-if="selection.personal" class="mt-3 space-y-2 ps-6 text-sm">
           <el-checkbox
             class="!whitespace-normal"
             :model-value="selection[USER_TAB_KEYS.PERSONAL_EXPENSES]"
@@ -112,7 +111,7 @@
               updateSelection(USER_TAB_KEYS.PERSONAL_EXPENSES, $event)
             "
           >
-            Personal Expenses
+            {{ t('auth.tabConfig.personalExpenses') }}
           </el-checkbox>
           <el-checkbox
             class="!whitespace-normal"
@@ -121,7 +120,7 @@
               updateSelection(USER_TAB_KEYS.PERSONAL_LOANS, $event)
             "
           >
-            Personal Loans
+            {{ t('auth.tabConfig.personalLoans') }}
           </el-checkbox>
         </div>
       </section>
@@ -129,16 +128,16 @@
 
     <template #footer>
       <div class="flex justify-end gap-2">
-        <el-button size="small" @click="$emit('cancel')">{{
-          cancelText
+        <el-button size="medium" @click="$emit('cancel')">{{
+          resolvedCancelText
         }}</el-button>
         <el-button
           type="primary"
-          size="small"
+          size="medium"
           :loading="loading"
           @click="$emit('confirm')"
         >
-          {{ confirmText }}
+          {{ resolvedConfirmText }}
         </el-button>
       </div>
     </template>
@@ -146,15 +145,19 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { USER_TAB_KEYS } from '@/helpers'
+
+const { t } = useI18n()
 
 const props = defineProps({
   visible: { type: Boolean, default: false },
   selection: { type: Object, required: true },
   loading: { type: Boolean, default: false },
-  title: { type: String, default: 'Choose Your Tabs' },
-  confirmText: { type: String, default: 'Continue' },
-  cancelText: { type: String, default: 'Cancel' },
+  title: { type: String, default: '' },
+  confirmText: { type: String, default: '' },
+  cancelText: { type: String, default: '' },
   showClose: { type: Boolean, default: false }
 })
 
@@ -164,6 +167,14 @@ const emit = defineEmits([
   'confirm',
   'cancel'
 ])
+
+const resolvedTitle = computed(() => props.title || t('auth.tabConfig.title'))
+const resolvedConfirmText = computed(
+  () => props.confirmText || t('auth.tabConfig.confirm')
+)
+const resolvedCancelText = computed(
+  () => props.cancelText || t('common.cancel')
+)
 
 function updateSelection(key, value) {
   emit('update:selection', {

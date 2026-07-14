@@ -1,32 +1,25 @@
 <template>
   <main class="public-page inner-page">
     <section class="title-section">
-      <p class="eyebrow">Group expense tracker</p>
-      <h1>Split bills and track shared costs with less confusion</h1>
-      <p>
-        Use Kharchafy to manage roommate costs, trip spending, food runs,
-        household bills, and shared lending without depending on scattered chat
-        messages.
-      </p>
+      <p class="eyebrow">{{ t('groupExpenseTracker.eyebrow') }}</p>
+      <h1>{{ t('groupExpenseTracker.title') }}</h1>
+      <p>{{ t('groupExpenseTracker.intro') }}</p>
     </section>
 
     <section class="bullet-section">
       <article class="bullet-card">
-        <h2>Why this flow matters</h2>
+        <h2>{{ t('groupExpenseTracker.benefitsHeading') }}</h2>
         <ul>
-          <li v-for="point in GROUP_EXPENSE_BENEFITS" :key="point">
+          <li v-for="point in benefits" :key="point">
             {{ point }}
           </li>
         </ul>
       </article>
 
       <article class="bullet-card">
-        <h2>Typical use cases</h2>
+        <h2>{{ t('groupExpenseTracker.useCasesHeading') }}</h2>
         <ul>
-          <li>Roommate rent, groceries, and utility tracking</li>
-          <li>Trip spending across transport, food, and stays</li>
-          <li>Family or event planning with multiple contributors</li>
-          <li>Any shared bill splitting workflow that needs visibility</li>
+          <li v-for="point in useCases" :key="point">{{ point }}</li>
         </ul>
       </article>
     </section>
@@ -34,7 +27,13 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { GROUP_EXPENSE_BENEFITS } from '@/constants'
+
+const { t, locale, tm } = useI18n()
+const benefits = computed(() => GROUP_EXPENSE_BENEFITS[locale.value])
+const useCases = computed(() => tm('groupExpenseTracker.useCases'))
 </script>
 
 <style scoped>
@@ -97,7 +96,7 @@ h1 {
 
 .bullet-card ul {
   margin: 0;
-  padding-left: 18px;
+  padding-inline-start: 18px;
 }
 
 .bullet-card li {

@@ -3,9 +3,9 @@
     :visible="visible"
     :selection="tabSelection"
     :loading="isSavingTabs"
-    title="Manage Your Tabs"
-    confirm-text="Save Changes"
-    cancel-text="Cancel"
+    :title="t('headerActions.manageTabs')"
+    :confirm-text="t('common.save')"
+    :cancel-text="t('common.cancel')"
     :show-close="true"
     @update:visible="emit('update:visible', $event)"
     @update:selection="tabSelection = $event"
@@ -16,6 +16,7 @@
 
 <script setup>
 import { ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { database, doc, setDoc } from '@/firebase'
 import UserTabConfigDialog from '@/components/generic-components/UserTabConfigDialog.vue'
 import { useAuthStore, useUserStore } from '@/stores'
@@ -38,6 +39,7 @@ const emit = defineEmits(['update:visible'])
 
 const authStore = useAuthStore()
 const userStore = useUserStore()
+const { t } = useI18n()
 const isSavingTabs = ref(false)
 const tabSelection = ref(
   createUserTabSelectionFromConfig(userStore.getActiveUserTabConfig)
@@ -81,7 +83,7 @@ async function saveManageTabs() {
     const sel = tabSelection.value
     if (!sel.shared && !sel.personal) {
       return showError(
-        'Please select at least one feature group — Shared or Personal — to save.',
+        t('authMessages.selectFeatureGroup'),
         { duration: 0 }
       )
     }
@@ -92,7 +94,7 @@ async function saveManageTabs() {
       !sel[USER_TAB_KEYS.USERS]
     ) {
       return showError(
-        'You selected Shared features but no shared tabs are enabled. Please select at least one shared tab (Shared Expenses, Shared Loans, or Users).',
+        t('authMessages.sharedNoTabsEnabled'),
         { duration: 0 }
       )
     }
@@ -102,13 +104,13 @@ async function saveManageTabs() {
       !sel[USER_TAB_KEYS.PERSONAL_LOANS]
     ) {
       return showError(
-        'You selected Personal features but no personal tabs are enabled. Please select at least one personal tab (Personal Expenses or Personal Loans).',
+        t('authMessages.personalNoTabsEnabled'),
         { duration: 0 }
       )
     }
     const userTabConfig = buildUserTabConfig(sel)
     if (!hasEnabledUserTabs(userTabConfig)) {
-      return showError('Select at least one actual tab to continue.')
+      return showError(t('authMessages.selectAtLeastOneTab'))
     }
 
     const payload = buildUserTabConfigDocument(
@@ -126,14 +128,14 @@ async function saveManageTabs() {
       accessManageTabs: canAccessManageTabs(payload)
     })
 
-    showSuccess('Tabs updated successfully.')
+    showSuccess(t('authMessages.tabsUpdated'))
     emit('update:visible', false)
   } catch (error) {
     console.error('Failed to update tabs:', error)
     showError(
       error?.code === 'permission-denied'
-        ? 'You do not have permission to update tab settings.'
-        : error?.message || 'Failed to update tab settings.'
+        ? t('authMessages.noPermissionSaveTabs')
+        : error?.message || t('authMessages.saveTabSettingsFailed')
     )
   } finally {
     isSavingTabs.value = false

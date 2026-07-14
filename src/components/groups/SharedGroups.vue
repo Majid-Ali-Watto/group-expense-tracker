@@ -5,7 +5,7 @@
     <template v-else>
       <el-alert
         v-if="activeUserIsBlocked"
-        title="Your account is blocked by admin. Shared groups are visible for reference only."
+        :title="t('groups.sharedGroupsBlockedNotice')"
         type="warning"
         :closable="false"
       />
@@ -13,14 +13,14 @@
       <div class="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 class="text-2xl font-semibold text-gray-900 dark:text-white">
-            Shared Groups
+            {{ t('groups.sharedGroupsTitle') }}
           </h2>
           <p class="text-sm text-gray-500 dark:text-gray-400">
-            Join a shared group or select one you already belong to.
+            {{ t('groups.sharedGroupsSubtitle') }}
           </p>
         </div>
         <el-button plain @click="$router.push('/groups')">
-          Back to Groups
+          {{ t('groups.backToGroups') }}
         </el-button>
       </div>
 
@@ -28,21 +28,21 @@
         v-if="missingGroupIds.length > 0"
         type="warning"
         :closable="false"
-        title="Some shared groups are no longer available."
+        :title="t('groups.someGroupsUnavailable')"
       />
 
       <div
         v-if="sharedIds.length === 0"
         class="rounded-xl border border-dashed border-gray-300 px-6 py-10 text-center text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400"
       >
-        No shared groups were found in this link.
+        {{ t('groups.noSharedGroupsInLink') }}
       </div>
 
       <div
         v-else-if="sharedGroups.length === 0"
         class="rounded-xl border border-dashed border-gray-300 px-6 py-10 text-center text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400"
       >
-        None of the shared groups could be loaded.
+        {{ t('groups.noSharedGroupsLoaded') }}
       </div>
 
       <div v-else class="space-y-4">
@@ -55,8 +55,8 @@
             v-if="activeUserIsBlocked || group.blocked"
             :title="
               group.blocked
-                ? 'This group is blocked by admin. Do not interact with it.'
-                : 'Your account is blocked by admin. Group actions are disabled.'
+                ? t('groups.groupBlockedByAdmin')
+                : t('groups.accountBlockedActionsDisabled')
             "
             type="warning"
             :closable="false"
@@ -77,15 +77,18 @@
                 </h3>
                 <div class="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1">
                   <p class="text-xs text-gray-500 dark:text-gray-400">
-                    Owner:
-                    {{ userStore.getUserByUid(group.ownerUid)?.name }}
-                    ({{ displayMobileForGroup(group.ownerUid, group) }})
+                    {{
+                      t('groups.ownerLabel', {
+                        name: userStore.getUserByUid(group.ownerUid)?.name,
+                        mobile: displayMobileForGroup(group.ownerUid, group)
+                      })
+                    }}
                   </p>
                   <p
                     v-if="group.category"
                     class="text-xs text-gray-500 dark:text-gray-400"
                   >
-                    Category: {{ group.category }}
+                    {{ t('groups.categoryInline', { category: group.category }) }}
                   </p>
                 </div>
               </div>
@@ -97,7 +100,7 @@
                 :disabled="activeUserIsBlocked || group.blocked"
                 @click="selectSharedGroup(group)"
               >
-                Select
+                {{ t('groups.select') }}
               </el-button>
               <el-button
                 v-else
@@ -111,7 +114,9 @@
                 @click="joinSharedGroup(group)"
               >
                 {{
-                  hasPendingJoinRequest(group) ? 'Join Request Pending' : 'Join'
+                  hasPendingJoinRequest(group)
+                    ? t('groups.joinRequestPending')
+                    : t('groups.join')
                 }}
               </el-button>
             </div>
@@ -130,9 +135,12 @@
 </template>
 
 <script setup>
+import { useI18n } from 'vue-i18n'
 import { LoadingSkeleton } from '@/components/shared'
 import { GroupDetailsAccordion } from '@/components/generic-components'
 import { SharedGroups } from '@/scripts/groups'
+
+const { t } = useI18n()
 
 const {
   loading,

@@ -14,6 +14,12 @@
           @navigate="navigateTo"
         />
 
+        <LanguageSwitcher
+          :is-visible="hasLocaleVariant || loggedIn"
+          :use-toggle="!hasLocaleVariant"
+          :route-path="route.path"
+        />
+
         <NotificationBell
           v-if="loggedIn"
           v-model:visible="notifVisible"
@@ -47,6 +53,7 @@
           :tabs="tabs"
           :active-tab="activeTab"
           :is-public-page="isPublicPage"
+          :has-locale-variant="hasLocaleVariant"
           :public-nav-links="publicNavLinks"
           :route-path="route.path"
           :is-stuck-state="isStuckState"
@@ -84,7 +91,7 @@
   <el-dialog
     v-if="showBugReport"
     v-model="showBugReport"
-    title="Report a Bug"
+    :title="t('bugReports.reportBug')"
     :width="'min(95vw, 740px)'"
     append-to-body
     :close-on-click-modal="true"
@@ -110,9 +117,11 @@
 
 <script setup>
 import { ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Header } from '@/scripts/layout'
 import { loadAsyncComponent } from '@/utils/async-component'
 import DesktopHeaderActions from '../header/DesktopHeaderActions.vue'
+import LanguageSwitcher from '../header/LanguageSwitcher.vue'
 import MobileHeaderMenu from '../header/MobileHeaderMenu.vue'
 import NotificationBell from '../header/NotificationBell.vue'
 import ProfileDialog from '../header/ProfileDialog.vue'
@@ -154,6 +163,7 @@ const showManageTabs = ref(false)
 const showProfile = ref(false)
 const bugReportView = ref('form')
 const bugReportOpenId = ref(null)
+const { t } = useI18n()
 
 const {
   route,
@@ -163,6 +173,7 @@ const {
   canShowManageTabs,
   canShowAdmin,
   isPublicPage,
+  hasLocaleVariant,
   isStuckState,
   publicNavLinks,
   confirmLogout,

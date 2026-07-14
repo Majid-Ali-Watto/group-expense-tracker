@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     :model-value="visible"
-    title="My Profile"
+    :title="t('profile.title')"
     :width="'min(92vw, 560px)'"
     class="profile-dialog"
     append-to-body
@@ -12,8 +12,8 @@
         <UserAvatar
           :image-url="previewPhotoUrl || profilePhotoUrl"
           :preview-url="previewPhotoUrl || profilePhotoUrl"
-          alt="Profile photo"
-          :preview-title="`${profileName}'s Profile Photo`"
+          :alt="t('users.profilePhotoAlt')"
+          :preview-title="t('users.profilePhotoTitle', { name: profileName })"
           :preview-on-click="true"
           :disabled="!(previewPhotoUrl || profilePhotoUrl)"
           size="lg"
@@ -26,7 +26,7 @@
           <p
             class="text-xs font-semibold tracking-[0.18em] text-emerald-700 uppercase"
           >
-            Account
+            {{ t('headerActions.account') }}
           </p>
           <h3 class="mt-1 text-xl font-bold text-slate-900">
             {{ profileName }}
@@ -43,24 +43,28 @@
               @change="handlePhotoSelected"
             />
             <el-button
-              size="small"
+              size="medium"
               type="success"
               plain
               :loading="photoSubmitting"
               :disabled="isBlocked || photoSubmitting"
               @click="photoInputRef?.click()"
             >
-              {{ profilePhotoUrl ? 'Update Photo' : 'Add Photo' }}
+              {{
+                profilePhotoUrl
+                  ? t('profile.updatePhoto')
+                  : t('profile.addPhoto')
+              }}
             </el-button>
             <el-button
               v-if="profilePhotoUrl"
-              size="small"
+              size="medium"
               text
               :loading="photoSubmitting"
               :disabled="isBlocked || photoSubmitting"
               @click="removeProfilePhoto"
             >
-              Remove
+              {{ t('common.remove') }}
             </el-button>
           </div>
         </div>
@@ -68,13 +72,13 @@
 
       <el-alert
         v-if="isBlocked"
-        title="Your account is currently blocked. Users and groups remain visible for reference only."
+        :title="t('profile.blockedBannerText')"
         type="warning"
         :closable="false"
       />
 
       <el-descriptions :column="1" border>
-        <el-descriptions-item label="Email Address">
+        <el-descriptions-item :label="t('profile.emailAddressLabel')">
           <div class="profile-field-value">
             <div class="min-w-0 flex-1">
               <span class="break-all">{{ profileEmail }}</span>
@@ -82,64 +86,70 @@
                 v-if="!canEditVerifiedEmail"
                 class="mt-1 text-xs text-gray-500"
               >
-                Managed by your current sign-in provider.
+                {{ t('profile.managedByProvider') }}
               </p>
             </div>
             <el-button
               v-if="canEditVerifiedEmail"
               text
               circle
-              size="small"
+              size="medium"
               :icon="Edit"
               :disabled="isBlocked"
               @click="openEmailDialog"
             />
           </div>
         </el-descriptions-item>
-        <el-descriptions-item label="Full Name">
+        <el-descriptions-item :label="t('profile.fullNameLabel')">
           <div class="profile-field-value">
             <span>{{ profileName }}</span>
             <el-button
               text
               circle
-              size="small"
+              size="medium"
               :icon="Edit"
               :disabled="isBlocked"
               @click="openEditDialog('name')"
             />
           </div>
         </el-descriptions-item>
-        <el-descriptions-item label="Mobile Number">
+        <el-descriptions-item :label="t('profile.mobileNumberLabel')">
           <div class="profile-field-value">
             <span>{{ profileMobile }}</span>
             <el-button
               text
               circle
-              size="small"
+              size="medium"
               :icon="Edit"
               :disabled="isBlocked"
               @click="openEditDialog('mobile')"
             />
           </div>
         </el-descriptions-item>
-        <el-descriptions-item label="Email Verification">
+        <el-descriptions-item :label="t('profile.emailVerificationLabel')">
           <el-tag :type="emailVerified ? 'success' : 'info'" effect="light">
-            {{ emailVerified ? 'Verified' : 'Pending' }}
+            {{
+              emailVerified ? t('profile.verifiedTag') : t('profile.pendingTag')
+            }}
           </el-tag>
         </el-descriptions-item>
 
-        <el-descriptions-item :label="`Emails Sent (${usageMonthKey})`">
+        <el-descriptions-item
+          :label="t('profile.emailsSentLabel', { month: usageMonthKey })"
+        >
           {{ emailsSentCount }} / {{ emailsSentLimitLabel }}
         </el-descriptions-item>
-        <el-descriptions-item :label="`OCR Extractions (${usageMonthKey})`">
+        <el-descriptions-item
+          :label="t('profile.ocrExtractionsLabel', { month: usageMonthKey })"
+        >
           {{ ocrExtractionsCount }} / {{ ocrExtractionsLimitLabel }}
         </el-descriptions-item>
-        <el-descriptions-item label="Account Tier">
+        <el-descriptions-item :label="t('profile.accountTierLabel')">
           <el-tag :type="accountTierTagType" effect="light">
             {{ accountTierLabel }}
           </el-tag>
         </el-descriptions-item>
-        <el-descriptions-item label="Roles">
+        <el-descriptions-item :label="t('profile.rolesLabel')">
           <div class="flex flex-wrap gap-2">
             <el-tag
               v-if="isAdminUser"
@@ -147,7 +157,7 @@
               type="danger"
               effect="light"
             >
-              Admin
+              {{ t('profile.adminTag') }}
             </el-tag>
             <el-tag
               v-if="isBugResolver"
@@ -155,19 +165,19 @@
               type="warning"
               effect="light"
             >
-              Bug Resolver
+              {{ t('profile.bugResolverTag') }}
             </el-tag>
             <span
               v-if="!isAdminUser && !isBugResolver"
               class="text-sm text-gray-500"
             >
-              Standard user
+              {{ t('profile.standardUserTag') }}
             </span>
           </div>
         </el-descriptions-item>
-        <el-descriptions-item label="Account Status">
+        <el-descriptions-item :label="t('profile.accountStatusLabel')">
           <el-tag :type="isBlocked ? 'danger' : 'success'" effect="light">
-            {{ isBlocked ? 'Blocked' : 'Active' }}
+            {{ isBlocked ? t('profile.blockedTag') : t('profile.activeTag') }}
           </el-tag>
         </el-descriptions-item>
       </el-descriptions>
@@ -179,15 +189,15 @@
       >
         <div class="flex flex-wrap items-center gap-2">
           <el-button
-            size="small"
+            size="medium"
             type="warning"
             :disabled="isBlocked"
             @click="showChangePasswordDialog = true"
           >
-            Change Password
+            {{ t('auth.changePassword.title') }}
           </el-button>
           <el-button
-            size="small"
+            size="medium"
             type="danger"
             plain
             :disabled="isBlocked || hasPendingDeleteRequest"
@@ -195,17 +205,20 @@
           >
             {{
               hasPendingDeleteRequest
-                ? `Delete Pending (${deleteRequestApprovalsCount}/${deleteRequestRequiredCount})`
-                : 'Delete Account'
+                ? t('users.deletePending', {
+                    approved: deleteRequestApprovalsCount,
+                    required: deleteRequestRequiredCount
+                  })
+                : t('profile.deleteAccount')
             }}
           </el-button>
         </div>
         <el-button
-          size="small"
+          size="medium"
           type="primary"
           @click="handleVisibilityChange(false)"
         >
-          Close
+          {{ t('common.close') }}
         </el-button>
       </div>
     </template>
@@ -218,7 +231,7 @@
 
   <el-dialog
     :model-value="emailDialogVisible"
-    title="Update Verified Email"
+    :title="t('profile.updateVerifiedEmailTitle')"
     :width="'min(92vw, 440px)'"
     append-to-body
     @update:model-value="handleEmailVisibilityChange"
@@ -230,34 +243,37 @@
       label-position="top"
       class="space-y-3 w-full flex flex-col items-center"
     >
-      <el-form-item label="New Verified Email" prop="email">
+      <el-form-item :label="t('profile.newVerifiedEmailLabel')" prop="email">
         <GenericInputField
           ref="emailInputRef"
           :model-value="emailForm.email"
           :wrap-form-item="false"
-          placeholder="new@example.com"
+          :placeholder="t('profile.newEmailPlaceholder')"
           type="email"
           @update:modelValue="emailForm.email = $event"
         />
       </el-form-item>
 
-      <el-form-item label="Confirm New Email" prop="confirmEmail">
+      <el-form-item :label="t('profile.confirmNewEmailLabel')" prop="confirmEmail">
         <GenericInputField
           ref="confirmEmailInputRef"
           :model-value="emailForm.confirmEmail"
           :wrap-form-item="false"
-          placeholder="new@example.com"
+          :placeholder="t('profile.newEmailPlaceholder')"
           type="email"
           @update:modelValue="emailForm.confirmEmail = $event"
         />
       </el-form-item>
 
-      <el-form-item label="Current Password" prop="currentPassword">
+      <el-form-item
+        :label="t('auth.changePassword.currentPasswordLabel')"
+        prop="currentPassword"
+      >
         <GenericInputField
           ref="currentPasswordInputRef"
           :model-value="emailForm.currentPassword"
           :wrap-form-item="false"
-          placeholder="Current password"
+          :placeholder="t('profile.currentPasswordPlaceholder')"
           type="password"
           show-password
           @update:modelValue="emailForm.currentPassword = $event"
@@ -267,18 +283,20 @@
 
     <template #footer>
       <div class="flex flex-wrap justify-end gap-2">
-        <el-button size="small" @click="resetEmailForm">Reset</el-button>
-        <el-button size="small" @click="handleEmailVisibilityChange(false)">
-          Cancel
+        <el-button size="medium" @click="resetEmailForm">{{
+          t('common.reset')
+        }}</el-button>
+        <el-button size="medium" @click="handleEmailVisibilityChange(false)">
+          {{ t('common.cancel') }}
         </el-button>
         <el-button
-          size="small"
+          size="medium"
           type="success"
           :loading="emailSubmitting"
           :disabled="emailSubmitting || isBlocked || !canEditVerifiedEmail"
           @click="submitEmailUpdate"
         >
-          Send Verification
+          {{ t('profile.sendVerification') }}
         </el-button>
       </div>
     </template>
@@ -298,23 +316,31 @@
       label-position="top"
       class="space-y-3"
     >
-      <el-form-item v-if="editField === 'name'" label="Full Name" prop="name">
+      <el-form-item
+        v-if="editField === 'name'"
+        :label="t('profile.fullNameLabel')"
+        prop="name"
+      >
         <GenericInputField
           ref="nameInputRef"
           :model-value="form.name"
           :wrap-form-item="false"
-          placeholder="Full name"
+          :placeholder="t('users.fullNamePlaceholder')"
           :maxlength="50"
           @update:modelValue="form.name = $event.toCapitalize()"
         />
       </el-form-item>
 
-      <el-form-item v-else label="Mobile Number" prop="mobile">
+      <el-form-item
+        v-else
+        :label="t('profile.mobileNumberLabel')"
+        prop="mobile"
+      >
         <GenericInputField
           ref="mobileInputRef"
           :model-value="form.mobile"
           :wrap-form-item="false"
-          placeholder="03XXXXXXXXX"
+          :placeholder="t('users.mobilePlaceholder')"
           :maxlength="11"
           type="tel"
           @update:modelValue="form.mobile = $event"
@@ -324,27 +350,33 @@
 
     <template #footer>
       <div class="flex flex-wrap justify-end gap-2">
-        <el-button size="small" @click="resetForm">Reset</el-button>
-        <el-button size="small" @click="handleEditVisibilityChange(false)">
-          Cancel
+        <el-button size="medium" @click="resetForm">{{
+          t('common.reset')
+        }}</el-button>
+        <el-button size="medium" @click="handleEditVisibilityChange(false)">
+          {{ t('common.cancel') }}
         </el-button>
         <el-button
-          size="small"
+          size="medium"
           type="success"
           :loading="isSubmitting"
           :disabled="isSubmitting || isBlocked"
           @click="submitProfileUpdate"
         >
-          Save Changes
+          {{ t('profile.saveChanges') }}
         </el-button>
       </div>
     </template>
   </el-dialog>
 
-  <ProfilePhotoEditorDialog
+  <ImageCropEditorDialog
     :visible="photoEditorVisible"
     :source-url="photoEditorSourceUrl"
     :submitting="photoSubmitting"
+    :title="t('profile.adjustPhotoTitle')"
+    :confirm-label="t('profile.uploadPhoto')"
+    :image-alt="t('profile.photoEditorAlt')"
+    preview-shape="circle"
     @update:visible="(visible) => (visible ? null : closePhotoEditor())"
     @confirm="handleEditedPhotoConfirm"
   />
@@ -352,6 +384,7 @@
 
 <script setup>
 import { computed, nextTick, reactive, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ElMessageBox } from 'element-plus'
 import { Edit } from '@element-plus/icons-vue'
 import {
@@ -362,9 +395,12 @@ import {
   updateProfile,
   verifyBeforeUpdateEmail
 } from '@/firebase'
-import { GenericInputField, UserAvatar } from '@/components/generic-components'
+import {
+  GenericInputField,
+  ImageCropEditorDialog,
+  UserAvatar
+} from '@/components/generic-components'
 import ChangePasswordDialog from '@/components/auth/ChangePasswordDialog.vue'
-import ProfilePhotoEditorDialog from '@/components/header/ProfilePhotoEditorDialog.vue'
 import { getEmailConfig, getOcrConfig, useFireBase } from '@/composables'
 import { findUserByEmail, validateEmail } from '@/helpers'
 import { useAuthStore, useGroupStore, useUserStore } from '@/stores'
@@ -386,6 +422,7 @@ const props = defineProps({
 
 const emit = defineEmits(['update:visible'])
 
+const { t } = useI18n()
 const authStore = useAuthStore()
 const groupStore = useGroupStore()
 const userStore = useUserStore()
@@ -418,9 +455,15 @@ const emailForm = reactive({
   currentPassword: ''
 })
 
-const profileName = computed(() => props.user?.name || 'Account User')
-const profileEmail = computed(() => props.user?.email || 'Not available')
-const profileMobile = computed(() => props.user?.mobile || 'Not available')
+const profileName = computed(
+  () => props.user?.name || t('profile.accountUserFallback')
+)
+const profileEmail = computed(
+  () => props.user?.email || t('profile.notAvailable')
+)
+const profileMobile = computed(
+  () => props.user?.mobile || t('profile.notAvailable')
+)
 const profilePhotoUrl = computed(() => props.user?.photoUrl || '')
 const emailVerified = computed(() => props.user?.emailVerified !== false)
 const canEditVerifiedEmail = computed(
@@ -474,20 +517,24 @@ const ocrExtractionsLimit = computed(() => {
   return raw != null ? Number(raw) : null
 })
 const emailsSentLimitLabel = computed(() =>
-  emailsSentLimit.value == null ? 'Unlimited' : emailsSentLimit.value
+  emailsSentLimit.value == null ? t('profile.unlimited') : emailsSentLimit.value
 )
 const ocrExtractionsLimitLabel = computed(() =>
-  ocrExtractionsLimit.value == null ? 'Unlimited' : ocrExtractionsLimit.value
+  ocrExtractionsLimit.value == null
+    ? t('profile.unlimited')
+    : ocrExtractionsLimit.value
 )
 
 const accountTierLabel = computed(() =>
-  isBilledUser.value ? 'Paid Tier' : 'Free Tier'
+  isBilledUser.value ? t('profile.paidTierTag') : t('profile.freeTierTag')
 )
 const accountTierTagType = computed(() =>
   isBilledUser.value ? 'success' : 'info'
 )
 const editDialogTitle = computed(() =>
-  editField.value === 'mobile' ? 'Edit Mobile Number' : 'Edit Full Name'
+  editField.value === 'mobile'
+    ? t('profile.editMobileTitle')
+    : t('profile.editNameTitle')
 )
 
 const rules = {
@@ -495,14 +542,12 @@ const rules = {
     {
       validator: (_, value, callback) => {
         const normalized = normalizeName(value)
-        if (!normalized) return callback(new Error('Name is required'))
+        if (!normalized) return callback(new Error(t('users.nameRequired')))
         if (normalized.length < 3) {
-          return callback(new Error('Name should be at least 3 characters'))
+          return callback(new Error(t('users.nameMinLength')))
         }
         if (!isValidName(normalized)) {
-          return callback(
-            new Error('Name can only contain alphabets and single spaces')
-          )
+          return callback(new Error(t('users.nameInvalid')))
         }
         callback()
       },
@@ -514,12 +559,10 @@ const rules = {
       validator: (_, value, callback) => {
         const normalized = normalizeMobile(value)
         if (!normalized) {
-          return callback(new Error('Mobile number is required'))
+          return callback(new Error(t('users.mobileRequired')))
         }
         if (!isValidMobile(normalized)) {
-          return callback(
-            new Error('Mobile number must be 11 digits starting with 03')
-          )
+          return callback(new Error(t('users.mobileInvalid')))
         }
         callback()
       },
@@ -533,14 +576,14 @@ const emailRules = {
     {
       validator: (_, value, callback) => {
         const normalized = normalizeEmail(value)
-        if (!normalized) return callback(new Error('New email is required'))
+        if (!normalized) {
+          return callback(new Error(t('profile.newEmailRequired')))
+        }
         if (!validateEmail(normalized)) {
-          return callback(new Error('Please enter a valid email address'))
+          return callback(new Error(t('authMessages.invalidEmail')))
         }
         if (normalized === normalizeEmail(profileEmail.value)) {
-          return callback(
-            new Error('New email must be different from your current email')
-          )
+          return callback(new Error(t('profile.newEmailMustDiffer')))
         }
         callback()
       },
@@ -552,10 +595,10 @@ const emailRules = {
       validator: (_, value, callback) => {
         const normalized = normalizeEmail(value)
         if (!normalized) {
-          return callback(new Error('Please confirm your new email'))
+          return callback(new Error(t('profile.confirmNewEmailRequired')))
         }
         if (normalized !== normalizeEmail(emailForm.email)) {
-          return callback(new Error('Email addresses do not match'))
+          return callback(new Error(t('profile.emailsDoNotMatch')))
         }
         callback()
       },
@@ -565,7 +608,7 @@ const emailRules = {
   currentPassword: [
     {
       required: true,
-      message: 'Current password is required',
+      message: t('authMessages.changePasswordCurrentRequired'),
       trigger: ['blur', 'change']
     }
   ]
@@ -662,7 +705,7 @@ async function openEditDialog(field = 'name') {
 async function openEmailDialog() {
   if (isBlocked.value) return
   if (!canEditVerifiedEmail.value) {
-    showError('Email updates are only available for password-based accounts.')
+    showError(t('profile.emailUpdatesPasswordOnly'))
     return
   }
 
@@ -687,11 +730,11 @@ function handleVisibilityChange(nextVisible) {
 function validateProfilePhoto(file) {
   const allowedTypes = ['image/jpeg', 'image/png', 'image/webp']
   if (!allowedTypes.includes(file.type)) {
-    showError('Only JPG, PNG, and WEBP images are allowed.')
+    showError(t('profile.photoTypeInvalid'))
     return false
   }
   if (file.size > 1024 * 1024) {
-    showError('Profile photo size must be less than 1MB.')
+    showError(t('profile.photoSizeTooLarge'))
     return false
   }
 
@@ -727,10 +770,10 @@ async function notifyGroupsAboutProfileChange({
 
     const changeParts = []
     if (oldName !== newName) {
-      changeParts.push(`changed their name from "${oldName}" to "${newName}"`)
+      changeParts.push(t('usersMessages.nameChangedPart', { oldName, newName }))
     }
     if (mobileChanged) {
-      changeParts.push('updated their mobile number')
+      changeParts.push(t('usersMessages.mobileUpdatedPart'))
     }
 
     let updatedGroup = { ...group }
@@ -738,7 +781,11 @@ async function notifyGroupsAboutProfileChange({
       updatedGroup = appendNotificationForUser(updatedGroup, member.uid, {
         id: Date.now().toString() + Math.random(),
         type: 'member-renamed',
-        message: `${newName} has ${changeParts.join(' and ')} in group "${group.name}".`,
+        message: t('usersMessages.memberRenamedNotif', {
+          newName,
+          changes: changeParts.join(' and '),
+          groupName: group.name
+        }),
         updatedBy: uid,
         timestamp: Date.now()
       })
@@ -813,33 +860,32 @@ async function requestDeleteAccount() {
   try {
     const ownerUids = getGroupOwnerUids(uid)
     await ElMessageBox.confirm(
-      `Are you sure you want to delete <strong>${name}</strong>?${
-        ownerUids.length > 0
-          ? '<br><br>Your account is in one or more groups. All group owners must approve before deletion.'
-          : ''
+      `${t('users.deleteUserConfirm', { name })}${
+        ownerUids.length > 0 ? t('users.deleteUserGroupWarning') : ''
       }`,
-      'Delete Account',
+      t('profile.deleteAccount'),
       {
-        confirmButtonText: 'Proceed',
-        cancelButtonText: 'Cancel',
+        confirmButtonText: t('users.proceed'),
+        cancelButtonText: t('common.cancel'),
         type: 'error',
         dangerouslyUseHTMLString: true
       }
     )
 
     const user = await read(`${DB_NODES.USERS}/${uid}`)
-    if (!user) return showError('User not found')
+    if (!user) return showError(t('users.userNotFound'))
     if (user.deleteRequest) {
-      return showError('A delete request is already pending for this account')
+      return showError(t('users.deleteAlreadyPending'))
     }
     if (user.updateRequest) {
-      return showError(
-        'An update request is pending. Resolve it before deleting the account.'
-      )
+      return showError(t('users.updatePendingCannotDelete'))
     }
 
     if (ownerUids.length === 0) {
-      await deleteData(`${DB_NODES.USERS}/${uid}`, `User ${name} deleted`)
+      await deleteData(
+        `${DB_NODES.USERS}/${uid}`,
+        t('users.userDeleted', { name })
+      )
 
       try {
         const currentUser = auth.currentUser
@@ -849,7 +895,7 @@ async function requestDeleteAccount() {
       } catch (authError) {
         console.error('Error deleting user from Firebase Auth:', authError)
         showError(
-          'Account deleted from database but Firebase Authentication deletion failed. You may need to sign in again to complete deletion.'
+          t('profile.accountDeletedAuthFailed')
         )
       }
 
@@ -866,12 +912,12 @@ async function requestDeleteAccount() {
     await updateData(
       `${DB_NODES.USERS}/${uid}`,
       () => ({ deleteRequest }),
-      'Delete request sent to group owners for approval'
+      t('users.deleteRequestSentToOwners')
     )
     userStore.addUser({ uid, deleteRequest })
   } catch (error) {
     if (error !== 'cancel') {
-      showError(error?.message || 'Failed to process delete request')
+      showError(error?.message || t('users.failedProcessDeleteRequest'))
     }
   }
 }
@@ -888,7 +934,7 @@ async function persistProfilePhoto(file) {
     const uploaded = await uploadReceipt(file)
     const currentUser = await read(`${DB_NODES.USERS}/${props.user.uid}`)
     if (!currentUser) {
-      showError('User not found')
+      showError(t('users.userNotFound'))
       return
     }
 
@@ -899,7 +945,7 @@ async function persistProfilePhoto(file) {
         photoUrl: uploaded.url,
         photoMeta: uploaded
       }),
-      'Profile photo updated successfully'
+      t('profile.photoUpdated')
     )
 
     if (previousMeta?.url && previousMeta.url !== uploaded.url) {
@@ -914,7 +960,7 @@ async function persistProfilePhoto(file) {
     )
     previewPhotoUrl.value = uploaded.url
   } catch (error) {
-    showError(error.message || 'Failed to update profile photo.')
+    showError(error.message || t('profile.photoUpdateFailed'))
   } finally {
     photoSubmitting.value = false
     if (photoInputRef.value) photoInputRef.value.value = ''
@@ -954,7 +1000,7 @@ async function removeProfilePhoto() {
   try {
     const currentUser = await read(`${DB_NODES.USERS}/${props.user.uid}`)
     if (!currentUser) {
-      showError('User not found')
+      showError(t('users.userNotFound'))
       return
     }
 
@@ -965,7 +1011,7 @@ async function removeProfilePhoto() {
         photoUrl: null,
         photoMeta: null
       }),
-      'Profile photo removed successfully'
+      t('profile.photoRemoved')
     )
 
     if (previousMeta?.url) {
@@ -1001,7 +1047,7 @@ async function submitProfileUpdate() {
 
   const currentUser = await read(`${DB_NODES.USERS}/${uid}`)
   if (!currentUser) {
-    showError('User not found')
+    showError(t('users.userNotFound'))
     return
   }
 
@@ -1011,7 +1057,7 @@ async function submitProfileUpdate() {
       otherUid !== uid && normalizeMobile(otherUser?.mobile || '') === newMobile
   )
   if (mobileTaken) {
-    showError('An account with this mobile number already exists')
+    showError(t('users.mobileTaken'))
     return
   }
 
@@ -1031,7 +1077,7 @@ async function submitProfileUpdate() {
       name: newName,
       mobile: newMobile
     }),
-    'Profile updated successfully'
+    t('users.userUpdated')
   )
 
   userStore.addUser({
@@ -1078,7 +1124,7 @@ async function submitEmailUpdate() {
   emailSubmitting.value = true
   try {
     if (!currentAuthUser || !currentEmail) {
-      throw new Error('No authenticated user found. Please log in again.')
+      throw new Error(t('authMessages.noAuthenticatedUser'))
     }
 
     try {
@@ -1089,12 +1135,12 @@ async function submitEmailUpdate() {
 
     const newEmail = normalizeEmail(emailForm.email)
     if (newEmail === currentEmail) {
-      throw new Error('New email must be different from your current email.')
+      throw new Error(t('profile.newEmailMustDiffer'))
     }
 
     const existingUser = await findUserByEmail(newEmail)
     if (existingUser && existingUser.uid !== props.user.uid) {
-      throw new Error('An account with this email already exists.')
+      throw new Error(t('profile.emailAlreadyExists'))
     }
 
     const credential = EmailAuthProvider.credential(
@@ -1108,7 +1154,7 @@ async function submitEmailUpdate() {
     })
 
     showSuccess(
-      `Verification email sent to ${newEmail}. Open that link to complete the change, then sign in again with the new email.`
+      t('profile.verificationEmailSentBody', { email: newEmail })
     )
     handleEmailVisibilityChange(false)
   } catch (error) {
@@ -1116,19 +1162,19 @@ async function submitEmailUpdate() {
       error.code === 'auth/wrong-password' ||
       error.code === 'auth/invalid-credential'
     ) {
-      showError('Current password is incorrect.')
+      showError(t('authMessages.changePasswordIncorrect'))
     } else if (error.code === 'auth/email-already-in-use') {
-      showError('An account with this email already exists.')
+      showError(t('profile.emailAlreadyExists'))
     } else if (error.code === 'auth/invalid-email') {
-      showError('Please enter a valid email address.')
+      showError(t('authMessages.invalidEmail'))
     } else if (error.code === 'auth/requires-recent-login') {
       showError(
-        'Session expired. Please log out and log back in before changing your email.'
+        t('profile.emailChangeSessionExpired')
       )
     } else if (error.code === 'auth/too-many-requests') {
-      showError('Too many attempts. Please try again later.')
+      showError(t('authMessages.tooManyRequests'))
     } else {
-      showError(error.message || 'Failed to send email verification.')
+      showError(error.message || t('profile.sendVerificationFailed'))
     }
   } finally {
     emailSubmitting.value = false

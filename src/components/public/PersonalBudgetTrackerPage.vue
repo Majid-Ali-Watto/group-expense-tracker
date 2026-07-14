@@ -1,19 +1,16 @@
 <template>
   <main class="public-page inner-page">
     <section class="title-section">
-      <p class="eyebrow">Personal budget tracker</p>
-      <h1>Keep monthly salary, expenses, and personal loans visible</h1>
-      <p>
-        Kharchafy is not only a shared bill app. It also gives you a practical
-        personal budget tracker for monthly expenses and salary planning.
-      </p>
+      <p class="eyebrow">{{ t('personalBudgetTracker.eyebrow') }}</p>
+      <h1>{{ t('personalBudgetTracker.title') }}</h1>
+      <p>{{ t('personalBudgetTracker.intro') }}</p>
     </section>
 
     <section class="bullet-section single-column">
       <article class="bullet-card">
-        <h2>What you can manage</h2>
+        <h2>{{ t('personalBudgetTracker.benefitsHeading') }}</h2>
         <ul>
-          <li v-for="point in BUDGET_BENEFITS" :key="point">{{ point }}</li>
+          <li v-for="point in benefits" :key="point">{{ point }}</li>
         </ul>
       </article>
     </section>
@@ -21,7 +18,12 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { BUDGET_BENEFITS } from '@/constants'
+
+const { t, locale } = useI18n()
+const benefits = computed(() => BUDGET_BENEFITS[locale.value])
 </script>
 
 <style scoped>
@@ -81,7 +83,7 @@ h1 {
 
 .bullet-card ul {
   margin: 0;
-  padding-left: 18px;
+  padding-inline-start: 18px;
 }
 
 .bullet-card li {
