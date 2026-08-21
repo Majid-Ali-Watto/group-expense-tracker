@@ -1,4 +1,3 @@
-import html2pdf from 'html2pdf.js'
 import * as XLSX from 'xlsx'
 import { getSiteName } from '@/constants'
 import { startLoading, stopLoading } from './loading'
@@ -55,6 +54,11 @@ async function downloadPDF(
   subtitle = ''
 ) {
   const loading = startLoading()
+  // Dynamic import — html2pdf.js is a browser-only UMD bundle (references
+  // `self` at module scope) and this function only ever runs from a user's
+  // download-button click, never during SSG prerendering. A static
+  // top-level import would get pulled into the SSR build and crash Node.
+  const html2pdf = (await import('html2pdf.js')).default
   const siteName = getLocalizedSiteName()
   const options = {
     margin: 0.5,
@@ -148,7 +152,7 @@ async function downloadPDF(
             align: 'center'
           })
           pdf.text(
-            'g-exp-trk.netlify.app',
+            'kharchafy-khata-application.vercel.app',
             pageWidth - 0.4,
             pageHeight - 0.28,
             { align: 'right' }

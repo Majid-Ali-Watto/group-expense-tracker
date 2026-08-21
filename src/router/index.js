@@ -1,9 +1,8 @@
-import { createRouter, createWebHistory } from 'vue-router'
 import { useGroupStore } from '../stores/groupStore'
 import { useAuthStore } from '../stores/authStore'
 import { useUserStore } from '../stores/userStore'
 import { Tabs } from '../assets/enums'
-import { SEO_PAGES, getSeoPages } from '@/constants'
+import { PUBLIC_BASE_PATHS, SEO_PAGES, getSeoPages } from '@/constants'
 import {
   resolveUserFromAuth,
   canAccessTab,
@@ -68,8 +67,12 @@ export const GROUP_TABS = new Set([Tabs.SHARED_EXPENSES, Tabs.SHARED_LOANS])
 
 // Pure browser API — no Pinia / Vue reactive dependencies.
 // Safe to call anywhere including router guards without risk of circular reactivity.
+// Guarded for SSG prerendering, where there is no sessionStorage (Node).
 function hasSession() {
-  return !!sessionStorage.getItem('_session')
+  return (
+    typeof sessionStorage !== 'undefined' &&
+    !!sessionStorage.getItem('_session')
+  )
 }
 
 // Resolves once Firebase Auth has finished its initial state check.
@@ -85,20 +88,24 @@ const authReady = new Promise((resolve) => {
 // (e.g. /features and /ur/features) so Urdu content is independently
 // crawlable/indexable rather than a client-side toggle on the English URL.
 const PUBLIC_PAGES = [
-  { path: '/', component: LandingPage, seoKey: 'home' },
-  { path: '/features', component: FeaturesPage, seoKey: 'features' },
+  { path: PUBLIC_BASE_PATHS.home, component: LandingPage, seoKey: 'home' },
   {
-    path: '/group-expense-tracker',
+    path: PUBLIC_BASE_PATHS.features,
+    component: FeaturesPage,
+    seoKey: 'features'
+  },
+  {
+    path: PUBLIC_BASE_PATHS.groupExpenseTracker,
     component: GroupExpenseTrackerPage,
     seoKey: 'groupExpenseTracker'
   },
   {
-    path: '/personal-budget-tracker',
+    path: PUBLIC_BASE_PATHS.personalBudgetTracker,
     component: PersonalBudgetTrackerPage,
     seoKey: 'personalBudgetTracker'
   },
-  { path: '/help', component: HelpPage, seoKey: 'help' },
-  { path: '/faq', component: FaqPage, seoKey: 'faq' }
+  { path: PUBLIC_BASE_PATHS.help, component: HelpPage, seoKey: 'help' },
+  { path: PUBLIC_BASE_PATHS.faq, component: FaqPage, seoKey: 'faq' }
 ]
 
 const SEO_PAGES_BY_LOCALE = { en: getSeoPages('en'), ur: getSeoPages('ur') }
@@ -115,6 +122,11 @@ const publicRoutes = PUBLIC_PAGES.flatMap(({ path, component, seoKey }) => [
     meta: { publicPage: true, locale: 'ur', seo: SEO_PAGES_BY_LOCALE.ur[seoKey] }
   }
 ])
+
+// Every crawlable URL (both locales) — the single source of truth for which
+// paths `vite-ssg` should prerender to static HTML. See ssgOptions.includedRoutes
+// in vite.config.js.
+export const PUBLIC_LOCALE_PATHS = publicRoutes.map((route) => route.path)
 
 // Auth routes — Login.vue handles both modes; mode is derived from route
 // path. Not `publicPage` (not indexed, no hreflang/footer), but still
@@ -138,7 +150,7 @@ const guestRoutes = GUEST_PAGES.flatMap(({ path, seoKey }) => [
   }
 ])
 
-const routes = [
+export const routes = [
   ...publicRoutes,
   ...guestRoutes,
   // App routes
@@ -234,15 +246,13 @@ const routes = [
   }
 ]
 
-const router = createRouter({
-  history: createWebHistory('/'),
-  routes,
-  // Restore scroll position when navigating back/forward; scroll to top on new navigation
-  scrollBehavior(to, from, savedPosition) {
-    if (savedPosition) return savedPosition
-    return { top: 0, behavior: 'smooth' }
-  }
-})
+// Restore scroll position when navigating back/forward; scroll to top on new
+// navigation. Passed straight through to `ViteSSG`'s `createRouter` call —
+// see src/main.js.
+export function scrollBehavior(to, from, savedPosition) {
+  if (savedPosition) return savedPosition
+  return { top: 0, behavior: 'smooth' }
+}
 
 async function getCurrentUserProfile() {
   const authStore = useAuthStore()
@@ -298,62 +308,67 @@ function getFallbackPath(userTabConfig, groupId = null) {
     : TAB_ROUTES[tab]
 }
 
-router.beforeEach(async (to) => {
-  const session = hasSession()
+// Registers the auth/tab-access navigation guard on a router instance.
+// Called from src/main.js once `ViteSSG` has created the router — kept as a
+// function (rather than this module creating and exporting its own router)
+// so `ViteSSG` can own router creation and pick the right history mode
+// (memory on the server during prerender, web on the client).
+export function setupRouterGuard(router) {
+  router.beforeEach(async (to) => {
+    const session = hasSession()
 
-  if ((to.path === '/' || to.path === '/ur') && session) {
-    const user = await getCurrentUserProfile()
-    const tabConfig = await getCurrentUserTabConfig(user?.uid)
-    return getFallbackPath(tabConfig, useGroupStore().getActiveGroup)
-  }
-
-  if (to.meta.requiresGuest && session) {
-    const user = await getCurrentUserProfile()
-    const tabConfig = await getCurrentUserTabConfig(user?.uid)
-    return getFallbackPath(tabConfig, useGroupStore().getActiveGroup)
-  }
-
-  if (to.meta.requiresAuth && !session) {
-    return { path: '/login', query: { redirect: to.fullPath } }
-  }
-
-  const groupStore = useGroupStore()
-
-  // Group-gated routes — set active group from URL param.
-  // Non-member access is handled inside the route component (GroupAccessGuard).
-  if (to.params.groupId) {
-    groupStore.setActiveGroup(to.params.groupId)
-  }
-
-  if (
-    to.meta.requiresBugResolver ||
-    to.meta.requiresUserTab ||
-    to.meta.requiresAdmin
-  ) {
-    const user = await getCurrentUserProfile()
-    const tabConfig = await getCurrentUserTabConfig(user?.uid)
-    const fallbackPath = getFallbackPath(
-      tabConfig,
-      to.params.groupId || groupStore.getActiveGroup
-    )
-
-    if (to.meta.requiresUserTab) {
-      const allowed = canAccessTab(to.meta.requiresUserTab, tabConfig, {
-        hasActiveGroup: GROUP_TABS.has(to.meta.requiresUserTab)
-          ? !!to.params.groupId
-          : true
-      })
-      if (!allowed) return fallbackPath
+    if ((to.path === '/' || to.path === '/ur') && session) {
+      const user = await getCurrentUserProfile()
+      const tabConfig = await getCurrentUserTabConfig(user?.uid)
+      return getFallbackPath(tabConfig, useGroupStore().getActiveGroup)
     }
 
-    if (to.meta.requiresBugResolver && !user?.bugResolver) {
-      return fallbackPath
+    if (to.meta.requiresGuest && session) {
+      const user = await getCurrentUserProfile()
+      const tabConfig = await getCurrentUserTabConfig(user?.uid)
+      return getFallbackPath(tabConfig, useGroupStore().getActiveGroup)
     }
 
-    if (to.meta.requiresAdmin && !user?.isAdmin) {
-      return fallbackPath
+    if (to.meta.requiresAuth && !session) {
+      return { path: '/login', query: { redirect: to.fullPath } }
     }
-  }
-})
 
-export default router
+    const groupStore = useGroupStore()
+
+    // Group-gated routes — set active group from URL param.
+    // Non-member access is handled inside the route component (GroupAccessGuard).
+    if (to.params.groupId) {
+      groupStore.setActiveGroup(to.params.groupId)
+    }
+
+    if (
+      to.meta.requiresBugResolver ||
+      to.meta.requiresUserTab ||
+      to.meta.requiresAdmin
+    ) {
+      const user = await getCurrentUserProfile()
+      const tabConfig = await getCurrentUserTabConfig(user?.uid)
+      const fallbackPath = getFallbackPath(
+        tabConfig,
+        to.params.groupId || groupStore.getActiveGroup
+      )
+
+      if (to.meta.requiresUserTab) {
+        const allowed = canAccessTab(to.meta.requiresUserTab, tabConfig, {
+          hasActiveGroup: GROUP_TABS.has(to.meta.requiresUserTab)
+            ? !!to.params.groupId
+            : true
+        })
+        if (!allowed) return fallbackPath
+      }
+
+      if (to.meta.requiresBugResolver && !user?.bugResolver) {
+        return fallbackPath
+      }
+
+      if (to.meta.requiresAdmin && !user?.isAdmin) {
+        return fallbackPath
+      }
+    }
+  })
+}

@@ -1,17 +1,15 @@
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
 import { createPinia } from 'pinia'
-import { createApp } from 'vue'
+import { ViteSSG } from 'vite-ssg'
 import App from './App.vue'
-import router from './router'
+import { routes, scrollBehavior, setupRouterGuard } from './router'
 import overflowPopup from '@/directives/overflow-popup'
-import { initializeAnalytics, trackPageView } from '@/utils/analytics'
-import { applySeoForRoute } from '@/utils/seo'
+import { initializeAnalytics } from '@/utils/analytics'
 import { toCapitalize } from '@/utils/string-formatting'
 import i18n, { getStoredLocale } from '@/i18n'
 import './main.css'
 
-const app = createApp(App)
 const PKR = new Intl.NumberFormat('en-PK', {
   style: 'currency',
   currency: 'PKR',
@@ -19,29 +17,40 @@ const PKR = new Intl.NumberFormat('en-PK', {
   maximumFractionDigits: 2
 })
 
-const formatAmount = (amount) => {
-  return PKR.format(amount)
-}
-app.provide('formatAmount', formatAmount)
+const formatAmount = (amount) => PKR.format(amount)
 String.prototype.toCapitalize = toCapitalize
-app.directive('overflow-popup', overflowPopup)
-app.use(ElementPlus)
-app.use(createPinia())
-app.use(router)
-app.use(i18n)
-app.mount('#app')
 
-initializeAnalytics(router)
-router.isReady().then(() => {
-  // Public/guest routes carry an explicit locale from their /ur URL;
-  // authenticated app routes carry none, so fall back to the user's saved
-  // preference (see src/i18n/index.js).
-  i18n.global.locale.value =
-    router.currentRoute.value.meta?.locale ?? getStoredLocale()
-  applySeoForRoute(router.currentRoute.value)
-  trackPageView(router.currentRoute.value)
-})
-router.afterEach((to) => {
-  i18n.global.locale.value = to.meta?.locale ?? getStoredLocale()
-  applySeoForRoute(to)
-})
+// `ViteSSG` owns app creation, router creation (memory history during
+// prerender, web history in the browser — see src/router/index.js), and
+// mounting. It also installs @unhead/vue automatically, so `useHead()` in
+// any component (see src/App.vue) works without extra setup. Only the
+// public marketing routes are actually prerendered — see
+// ssgOptions.includedRoutes in vite.config.js; every other route still
+// behaves as a plain client-rendered SPA, same as before.
+export const createApp = ViteSSG(
+  App,
+  { routes, base: '/', scrollBehavior },
+  ({ app, router, isClient }) => {
+    app.provide('formatAmount', formatAmount)
+    app.directive('overflow-popup', overflowPopup)
+    app.use(ElementPlus)
+    app.use(createPinia())
+    app.use(i18n)
+
+    setupRouterGuard(router)
+
+    // Public/guest pages carry an explicit locale from their /ur URL;
+    // authenticated app routes carry none, so fall back to the user's saved
+    // preference (see src/i18n/index.js). Registered before the initial
+    // navigation resolves, so it also covers the first render.
+    router.afterEach((to) => {
+      i18n.global.locale.value = to.meta?.locale ?? getStoredLocale()
+    })
+
+    // Analytics is meaningless during SSG prerendering — client only.
+    // initializeAnalytics registers its own router.afterEach for page views.
+    if (isClient) {
+      initializeAnalytics(router)
+    }
+  }
+)

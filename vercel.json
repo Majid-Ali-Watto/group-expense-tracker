@@ -1,3 +1,28 @@
 {
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  "rewrites": [
+    { "source": "/features", "destination": "/features/index.html" },
+    {
+      "source": "/group-expense-tracker",
+      "destination": "/group-expense-tracker/index.html"
+    },
+    {
+      "source": "/personal-budget-tracker",
+      "destination": "/personal-budget-tracker/index.html"
+    },
+    { "source": "/help", "destination": "/help/index.html" },
+    { "source": "/faq", "destination": "/faq/index.html" },
+    { "source": "/ur", "destination": "/ur/index.html" },
+    { "source": "/ur/features", "destination": "/ur/features/index.html" },
+    {
+      "source": "/ur/group-expense-tracker",
+      "destination": "/ur/group-expense-tracker/index.html"
+    },
+    {
+      "source": "/ur/personal-budget-tracker",
+      "destination": "/ur/personal-budget-tracker/index.html"
+    },
+    { "source": "/ur/help", "destination": "/ur/help/index.html" },
+    { "source": "/ur/faq", "destination": "/ur/faq/index.html" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
 }

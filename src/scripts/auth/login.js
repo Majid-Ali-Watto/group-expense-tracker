@@ -644,7 +644,8 @@ export const Login = () => {
         showError(t('authMessages.tooManyRequestsWait'))
       } else if (
         error.code === 'auth/wrong-password' ||
-        error.code === 'auth/invalid-credential'
+        error.code === 'auth/invalid-credential' ||
+        error.code === 'auth/firebase-app-check-token-is-invalid'
       ) {
         showError(t('authMessages.incorrectPasswordResend'))
       } else {

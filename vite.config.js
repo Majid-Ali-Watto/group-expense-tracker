@@ -1,7 +1,17 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { VitePWA } from 'vite-plugin-pwa'
+import generateSitemap from 'vite-ssg-sitemap'
 import { fileURLToPath, URL } from 'node:url'
+import { PUBLIC_BASE_PATHS } from './src/constants/publicPaths'
+import { SITE_NAME, SITE_URL } from './src/constants/seo'
+
+// The 12 crawlable URLs (6 public pages x en/ur) — the only routes vite-ssg
+// prerenders to static HTML. Everything else (login/register/private app
+// routes) stays a plain client-rendered SPA, same as before.
+const SSG_INCLUDED_ROUTES = Object.values(PUBLIC_BASE_PATHS).flatMap(
+  (path) => [path, path === '/' ? '/ur' : `/ur${path}`]
+)
 
 export default defineConfig({
   base: '/', // Required for SPA deep links on root-hosted deployments like Netlify
@@ -52,9 +62,10 @@ export default defineConfig({
         enabled: true // Enable PWA in development mode for testing
       },
       manifest: {
-        name: 'Group Expense Tracker',
-        short_name: 'ExpenseTracker',
-        description: 'Track and manage expenses for a group of friends.',
+        name: `${SITE_NAME} - Group Expense & Budget Tracker`,
+        short_name: SITE_NAME,
+        description:
+          'Kharchafy is a group expense, shared loan, and personal budgeting app.',
         theme_color: '#16a34a',
         background_color: '#ffffff',
         start_url: '/',
@@ -99,5 +110,22 @@ export default defineConfig({
         ]
       }
     })
-  ]
+  ],
+  ssgOptions: {
+    script: 'async',
+    formatting: 'minify',
+    // '/faq' -> dist/faq/index.html instead of dist/faq.html — every static
+    // host (Vercel, Netlify, Firebase Hosting) serves that for a `/faq`
+    // request with zero extra rewrite config, unlike the flat default which
+    // needs `cleanUrls` support to be reachable at its clean URL.
+    dirStyle: 'nested',
+    includedRoutes: () => SSG_INCLUDED_ROUTES,
+    onFinished() {
+      generateSitemap({
+        hostname: SITE_URL,
+        // public/robots.txt is already hand-authored and correct.
+        generateRobotsTxt: false
+      })
+    }
+  }
 })

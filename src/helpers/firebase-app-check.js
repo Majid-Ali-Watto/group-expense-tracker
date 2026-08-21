@@ -1,4 +1,5 @@
 import { app } from '@/helpers/firebase-app'
+import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check'
 
 // App Check — debug token in dev, reCAPTCHA in production.
 // The debug token is printed to the browser console on first load;
@@ -8,17 +9,23 @@ if (import.meta.env.DEV) {
     import.meta.env.VITE_APP_CHECK_DEBUG_TOKEN || true
 }
 
+// Registered synchronously, not via a lazy `import()`: firebase.js imports
+// this module before creating `auth`, so App Check must already be attached
+// to `app` by the time that happens. A dynamic import left a window —
+// mainly visible in production, where the extra chunk fetch is slower and
+// less predictable than dev's local module graph — where a fast or
+// autofilled login could call signInWithEmailAndPassword before App Check
+// had registered, so Auth sent the request with no App Check token at all
+// and enforcement rejected it as auth/firebase-app-check-token-is-invalid.
 if (typeof window !== 'undefined' && import.meta.env.VITE_RECAPTCHA_SITE_KEY) {
-  import('firebase/app-check')
-    .then(({ initializeAppCheck, ReCaptchaV3Provider }) => {
-      initializeAppCheck(app, {
-        provider: new ReCaptchaV3Provider(
-          import.meta.env.VITE_RECAPTCHA_SITE_KEY
-        ),
-        isTokenAutoRefreshEnabled: true
-      })
+  try {
+    initializeAppCheck(app, {
+      provider: new ReCaptchaV3Provider(
+        import.meta.env.VITE_RECAPTCHA_SITE_KEY
+      ),
+      isTokenAutoRefreshEnabled: true
     })
-    .catch((error) => {
-      console.warn('Firebase App Check is unavailable:', error)
-    })
+  } catch (error) {
+    console.warn('Firebase App Check is unavailable:', error)
+  }
 }

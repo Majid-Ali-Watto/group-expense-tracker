@@ -29,75 +29,6 @@ export function stripLocalePrefix(path) {
   return path
 }
 
-function upsertMeta(key, value, attr = 'name') {
-  if (typeof document === 'undefined') return
-
-  let element = document.head.querySelector(`meta[${attr}="${key}"]`)
-  if (!element) {
-    element = document.createElement('meta')
-    element.setAttribute(attr, key)
-    document.head.appendChild(element)
-  }
-
-  if (!value) {
-    element.remove()
-    return
-  }
-
-  element.setAttribute('content', value)
-}
-
-function upsertCanonical(href) {
-  if (typeof document === 'undefined') return
-
-  let canonical = document.head.querySelector('link[rel="canonical"]')
-  if (!canonical) {
-    canonical = document.createElement('link')
-    canonical.setAttribute('rel', 'canonical')
-    document.head.appendChild(canonical)
-  }
-
-  canonical.setAttribute('href', href)
-}
-
-function upsertAlternateLinks(links) {
-  if (typeof document === 'undefined') return
-
-  document
-    .querySelectorAll('link[rel="alternate"][data-route-seo]')
-    .forEach((el) => el.remove())
-
-  links.forEach(({ hreflang, href }) => {
-    const link = document.createElement('link')
-    link.setAttribute('rel', 'alternate')
-    link.setAttribute('hreflang', hreflang)
-    link.setAttribute('href', href)
-    link.setAttribute('data-route-seo', 'true')
-    document.head.appendChild(link)
-  })
-}
-
-function upsertStructuredData(data) {
-  if (typeof document === 'undefined') return
-
-  const id = 'route-seo-structured-data'
-  let script = document.getElementById(id)
-
-  if (!data || (Array.isArray(data) && !data.length)) {
-    if (script) script.remove()
-    return
-  }
-
-  if (!script) {
-    script = document.createElement('script')
-    script.id = id
-    script.type = 'application/ld+json'
-    document.head.appendChild(script)
-  }
-
-  script.textContent = JSON.stringify(data)
-}
-
 function resolveAbsoluteUrl(value, origin) {
   if (!value) return `${origin}${DEFAULT_OG_IMAGE}`
   if (/^https?:\/\//i.test(value)) return value
@@ -152,10 +83,17 @@ function localizeBrandName(value, locale) {
   return value
 }
 
-export function applySeoForRoute(route) {
-  if (typeof window === 'undefined' || !route) return
+// Builds a plain @unhead/vue head-config object for a route. Pure — no DOM
+// access, so it runs identically during SSG prerendering (Node) and on the
+// client. Replaces the old DOM-mutation based applySeoForRoute; see
+// src/App.vue for the single `useHead()` call site that consumes this.
+export function buildHeadConfig(route) {
+  if (!route) return {}
 
-  const origin = window.location.origin || SITE_URL
+  // No `window` during SSG prerendering — fall back to the canonical site
+  // origin so prerendered canonical/OG/alternate URLs are still correct.
+  const origin =
+    (typeof window !== 'undefined' && window.location.origin) || SITE_URL
   const locale = route.meta?.locale ?? getStoredLocale()
   const localizedSiteName = getSiteName(locale)
   const seo = localizeBrandName(
@@ -169,52 +107,49 @@ export function applySeoForRoute(route) {
   const path = seo.canonicalPath || route.fullPath || route.path || '/'
   const canonicalUrl = new URL(path, origin).toString()
   const imageUrl = resolveAbsoluteUrl(seo.image, origin)
+  const ogTitle = seo.ogTitle || seo.title || localizedSiteName
+  // DEFAULT_OG_IMAGE is a known 1000x560 asset; a page-specific seo.image
+  // may be any size, so only assert dimensions for the shared default.
+  const imageIsDefault = !seo.image
 
-  document.documentElement.lang = locale
-  document.documentElement.dir = locale === 'ur' ? 'rtl' : 'ltr'
-  document.title = seo.title || localizedSiteName
+  const meta = [
+    { name: 'description', content: seo.description },
+    { name: 'keywords', content: seo.keywords },
+    { name: 'robots', content: seo.robots || PRIVATE_ROBOTS },
+    { name: 'author', content: localizedSiteName },
+    { name: 'application-name', content: localizedSiteName },
+    { property: 'og:type', content: seo.ogType || 'website' },
+    { property: 'og:title', content: ogTitle },
+    { property: 'og:description', content: seo.ogDescription || seo.description },
+    { property: 'og:url', content: canonicalUrl },
+    { property: 'og:site_name', content: localizedSiteName },
+    { property: 'og:image', content: imageUrl },
+    imageIsDefault && { property: 'og:image:width', content: '1000' },
+    imageIsDefault && { property: 'og:image:height', content: '560' },
+    { property: 'og:image:alt', content: ogTitle },
+    { property: 'og:locale', content: OG_LOCALES[locale] || OG_LOCALES.en },
+    { name: 'twitter:card', content: 'summary_large_image' },
+    { name: 'twitter:site', content: '@Kharchafy' },
+    { name: 'twitter:title', content: seo.twitterTitle || seo.title || localizedSiteName },
+    { name: 'twitter:description', content: seo.twitterDescription || seo.description },
+    { name: 'twitter:image', content: imageUrl },
+    { name: 'twitter:image:alt', content: ogTitle }
+  ].filter((entry) => entry && entry.content)
 
-  upsertMeta('description', seo.description)
-  upsertMeta('keywords', seo.keywords)
-  upsertMeta('robots', seo.robots || PRIVATE_ROBOTS)
-  upsertMeta('author', localizedSiteName)
-  upsertMeta('application-name', localizedSiteName)
-
-  upsertMeta('og:type', seo.ogType || 'website', 'property')
-  upsertMeta(
-    'og:title',
-    seo.ogTitle || seo.title || localizedSiteName,
-    'property'
-  )
-  upsertMeta('og:description', seo.ogDescription || seo.description, 'property')
-  upsertMeta('og:url', canonicalUrl, 'property')
-  upsertMeta('og:site_name', localizedSiteName, 'property')
-  upsertMeta('og:image', imageUrl, 'property')
-  upsertMeta('og:locale', OG_LOCALES[locale] || OG_LOCALES.en, 'property')
-
-  upsertMeta('twitter:card', 'summary_large_image')
-  upsertMeta(
-    'twitter:title',
-    seo.twitterTitle || seo.title || localizedSiteName
-  )
-  upsertMeta('twitter:description', seo.twitterDescription || seo.description)
-  upsertMeta('twitter:image', imageUrl)
-
-  upsertCanonical(canonicalUrl)
+  const link = [{ rel: 'canonical', href: canonicalUrl }]
 
   if (route.meta?.publicPage === true) {
     const alternate = getAlternateLocalePath(route.path || '/')
     const alternateUrl = new URL(alternate.path, origin).toString()
-    upsertAlternateLinks([
-      { hreflang: locale, href: canonicalUrl },
-      { hreflang: alternate.locale, href: alternateUrl },
+    link.push(
+      { rel: 'alternate', hreflang: locale, href: canonicalUrl },
+      { rel: 'alternate', hreflang: alternate.locale, href: alternateUrl },
       {
+        rel: 'alternate',
         hreflang: 'x-default',
         href: locale === 'en' ? canonicalUrl : alternateUrl
       }
-    ])
-  } else {
-    upsertAlternateLinks([])
+    )
   }
 
   const structuredData = replaceSeoTokens(seo.structuredData, {
@@ -222,5 +157,17 @@ export function applySeoForRoute(route) {
     SITE_URL: origin,
     IMAGE_URL: imageUrl
   })
-  upsertStructuredData(structuredData)
+
+  const script =
+    structuredData && (!Array.isArray(structuredData) || structuredData.length)
+      ? [{ type: 'application/ld+json', innerHTML: JSON.stringify(structuredData) }]
+      : []
+
+  return {
+    title: seo.title || localizedSiteName,
+    htmlAttrs: { lang: locale, dir: locale === 'ur' ? 'rtl' : 'ltr' },
+    meta,
+    link,
+    script
+  }
 }

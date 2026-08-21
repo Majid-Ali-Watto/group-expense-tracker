@@ -4,7 +4,7 @@ export const SITE_NAMES = {
   ur: 'خرچے فائی'
 }
 export const getSiteName = (locale = 'en') => SITE_NAMES[locale] || SITE_NAME
-export const SITE_URL = 'https://g-exp-trk.netlify.app'
+export const SITE_URL = 'https://kharchafy-khata-application.vercel.app'
 export const DEFAULT_OG_IMAGE = '/expenses.png'
 export const PUBLIC_ROBOTS = 'index, follow'
 export const PRIVATE_ROBOTS = 'noindex, nofollow'

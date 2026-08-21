@@ -41,7 +41,8 @@ import {
 } from '@/utils/sessionCrypto'
 import { showError } from '@/utils/showAlerts'
 import { generateUUID } from '@/utils/uuid'
-import { stripLocalePrefix } from '@/utils/seo'
+import { buildHeadConfig, stripLocalePrefix } from '@/utils/seo'
+import { useHead } from '@unhead/vue'
 import {
   auth,
   onAuthStateChanged,
@@ -119,6 +120,12 @@ export const App = () => {
   const groupStore = useGroupStore()
   const userStore = useUserStore()
   const isAdminActive = computed(() => route.path.startsWith('/admin'))
+
+  // Route-driven <head> — title, description, OG/Twitter, canonical,
+  // hreflang alternates, JSON-LD. Reactive so it re-runs on every
+  // navigation, and runs identically during SSG prerendering (server) and
+  // client-side navigation. See src/utils/seo.js for the data source.
+  useHead(computed(() => buildHeadConfig(route)))
   // Expenses Summary state
   const showNetPositionDialog = ref(false)
   const netPositionSummary = ref(null)
@@ -221,11 +228,14 @@ export const App = () => {
   }
 
   // Theme management - Initialize immediately
-  const savedTheme = localStorage.getItem('theme')
+  // Guarded for SSG prerendering, where there is no localStorage (Node).
+  const savedTheme =
+    typeof localStorage !== 'undefined' ? localStorage.getItem('theme') : null
   const isDarkTheme = ref(savedTheme === 'dark')
   const THEME_PAGE_TURN_MS = 760
   let themeAnimationTimeout = null
   const applyClasses = (docAddCls, docRemoveCls, bodyAddCls, bodyRemoveCls) => {
+    if (typeof document === 'undefined') return
     document.documentElement.classList.add(docAddCls)
     document.documentElement.classList.remove(docRemoveCls)
     document.body.classList.add(bodyAddCls)
