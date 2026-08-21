@@ -52,7 +52,7 @@
             :disabled="isSaveEnbl || isSubmitting"
             :loading="isSubmitting"
             type="success"
-            size="medium"
+            size="default"
             @click="addSalary"
           >
             {{ t('personalExpenses.saveSalary') }}
@@ -61,7 +61,7 @@
             :disabled="isUpdateEnbl || isSubmitting"
             :loading="isSubmitting"
             type="warning"
-            size="medium"
+            size="default"
             @click="updateSalary"
           >
             {{ t('personalExpenses.updateSalary') }}

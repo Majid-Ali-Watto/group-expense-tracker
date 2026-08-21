@@ -50,6 +50,68 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/users/$(mobile)).data.uid;
     }
 
+    function groupDoc(groupId) {
+      return get(/databases/$(database)/documents/groups/$(groupId));
+    }
+
+    function callerIsGroupOwner(groupId) {
+      return exists(/databases/$(database)/documents/groups/$(groupId))
+        && groupDoc(groupId).data.get('ownerUid', '') == request.auth.uid;
+    }
+
+    function callerIsGroupMember(groupId) {
+      return exists(/databases/$(database)/documents/groups/$(groupId))
+        && groupDoc(groupId).data.get('members', []).hasAny([{ 'uid': request.auth.uid }]);
+    }
+
+    function callerIsPendingGroupMember(groupId) {
+      return exists(/databases/$(database)/documents/groups/$(groupId))
+        && groupDoc(groupId).data.get('pendingMembers', []).hasAny([{ 'uid': request.auth.uid }]);
+    }
+
+    function callerCanWriteGroup(groupId) {
+      return request.auth != null
+        && callerIsNotBlocked()
+        && groupIsNotBlocked(groupId)
+        && (
+          callerIsAdmin()
+          || callerIsGroupOwner(groupId)
+          || callerIsGroupMember(groupId)
+          || callerIsPendingGroupMember(groupId)
+          || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['joinRequests'])
+        );
+    }
+
+    function callerCanDeleteGroup(groupId) {
+      return request.auth != null
+        && callerIsNotBlocked()
+        && (
+          callerIsAdmin()
+          || callerIsGroupOwner(groupId)
+          || (
+            callerIsGroupMember(groupId)
+            && resource.data.get('deleteRequest', {}).get('requested', false) == true
+            && resource.data.get('deleteRequest', {}).get('approvals', []).size()
+              >= resource.data.get('members', []).size()
+          )
+        );
+    }
+
+    function callerCanAccessSharedGroup(groupId) {
+      return request.auth != null
+        && callerIsNotBlocked()
+        && groupIsNotBlocked(groupId)
+        && (callerIsAdmin() || callerIsGroupMember(groupId));
+    }
+
+    function callerIsBugStaff() {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && (
+          userDoc(request.auth.uid).data.get('isAdmin', false) == true
+          || userDoc(request.auth.uid).data.get('bugResolver', false) == true
+        );
+    }
+
     // Users — any authenticated user can read.
     // New users may create their own document (callerIsNotBlocked() would fail because
     // the document doesn't exist yet when checked). Updates/deletes still require the
@@ -62,8 +124,17 @@ service cloud.firestore {
                     && validUserCreateFlags();
       allow update: if request.auth != null
                     && callerIsNotBlocked()
-                    && (callerIsAdmin() || adminManagedUserFlagsUnchanged());
-      allow delete: if request.auth != null && callerIsNotBlocked();
+                    && (
+                      callerIsAdmin()
+                      || (
+                        request.auth.uid == userId
+                        && request.resource.data.get('uid', userId) == resource.data.get('uid', userId)
+                        && adminManagedUserFlagsUnchanged()
+                      )
+                    );
+      allow delete: if request.auth != null
+                    && callerIsNotBlocked()
+                    && (request.auth.uid == userId || callerIsAdmin());
     }
 
     // User tab configs — owner can read/write their own tab flags.
@@ -103,68 +174,55 @@ service cloud.firestore {
       allow read: if request.auth != null;
       // create: group doesn't exist yet — groupIsNotBlocked() would fail on get() of missing doc.
       allow create: if request.auth != null && callerIsNotBlocked();
-      allow update, delete: if request.auth != null
-                            && callerIsNotBlocked()
-                            && groupIsNotBlocked(groupId);
+      allow update: if callerCanWriteGroup(groupId);
+      allow delete: if callerCanDeleteGroup(groupId);
     }
     match /groups/{groupId}/{document=**} {
       allow read: if request.auth != null;
-      allow create: if request.auth != null && callerIsNotBlocked();
-      allow update, delete: if request.auth != null
-                            && callerIsNotBlocked()
-                            && groupIsNotBlocked(groupId);
+      allow create: if request.auth != null
+                    && callerIsNotBlocked()
+                    && groupIsNotBlocked(groupId)
+                    && (callerIsAdmin() || callerIsGroupOwner(groupId) || callerIsGroupMember(groupId));
+      allow update: if callerCanWriteGroup(groupId);
+      allow delete: if callerCanDeleteGroup(groupId);
     }
 
     // Shared expenses — blocked user cannot write; writes into a blocked group are denied
     match /shared-expenses/{groupId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null
-                   && callerIsNotBlocked()
-                   && groupIsNotBlocked(groupId);
+      allow read, write: if callerCanAccessSharedGroup(groupId);
     }
     match /shared-expenses/{groupId}/{document=**} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null
-                   && callerIsNotBlocked()
-                   && groupIsNotBlocked(groupId);
+      allow read, write: if callerCanAccessSharedGroup(groupId);
     }
 
     // Shared expenses backup — same restrictions
     match /shared-expenses-backup/{groupId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null
-                   && callerIsNotBlocked()
-                   && groupIsNotBlocked(groupId);
+      allow read, write: if callerCanAccessSharedGroup(groupId);
     }
     match /shared-expenses-backup/{groupId}/{document=**} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null
-                   && callerIsNotBlocked()
-                   && groupIsNotBlocked(groupId);
+      allow read, write: if callerCanAccessSharedGroup(groupId);
     }
 
     // Shared loans — same restrictions
     match /shared-loans/{groupId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null
-                   && callerIsNotBlocked()
-                   && groupIsNotBlocked(groupId);
+      allow read, write: if callerCanAccessSharedGroup(groupId);
     }
     match /shared-loans/{groupId}/{document=**} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null
-                   && callerIsNotBlocked()
-                   && groupIsNotBlocked(groupId);
+      allow read, write: if callerCanAccessSharedGroup(groupId);
     }
 
     // Personal expenses — read restricted to owner; blocked user cannot write
     match /personal-expenses/{mobile} {
       allow read: if request.auth != null && request.auth.uid == ownerUid(mobile);
-      allow write: if request.auth != null && callerIsNotBlocked();
+      allow write: if request.auth != null
+                   && request.auth.uid == ownerUid(mobile)
+                   && callerIsNotBlocked();
     }
     match /personal-expenses/{mobile}/{document=**} {
       allow read: if request.auth != null && request.auth.uid == ownerUid(mobile);
-      allow write: if request.auth != null && callerIsNotBlocked();
+      allow write: if request.auth != null
+                   && request.auth.uid == ownerUid(mobile)
+                   && callerIsNotBlocked();
     }
 
     // Personal loans — owner only; blocked user cannot write
@@ -186,36 +244,58 @@ service cloud.firestore {
                          && callerIsNotBlocked();
     }
 
-    // Bug reports — authenticated users can read/write; blocked user cannot write
-    match /bug-reports/{mobileKey}/{document=**} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null && callerIsNotBlocked();
+    // Bug reports — reporters can manage their own reports; bug staff can resolve all.
+    match /bug-reports/{uid}/reports/{reportId} {
+      allow read: if request.auth != null
+                  && (request.auth.uid == uid || callerIsBugStaff());
+      allow create: if request.auth != null
+                    && request.auth.uid == uid
+                    && callerIsNotBlocked();
+      allow update, delete: if request.auth != null
+                            && callerIsNotBlocked()
+                            && (request.auth.uid == uid || callerIsBugStaff());
     }
 
     // Collection group rule required for collectionGroup('reports') admin query
     match /{path=**}/reports/{reportId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null && callerIsNotBlocked();
+      allow read, write: if request.auth != null
+                          && callerIsNotBlocked()
+                          && callerIsBugStaff();
     }
 
     // Collection group rules for leave-group balance checks
     match /{path=**}/payments/{paymentId} {
-      allow read: if request.auth != null;
+      allow read: if request.auth != null
+                  && (callerIsAdmin() || callerIsGroupMember(resource.data.get('group', '')));
     }
     match /{path=**}/loans/{loanId} {
-      allow read: if request.auth != null;
+      allow read: if request.auth != null
+                  && (callerIsAdmin() || callerIsGroupMember(resource.data.get('group', '')));
     }
 
     // Bug report counters — authenticated, non-blocked only for writes
     match /bug-report-counters/{counterId} {
       allow read: if request.auth != null;
-      allow write: if request.auth != null && callerIsNotBlocked();
+      allow create: if request.auth != null
+                    && callerIsNotBlocked()
+                    && request.resource.data.get('count', 0) == 1;
+      allow update: if request.auth != null
+                    && callerIsNotBlocked()
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['count'])
+                    && request.resource.data.count == resource.data.get('count', 0) + 1;
+      allow delete: if false;
     }
 
-    // Bug report notifications — authenticated, non-blocked only for writes
-    match /bug-report-notifications/{target}/{document=**} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null && callerIsNotBlocked();
+    // Bug report notifications — reporter-owned inboxes and bug staff admin inbox.
+    match /bug-report-notifications/admin/items/{itemId} {
+      allow read, write: if request.auth != null
+                          && callerIsNotBlocked()
+                          && callerIsBugStaff();
+    }
+    match /bug-report-notifications/{uid}/items/{itemId} {
+      allow read, write: if request.auth != null
+                          && callerIsNotBlocked()
+                          && (request.auth.uid == uid || callerIsBugStaff());
     }
 
     // App config — readable by any authenticated user; writable only by admins

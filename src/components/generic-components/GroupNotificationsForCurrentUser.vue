@@ -14,7 +14,7 @@
         >
       </div>
       <el-button
-        size="medium"
+        size="default"
         text
         @click="hideNotification(group.id, notif.id)"
       >

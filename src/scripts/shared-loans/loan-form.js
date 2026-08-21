@@ -461,9 +461,16 @@ export const LoanForm = (props, emit) => {
           const groupId = groupStore.getActiveGroup || 'global'
           loanPath = `${props.dbRef}/${groupId}/months/${monthYear}/loans`
         }
+        const personalLoanDocumentPath =
+          props.isPersonal && isEditMode.value && props.row?.id
+            ? `${props.dbRef}/${authStore.getActiveUserUid}/months/${props.row._month || monthYear}/loans/${props.row.id}`
+            : null
 
         const uploadedReceipts = await uploadSelectedFiles({
-          replaceExisting: whatTask === 'Update' && props.isPersonal
+          replaceExisting: whatTask === 'Update' && props.isPersonal,
+          deleteContext: personalLoanDocumentPath
+            ? { documentPath: personalLoanDocumentPath }
+            : null
         })
         if (!uploadedReceipts) return
 
@@ -559,7 +566,9 @@ export const LoanForm = (props, emit) => {
           } else {
             const deleteMonth = props.row._month || monthYear
             const personalDeletePath = `${props.dbRef}/${authStore.getActiveUserUid}/months/${deleteMonth}/loans`
-            deleteExistingReceipts()
+            deleteExistingReceipts({
+              documentPath: `${personalDeletePath}/${props.row.id}`
+            })
             deleteData(
               `${personalDeletePath}/${props.row.id}`,
               t('sharedLoans.loanDeleted')

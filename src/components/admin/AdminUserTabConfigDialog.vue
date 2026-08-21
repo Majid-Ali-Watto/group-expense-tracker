@@ -183,7 +183,7 @@
           <p class="text-sm font-medium text-gray-700 dark:text-gray-200">
             {{ t('admin.userTabConfig.usageCounters') }}
           </p>
-          <el-button size="medium" plain @click="resetUsageCounters">
+          <el-button size="default" plain @click="resetUsageCounters">
             {{ t('admin.userTabConfig.resetCounters') }}
           </el-button>
         </div>

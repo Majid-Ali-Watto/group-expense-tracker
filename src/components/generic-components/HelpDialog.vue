@@ -38,12 +38,12 @@
               v-if="loggedIn"
               type="warning"
               plain
-              size="medium"
+              size="default"
               @click="handleLogout"
               >{{ t('headerActions.logout') }}</el-button
             >
           </div>
-          <el-button size="medium" @click="handleClose">{{
+          <el-button size="default" @click="handleClose">{{
             t('common.close')
           }}</el-button>
         </div>

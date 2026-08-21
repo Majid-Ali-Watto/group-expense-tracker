@@ -24,7 +24,7 @@
         </span>
         <el-button
           v-if="sortKey"
-          size="medium"
+          size="default"
           link
           class="flex-shrink-0"
           style="color: var(--text-secondary)"
@@ -34,7 +34,7 @@
         </el-button>
         <el-button
           v-if="tableColumns.length > 1"
-          size="medium"
+          size="default"
           link
           class="flex-shrink-0"
           style="color: var(--text-secondary)"
@@ -53,7 +53,7 @@
         >
           <el-button
             v-if="showPopup"
-            size="medium"
+            size="default"
             type="danger"
             plain
             @click="bulkDeleteSelected"
@@ -66,14 +66,14 @@
           </el-button>
           <el-button
             v-if="canDownloadExcel"
-            size="medium"
+            size="default"
             plain
             @click="downloadSelectedExcel"
             >{{ t('table.excel') }}</el-button
           >
           <el-button
             v-if="canDownloadPdf"
-            size="medium"
+            size="default"
             plain
             @click="downloadSelectedPdf"
             >{{ t('table.pdf') }}</el-button
@@ -241,7 +241,7 @@
               <el-button
                 v-if="rowData.split.length > 1"
                 link
-                size="medium"
+                size="default"
                 class="ml-2 flex-shrink-0"
                 @click.stop="
                   openShowMore(
@@ -285,7 +285,7 @@
               <el-button
                 v-if="rowData.payers.length > 1"
                 link
-                size="medium"
+                size="default"
                 class="ml-2 flex-shrink-0"
                 @click.stop="
                   openShowMore(
@@ -376,7 +376,7 @@
               <el-button
                 v-if="rowData.splitItems.length > 1"
                 link
-                size="medium"
+                size="default"
                 class="ml-2 flex-shrink-0"
                 @click.stop="
                   openShowMore(
@@ -426,7 +426,7 @@
               <el-button
                 v-if="rowData.receiptUrls.length > 1"
                 link
-                size="medium"
+                size="default"
                 class="ml-1 flex-shrink-0"
                 @click.stop="
                   openShowMore(
@@ -564,22 +564,22 @@
         <div class="dialog-footer">
           <!-- Delete mode footer -->
           <template v-if="deleteMode">
-            <el-button type="danger" size="medium" @click="remove">{{
+            <el-button type="danger" size="default" @click="remove">{{
               t('table.yesDelete')
             }}</el-button>
-            <el-button size="medium" @click="closeDialog">{{
+            <el-button size="default" @click="closeDialog">{{
               t('common.cancel')
             }}</el-button>
           </template>
           <!-- Edit mode footer -->
           <template v-else>
-            <el-button type="warning" size="medium" @click="update">{{
+            <el-button type="warning" size="default" @click="update">{{
               t('common.update')
             }}</el-button>
-            <el-button type="primary" size="medium" @click="duplicate">{{
+            <el-button type="primary" size="default" @click="duplicate">{{
               t('common.duplicate')
             }}</el-button>
-            <el-button type="success" size="medium" @click="closeDialog">{{
+            <el-button type="success" size="default" @click="closeDialog">{{
               t('common.cancel')
             }}</el-button>
           </template>
@@ -592,14 +592,14 @@
   <div v-if="isDownloadAvailable" class="mt-2 flex justify-between">
     <GenericButton
       v-if="canDownloadExcel"
-      size="medium"
+      size="default"
       type=""
       @click="downloadExcelData"
       >{{ t('table.downloadExcel') }}</GenericButton
     >
     <GenericButton
       v-if="canDownloadPdf"
-      size="medium"
+      size="default"
       type="success"
       @click="downloadPdfData"
       >{{ t('table.downloadPdf') }}</GenericButton

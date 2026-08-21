@@ -66,6 +66,48 @@ export const Users = () => {
     router.replace({ path: route.path, query })
   })
 
+  const sortOptions = computed(() => [
+    { label: t('users.default'), value: '' },
+    { label: t('groups.sortAsc'), value: 'asc' },
+    { label: t('groups.sortDesc'), value: 'desc' }
+  ])
+  const filterFields = computed(() => [
+    {
+      key: 'sort',
+      modelValue: sortOrder.value,
+      placeholder: t('users.sortPlaceholder'),
+      options: sortOptions.value,
+      filterable: false,
+      onChange: (value) => {
+        sortOrder.value = value || ''
+      }
+    },
+    {
+      key: 'sharedGroupsOnly',
+      type: 'checkbox',
+      label: t('users.sharedGroupsOnly'),
+      modelValue: sharedGroupsOnly.value,
+      onChange: (value) => {
+        sharedGroupsOnly.value = value
+      }
+    },
+    {
+      key: 'hideBlockedUsers',
+      type: 'checkbox',
+      label: t('users.hideBlockedUsers'),
+      modelValue: hideBlockedUsers.value,
+      onChange: (value) => {
+        hideBlockedUsers.value = value
+      }
+    }
+  ])
+
+  const clearFilters = () => {
+    sortOrder.value = ''
+    sharedGroupsOnly.value = false
+    hideBlockedUsers.value = false
+  }
+
   function ensureUsersInteractionAllowed(user = null) {
     if (activeUserIsBlocked.value) {
       showError(getActiveUserBlockedMessage())
@@ -132,7 +174,11 @@ export const Users = () => {
 
   const editUserRules = {
     name: [
-      { required: true, message: t('users.validationFullNameRequired'), trigger: 'blur' },
+      {
+        required: true,
+        message: t('users.validationFullNameRequired'),
+        trigger: 'blur'
+      },
       {
         validator: (_rule, value, callback) => {
           const normalizedName = normalizeName(value || '')
@@ -145,9 +191,7 @@ export const Users = () => {
             return
           }
           if (!isValidName(normalizedName)) {
-            callback(
-              new Error(t('users.nameInvalid'))
-            )
+            callback(new Error(t('users.nameInvalid')))
             return
           }
           callback()
@@ -156,7 +200,11 @@ export const Users = () => {
       }
     ],
     mobile: [
-      { required: true, message: t('users.validationMobileRequired'), trigger: 'blur' },
+      {
+        required: true,
+        message: t('users.validationMobileRequired'),
+        trigger: 'blur'
+      },
       {
         validator: (_rule, value, callback) => {
           const normalizedMobile = normalizeMobile(value || '')
@@ -165,9 +213,7 @@ export const Users = () => {
             return
           }
           if (!isValidMobile(normalizedMobile)) {
-            callback(
-              new Error(t('users.mobileInvalid'))
-            )
+            callback(new Error(t('users.mobileInvalid')))
             return
           }
           callback()
@@ -463,10 +509,8 @@ export const Users = () => {
     const user = await read(`${DB_NODES.USERS}/${uid}`)
     if (!user) return showError(t('users.userNotFound'))
     if (!ensureUsersInteractionAllowed(user)) return
-    if (user.deleteRequest)
-      return showError(t('users.deleteRequestPending'))
-    if (user.updateRequest)
-      return showError(t('users.updateRequestPending'))
+    if (user.deleteRequest) return showError(t('users.deleteRequestPending'))
+    if (user.updateRequest) return showError(t('users.updateRequestPending'))
 
     const existingUsers = (await read(DB_NODES.USERS, false)) || {}
     const mobileTaken = Object.entries(existingUsers).some(
@@ -558,9 +602,7 @@ export const Users = () => {
       const ownerUids = getGroupOwnerUids(uid)
       await ElMessageBox.confirm(
         t('users.deleteUserConfirm', { name }) +
-          (ownerUids.length > 0
-            ? t('users.deleteUserGroupWarning')
-            : ''),
+          (ownerUids.length > 0 ? t('users.deleteUserGroupWarning') : ''),
         t('users.deleteUserTitle'),
         {
           confirmButtonText: t('users.proceed'),
@@ -572,14 +614,16 @@ export const Users = () => {
 
       const user = await read(`${DB_NODES.USERS}/${uid}`)
       if (!user) return showError(t('users.userNotFound'))
-      if (user.deleteRequest)
-        return showError(t('users.deleteAlreadyPending'))
+      if (user.deleteRequest) return showError(t('users.deleteAlreadyPending'))
       if (user.updateRequest)
         return showError(t('users.updatePendingCannotDelete'))
 
       if (ownerUids.length === 0) {
         // Delete from Realtime Database
-        await deleteData(`${DB_NODES.USERS}/${uid}`, t('users.userDeleted', { name }))
+        await deleteData(
+          `${DB_NODES.USERS}/${uid}`,
+          t('users.userDeleted', { name })
+        )
         userStore.setUsers([...userStore.getUsers].filter((u) => u.uid !== uid))
       } else {
         const deleteRequest = {
@@ -677,7 +721,9 @@ export const Users = () => {
       await updateData(
         `${DB_NODES.USERS}/${userUid}`,
         () => ({ [field]: null, ...rejectionData }),
-        type === 'delete' ? t('users.deleteRejected') : t('users.updateRejected')
+        type === 'delete'
+          ? t('users.deleteRejected')
+          : t('users.updateRejected')
       )
       userStore.addUser({ uid: userUid, [field]: null, ...rejectionData })
     } catch (e) {
@@ -720,6 +766,8 @@ export const Users = () => {
     sortOrder,
     sharedGroupsOnly,
     hideBlockedUsers,
+    filterFields,
+    clearFilters,
     filteredUsers,
     editDialogVisible,
     editForm,

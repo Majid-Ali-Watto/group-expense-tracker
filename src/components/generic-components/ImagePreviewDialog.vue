@@ -10,7 +10,7 @@
     <div class="ipd-shell">
       <div v-if="hasMultiple" class="ipd-toolbar ipd-toolbar--top">
         <el-button
-          size="medium"
+          size="default"
           :disabled="currentIndex <= 0"
           @click="previous"
         >
@@ -20,7 +20,7 @@
           {{ currentIndex + 1 }} / {{ normalizedImages.length }}
         </span>
         <el-button
-          size="medium"
+          size="default"
           :disabled="currentIndex >= normalizedImages.length - 1"
           @click="next"
         >
@@ -29,14 +29,14 @@
       </div>
 
       <div class="ipd-toolbar">
-        <el-button size="medium" :disabled="zoom <= minZoom" @click="zoomOut">
+        <el-button size="default" :disabled="zoom <= minZoom" @click="zoomOut">
           -
         </el-button>
         <span class="ipd-zoom">{{ Math.round(zoom * 100) }}%</span>
-        <el-button size="medium" :disabled="zoom >= maxZoom" @click="zoomIn">
+        <el-button size="default" :disabled="zoom >= maxZoom" @click="zoomIn">
           +
         </el-button>
-        <el-button size="medium" @click="resetZoom">{{
+        <el-button size="default" @click="resetZoom">{{
           t('common.reset')
         }}</el-button>
       </div>

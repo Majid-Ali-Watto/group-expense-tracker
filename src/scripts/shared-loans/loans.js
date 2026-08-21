@@ -41,7 +41,7 @@ export const Loans = () => {
   const { dbRef, read, readShallow, updateData, deleteData } = useFireBase()
   const formatAmount = inject('formatAmount')
 
-  const showLoanForm = ref(false)
+  const showLoanForm = ref(route.query.new === '1')
   const closeLoanForm = () => {
     showLoanForm.value = !showLoanForm.value
   }
@@ -297,15 +297,19 @@ export const Loans = () => {
     }),
     buildItemPath: ({ groupId, monthYear, itemId }) =>
       `${DB_NODES.SHARED_LOANS}/${groupId}/months/${monthYear}/loans/${itemId}`,
-    cleanupDeletedReceipts: (loan) => {
+    cleanupDeletedReceipts: (loan, _request, itemPath) => {
       const deletedMeta = loan?.receiptMeta
       if (!deletedMeta) return
 
       const metas = Array.isArray(deletedMeta) ? deletedMeta : [deletedMeta]
-      metas.forEach((meta) => deleteReceipt(meta))
+      metas.forEach((meta) =>
+        deleteReceipt(meta, { documentPath: itemPath })
+      )
     },
-    buildUpdatedItem: (loan, request, notification) => {
-      cleanupOldReceipts(loan?.receiptMeta, request.changes?.receiptMeta)
+    buildUpdatedItem: (loan, request, notification, itemPath) => {
+      cleanupOldReceipts(loan?.receiptMeta, request.changes?.receiptMeta, {
+        documentPath: itemPath
+      })
 
       const updatedLoan = appendNotificationForUser(
         {
@@ -373,7 +377,10 @@ export const Loans = () => {
       label: t('sharedLoans.giver'),
       placeholder: t('sharedLoans.selectGiver'),
       modelValue: selectedGiver.value,
-      options: [{ label: t('sharedLoans.allGivers'), value: 'All' }, ...usersOptions.value],
+      options: [
+        { label: t('sharedLoans.allGivers'), value: 'All' },
+        ...usersOptions.value
+      ],
       onChange: (v) => {
         selectedGiver.value = v
       }

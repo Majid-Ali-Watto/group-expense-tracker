@@ -27,7 +27,7 @@ const props = defineProps({
   max: { type: Number, default: Infinity },
   precision: { type: Number, default: undefined },
   step: { type: Number, default: 1 },
-  size: { type: String, default: 'medium' },
+  size: { type: String, default: 'default' },
   placeholder: { type: String, default: '' },
   controlsPosition: { type: String, default: 'right' },
   wrapFormItem: { type: Boolean, default: true },

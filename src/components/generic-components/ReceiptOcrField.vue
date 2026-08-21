@@ -16,7 +16,7 @@
           <el-button
             type="primary"
             plain
-            size="medium"
+            size="default"
             :loading="extracting"
             :disabled="
               uploading ||

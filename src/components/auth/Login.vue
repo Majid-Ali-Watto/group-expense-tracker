@@ -88,7 +88,7 @@
         <template #footer>
           <GenericButton
             type="default"
-            size="medium"
+            size="default"
             :disabled="isGoogleMobileSubmitting"
             @click="cancelGoogleMobileDialog"
           >
@@ -96,7 +96,7 @@
           </GenericButton>
           <GenericButton
             type="success"
-            size="medium"
+            size="default"
             :loading="isGoogleMobileSubmitting"
             :disabled="isGoogleMobileSubmitting"
             @click="submitGoogleMobile"

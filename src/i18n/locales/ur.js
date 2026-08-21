@@ -49,7 +49,7 @@ export default {
     stayLoggedIn: 'لاگ ان رہیں'
   },
   header: {
-    tagline: 'ٹریک · تقسیم · تصفیہ'
+    tagline: 'ٹریک · تقسیم · حساب برابر'
   },
   months: {
     january: 'جنوری',
@@ -66,7 +66,7 @@ export default {
     december: 'دسمبر'
   },
   footer: {
-    brand: 'Kharchafy',
+    brand: 'خرچے فائی',
     tagline: 'مشترکہ اخراجات، مشترکہ قرضے، اور ذاتی بجٹ کا انتظام ایک ہی جگہ۔',
     publicNavLabel: 'عوامی صفحات'
   },
@@ -150,7 +150,8 @@ export default {
       register: 'رجسٹر'
     },
     infoAlert: {
-      registerText: 'اپنے نام، موبائل، ای میل، اور لاگ ان کوڈ کے ساتھ نیا اکاؤنٹ بنائیں۔',
+      registerText:
+        'اپنے نام، موبائل، ای میل، اور لاگ ان کوڈ کے ساتھ نیا اکاؤنٹ بنائیں۔',
       registerWarning:
         'اپنا اکاؤنٹ فعال کرنے کے لیے آپ کو 48 گھنٹوں کے اندر اپنی ای میل کی تصدیق کرنی ہوگی۔',
       loginText: 'اپنی ای میل اور پاس ورڈ سے لاگ ان کریں۔'
@@ -186,8 +187,9 @@ export default {
     },
     googleMobileDialog: {
       title: 'ایک اور مرحلہ',
-      instructions: 'رجسٹریشن مکمل کرنے کے لیے براہ کرم اپنا موبائل نمبر درج کریں۔',
-      prioritize: 'ترجیح دیں (ایزی پیسہ/جاز کیش)، لازمی نہیں',
+      instructions:
+        'رجسٹریشن مکمل کرنے کے لیے براہ کرم اپنا موبائل نمبر درج کریں۔',
+      prioritize: 'ترجیحاً (ایزی پیسہ/جاز کیش)، ضروری نہیں',
       placeholder: 'موبائل نمبر (11 ہندسے)',
       cancel: 'منسوخ کریں',
       continue: 'جاری رکھیں'
@@ -222,7 +224,8 @@ export default {
     }
   },
   authMessages: {
-    tooManyFailedAttempts: 'بہت زیادہ ناکام کوششیں۔ {minutes} منٹ میں دوبارہ کوشش کریں۔',
+    tooManyFailedAttempts:
+      'بہت زیادہ ناکام کوششیں۔ {minutes} منٹ میں دوبارہ کوشش کریں۔',
     fillRequiredFields: 'براہ کرم تمام مطلوبہ فیلڈز درست طریقے سے پُر کریں',
     allFieldsRequired: 'رجسٹریشن کے لیے تمام فیلڈز درکار ہیں',
     invalidEmail: 'براہ کرم ایک درست ای میل ایڈریس درج کریں',
@@ -234,7 +237,8 @@ export default {
     ok: 'ٹھیک ہے',
     emailAlreadyRegistered:
       'یہ ای میل پہلے سے رجسٹرڈ ہے۔ اگر آپ نے حال ہی میں رجسٹر کیا ہے لیکن تصدیق نہیں کی تو اپنی ای میل میں تصدیقی لنک چیک کریں۔ اگر یہ ای میل آپ کی نہیں ہے یا مدد درکار ہے تو براہ کرم سپورٹ سے رابطہ کریں۔',
-    weakPassword: 'پاس ورڈ بہت کمزور ہے۔ براہ کرم کم از کم 6 حروف استعمال کریں۔',
+    weakPassword:
+      'پاس ورڈ بہت کمزور ہے۔ براہ کرم کم از کم 6 حروف استعمال کریں۔',
     invalidEmailFormat: 'ای میل فارمیٹ غلط ہے',
     registrationFailed: 'رجسٹریشن ناکام ہو گئی۔ براہ کرم دوبارہ کوشش کریں۔',
     emailPasswordRequired: 'ای میل اور پاس ورڈ درکار ہیں',
@@ -242,37 +246,47 @@ export default {
       'یہ اکاؤنٹ Google کے ذریعے بنایا گیا تھا۔ براہ کرم ای میل اور پاس ورڈ کے بجائے Google سے سائن ان کریں۔\nیا\nاگر آپ ای میل اور پاس ورڈ استعمال کرنا چاہتے ہیں تو پہلے اسے سیٹ اپ کرنے کے لیے اپنا پاس ورڈ ری سیٹ کریں۔',
     emailNotVerified:
       'آپ کی ای میل کی تصدیق نہیں ہوئی۔ براہ کرم اپنا ان باکس چیک کریں اور تصدیقی لنک پر کلک کریں۔ ضرورت پڑنے پر "تصدیقی ای میل دوبارہ بھیجیں" استعمال کریں۔',
-    noAccountFound: 'اس ای میل کے ساتھ کوئی اکاؤنٹ نہیں ملا۔ براہ کرم پہلے رجسٹر کریں یا اپنا ای میل ایڈریس چیک کریں۔',
+    noAccountFound:
+      'اس ای میل کے ساتھ کوئی اکاؤنٹ نہیں ملا۔ براہ کرم پہلے رجسٹر کریں یا اپنا ای میل ایڈریس چیک کریں۔',
     incorrectCredentialsWithAttempts:
       'ای میل یا پاس ورڈ غلط ہے۔ {left} کوشش (کوششیں) باقی ہیں۔ اگر آپ کا اکاؤنٹ نہیں ہے تو براہ کرم پہلے رجسٹر کریں۔',
     incorrectCredentials:
       'ای میل یا پاس ورڈ غلط ہے۔ اگر آپ کا اکاؤنٹ نہیں ہے تو براہ کرم پہلے رجسٹر کریں۔',
-    tooManyFailedLoginAttempts: 'بہت زیادہ ناکام کوششیں۔ براہ کرم بعد میں دوبارہ کوشش کریں۔',
+    tooManyFailedLoginAttempts:
+      'بہت زیادہ ناکام کوششیں۔ براہ کرم بعد میں دوبارہ کوشش کریں۔',
     loginFailed: 'لاگ ان ناکام ہو گیا۔ براہ کرم دوبارہ کوشش کریں۔',
     passwordResetCompleteBody:
       'آپ کا پاس ورڈ کامیابی سے ری سیٹ ہو گیا ہے! اب آپ اپنے نئے کوڈ کے ساتھ لاگ ان کر سکتے ہیں۔',
     passwordResetCompleteTitle: 'پاس ورڈ ری سیٹ مکمل',
     loginSuccessful: 'لاگ ان کامیاب!',
     emailNotFound: 'ای میل ایڈریس نہیں ملا۔ براہ کرم اپنی ای میل درج کریں۔',
-    verificationResent: 'تصدیقی ای میل {email} پر دوبارہ بھیج دی گئی ہے۔ براہ کرم اپنا ان باکس چیک کریں۔',
-    tooManyRequestsWait: 'بہت زیادہ درخواستیں۔ دوبارہ کوشش کرنے سے پہلے چند منٹ انتظار کریں۔',
-    incorrectPasswordResend: 'غلط پاس ورڈ۔ تصدیق دوبارہ بھیجنے کے لیے اپنا درست پاس ورڈ درج کریں۔',
+    verificationResent:
+      'تصدیقی ای میل {email} پر دوبارہ بھیج دی گئی ہے۔ براہ کرم اپنا ان باکس چیک کریں۔',
+    tooManyRequestsWait:
+      'بہت زیادہ درخواستیں۔ دوبارہ کوشش کرنے سے پہلے چند منٹ انتظار کریں۔',
+    incorrectPasswordResend:
+      'غلط پاس ورڈ۔ تصدیق دوبارہ بھیجنے کے لیے اپنا درست پاس ورڈ درج کریں۔',
     resendFailed: 'تصدیقی ای میل دوبارہ بھیجنے میں ناکامی۔',
     enterEmailAddress: 'براہ کرم اپنا ای میل ایڈریس درج کریں',
     resetEmailSentBody:
-      "پاس ورڈ ری سیٹ لنک <strong>{email}</strong> پر بھیج دیا گیا ہے۔<br><br>محفوظ Firebase صفحے پر اپنا پاس ورڈ ری سیٹ کرنے کے لیے اپنی ای میل میں لنک پر کلک کریں۔ مکمل ہونے پر آپ کو اس صفحے پر واپس بھیج دیا جائے گا۔",
+      'پاس ورڈ ری سیٹ لنک <strong>{email}</strong> پر بھیج دیا گیا ہے۔<br><br>محفوظ Firebase صفحے پر اپنا پاس ورڈ ری سیٹ کرنے کے لیے اپنی ای میل میں لنک پر کلک کریں۔ مکمل ہونے پر آپ کو اس صفحے پر واپس بھیج دیا جائے گا۔',
     resetEmailSentTitle: 'ری سیٹ ای میل بھیج دی گئی',
     noAccountForEmail: 'اس ای میل ایڈریس کے ساتھ کوئی اکاؤنٹ نہیں ملا۔',
     invalidEmailAddressFormat: 'ای میل ایڈریس کا فارمیٹ غلط ہے۔',
     tooManyRequests: 'بہت زیادہ درخواستیں۔ براہ کرم بعد میں دوبارہ کوشش کریں۔',
-    resetEmailFailed: 'ری سیٹ ای میل بھیجنے میں ناکامی۔ براہ کرم دوبارہ کوشش کریں۔',
+    resetEmailFailed:
+      'ری سیٹ ای میل بھیجنے میں ناکامی۔ براہ کرم دوبارہ کوشش کریں۔',
     googleAccountExistsDifferentCred:
       'یہ ای میل پہلے سے ای میل اور پاس ورڈ کے ساتھ رجسٹرڈ ہے۔ براہ کرم اپنے ای میل اور پاس ورڈ کے ساتھ لاگ ان کریں۔',
-    googleSignInFailed: 'Google سائن ان ناکام ہو گیا۔ براہ کرم دوبارہ کوشش کریں۔',
+    googleSignInFailed:
+      'Google سائن ان ناکام ہو گیا۔ براہ کرم دوبارہ کوشش کریں۔',
     enterMobileNumber: 'براہ کرم اپنا موبائل نمبر درج کریں۔',
-    invalidMobileNumber: 'براہ کرم ایک درست موبائل نمبر درج کریں (10-11 ہندسے)۔',
-    saveDetailsFailed: 'آپ کی تفصیلات محفوظ کرنے میں ناکامی۔ براہ کرم دوبارہ کوشش کریں۔',
-    selectFeatureGroup: 'براہ کرم جاری رکھنے کے لیے کم از کم ایک فیچر گروپ — مشترکہ یا ذاتی — منتخب کریں۔',
+    invalidMobileNumber:
+      'براہ کرم ایک درست موبائل نمبر درج کریں (10-11 ہندسے)۔',
+    saveDetailsFailed:
+      'آپ کی تفصیلات محفوظ کرنے میں ناکامی۔ براہ کرم دوبارہ کوشش کریں۔',
+    selectFeatureGroup:
+      'براہ کرم جاری رکھنے کے لیے کم از کم ایک فیچر گروپ — مشترکہ یا ذاتی — منتخب کریں۔',
     sharedNoTabsEnabled:
       'آپ نے مشترکہ خصوصیات منتخب کیں لیکن کوئی مشترکہ ٹیب فعال نہیں ہے۔ براہ کرم کم از کم ایک مشترکہ ٹیب منتخب کریں (مشترکہ اخراجات، مشترکہ قرضے، یا صارفین)۔',
     personalNoTabsEnabled:
@@ -285,23 +299,27 @@ export default {
     changePasswordNewRequired: 'نیا پاس ورڈ درکار ہے',
     changePasswordConfirmRequired: 'براہ کرم اپنے نئے پاس ورڈ کی تصدیق کریں',
     changePasswordMismatch: 'پاس ورڈز آپس میں مماثل نہیں ہیں',
-    noAuthenticatedUser: 'کوئی تصدیق شدہ صارف نہیں ملا۔ براہ کرم دوبارہ لاگ ان کریں۔',
+    noAuthenticatedUser:
+      'کوئی تصدیق شدہ صارف نہیں ملا۔ براہ کرم دوبارہ لاگ ان کریں۔',
     changePasswordSameAsCurrent:
       'نیا پاس ورڈ آپ کے موجودہ پاس ورڈ سے مختلف ہونا چاہیے۔',
     changePasswordSuccess: 'پاس ورڈ کامیابی سے تبدیل ہو گیا!',
     changePasswordIncorrect: 'موجودہ پاس ورڈ غلط ہے۔',
     changePasswordSessionExpired:
       'سیشن ختم ہو گیا۔ پاس ورڈ تبدیل کرنے سے پہلے براہ کرم لاگ آؤٹ کر کے دوبارہ لاگ ان کریں۔',
-    changePasswordFailed: 'پاس ورڈ تبدیل کرنے میں ناکامی۔ براہ کرم دوبارہ کوشش کریں۔'
+    changePasswordFailed:
+      'پاس ورڈ تبدیل کرنے میں ناکامی۔ براہ کرم دوبارہ کوشش کریں۔'
   },
   validation: {
     nameRequired: 'پورا نام درکار ہے',
     nameMinLength: 'نام کم از کم 3 حروف کا ہونا چاہیے',
     nameAlphaOnly: 'نام میں صرف حروف اور واحد اسپیس ہو سکتے ہیں',
     mobileRequired: 'موبائل نمبر درکار ہے',
-    mobilePattern: 'موبائل نمبر 03 سے شروع ہونے والے 11 ہندسوں پر مشتمل ہونا چاہیے',
+    mobilePattern:
+      'موبائل نمبر 03 سے شروع ہونے والے 11 ہندسوں پر مشتمل ہونا چاہیے',
     emailRequired: 'ای میل درکار ہے',
-    emailPattern: 'براہ کرم ایک درست ای میل ایڈریس درج کریں (مثلاً user@example.com)',
+    emailPattern:
+      'براہ کرم ایک درست ای میل ایڈریس درج کریں (مثلاً user@example.com)',
     passwordRequired: 'پاس ورڈ درکار ہے',
     passwordMin: 'پاس ورڈ کم از کم 6 حروف کا ہونا چاہیے',
     passwordMax: 'پاس ورڈ 15 حروف سے زیادہ نہیں ہونا چاہیے'
@@ -313,7 +331,7 @@ export default {
     approve: 'منظور کریں',
     reject: 'مسترد کریں',
     balanced: 'متوازن',
-    mismatch: 'عدم توافق',
+    mismatch: 'مطابقت نہیں',
     remove: 'ہٹائیں',
     change: 'تبدیل کریں',
     none: 'کوئی نہیں',
@@ -348,7 +366,8 @@ export default {
     selectDate: 'تاریخ منتخب کریں',
     activeUserBlocked:
       'آپ کا اکاؤنٹ منتظم نے بلاک کر دیا ہے۔ صارفین اور گروپس غیر فعال ہیں۔',
-    entityBlocked: 'یہ {entity} منتظم نے بلاک کیا ہوا ہے۔ اس کے ساتھ تعامل نہ کریں۔',
+    entityBlocked:
+      'یہ {entity} منتظم نے بلاک کیا ہوا ہے۔ اس پر کوئی عمل نہ کریں۔',
     entityGroup: 'گروپ',
     entityUser: 'صارف',
     save: 'محفوظ کریں',
@@ -368,9 +387,9 @@ export default {
     warning: 'تنبیہ',
     ok: 'ٹھیک ہے',
     closeForm: 'فارم بند کریں',
-    closeFormHint: 'خارج کر کے بند کرنے کے لیے تھپتھپائیں',
+    closeFormHint: 'فارم بند کرنے کے لیے ٹیپ کریں',
     actionLabel: 'ایکشن',
-    openFormHint: 'فارم کھولنے کے لیے تھپتھپائیں',
+    openFormHint: 'فارم کھولنے کے لیے ٹیپ کریں',
     imageAlt: 'تصویر',
     clear: 'صاف کریں',
     selectOption: 'ایک آپشن منتخب کریں',
@@ -410,8 +429,7 @@ export default {
     rejectConfirm: 'کیا آپ واقعی اس {type} درخواست کو مسترد کرنا چاہتے ہیں؟',
     rejectTitle: 'مسترد کرنے کی تصدیق',
     yesRejectBtn: 'ہاں، مسترد کریں',
-    requestRejected:
-      'آپ کی {item} کی {type} درخواست مسترد کر دی گئی',
+    requestRejected: 'آپ کی {item} کی {type} درخواست مسترد کر دی گئی',
     requestRejectedMsg: '{type} درخواست مسترد کر دی گئی۔',
     verifyWarning:
       'براہ کرم {type} کی تفصیلات غور سے جانچیں۔ ایک بار شامل ہونے کے بعد کوئی بھی تبدیلی یا حذف کرنے کے لیے تمام گروپ ممبران کی منظوری ضروری ہوگی۔'
@@ -459,40 +477,40 @@ export default {
       'ادا کنندگان کا کل ({payersTotal}) لین دین کی رقم ({amount}) کے برابر ہونا چاہیے۔',
     splitItemError:
       'کسٹم تقسیم طریقہ استعمال کرتے وقت کم از کم ایک تقسیمی آئٹم شامل کریں۔',
-    pairwiseSettlements: 'دو طرفہ تصفیے (کون کسے ادا کرتا ہے)',
-    allSettled: '✅ سب تصفیہ ہو گیا!',
-    allSettledText: 'کوئی زیر التوا تصفیہ نہیں۔ سب کا بیلنس صفر ہے۔',
-    settlementRequest: '📋 تصفیے کی درخواست',
+    pairwiseSettlements: 'حساب (کون کسے ادا کرتا ہے)',
+    allSettled: '✅ سب کا حساب برابر ہو گیا!',
+    allSettledText: 'کوئی ادائیگی باقی نہیں۔ سب کا حساب صفر ہے۔',
+    settlementRequest: '📋 حساب برابر کرنے کی درخواست',
     settlementRequestedBy: 'درخواست کنندہ: {user}، مہینہ: {month}',
     settlementAllMustApprove:
-      'تصفیہ حتمی کرنے سے پہلے تمام اراکین کی منظوری ضروری ہے۔',
+      'حساب برابر کرنے سے پہلے تمام اراکین کی منظوری ضروری ہے۔',
     approvals: 'منظوریاں:',
-    approveSettlement: 'تصفیہ منظور کریں',
-    cancelSettlementRequest: 'تصفیے کی درخواست منسوخ کریں',
-    rejectSettlement: 'تصفیہ مسترد کریں',
-    youApprovedSettlement: '✓ آپ نے تصفیے کی درخواست منظور کر لی ہے',
+    approveSettlement: 'حساب برابر کریں',
+    cancelSettlementRequest: 'حساب برابر کرنے کی درخواست منسوخ کریں',
+    rejectSettlement: 'حساب برابر مسترد کریں',
+    youApprovedSettlement: '✓ آپ نے حساب برابر کرنے کی درخواست منظور کر لی ہے',
     waitingForMembers: '- تمام اراکین کی منظوری کا انتظار ہے',
-    finalizeSettlement: 'تصفیہ ابھی حتمی کریں',
-    requestSettlement: 'تصفیہ کی درخواست کریں',
-    settlementDone: 'تصفیہ مکمل',
+    finalizeSettlement: 'ابھی حساب برابر کریں',
+    requestSettlement: 'حساب برابر کرنے کی درخواست',
+    settlementDone: 'حساب برابر',
     pays: 'ادا کرتا ہے',
     receives: 'وصول کرتا ہے',
     requestSettlementConfirm:
-      'یہ تمام گروپ ممبران کو تصفیے کی درخواست بھیجے گا۔ تصفیہ حتمی کرنے سے پہلے تمام اراکین کی منظوری ضروری ہے۔',
-    requestSettlementTitle: 'تصفیے کی درخواست',
+      'یہ تمام گروپ ممبران کو حساب برابر کرنے کی درخواست بھیجے گا۔ حساب برابر کرنے سے پہلے تمام اراکین کی منظوری ضروری ہے۔',
+    requestSettlementTitle: 'حساب برابر کرنے کی درخواست',
     sendRequest: 'درخواست بھیجیں',
     noActiveGroup: 'کوئی فعال گروپ منتخب نہیں',
-    settlementRequestSent: 'تصفیے کی درخواست کامیابی سے بھیج دی گئی',
-    youApprovedSettlementMsg: 'آپ نے تصفیے کی درخواست منظور کر لی',
-    rejectSettlementConfirm: 'یہ تصفیے کی درخواست منسوخ کر دے گا۔',
-    rejectSettlementTitle: 'تصفیے کی درخواست مسترد کریں',
+    settlementRequestSent: 'حساب برابر کرنے کی درخواست کامیابی سے بھیج دی گئی',
+    youApprovedSettlementMsg: 'آپ نے حساب برابر کرنے کی درخواست منظور کر لی',
+    rejectSettlementConfirm: 'یہ حساب برابر کرنے کی درخواست منسوخ کر دے گا۔',
+    rejectSettlementTitle: 'حساب برابر کرنے کی درخواست مسترد کریں',
     rejectBtn: 'مسترد کریں',
-    settlementRejected: 'تصفیے کی درخواست مسترد کر دی گئی',
+    settlementRejected: 'حساب برابر کرنے کی درخواست مسترد کر دی گئی',
     allMustApproveFirst:
-      'تصفیہ حتمی کرنے سے پہلے تمام گروپ ممبران کی منظوری ضروری ہے',
+      'حساب برابر کرنے سے پہلے تمام گروپ ممبران کی منظوری ضروری ہے',
     finalizeConfirm:
-      'کیا آپ واقعی اخراجات کو بیک اپ میں منتقل کرکے تصفیہ حتمی کرنا چاہتے ہیں؟',
-    finalizeTitle: 'تصفیہ حتمی کریں',
+      'کیا آپ واقعی اخراجات کو بیک اپ میں منتقل کرکے حساب برابر کرنا چاہتے ہیں؟',
+    finalizeTitle: 'حساب برابر کریں',
     ok: 'ٹھیک ہے',
     finalizeSuccess:
       'اخراجات کامیابی سے بیک اپ میں محفوظ ہو گئے! {month} کا ڈیٹا صاف ہو گیا۔',
@@ -536,7 +554,7 @@ export default {
     status: 'حیثیت',
     willPay: 'ادا کرے گا',
     willReceive: 'وصول کرے گا',
-    settled: 'تصفیہ شدہ',
+    settled: 'برابر',
     giver: 'دینے والا',
     selectGiver: 'دینے والا منتخب کریں',
     allGivers: 'تمام دینے والے',
@@ -567,17 +585,19 @@ export default {
     loanToBeDeleted: 'حذف ہونے والا قرضہ:'
   },
   users: {
-    blockedAccountWarning: 'آپ کا اکاؤنٹ منتظم نے بلاک کر دیا ہے۔ صارفین صرف حوالہ کے لیے دکھائے جا رہے ہیں۔',
+    blockedAccountWarning:
+      'آپ کا اکاؤنٹ منتظم نے بلاک کر دیا ہے۔ صارفین صرف حوالہ کے لیے دکھائے جا رہے ہیں۔',
     existingUsers: 'موجودہ صارفین (صرف تصدیق شدہ)',
     searchPlaceholder: 'نام، موبائل، یا گروپ سے تلاش کریں...',
+    sortPlaceholder: 'ترتیب',
     default: 'ڈیفالٹ',
     sharedGroupsOnly: 'صرف مشترکہ گروپ',
     hideBlockedUsers: 'بلاک صارفین چھپائیں',
     nameMobile: 'نام / موبائل',
     groups: 'گروپس',
     actions: 'اقدامات',
-    noUsersMatch: 'موجودہ فلٹرز سے کوئی صارف نہیں ملا',
-    clearSearchHint: 'تلاش صاف کریں یا مشترکہ گروپ فلٹر ہٹائیں۔',
+    noUsersMatch: 'موجودہ چھانٹی سے کوئی صارف نہیں ملا',
+    clearSearchHint: 'تلاش صاف کریں یا مشترکہ گروپ کی چھانٹی ہٹائیں۔',
     createGroup: 'گروپ بنائیں',
     edit: 'ترمیم کریں',
     delete: 'حذف کریں',
@@ -589,7 +609,8 @@ export default {
     member: 'رکن',
     requested: 'درخواست کردہ',
     joinGroup: 'گروپ میں شامل ہوں',
-    blockedUserWarning: 'یہ صارف منتظم نے بلاک کیا ہوا ہے۔ اس اکاؤنٹ سے تعامل نہ کریں۔',
+    blockedUserWarning:
+      'یہ صارف منتظم نے بلاک کیا ہوا ہے۔ اس اکاؤنٹ سے تعامل نہ کریں۔',
     pendingApprovals: 'زیر التواء منظوریاں',
     deleteRequestBy: 'حذف کی درخواست از',
     approvals: 'منظوریاں: {approved} / {required}',
@@ -602,33 +623,42 @@ export default {
     fullNamePlaceholder: 'پورا نام',
     save: 'محفوظ کریں',
     createGroupDialog: 'گروپ بنائیں',
-    usersGroupsTitle: "{name} کے گروپس ({count})",
-    alreadyPendingJoin: 'اس گروپ کے لیے آپ کی پہلے سے ایک درخواست زیر التواء ہے۔',
-    joinGroupConfirm: 'کیا آپ "{name}" میں شامل ہونے کی درخواست بھیجنا چاہتے ہیں؟',
+    usersGroupsTitle: '{name} کے گروپس ({count})',
+    alreadyPendingJoin:
+      'اس گروپ کے لیے آپ کی پہلے سے ایک درخواست زیر التواء ہے۔',
+    joinGroupConfirm:
+      'کیا آپ "{name}" میں شامل ہونے کی درخواست بھیجنا چاہتے ہیں؟',
     joinGroupTitle: 'گروپ میں شامل ہوں',
     sendRequest: 'درخواست بھیجیں',
-    joinRequestSent: 'شامل ہونے کی درخواست بھیج دی گئی! رکن کی منظوری کا انتظار ہے۔',
+    joinRequestSent:
+      'شامل ہونے کی درخواست بھیج دی گئی! رکن کی منظوری کا انتظار ہے۔',
     failedJoinRequest: 'درخواست بھیجنے میں ناکامی۔ دوبارہ کوشش کریں۔',
     nameRequired: 'نام ضروری ہے',
     nameMinLength: 'نام کم از کم 3 حروف کا ہونا چاہیے',
     nameInvalid: 'نام میں صرف حروف اور ایک خالی جگہ استعمال ہو سکتی ہے',
     mobileRequired: 'موبائل نمبر ضروری ہے',
-    mobileInvalid: 'موبائل نمبر 03 سے شروع ہونا چاہیے اور 11 ہندسوں کا ہونا چاہیے',
+    mobileInvalid:
+      'موبائل نمبر 03 سے شروع ہونا چاہیے اور 11 ہندسوں کا ہونا چاہیے',
     userNotFound: 'صارف نہیں ملا',
     deleteRequestPending: 'اس صارف کی حذف کی درخواست زیر التواء ہے',
     updateRequestPending: 'اس صارف کی تبدیلی کی درخواست زیر التواء ہے',
     mobileTaken: 'اس موبائل نمبر سے پہلے سے ایک اکاؤنٹ موجود ہے',
     userUpdated: 'صارف کامیابی سے اپ ڈیٹ کر دیا گیا',
-    deleteUserConfirm: 'کیا آپ واقعی <strong>{name}</strong> کو حذف کرنا چاہتے ہیں؟',
-    deleteUserGroupWarning: '<br><br>یہ صارف ایک یا زیادہ گروپس میں ہے۔ حذف سے پہلے تمام گروپ مالکان کی منظوری ضروری ہے۔',
+    deleteUserConfirm:
+      'کیا آپ واقعی <strong>{name}</strong> کو حذف کرنا چاہتے ہیں؟',
+    deleteUserGroupWarning:
+      '<br><br>یہ صارف ایک یا زیادہ گروپس میں ہے۔ حذف سے پہلے تمام گروپ مالکان کی منظوری ضروری ہے۔',
     deleteUserTitle: 'صارف حذف کریں',
     proceed: 'آگے بڑھیں',
     deleteAlreadyPending: 'اس صارف کی حذف کی درخواست پہلے سے زیر التواء ہے',
-    updatePendingCannotDelete: 'تبدیلی کی درخواست زیر التواء ہے۔ حذف سے پہلے اسے منسوخ کریں۔',
+    updatePendingCannotDelete:
+      'تبدیلی کی درخواست زیر التواء ہے۔ حذف سے پہلے اسے منسوخ کریں۔',
     userDeleted: 'صارف {name} حذف کر دیا گیا',
-    deleteRequestSentToOwners: 'گروپ مالکان کو منظوری کے لیے حذف کی درخواست بھیج دی گئی',
+    deleteRequestSentToOwners:
+      'گروپ مالکان کو منظوری کے لیے حذف کی درخواست بھیج دی گئی',
     approvalRecorded: 'منظوری ریکارڈ کر لی گئی',
-    rejectUserConfirm: 'کیا آپ <strong>{name}</strong> کی {type} درخواست مسترد کرنا چاہتے ہیں؟',
+    rejectUserConfirm:
+      'کیا آپ <strong>{name}</strong> کی {type} درخواست مسترد کرنا چاہتے ہیں؟',
     rejectUserTitle: 'درخواست مسترد کریں',
     deleteRejected: 'حذف کی درخواست مسترد کر دی گئی',
     updateRejected: 'تبدیلی کی درخواست مسترد کر دی گئی',
@@ -644,7 +674,8 @@ export default {
     nameChangedPart: 'نے اپنا نام "{oldName}" سے "{newName}" میں تبدیل کیا',
     mobileUpdatedPart: 'نے اپنا موبائل نمبر اپ ڈیٹ کیا',
     memberRenamedNotif: '{newName} نے گروپ "{groupName}" میں {changes}۔',
-    deletionRejectedNotif: 'آپ کی اکاؤنٹ حذف کرنے کی درخواست {name} نے مسترد کر دی۔'
+    deletionRejectedNotif:
+      'آپ کی اکاؤنٹ حذف کرنے کی درخواست {name} نے مسترد کر دی۔'
   },
   personalExpenses: {
     addNewExpensePrompt: 'نیا خرچ شامل کرنا چاہتے ہیں؟',
@@ -673,10 +704,12 @@ export default {
     salaryUpdateConfirm: 'کیا آپ واقعی تنخواہ اپ ڈیٹ کرنا چاہتے ہیں؟',
     noSalaryToUpdate: 'اس مہینے کے لیے اپ ڈیٹ کرنے کو کوئی موجودہ تنخواہ نہیں۔',
     unexpectedError: 'ایک غیر متوقع خرابی پیش آگئی۔',
-    failedLoadSalaryData: 'تنخواہ کا ڈیٹا لوڈ کرنے میں ناکامی۔ براہ کرم دوبارہ کوشش کریں۔',
+    failedLoadSalaryData:
+      'تنخواہ کا ڈیٹا لوڈ کرنے میں ناکامی۔ براہ کرم دوبارہ کوشش کریں۔',
     failedLoadMonths: 'مہینے لوڈ کرنے میں ناکامی۔ براہ کرم دوبارہ کوشش کریں۔',
     failedLoadSalary: 'تنخواہ لوڈ کرنے میں ناکامی۔ براہ کرم دوبارہ کوشش کریں۔',
-    failedLoadExpenses: 'اخراجات لوڈ کرنے میں ناکامی۔ براہ کرم دوبارہ کوشش کریں۔',
+    failedLoadExpenses:
+      'اخراجات لوڈ کرنے میں ناکامی۔ براہ کرم دوبارہ کوشش کریں۔',
     expenseAdded: 'خرچ کامیابی سے شامل ہو گیا!',
     expenseUpdated: 'خرچ کامیابی سے اپ ڈیٹ ہو گیا',
     expenseDeleted: 'خرچ کامیابی سے حذف ہو گیا'
@@ -688,7 +721,7 @@ export default {
     overallBalance: 'مجموعی بیلنس',
     totalTransactions: 'کل لین دین',
     lentVsBorrowed: 'دیا گیا بمقابلہ لیا گیا',
-    settlementPerPerson: 'فی فرد تصفیہ',
+    settlementPerPerson: 'فی فرد ادائیگی',
     whoPaysWhom: 'کون کس کو ادا کرے گا',
     loanRecords: 'قرضوں کے ریکارڈ',
     personalLoansDownload: 'ذاتی_قرضے',
@@ -703,7 +736,8 @@ export default {
     reportBug: 'بگ رپورٹ کریں',
     myReports: 'میری رپورٹس',
     statusUpdates: 'آپ کی جمع کردہ رپورٹس کی اسٹیٹس اپ ڈیٹس',
-    improveApp: 'جو مسئلہ پیش آیا اسے بیان کر کے Kharchafy بہتر بنانے میں مدد کریں',
+    improveApp:
+      'جو مسئلہ پیش آیا اسے بیان کر کے خرچے فائی بہتر بنانے میں مدد کریں',
     newReport: 'نئی رپورٹ',
     submittedEmpty: 'آپ نے ابھی تک کوئی بگ رپورٹ جمع نہیں کرائی۔',
     tipsTitle: 'بہتر بگ رپورٹ کے لیے تجاویز',
@@ -716,8 +750,7 @@ export default {
     ],
     reportSubmitted: 'رپورٹ کامیابی سے جمع ہو گئی!',
     bugNumber: 'بگ نمبر:',
-    thankYou:
-      'بہتری میں مدد کے لیے شکریہ۔ ہم جلد از جلد اس کا جائزہ لیں گے۔',
+    thankYou: 'بہتری میں مدد کے لیے شکریہ۔ ہم جلد از جلد اس کا جائزہ لیں گے۔',
     submitAnother: 'ایک اور رپورٹ جمع کریں',
     category: 'بگ زمرہ',
     selectCategory: 'زمرہ منتخب کریں',
@@ -765,7 +798,7 @@ export default {
     searchPlaceholder: 'بگ نمبر (khata-bug-...) یا عنوان سے تلاش کریں...',
     totalOpen: '{total} کل · {open} کھلے',
     refresh: 'ریفریش',
-    noReportsMatch: 'موجودہ فلٹر سے کوئی بگ رپورٹ نہیں ملی۔',
+    noReportsMatch: 'موجودہ چھانٹی سے کوئی بگ رپورٹ نہیں ملی۔',
     showLess: 'کم دکھائیں',
     showMore: 'مزید دکھائیں',
     anonymous: 'نامعلوم',
@@ -789,7 +822,7 @@ export default {
       groups: 'گروپس',
       notifications: 'اطلاعات',
       auth: 'تصدیق / لاگ ان',
-      settlement: 'تصفیہ',
+      settlement: 'حساب برابر',
       export: 'ایکسپورٹ (PDF / Excel)',
       charts: 'چارٹس / بصریات',
       other: 'دیگر'
@@ -845,7 +878,8 @@ export default {
     deleteNoteTitle: 'نوٹ حذف کریں',
     noteDeleted: 'نوٹ حذف ہو گیا۔',
     noteDeleteFailed: 'نوٹ حذف کرنے میں ناکامی۔ براہ کرم دوبارہ کوشش کریں۔',
-    reactionFailed: 'ری ایکشن اپ ڈیٹ کرنے میں ناکامی۔ براہ کرم دوبارہ کوشش کریں۔',
+    reactionFailed:
+      'ری ایکشن اپ ڈیٹ کرنے میں ناکامی۔ براہ کرم دوبارہ کوشش کریں۔',
     downloadFailed: 'ڈاؤن لوڈ ناکام ہو گیا۔ تصویر نئے ٹیب میں کھول کر دیکھیں۔',
     screenshotAlt: 'اسکرین شاٹ {index}',
     imageAlt: 'تصویر {index}'
@@ -854,7 +888,10 @@ export default {
     blockedNotice:
       'آپ کا اکاؤنٹ منتظم نے بلاک کر دیا ہے۔ گروپس صرف حوالہ کے لیے دکھائے جا رہے ہیں۔',
     createPrompt: 'نیا گروپ بنانا چاہتے ہیں؟',
+    addExpense: 'خرچ شامل کریں',
+    addLoan: 'قرض شامل کریں',
     searchPlaceholder: 'گروپ نام، کوڈ، مالک، یا رکن سے تلاش کریں...',
+    sortPlaceholder: 'ترتیب',
     sortDefault: 'ڈیفالٹ',
     sortAsc: 'A→Z',
     sortDesc: 'Z→A',
@@ -878,7 +915,8 @@ export default {
     categoryOptionalPlaceholder: 'زمرہ منتخب کریں (اختیاری)',
     create: 'بنائیں',
 
-    groupBlockedByAdmin: 'یہ گروپ منتظم نے بلاک کیا ہوا ہے۔ اس کے ساتھ تعامل نہ کریں۔',
+    groupBlockedByAdmin:
+      'یہ گروپ منتظم نے بلاک کیا ہوا ہے۔ اس کے ساتھ تعامل نہ کریں۔',
     accountBlockedActionsDisabled:
       'آپ کا اکاؤنٹ منتظم نے بلاک کر دیا ہے۔ گروپ اقدامات غیر فعال ہیں۔',
     ownerLabel: 'مالک: {name} ({mobile})',
@@ -956,8 +994,7 @@ export default {
     ownershipTransferRequestTitle: '👑 ملکیت منتقلی کی درخواست',
     currentOwnershipLabel: 'موجودہ ملکیت:',
     transferOwnershipToLabel: 'ملکیت منتقل کریں:',
-    awaitingNewOwnerAcceptance:
-      'نامزد نئے مالک کی قبولیت کا انتظار ہے۔',
+    awaitingNewOwnerAcceptance: 'نامزد نئے مالک کی قبولیت کا انتظار ہے۔',
     acceptOwnership: 'ملکیت قبول کریں',
     declineOwnership: 'رد کریں',
 
@@ -974,7 +1011,7 @@ export default {
     netAmountLabel: 'نیٹ رقم',
     willReceive: 'وصول کریں گے',
     willPay: 'ادا کریں گے',
-    settled: 'تصفیہ شدہ',
+    settled: 'برابر',
     youGet: 'آپ کو ملے گا',
     youPay: 'آپ ادا کریں گے',
     visibleOnlyToYouHint:
@@ -984,14 +1021,14 @@ export default {
     notJoinedAnyGroups: 'آپ ابھی تک کسی گروپ میں شامل نہیں ہوئے',
     noMoreGroupsAvailable: 'اس وقت مزید کوئی گروپ دستیاب نہیں',
     tryDifferentSearch: 'مختلف گروپ نام، کوڈ، مالک، یا رکن آزما کر دیکھیں۔',
-    createOrAcceptInvite:
-      'شروع کرنے کے لیے نیا گروپ بنائیں یا دعوت قبول کریں۔',
+    createOrAcceptInvite: 'شروع کرنے کے لیے نیا گروپ بنائیں یا دعوت قبول کریں۔',
     newGroupsWillAppear:
       'جب کوئی آپ کو دعوت دے گا یا نیا گروپ بنائے گا تو نئے گروپس یہاں ظاہر ہوں گے۔',
     allCategoriesOption: '🗂️ سب'
   },
   groupsMessages: {
-    loadAvailableGroupsFailed: 'دستیاب گروپس لوڈ کرنے میں ناکامی۔ براہ کرم دوبارہ کوشش کریں۔',
+    loadAvailableGroupsFailed:
+      'دستیاب گروپس لوڈ کرنے میں ناکامی۔ براہ کرم دوبارہ کوشش کریں۔',
     joinedGroupSuccess: 'آپ گروپ میں شامل ہو گئے ہیں!',
     invitationDeclined: 'دعوت رد کر دی گئی۔',
     joinedGroupsShareLabel: 'شامل شدہ گروپس',
@@ -1000,14 +1037,15 @@ export default {
     noGroupsToShare: 'شیئر کرنے کے لیے کوئی {label} دستیاب نہیں',
     sharedGroupTitle: 'شیئر کیا گیا گروپ: {name}',
     sharedGroupsTitleShare: 'شیئر کیے گئے {label}',
-    openGroupText: 'Kharchafy میں "{name}" کھولیں۔',
-    openGroupsText: 'Kharchafy میں یہ {label} کھولیں: {names}',
+    openGroupText: 'خرچے فائی میں "{name}" کھولیں۔',
+    openGroupsText: 'خرچے فائی میں یہ {label} کھولیں: {names}',
     shareLinkCopied: 'شیئر لنک کلپ بورڈ میں کاپی ہو گیا!',
     copyShareLinkLabel: 'یہ شیئر لنک کاپی کریں:',
     shareLinkFailed: 'گروپ لنک شیئر کرنے میں ناکامی۔',
     selectMemberToAddError: 'براہ کرم شامل کرنے کے لیے رکن منتخب کریں',
     userNotFound: 'صارف نہیں ملا',
-    noPendingJoinRequestToCancel: 'منسوخ کرنے کے لیے کوئی زیر التوا شمولیت درخواست نہیں ملی',
+    noPendingJoinRequestToCancel:
+      'منسوخ کرنے کے لیے کوئی زیر التوا شمولیت درخواست نہیں ملی',
     joinRequestAlreadyPending: 'شمولیت کی درخواست پہلے سے زیر التوا ہے',
     joinRequestSent: 'شمولیت کی درخواست بھیج دی گئی',
     joinRequestSentToOwner: 'شمولیت کی درخواست گروپ مالک کو بھیج دی گئی',
@@ -1015,13 +1053,19 @@ export default {
     memberAddedToGroup: '{name} کو گروپ میں شامل کر دیا گیا ہے',
     approvalRecorded: 'منظوری ریکارڈ کر لی گئی',
     approvedJoinRequest: 'آپ نے شمولیت کی اس درخواست کو منظور کر لیا ہے',
-    allMustApproveBeforeAdding: 'گروپ میں شامل کرنے سے پہلے تمام اراکین کی منظوری ضروری ہے',
+    allMustApproveBeforeAdding:
+      'گروپ میں شامل کرنے سے پہلے تمام اراکین کی منظوری ضروری ہے',
     memberAdded: 'رکن شامل کر دیا گیا',
-    joinRequestFromRejected: '{name} ({mobile}) کی شمولیت درخواست مسترد کر دی گئی',
-    yourJoinRequestRejected: '"{groupName}" میں شامل ہونے کی آپ کی درخواست مسترد کر دی گئی',
+    joinRequestFromRejected:
+      '{name} ({mobile}) کی شمولیت درخواست مسترد کر دی گئی',
+    yourJoinRequestRejected:
+      '"{groupName}" میں شامل ہونے کی آپ کی درخواست مسترد کر دی گئی',
     requestRejected: 'درخواست مسترد کر دی گئی',
-    mustBeMemberToSelect: 'اس گروپ کو منتخب کرنے کے لیے آپ کا اس کا رکن ہونا ضروری ہے',
+    mustBeMemberToSelect:
+      'اس گروپ کو منتخب کرنے کے لیے آپ کا اس کا رکن ہونا ضروری ہے',
     selectedGroupSuccess: 'منتخب گروپ: {name}',
+    selectGroupBeforeSharedAction:
+      'مشترکہ اندراج شامل کرنے سے پہلے کوئی گروپ جوائن یا منتخب کریں۔',
     soleMemberDeleteConfirm:
       'آپ اس گروپ کے واحد رکن ہیں۔ یہ کسی منظوری کے بغیر فوراً حذف ہو جائے گا۔',
     deleteGroupTitle: 'گروپ حذف کریں',
@@ -1033,16 +1077,18 @@ export default {
     sendRequestButton: 'درخواست بھیجیں',
     deletionRequestSent: 'حذف کی درخواست بھیج دی گئی',
     deletionRequestSentToAll: 'حذف کی درخواست تمام اراکین کو بھیج دی گئی',
-    allApprovedGroupDeleted: 'تمام اراکین نے منظوری دے دی۔ گروپ حذف کر دیا گیا ہے۔',
+    allApprovedGroupDeleted:
+      'تمام اراکین نے منظوری دے دی۔ گروپ حذف کر دیا گیا ہے۔',
     approvedDeletionRequest: 'آپ نے حذف کی درخواست کو منظور کر لیا ہے',
     rejectDeletionConfirmBody:
       'یہ حذف کی درخواست منسوخ کر دے گا۔ اگر مالک گروپ حذف کرنا چاہے تو اسے نئی درخواست بنانی ہوگی۔',
     rejectDeletionRequestTitle: 'حذف کی درخواست مسترد کریں',
     rejectButton: 'مسترد کریں',
-    deletionCancelledBy: 'گروپ حذف کرنے کی درخواست {name} ({mobile}) نے منسوخ کر دی',
-    deletionRejectedAndCancelled:
-      'حذف کی درخواست مسترد اور منسوخ کر دی گئی ہے',
-    cannotDeleteUntilAllApprove: 'تمام اراکین کی منظوری تک گروپ حذف نہیں کیا جا سکتا',
+    deletionCancelledBy:
+      'گروپ حذف کرنے کی درخواست {name} ({mobile}) نے منسوخ کر دی',
+    deletionRejectedAndCancelled: 'حذف کی درخواست مسترد اور منسوخ کر دی گئی ہے',
+    cannotDeleteUntilAllApprove:
+      'تمام اراکین کی منظوری تک گروپ حذف نہیں کیا جا سکتا',
     finalDeleteConfirmBody:
       'تمام اراکین نے منظوری دے دی ہے۔ یہ گروپ اور اس کا تمام ڈیٹا مستقل طور پر حذف کر دے گا۔ یہ عمل واپس نہیں ہو سکتا۔',
     confirmFinalDeletionTitle: 'حتمی حذف کی تصدیق کریں',
@@ -1062,7 +1108,8 @@ export default {
     proposedRemovalNotif:
       'آپ کو "{groupName}" سے ہٹانے کی تجویز دی گئی ہے۔ یہ موجودہ اراکین کی منظوری کے بعد مؤثر ہوگی۔',
     editRequestSentToast: 'ترمیم کی درخواست بھیج دی گئی',
-    editRequestSentToMembers: 'ترمیم کی درخواست اراکین کو منظوری کے لیے بھیج دی گئی',
+    editRequestSentToMembers:
+      'ترمیم کی درخواست اراکین کو منظوری کے لیے بھیج دی گئی',
     groupNameUpdatedToast: 'گروپ کا نام اپ ڈیٹ ہو گیا',
     groupNameUpdatedSuccess: 'گروپ کا نام کامیابی سے اپ ڈیٹ ہو گیا',
     noChangesToSave: 'محفوظ کرنے کے لیے کوئی تبدیلی نہیں',
@@ -1076,11 +1123,13 @@ export default {
     nameArrow: 'نام → "{name}"',
     addedMembersCount: '+{count} رکن',
     removedMembersCount: '-{count} رکن',
-    editCancelledBy: 'گروپ ترمیم کی درخواست {name} ({mobile}) نے منسوخ کر دی{detail}',
+    editCancelledBy:
+      'گروپ ترمیم کی درخواست {name} ({mobile}) نے منسوخ کر دی{detail}',
     editRequestRejectedToast: 'ترمیمی درخواست مسترد کر دی گئی',
     groupNotFound: 'گروپ نہیں ملا',
     memberAlreadyInGroup: 'یہ رکن پہلے سے گروپ میں موجود ہے',
-    addMemberRequestSentToAll: 'رکن شامل کرنے کی درخواست تمام اراکین کو بھیج دی گئی',
+    addMemberRequestSentToAll:
+      'رکن شامل کرنے کی درخواست تمام اراکین کو بھیج دی گئی',
     allMustApproveBeforeAddingNew:
       'نیا رکن شامل کرنے سے پہلے تمام اراکین کی منظوری ضروری ہے',
     newMemberAddedSuccess: 'نیا رکن کامیابی سے شامل ہو گیا',
@@ -1092,18 +1141,20 @@ export default {
     groupDeletionPending: 'گروپ حذف کرنے کی درخواست زیر التوا ہے',
     addMemberPending: 'رکن شامل کرنے کی درخواست زیر التوا ہے',
     ownershipTransferPending: 'ملکیت منتقلی زیر التوا ہے',
-    settlementRequestPending: 'تصفیہ کی درخواست زیر التوا ہے',
+    settlementRequestPending: 'حساب برابر کرنے کی درخواست زیر التوا ہے',
     joinRequestPendingReason: 'شمولیت کی درخواست زیر التوا ہے',
-    cannotLeaveWhileReason: '{reason}۔ اسے پہلے حل کریں، تب تک گروپ نہیں چھوڑ سکتے۔',
+    cannotLeaveWhileReason:
+      '{reason}۔ اسے پہلے حل کریں، تب تک گروپ نہیں چھوڑ سکتے۔',
     cannotLeaveExpenseChangePending:
       'مشترکہ خرچ کی تبدیلی کی درخواست زیر التوا ہے۔ اسے پہلے حل کریں، تب تک گروپ نہیں چھوڑ سکتے۔',
     cannotLeaveLoanChangePending:
       'مشترکہ قرض کی تبدیلی کی درخواست زیر التوا ہے۔ اسے پہلے حل کریں، تب تک گروپ نہیں چھوڑ سکتے۔',
     cannotLeaveActiveTransactions:
-      'اس گروپ میں آپ کے فعال مشترکہ اخراجات یا قرضے موجود ہیں۔ پہلے تصفیہ مکمل کریں، تب تک گروپ نہیں چھوڑ سکتے۔',
+      'اس گروپ میں آپ کے فعال مشترکہ اخراجات یا قرضے موجود ہیں۔ پہلے حساب برابر کریں، تب تک گروپ نہیں چھوڑ سکتے۔',
     cannotLeaveUnsettledBalance:
-      'آپ کا غیر تصفیہ شدہ بیلنس ({amount}) موجود ہے۔ پہلے حساب برابر کریں، تب تک گروپ نہیں چھوڑ سکتے۔',
-    couldNotVerifyBalance: 'آپ کا بیلنس چیک نہیں ہو سکا۔ براہ کرم دوبارہ کوشش کریں۔',
+      'آپ کا {amount} ادا ہونا باقی ہے۔ پہلے حساب برابر کریں، تب تک گروپ نہیں چھوڑ سکتے۔',
+    couldNotVerifyBalance:
+      'آپ کا بیلنس چیک نہیں ہو سکا۔ براہ کرم دوبارہ کوشش کریں۔',
     soleMemberLeaveConfirmBody:
       'آپ اس گروپ کے واحد رکن ہیں۔ گروپ چھوڑنے سے خالی گروپ فوراً حذف ہو جائے گا۔',
     leaveGroupTitle: 'گروپ چھوڑیں',
@@ -1113,8 +1164,7 @@ export default {
       'آپ گروپ مالک ہیں۔ گروپ چھوڑنے سے پہلے آپ کو ملکیت کسی دوسرے رکن کو منتقل کرنی ہوگی۔',
     transferOwnershipRequiredTitle: 'ملکیت منتقلی ضروری ہے',
     transferOwnershipButton: 'ملکیت منتقل کریں',
-    couldNotFindMembershipRecord:
-      'اس گروپ میں آپ کا رکنیت ریکارڈ نہیں ملا۔',
+    couldNotFindMembershipRecord: 'اس گروپ میں آپ کا رکنیت ریکارڈ نہیں ملا۔',
     ownershipWillTransferTo:
       'آپ مالک ہیں۔ گروپ چھوڑنے پر ملکیت {name} کو منتقل ہو جائے گی۔',
     confirmLeaveGroupBody: 'کیا آپ واقعی یہ گروپ چھوڑنا چاہتے ہیں؟',
@@ -1149,32 +1199,36 @@ export default {
     deletePendingButton: 'حذف زیر التوا ({approved}/{total})',
     requestDeleteButton: 'حذف کی درخواست',
     maxMembersError: 'ایک گروپ میں زیادہ سے زیادہ {max} اراکین ہو سکتے ہیں',
-    atLeastTwoMembersToCreate:
-      'گروپ بنانے کے لیے کم از کم دو اراکین ضروری ہیں',
+    atLeastTwoMembersToCreate: 'گروپ بنانے کے لیے کم از کم دو اراکین ضروری ہیں',
     ownerDuplicateNameError: 'آپ کے پاس اس نام کا گروپ پہلے سے موجود ہے',
     memberConflictNameError:
       'ایک یا زیادہ اراکین پہلے سے اس نام کے گروپ میں موجود ہیں',
     groupCreatedToast: 'گروپ بن گیا — منتخب اراکین کو دعوتیں بھیج دی گئیں',
     maxMembersAllowedError: 'گروپ میں زیادہ سے زیادہ {max} اراکین کی اجازت ہے',
     failedLoadSharedGroups: 'شیئر کیے گئے گروپس لوڈ کرنے میں ناکامی۔',
-    wantsToJoinNotif: '{name} ({mobile}) "{groupName}" میں شامل ہونا چاہتا/چاہتی ہے',
-    joinRequestSentWaiting: 'شمولیت کی درخواست بھیج دی گئی! رکن کی منظوری کا انتظار ہے۔',
-    failedSendJoinRequest: 'شمولیت کی درخواست بھیجنے میں ناکامی۔ براہ کرم دوبارہ کوشش کریں۔',
+    wantsToJoinNotif:
+      '{name} ({mobile}) "{groupName}" میں شامل ہونا چاہتا/چاہتی ہے',
+    joinRequestSentWaiting:
+      'شمولیت کی درخواست بھیج دی گئی! رکن کی منظوری کا انتظار ہے۔',
+    failedSendJoinRequest:
+      'شمولیت کی درخواست بھیجنے میں ناکامی۔ براہ کرم دوبارہ کوشش کریں۔',
     acceptedInvitationNotif:
       '{name} ({mobile}) نے "{groupName}" میں شامل ہونے کی آپ کی دعوت قبول کر لی',
     declinedInvitationNotif:
       '{name} ({mobile}) نے "{groupName}" میں شامل ہونے کی آپ کی دعوت رد کر دی',
-    failedJoinGroup: 'اس گروپ میں شامل ہونے میں ناکامی۔ براہ کرم دوبارہ کوشش کریں۔'
+    failedJoinGroup:
+      'اس گروپ میں شامل ہونے میں ناکامی۔ براہ کرم دوبارہ کوشش کریں۔'
   },
   layout: {
     shareText: 'یہ صفحہ خرچے فائی میں کھولیں۔',
     linkCopied: 'لنک کلپ بورڈ میں کاپی ہو گیا!',
     copyThisLink: 'یہ لنک کاپی کریں:',
     nativeShareUnavailable:
-      'نیٹو شیئر دستیاب نہیں ہے، اس لیے لنک دستی کاپی کے لیے کھول دیا گیا۔',
+      'شیئر کا آپشن اس ڈیوائس پر دستیاب نہیں، لنک خود کاپی کرنے کے لیے کھول دیا گیا۔',
     inactivityMinute: '1 منٹ',
     inactivityMinutes: '{count} منٹ',
-    inactivityLogoutMessage: 'آپ کو {label} کی غیر فعالیت کے بعد لاگ آؤٹ کر دیا گیا۔',
+    inactivityLogoutMessage:
+      'آپ {label} تک غیر سرگرم رہے، اس لیے لاگ آؤٹ کر دیا گیا۔',
     sessionExpired: 'سیشن ختم ہو گیا۔ براہ کرم دوبارہ لاگ ان کریں۔',
     guestName: 'مہمان'
   },
@@ -1191,11 +1245,16 @@ export default {
     notMemberNotice:
       'آپ اس گروپ کے رکن نہیں ہیں۔ شامل ہونے کی درخواست کریں یا گروپ مالک سے دعوت طلب کریں۔',
     acceptInvitation: 'دعوت قبول کریں',
-    acceptInvitationFailed: 'دعوت قبول کرنے میں ناکامی۔ براہ کرم دوبارہ کوشش کریں۔',
-    declineInvitationFailed: 'دعوت رد کرنے میں ناکامی۔ براہ کرم دوبارہ کوشش کریں۔',
-    pendingJoinRequestExists: 'آپ کی پہلے سے ایک زیر التوا شمولیت درخواست موجود ہے۔',
-    joinRequestSent: 'شمولیت کی درخواست بھیج دی گئی! رکن کی منظوری کا انتظار ہے۔',
-    joinRequestFailed: 'شمولیت کی درخواست بھیجنے میں ناکامی۔ براہ کرم دوبارہ کوشش کریں۔',
+    acceptInvitationFailed:
+      'دعوت قبول کرنے میں ناکامی۔ براہ کرم دوبارہ کوشش کریں۔',
+    declineInvitationFailed:
+      'دعوت رد کرنے میں ناکامی۔ براہ کرم دوبارہ کوشش کریں۔',
+    pendingJoinRequestExists:
+      'آپ کی پہلے سے ایک زیر التوا شمولیت درخواست موجود ہے۔',
+    joinRequestSent:
+      'شمولیت کی درخواست بھیج دی گئی! رکن کی منظوری کا انتظار ہے۔',
+    joinRequestFailed:
+      'شمولیت کی درخواست بھیجنے میں ناکامی۔ براہ کرم دوبارہ کوشش کریں۔',
     requestToJoin: 'شامل ہونے کی درخواست',
     backToGroupsArrow: '← گروپس پر واپس جائیں'
   },
@@ -1262,7 +1321,7 @@ export default {
     noData: 'دکھانے کے لیے کوئی ڈیٹا نہیں'
   },
   filterBar: {
-    title: 'فلٹرز'
+    title: 'چھانٹی'
   },
   imageEditor: {
     previewLabel: 'پیش نظارہ',
@@ -1275,7 +1334,7 @@ export default {
     defaultConfirmLabel: 'تصویر استعمال کریں',
     defaultAlt: 'امیج ایڈیٹر',
     defaultHint:
-      'دوبارہ جگہ بنانے کے لیے گھسیٹیں۔ تصویر کو زوم اور گھمانے کے لیے نیچے دیے گئے کنٹرولز استعمال کریں۔'
+      'تصویر کی پوزیشن بدلنے کے لیے گھسیٹیں۔ زوم یا گھمانے کے لیے نیچے دیے گئے بٹن استعمال کریں۔'
   },
   imagePreview: {
     previous: 'پچھلا',
@@ -1293,7 +1352,7 @@ export default {
     insertTemplate: 'بگ رپورٹ ٹیمپلیٹ شامل کریں',
     attachImage: 'تصویر منسلک کریں',
     imageLabel: 'تصویر',
-    hint: 'مارک ڈاؤن سپورٹڈ ہے'
+    hint: 'مارک ڈاؤن سپورٹ موجود ہے'
   },
   netPosition: {
     dialogTitle: 'آپ کے اخراجات کا خلاصہ',
@@ -1307,14 +1366,14 @@ export default {
     netForSharedLoans: 'مشترکہ قرضوں کے لیے نیٹ:',
     netForPersonalLoans: 'ذاتی قرضوں کے لیے نیٹ:',
     categoryBreakdown: 'زمرہ جاتی تفصیل',
-    categoryChartTitle: 'فی زمرہ وصول (↑) بمقابلہ ادا (↓)',
+    categoryChartTitle: 'زمرے کے مطابق وصولی (↑) اور ادائیگی (↓)',
     downloadPdf: 'PDF ڈاؤن لوڈ کریں'
   },
   receiptOcr: {
     extracting: 'نکالا جا رہا ہے...',
     extractText: 'متن نکالیں',
     verifyWarning:
-      'محفوظ کرنے سے پہلے نکالے گئے ڈیٹا کی تصدیق کریں۔ رسید سے ڈیٹا نکالنے میں غلطی ہو سکتی ہے۔',
+      'محفوظ کرنے سے پہلے نکالی گئی معلومات جانچ لیں۔ رسید پڑھنے میں غلطی ہو سکتی ہے۔',
     comingSoon: 'رسید سے متن نکالنے کی سہولت جلد آ رہی ہے۔'
   },
   receiptUpload: {
@@ -1326,12 +1385,13 @@ export default {
     editorTitle: 'رسید ایڈجسٹ کریں',
     editorConfirmLabel: 'رسید استعمال کریں',
     editorAlt: 'رسید ایڈیٹر',
-    editorHint: 'رسید کو دوبارہ جگہ دینے کے لیے گھسیٹیں، پھر ضرورت کے مطابق زوم یا گھمائیں۔',
+    editorHint:
+      'رسید کی جگہ بدلنے کے لیے گھسیٹیں، پھر ضرورت کے مطابق زوم یا گھمائیں۔',
     previewFallbackName: 'رسید کا پیش نظارہ',
     receiptIndexName: 'رسید {index}'
   },
   welcomeBanner: {
-    welcomeBack: 'خوش آمدید',
+    welcomeBack: 'واپس خوش آمدید',
     userNameLabel: 'صارف کا نام',
     activeGroupLabel: 'فعال گروپ (شامل شدہ گروپس)',
     noGroupSelected: 'کوئی گروپ منتخب نہیں'
@@ -1402,7 +1462,8 @@ export default {
         'مشترکہ خصوصیات کے لیے کم از کم ایک مشترکہ ٹیب (مشترکہ اخراجات، مشترکہ قرضے، یا صارفین) درکار ہے۔',
       personalRequiresTabError:
         'ذاتی خصوصیات کے لیے کم از کم ایک ذاتی ٹیب (ذاتی اخراجات یا ذاتی قرضے) درکار ہے۔',
-      selectAtLeastOneTabError: 'جاری رکھنے کے لیے کم از کم ایک اصل ٹیب منتخب کریں۔',
+      selectAtLeastOneTabError:
+        'جاری رکھنے کے لیے کم از کم ایک اصل ٹیب منتخب کریں۔',
       validateFailed: 'صارف کی ٹیب کنفگ کی تصدیق میں ناکامی۔'
     },
     users: {
@@ -1457,7 +1518,7 @@ export default {
     freeTierTag: 'فری ٹیئر',
     blockedBannerText:
       'آپ کا اکاؤنٹ فی الحال بلاک ہے۔ صارفین اور گروپس صرف حوالہ کے لیے دکھائی دیتے رہیں گے۔',
-    managedByProvider: 'آپ کے موجودہ سائن ان پرووائیڈر کے ذریعے منظم ہے۔',
+    managedByProvider: 'آپ کے موجودہ سائن ان طریقے سے منظم ہے۔',
     emailsSentLabel: 'بھیجی گئی ای میلز ({month})',
     ocrExtractionsLabel: 'OCR نکالنے کی تعداد ({month})',
     newVerifiedEmailLabel: 'نئی تصدیق شدہ ای میل',

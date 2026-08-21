@@ -44,12 +44,43 @@ html[lang='ur'] body {
   font-family: 'Noto Nastaliq Urdu', 'Poppins', sans-serif;
 }
 
-/* The Kharchafy brand/tagline stays Latin and single-line — the Nastaliq
-   line-height above only serves wrapped Urdu paragraphs, and applying it
-   here just inflates the header and breaks its vertical centering. */
+/* The brand/tagline stays short and single-line. The Nastaliq line-height
+   above only serves wrapped Urdu paragraphs, and applying it here just
+   inflates the header and breaks its vertical centering. */
 html[lang='ur'] .kharchafy-brand,
 html[lang='ur'] .kharchafy-brand * {
   line-height: 1.5 !important;
+}
+
+html[lang='ur'] .kharchafy-brand {
+  align-items: flex-end;
+  text-align: right;
+}
+
+html[lang='ur'] .kharchafy-brand a {
+  font-size: clamp(1.25rem, 5.2vw, 1.85rem);
+  letter-spacing: 0 !important;
+  white-space: nowrap;
+}
+
+html[lang='ur'] .kharchafy-brand span {
+  font-size: clamp(0.58rem, 2.1vw, 0.78rem);
+  letter-spacing: 0 !important;
+  text-transform: none;
+  white-space: nowrap;
+}
+
+/* Fixed-height controls cannot inherit the paragraph-friendly Urdu
+   line-height without clipping or shifting their hit targets. */
+html[lang='ur'] button,
+html[lang='ur'] .el-button,
+html[lang='ur'] .el-input__inner,
+html[lang='ur'] .el-select__wrapper,
+html[lang='ur'] .el-select__selected-item,
+html[lang='ur'] .el-checkbox__label,
+html[lang='ur'] .el-radio__label,
+html[lang='ur'] .el-dropdown-menu__item {
+  line-height: 1.45 !important;
 }
 
 /* Theme-aware colors */
@@ -1177,18 +1208,19 @@ button:disabled {
 /* Filter bars */
 .filter-bar {
   background-color: var(--card-bg);
-  border: 1px solid var(--success-100);
-  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
   padding: 0.75rem 0.85rem;
-  box-shadow: 0 8px 24px -16px rgba(34, 197, 94, 0.25);
+  box-shadow: 0 4px 12px -10px rgba(15, 23, 42, 0.35);
   /* Counteract el-row's negative gutter margins so the bar aligns with siblings */
   margin-left: 0 !important;
   margin-right: 0 !important;
 }
 
 .dark-theme .filter-bar {
-  border-color: rgba(34, 197, 94, 0.3);
-  box-shadow: 0 8px 24px -16px rgba(34, 197, 94, 0.2);
+  background-color: var(--card-bg);
+  border-color: var(--border-color);
+  box-shadow: 0 4px 12px -10px rgba(0, 0, 0, 0.7);
 }
 
 .filter-bar .el-form-item__label {
@@ -1456,6 +1488,28 @@ button:disabled {
 
 .el-tabs__nav-scroll {
   display: flex;
+}
+
+/* ── RTL / Urdu tab fixes ──────────────────────────────────────────────────── */
+
+html[lang='ur'] .el-tabs__header,
+html[lang='ur'] .el-tabs__nav-wrap,
+html[lang='ur'] .el-tabs__nav-scroll,
+html[lang='ur'] .el-tabs__nav,
+html[lang='ur'] .el-tabs__item,
+html[lang='ur'] .el-tabs__nav-prev,
+html[lang='ur'] .el-tabs__nav-next {
+  line-height: 1.4 !important;
+}
+
+html[lang='ur'] .el-tabs__item {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 0 0 auto;
+  height: 40px !important;
+  padding: 0 18px !important;
+  white-space: nowrap;
 }
 
 @media (prefers-reduced-motion: reduce) {

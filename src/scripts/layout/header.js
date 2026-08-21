@@ -74,7 +74,7 @@ export const Header = (props, emit, options = {}) => {
   async function shareCurrentUrl() {
     return share(
       {
-        title: document.title || 'Kharchafy',
+        title: document.title || t('footer.brand'),
         text: t('layout.shareText'),
         url: window.location.href
       },
@@ -129,8 +129,7 @@ export const Header = (props, emit, options = {}) => {
   // to them so an Urdu marketing/guest page doesn't drop back to English.
   function navigateTo(path) {
     const target =
-      (path === '/login' || path === '/register') &&
-      route.meta?.locale === 'ur'
+      (path === '/login' || path === '/register') && route.meta?.locale === 'ur'
         ? `/ur${path}`
         : path
     if (route.path === target) return

@@ -7,12 +7,12 @@
       <GenericButton
         v-if="showResendVerification"
         type="link"
-        size="medium"
+        size="default"
         @click="$emit('resend-verification')"
       >
         {{ t('auth.actions.resendVerification') }}
       </GenericButton>
-      <GenericButton type="link" size="medium" @click="$emit('forgot-code')">
+      <GenericButton type="link" size="default" @click="$emit('forgot-code')">
         {{ t('auth.actions.forgotPassword') }}
       </GenericButton>
     </div>
@@ -28,7 +28,7 @@
       <GenericButton
         @click="$emit('submit')"
         type="success"
-        size="medium"
+        size="default"
         custom-class="flex-1"
         :loading="isSubmitting"
         :disabled="isSubmitting"
@@ -85,7 +85,7 @@
       {{ t('auth.actions.newToApp') }}
       <GenericButton
         type="link"
-        size="medium"
+        size="default"
         custom-class="font-medium"
         @click="$emit('update:mode', 'register')"
       >
@@ -100,7 +100,7 @@
       {{ t('auth.actions.alreadyHaveAccount') }}
       <GenericButton
         type="link"
-        size="medium"
+        size="default"
         custom-class="font-medium"
         @click="$emit('update:mode', 'login')"
       >

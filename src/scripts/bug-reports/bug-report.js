@@ -410,13 +410,15 @@ export const BugReport = (props) => {
       )
       actionLoading.value = r.id
       const uid = authStore.getActiveUserUid
+      const reportPath = `${DB_NODES.BUG_REPORTS}/${uid}/reports/${r.id}`
+      if (r.screenshots?.length) {
+        cleanupOldReceipts(r.screenshots, [], { documentPath: reportPath })
+      }
       await deleteDoc(doc(database, DB_NODES.BUG_REPORTS, uid, 'reports', r.id))
       if (uid)
         await deleteDoc(
           doc(database, DB_NODES.BUG_REPORT_NOTIFICATIONS, uid, 'items', r.id)
         ).catch(() => {})
-      if (r.screenshots?.length)
-        r.screenshots.forEach((ss) => cleanupOldReceipts([ss], []))
       showSuccess(t('bugReports.reportDeleted'))
     } catch (e) {
       if (e !== 'cancel') showError(e?.message || t('bugReports.deleteFailed'))
@@ -552,10 +554,13 @@ export const BugReport = (props) => {
       }
       const allScreenshots = [...(editForm.value.screenshots || []), ...newMeta]
       const original = myReports.value.find((r) => r.id === editForm.value.id)
-      if (original?.screenshots?.length)
-        cleanupOldReceipts(original.screenshots, allScreenshots)
-
       const uid = authStore.getActiveUserUid
+      const reportPath = `${DB_NODES.BUG_REPORTS}/${uid}/reports/${editForm.value.id}`
+      if (original?.screenshots?.length)
+        cleanupOldReceipts(original.screenshots, allScreenshots, {
+          documentPath: reportPath
+        })
+
       await updateDoc(
         doc(database, DB_NODES.BUG_REPORTS, uid, 'reports', editForm.value.id),
         {

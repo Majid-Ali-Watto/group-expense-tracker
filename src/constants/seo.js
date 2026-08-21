@@ -1,4 +1,9 @@
 export const SITE_NAME = 'Kharchafy'
+export const SITE_NAMES = {
+  en: SITE_NAME,
+  ur: 'خرچے فائی'
+}
+export const getSiteName = (locale = 'en') => SITE_NAMES[locale] || SITE_NAME
 export const SITE_URL = 'https://g-exp-trk.netlify.app'
 export const DEFAULT_OG_IMAGE = '/expenses.png'
 export const PUBLIC_ROBOTS = 'index, follow'
@@ -252,7 +257,7 @@ export const FAQ_ITEMS = {
 const softwareApplicationSchema = (locale) => ({
   '@context': 'https://schema.org',
   '@type': 'SoftwareApplication',
-  name: SITE_NAME,
+  name: getSiteName(locale),
   applicationCategory: 'FinanceApplication',
   operatingSystem: 'Web',
   url: '__PAGE_URL__',
@@ -267,7 +272,7 @@ const softwareApplicationSchema = (locale) => ({
 const websiteSchema = (locale) => ({
   '@context': 'https://schema.org',
   '@type': 'WebSite',
-  name: SITE_NAME,
+  name: getSiteName(locale),
   url: '__SITE_URL__',
   inLanguage: locale
 })
@@ -327,10 +332,7 @@ export function getSeoPages(locale) {
         locale === 'ur'
           ? 'گروپ اخراجات ٹریکر, بل تقسیم ایپ, مشترکہ بجٹ ایپ, ذاتی بجٹ ٹریکر, مشترکہ قرض ٹریکر'
           : 'group expense tracker, split bills app, shared budget app, personal budget tracker, shared loan tracker',
-      structuredData: [
-        softwareApplicationSchema(locale),
-        websiteSchema(locale)
-      ]
+      structuredData: [softwareApplicationSchema(locale), websiteSchema(locale)]
     }),
     features: buildPageSeo({
       title:

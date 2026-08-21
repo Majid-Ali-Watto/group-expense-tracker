@@ -28,7 +28,7 @@
               <el-button
                 type="info"
                 plain
-                size="medium"
+                size="default"
                 @click="closeCreateGroup"
               >
                 {{ t('common.cancel') }}
@@ -39,62 +39,43 @@
       </Transition>
 
       <!-- Search Bar -->
-      <div class="mb-2">
-        <GenericInputField
-          v-model="searchQuery"
-          :placeholder="t('groups.searchPlaceholder')"
-          :maxlength="50"
-          :wrap-form-item="false"
+      <div class="mb-2 flex flex-col sm:flex-row sm:items-center gap-2">
+        <div class="flex-1 min-w-0">
+          <GenericInputField
+            v-model="searchQuery"
+            :placeholder="t('groups.searchPlaceholder')"
+            :maxlength="50"
+            :wrap-form-item="false"
+          >
+            <template #prefix>
+              <span class="text-gray-400">🔍</span>
+            </template>
+          </GenericInputField>
+        </div>
+        <div
+          class="hidden sm:flex items-center gap-2"
+          :class="{ 'pointer-events-none opacity-60': activeUserIsBlocked }"
         >
-          <template #prefix>
-            <span class="text-gray-400">🔍</span>
-          </template>
-        </GenericInputField>
+          <GenericButton
+            type="primary"
+            plain
+            custom-class="!w-fit !px-3"
+            @click="navigateToSharedExpense()"
+          >
+            {{ t('groups.addExpense') }}
+          </GenericButton>
+          <GenericButton
+            type="success"
+            plain
+            custom-class="!w-fit !px-3"
+            @click="navigateToSharedLoan()"
+          >
+            {{ t('groups.addLoan') }}
+          </GenericButton>
+        </div>
       </div>
 
-      <!-- Sort & Filter controls -->
-      <div class="flex items-center gap-2 mb-2 min-w-0">
-        <el-button-group size="medium" class="flex-shrink-0">
-          <el-button
-            :type="sortOrder === '' ? 'primary' : ''"
-            @click="sortOrder = ''"
-            >{{ t('groups.sortDefault') }}</el-button
-          >
-          <el-button
-            :type="sortOrder === 'asc' ? 'primary' : ''"
-            @click="sortOrder = 'asc'"
-            >{{ t('groups.sortAsc') }}</el-button
-          >
-          <el-button
-            :type="sortOrder === 'desc' ? 'primary' : ''"
-            @click="sortOrder = 'desc'"
-            >{{ t('groups.sortDesc') }}</el-button
-          >
-        </el-button-group>
-        <GenericDropDown
-          v-model="filterByCategory"
-          :options="allCategoryOptions"
-          :placeholder="t('groups.categoryPlaceholder')"
-          size="medium"
-          select-class="w-full"
-          class="flex-1 min-w-0"
-          :wrap-form-item="false"
-        />
-        <GenericDropDown
-          v-model="filterByUser"
-          :options="allGroupMemberOptions"
-          :placeholder="t('groups.memberPlaceholder')"
-          size="medium"
-          select-class="w-full"
-          class="flex-1 min-w-0"
-          :wrap-form-item="false"
-        />
-      </div>
-      <div class="mb-4">
-        <el-checkbox v-model="hideBlockedEntities" size="small">
-          {{ t('groups.hideBlockedGroups') }}
-        </el-checkbox>
-      </div>
+      <FilterBar :fields="filterFields" class="mb-4" @clear="clearFilters" />
 
       <GroupPendingInvitations
         :invitations="pendingInvitations"
@@ -111,7 +92,7 @@
         <h4 class="mb-0">{{ t('groups.joinedGroupsHeading') }}</h4>
         <div class="flex items-center gap-1">
           <GenericButton
-            size="medium"
+            size="default"
             plain
             type="warning"
             :disabled="pinnedGroupsForShare.length === 0"
@@ -121,7 +102,7 @@
             {{ t('groups.sharePinned') }}
           </GenericButton>
           <GenericButton
-            size="medium"
+            size="default"
             plain
             type="primary"
             :disabled="joinedGroupsForShare.length === 0"
@@ -163,6 +144,8 @@
           :reject-ownership-transfer="rejectOwnershipTransfer"
           :active-user-blocked="activeUserIsBlocked"
           @toggle-pin="togglePin"
+          @add-expense="navigateToSharedExpense(group.id)"
+          @add-loan="navigateToSharedLoan(group.id)"
         />
       </div>
 
@@ -228,7 +211,7 @@ import { Groups } from '@/scripts/groups'
 import {
   GenericInputField,
   GenericButton,
-  GenericDropDown
+  FilterBar
 } from '@/components/generic-components'
 import { loadAsyncComponent } from '@/utils'
 import GroupPendingInvitations from './GroupPendingInvitations.vue'
@@ -251,12 +234,8 @@ const { t } = useI18n()
 const {
   showCreateGroup,
   searchQuery,
-  sortOrder,
-  filterByUser,
-  filterByCategory,
-  hideBlockedEntities,
-  allGroupMemberOptions,
-  allCategoryOptions,
+  filterFields,
+  clearFilters,
   joinedGroups,
   otherGroups,
   availableGroupsLoading,
@@ -285,6 +264,8 @@ const {
   openCreateGroup,
   closeCreateGroup,
   onGroupCreated,
+  navigateToSharedExpense,
+  navigateToSharedLoan,
   approveGroupDeletion,
   rejectGroupDeletion,
 

@@ -1,5 +1,6 @@
 import { ref, watch, computed, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import {
   useUsersOptions,
@@ -25,6 +26,7 @@ import { DB_NODES } from '@/constants'
 
 export const SharedExpenses = (props, emit) => {
   const { t } = useI18n()
+  const route = useRoute()
   const { updateData, saveData, isSubmitting } = useFireBase()
   const isVisible = ref(true)
   const authStore = useAuthStore()
@@ -34,7 +36,7 @@ export const SharedExpenses = (props, emit) => {
   const storeProxy = useStoreProxy()
   const isEditMode = computed(() => !!props.row?.amount)
 
-  const showTransactionForm = ref(false)
+  const showTransactionForm = ref(route.query.new === '1')
 
   const openForm = () => {
     showTransactionForm.value = true

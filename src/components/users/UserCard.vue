@@ -92,7 +92,7 @@
           </div>
 
           <el-button
-            size="medium"
+            size="default"
             type="success"
             plain
             :disabled="isInteractionBlocked"
@@ -104,7 +104,7 @@
           <template v-if="canManage">
             <template v-if="!user.deleteRequest">
               <el-button
-                size="medium"
+                size="default"
                 type="primary"
                 :disabled="isInteractionBlocked"
                 @click="$emit('edit')"
@@ -112,7 +112,7 @@
                 {{ t('users.edit') }}
               </el-button>
               <el-button
-                size="medium"
+                size="default"
                 type="danger"
                 :disabled="isInteractionBlocked"
                 @click="$emit('delete', user.uid, user.name)"
@@ -120,7 +120,7 @@
                 {{ t('users.delete') }}
               </el-button>
             </template>
-            <el-button v-else size="medium" disabled>
+            <el-button v-else size="default" disabled>
               {{ t('users.deletePending', { approved: user.deleteRequest.approvals?.length || 0, required: user.deleteRequest.requiredApprovals?.length || 0 }) }}
             </el-button>
           </template>

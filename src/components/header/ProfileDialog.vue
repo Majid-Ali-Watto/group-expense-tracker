@@ -43,7 +43,7 @@
               @change="handlePhotoSelected"
             />
             <el-button
-              size="medium"
+              size="default"
               type="success"
               plain
               :loading="photoSubmitting"
@@ -58,7 +58,7 @@
             </el-button>
             <el-button
               v-if="profilePhotoUrl"
-              size="medium"
+              size="default"
               text
               :loading="photoSubmitting"
               :disabled="isBlocked || photoSubmitting"
@@ -93,7 +93,7 @@
               v-if="canEditVerifiedEmail"
               text
               circle
-              size="medium"
+              size="default"
               :icon="Edit"
               :disabled="isBlocked"
               @click="openEmailDialog"
@@ -106,7 +106,7 @@
             <el-button
               text
               circle
-              size="medium"
+              size="default"
               :icon="Edit"
               :disabled="isBlocked"
               @click="openEditDialog('name')"
@@ -119,7 +119,7 @@
             <el-button
               text
               circle
-              size="medium"
+              size="default"
               :icon="Edit"
               :disabled="isBlocked"
               @click="openEditDialog('mobile')"
@@ -189,7 +189,7 @@
       >
         <div class="flex flex-wrap items-center gap-2">
           <el-button
-            size="medium"
+            size="default"
             type="warning"
             :disabled="isBlocked"
             @click="showChangePasswordDialog = true"
@@ -197,7 +197,7 @@
             {{ t('auth.changePassword.title') }}
           </el-button>
           <el-button
-            size="medium"
+            size="default"
             type="danger"
             plain
             :disabled="isBlocked || hasPendingDeleteRequest"
@@ -214,7 +214,7 @@
           </el-button>
         </div>
         <el-button
-          size="medium"
+          size="default"
           type="primary"
           @click="handleVisibilityChange(false)"
         >
@@ -283,14 +283,14 @@
 
     <template #footer>
       <div class="flex flex-wrap justify-end gap-2">
-        <el-button size="medium" @click="resetEmailForm">{{
+        <el-button size="default" @click="resetEmailForm">{{
           t('common.reset')
         }}</el-button>
-        <el-button size="medium" @click="handleEmailVisibilityChange(false)">
+        <el-button size="default" @click="handleEmailVisibilityChange(false)">
           {{ t('common.cancel') }}
         </el-button>
         <el-button
-          size="medium"
+          size="default"
           type="success"
           :loading="emailSubmitting"
           :disabled="emailSubmitting || isBlocked || !canEditVerifiedEmail"
@@ -350,14 +350,14 @@
 
     <template #footer>
       <div class="flex flex-wrap justify-end gap-2">
-        <el-button size="medium" @click="resetForm">{{
+        <el-button size="default" @click="resetForm">{{
           t('common.reset')
         }}</el-button>
-        <el-button size="medium" @click="handleEditVisibilityChange(false)">
+        <el-button size="default" @click="handleEditVisibilityChange(false)">
           {{ t('common.cancel') }}
         </el-button>
         <el-button
-          size="medium"
+          size="default"
           type="success"
           :loading="isSubmitting"
           :disabled="isSubmitting || isBlocked"
@@ -939,6 +939,12 @@ async function persistProfilePhoto(file) {
     }
 
     const previousMeta = currentUser.photoMeta || props.user?.photoMeta || null
+    if (previousMeta?.url && previousMeta.url !== uploaded.url) {
+      deleteReceipt(previousMeta, {
+        documentPath: `${DB_NODES.USERS}/${props.user.uid}`
+      }).catch(() => {})
+    }
+
     await updateData(
       `${DB_NODES.USERS}/${props.user.uid}`,
       () => ({
@@ -947,10 +953,6 @@ async function persistProfilePhoto(file) {
       }),
       t('profile.photoUpdated')
     )
-
-    if (previousMeta?.url && previousMeta.url !== uploaded.url) {
-      deleteReceipt(previousMeta).catch(() => {})
-    }
 
     userStore.addUser(
       buildUpdatedUserPayload(currentUser, {
@@ -1005,6 +1007,12 @@ async function removeProfilePhoto() {
     }
 
     const previousMeta = currentUser.photoMeta || props.user?.photoMeta || null
+    if (previousMeta?.url) {
+      deleteReceipt(previousMeta, {
+        documentPath: `${DB_NODES.USERS}/${props.user.uid}`
+      }).catch(() => {})
+    }
+
     await updateData(
       `${DB_NODES.USERS}/${props.user.uid}`,
       () => ({
@@ -1013,10 +1021,6 @@ async function removeProfilePhoto() {
       }),
       t('profile.photoRemoved')
     )
-
-    if (previousMeta?.url) {
-      deleteReceipt(previousMeta).catch(() => {})
-    }
 
     userStore.addUser(
       buildUpdatedUserPayload(currentUser, {

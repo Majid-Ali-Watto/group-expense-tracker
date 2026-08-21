@@ -279,15 +279,19 @@ export const ExpenseList = (props) => {
     }),
     buildItemPath: ({ groupId, monthYear, itemId }) =>
       `${props.dbRef}/${groupId}/months/${monthYear}/payments/${itemId}`,
-    cleanupDeletedReceipts: (payment) => {
+    cleanupDeletedReceipts: (payment, _request, itemPath) => {
       const deletedMeta = payment?.receiptMeta
       if (!deletedMeta) return
 
       const metas = Array.isArray(deletedMeta) ? deletedMeta : [deletedMeta]
-      metas.forEach((meta) => deleteReceipt(meta))
+      metas.forEach((meta) =>
+        deleteReceipt(meta, { documentPath: itemPath })
+      )
     },
-    buildUpdatedItem: (payment, request, notification) => {
-      cleanupOldReceipts(payment?.receiptMeta, request.changes?.receiptMeta)
+    buildUpdatedItem: (payment, request, notification, itemPath) => {
+      cleanupOldReceipts(payment?.receiptMeta, request.changes?.receiptMeta, {
+        documentPath: itemPath
+      })
 
       const updatedPayment = appendNotificationForUser(
         {

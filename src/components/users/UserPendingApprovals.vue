@@ -26,14 +26,14 @@
         </div>
         <div class="flex gap-1 flex-shrink-0">
           <el-button
-            size="medium"
+            size="default"
             type="success"
             @click="$emit('approve', item.user.uid, item.type)"
           >
             {{ t('users.approve') }}
           </el-button>
           <el-button
-            size="medium"
+            size="default"
             type="danger"
             @click="$emit('reject', item.user.uid, item.type, item.user.name)"
           >

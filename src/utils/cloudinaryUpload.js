@@ -1,23 +1,41 @@
-const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
-const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET
-const API_KEY = import.meta.env.VITE_CLOUDINARY_API_KEY
-const API_SECRET = import.meta.env.VITE_CLOUDINARY_API_SECRET
+import { getApiAuthHeaders } from './apiAuth'
 
-async function sha1(message) {
-  const buf = new TextEncoder().encode(message)
-  const hashBuf = await crypto.subtle.digest('SHA-1', buf)
-  return Array.from(new Uint8Array(hashBuf))
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('')
+const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
+const API_BASE = import.meta.env.VITE_NODE_BE_API_URL?.trim()
+const API_KEY = import.meta.env.VITE_X_API_KEY || ''
+
+async function getUploadSignature() {
+  if (!API_BASE) {
+    throw new Error('Upload API is not configured')
+  }
+
+  const headers = await getApiAuthHeaders({
+    'Content-Type': 'application/json',
+    'x-api-key': API_KEY
+  })
+
+  const res = await fetch(`${API_BASE}/cloudinary/sign-upload`, {
+    method: 'POST',
+    headers
+  })
+
+  if (!res.ok) {
+    throw new Error('Cloudinary upload signing failed')
+  }
+
+  return res.json()
 }
 
 export async function uploadToCloudinary(file) {
+  const signed = await getUploadSignature()
   const formData = new FormData()
   formData.append('file', file)
-  formData.append('upload_preset', UPLOAD_PRESET)
+  formData.append('api_key', signed.apiKey)
+  formData.append('timestamp', String(signed.timestamp))
+  formData.append('signature', signed.signature)
 
   const res = await fetch(
-    `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`,
+    `https://api.cloudinary.com/v1_1/${signed.cloudName || CLOUD_NAME}/auto/upload`,
     { method: 'POST', body: formData }
   )
 
@@ -34,34 +52,39 @@ export async function uploadToCloudinary(file) {
   }
 }
 
-// Fire-and-forget — does not block the caller
-export async function deleteFromCloudinary(publicId, resourceType = 'image') {
-  if (!publicId || !API_KEY || !API_SECRET) return
+// Fire-and-forget — does not block the caller.
+// Signing is done server-side so the Cloudinary API secret is never in the bundle.
+export async function deleteFromCloudinary(
+  publicId,
+  resourceType = 'image',
+  context = null
+) {
+  if (!publicId || !API_BASE) return
 
-  const timestamp = Math.floor(Date.now() / 1000)
-  const paramStr = `public_id=${publicId}&timestamp=${timestamp}`
-  const signature = await sha1(paramStr + API_SECRET)
-
-  const formData = new FormData()
-  formData.append('public_id', publicId)
-  formData.append('timestamp', String(timestamp))
-  formData.append('api_key', API_KEY)
-  formData.append('signature', signature)
-
-  await fetch(
-    `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${resourceType}/destroy`,
-    { method: 'POST', body: formData }
-  ).catch(() => {})
+  try {
+    const headers = await getApiAuthHeaders({
+      'Content-Type': 'application/json',
+      'x-api-key': API_KEY
+    })
+    await fetch(`${API_BASE}/cloudinary/delete`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ publicId, resourceType, context })
+    })
+  } catch {
+    // best-effort — a failed delete is not fatal
+  }
 }
 
 // Deletes Cloudinary files that existed before an update but are no longer present after
-export function cleanupOldReceipts(oldMeta, newMeta) {
+export function cleanupOldReceipts(oldMeta, newMeta, context = null) {
   if (!oldMeta || !newMeta) return
   const oldMetas = Array.isArray(oldMeta) ? oldMeta : [oldMeta]
   const newUrls = new Set(
     (Array.isArray(newMeta) ? newMeta : [newMeta]).map((m) => m.url)
   )
   oldMetas.forEach((m) => {
-    if (!newUrls.has(m.url)) deleteFromCloudinary(m.publicId, m.resourceType)
+    if (!newUrls.has(m.url))
+      deleteFromCloudinary(m.publicId, m.resourceType, context)
   })
 }

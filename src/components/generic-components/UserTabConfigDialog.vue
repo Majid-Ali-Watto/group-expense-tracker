@@ -128,12 +128,12 @@
 
     <template #footer>
       <div class="flex justify-end gap-2">
-        <el-button size="medium" @click="$emit('cancel')">{{
+        <el-button size="default" @click="$emit('cancel')">{{
           resolvedCancelText
         }}</el-button>
         <el-button
           type="primary"
-          size="medium"
+          size="default"
           :loading="loading"
           @click="$emit('confirm')"
         >

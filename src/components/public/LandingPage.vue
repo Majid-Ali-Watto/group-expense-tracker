@@ -46,7 +46,10 @@
       </div>
 
       <div class="card-grid">
-        <RouterLink class="content-card link-card" :to="withLocale('/features')">
+        <RouterLink
+          class="content-card link-card"
+          :to="withLocale('/features')"
+        >
           <h3>{{ t('landing.explore.features.title') }}</h3>
           <p>{{ t('landing.explore.features.description') }}</p>
         </RouterLink>
@@ -84,15 +87,13 @@ const { t, locale } = useI18n()
 
 const highlights = computed(() => LANDING_HIGHLIGHTS[locale.value])
 const useCases = computed(() => PUBLIC_USE_CASES[locale.value])
-const withLocale = (path) =>
-  route.meta?.locale === 'ur' ? `/ur${path}` : path
+const withLocale = (path) => (route.meta?.locale === 'ur' ? `/ur${path}` : path)
 </script>
 
 <style scoped>
 .public-page {
   padding: 108px 20px 32px;
-  max-width: 1180px;
-  margin: 0 auto;
+  width: 100%;
   color: #163020;
 }
 

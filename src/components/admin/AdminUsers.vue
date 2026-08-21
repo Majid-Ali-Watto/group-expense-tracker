@@ -87,7 +87,7 @@
                 t('admin.users.tabConfigColumn')
               }}</span>
               <el-button
-                size="medium"
+                size="default"
                 plain
                 :loading="
                   saving &&

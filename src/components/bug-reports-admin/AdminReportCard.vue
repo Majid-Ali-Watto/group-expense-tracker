@@ -16,7 +16,7 @@
       <div class="bra-card-top-right">
         <el-select
           :model-value="report.status"
-          size="medium"
+          size="default"
           class="bra-status-select"
           :class="`status-${report.status}`"
           @change="(val) => $emit('update-status', report.id, val)"
@@ -68,7 +68,7 @@
     <GenericButton
       v-if="report.description.length > 160"
       type="default"
-      size="medium"
+      size="default"
       class="bra-expand-btn"
       @click="$emit('toggle-expand', report.id)"
     >

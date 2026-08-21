@@ -30,34 +30,7 @@
         <template #prefix><span class="text-gray-400">🔍</span></template>
       </GenericInputField>
 
-      <!-- Sort & Filter controls -->
-      <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-        <el-button-group size="medium">
-          <el-button
-            :type="sortOrder === '' ? 'primary' : ''"
-            @click="sortOrder = ''"
-            >{{ t('users.default') }}</el-button
-          >
-          <el-button
-            :type="sortOrder === 'asc' ? 'primary' : ''"
-            @click="sortOrder = 'asc'"
-            >{{ t('groups.sortAsc') }}</el-button
-          >
-          <el-button
-            :type="sortOrder === 'desc' ? 'primary' : ''"
-            @click="sortOrder = 'desc'"
-            >{{ t('groups.sortDesc') }}</el-button
-          >
-        </el-button-group>
-        <el-checkbox v-model="sharedGroupsOnly" size="small"
-          >{{ t('users.sharedGroupsOnly') }}</el-checkbox
-        >
-      </div>
-      <div class="mb-3">
-        <el-checkbox v-model="hideBlockedUsers" size="small">
-          {{ t('users.hideBlockedUsers') }}
-        </el-checkbox>
-      </div>
+      <FilterBar :fields="filterFields" class="mb-3" @clear="clearFilters" />
 
       <!-- Header row — visible only on larger screens -->
       <div
@@ -124,7 +97,7 @@
 import { useI18n } from 'vue-i18n'
 import { LoadingSkeleton } from '@/components/shared'
 import { Users } from '@/scripts/users'
-import { GenericInputField } from '@/components/generic-components'
+import { FilterBar, GenericInputField } from '@/components/generic-components'
 import UserPendingApprovals from './UserPendingApprovals.vue'
 import UserCard from './UserCard.vue'
 import UserEditDialog from './UserEditDialog.vue'
@@ -135,9 +108,8 @@ const { t } = useI18n()
 
 const {
   searchQuery,
-  sortOrder,
-  sharedGroupsOnly,
-  hideBlockedUsers,
+  filterFields,
+  clearFilters,
   filteredUsers,
   editDialogVisible,
   editForm,

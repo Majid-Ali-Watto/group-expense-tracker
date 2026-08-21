@@ -23,7 +23,7 @@
           v-model="form.currentPassword"
           type="password"
           show-password
-          size="medium"
+          size="default"
           :placeholder="t('auth.changePassword.currentPasswordPlaceholder')"
           :disabled="isSubmitting"
           autocomplete="current-password"
@@ -41,7 +41,7 @@
           :placeholder="t('auth.changePassword.newPasswordPlaceholder')"
           :disabled="isSubmitting"
           autocomplete="new-password"
-          size="medium"
+          size="default"
         />
       </el-form-item>
 
@@ -53,7 +53,7 @@
           v-model="form.confirmPassword"
           type="password"
           show-password
-          size="medium"
+          size="default"
           :placeholder="t('auth.changePassword.confirmPasswordPlaceholder')"
           :disabled="isSubmitting"
           autocomplete="new-password"
@@ -62,12 +62,12 @@
     </el-form>
 
     <template #footer>
-      <el-button size="medium" :disabled="isSubmitting" @click="closeDialog"
+      <el-button size="default" :disabled="isSubmitting" @click="closeDialog"
         >{{ t('common.cancel') }}</el-button
       >
       <el-button
         type="primary"
-        size="medium"
+        size="default"
         :loading="isSubmitting"
         @click="handleChangePassword"
       >

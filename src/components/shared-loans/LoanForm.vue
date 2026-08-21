@@ -142,7 +142,7 @@
                     v-model="selectedGiverUser"
                     :options="usersForDropdown"
                     :placeholder="t('sharedLoans.pickUserOptional')"
-                    size="medium"
+                    size="default"
                     :wrap-form-item="false"
                   />
                 </div>
@@ -236,7 +236,7 @@
                     v-model="selectedReceiverUser"
                     :options="usersForDropdown"
                     :placeholder="t('sharedLoans.pickUserOptional')"
-                    size="medium"
+                    size="default"
                     :wrap-form-item="false"
                   />
                 </div>
@@ -294,16 +294,16 @@
             </el-checkbox>
           </div>
           <div v-if="!isEditMode" class="flex justify-end gap-2">
-            <el-button type="default" size="medium" @click="handleResetForm">
+            <el-button type="default" size="default" @click="handleResetForm">
               {{ t('common.reset') }}
             </el-button>
-            <el-button type="info" plain size="medium" @click="closeForm">
+            <el-button type="info" plain size="default" @click="closeForm">
               {{ t('common.cancel') }}
             </el-button>
             <el-button
               v-if="isVisible"
               type="success"
-              size="medium"
+              size="default"
               :loading="receiptUploading || receiptExtracting || isSubmitting"
               :disabled="receiptUploading || receiptExtracting || isSubmitting"
               @click="() => validateForm()"

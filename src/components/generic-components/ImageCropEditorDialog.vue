@@ -75,19 +75,19 @@
           />
 
           <div class="image-crop-editor__actions">
-            <el-button size="medium" @click="zoomOut">{{
+            <el-button size="default" @click="zoomOut">{{
               t('imageEditor.zoomOut')
             }}</el-button>
-            <el-button size="medium" @click="zoomIn">{{
+            <el-button size="default" @click="zoomIn">{{
               t('imageEditor.zoomIn')
             }}</el-button>
-            <el-button size="medium" @click="rotateLeft">{{
+            <el-button size="default" @click="rotateLeft">{{
               t('imageEditor.rotateLeft')
             }}</el-button>
-            <el-button size="medium" @click="rotateRight">
+            <el-button size="default" @click="rotateRight">
               {{ t('imageEditor.rotateRight') }}
             </el-button>
-            <el-button size="medium" @click="resetEditor">{{
+            <el-button size="default" @click="resetEditor">{{
               t('common.reset')
             }}</el-button>
           </div>
@@ -101,11 +101,11 @@
 
     <template #footer>
       <div class="image-crop-editor__footer">
-        <el-button size="medium" @click="emit('update:visible', false)">
+        <el-button size="default" @click="emit('update:visible', false)">
           {{ t('common.cancel') }}
         </el-button>
         <el-button
-          size="medium"
+          size="default"
           type="success"
           :loading="submitting"
           :disabled="submitting || !sourceUrl || !imageLoaded"

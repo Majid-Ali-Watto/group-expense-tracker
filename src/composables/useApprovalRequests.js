@@ -205,7 +205,7 @@ export function useApprovalRequests({
       }
 
       if (request.type === 'delete') {
-        await cleanupDeletedReceipts(rawItems.value[itemId], request)
+        await cleanupDeletedReceipts(rawItems.value[itemId], request, itemPath)
         await appendRequesterNotification(
           itemId,
           itemPath,
@@ -224,7 +224,8 @@ export function useApprovalRequests({
       const updatedItem = buildUpdatedItem(
         rawItems.value[itemId],
         request,
-        notification
+        notification,
+        itemPath
       )
 
       await updateData(

@@ -51,14 +51,14 @@
           class="flex gap-1"
         >
           <el-button
-            size="medium"
+            size="default"
             type="success"
             @click="approveMemberJoinRequest(group.id, request.uid)"
           >
             {{ t('common.approve') }}
           </el-button>
           <el-button
-            size="medium"
+            size="default"
             type="danger"
             @click="rejectJoinRequest(group.id, request.uid)"
           >
@@ -121,14 +121,14 @@
     <!-- Approve/Reject buttons for current user -->
     <div v-if="!hasUserApprovedDeletion(group)" class="flex gap-2">
       <el-button
-        size="medium"
+        size="default"
         type="success"
         @click="approveGroupDeletion(group.id)"
       >
         {{ t('groups.approveDeletion') }}
       </el-button>
       <el-button
-        size="medium"
+        size="default"
         type="danger"
         @click="rejectGroupDeletion(group.id)"
       >
@@ -200,14 +200,14 @@
     </div>
     <div v-if="!hasUserApprovedEditRequest(group)" class="flex gap-2">
       <el-button
-        size="medium"
+        size="default"
         type="success"
         @click="approveEditRequest(group.id)"
       >
         {{ t('common.approve') }}
       </el-button>
       <el-button
-        size="medium"
+        size="default"
         type="danger"
         @click="rejectEditRequest(group.id)"
       >
@@ -258,14 +258,14 @@
     <!-- Non-admin approval/reject -->
     <div v-if="!hasUserApprovedAddMemberRequest(group)" class="flex gap-2">
       <el-button
-        size="medium"
+        size="default"
         type="success"
         @click="approveAddMemberRequest(group.id)"
       >
         {{ t('common.approve') }}
       </el-button>
       <el-button
-        size="medium"
+        size="default"
         type="danger"
         @click="rejectAddMemberRequest(group.id)"
       >
@@ -286,7 +286,7 @@
     >
       <el-button
         type="primary"
-        size="medium"
+        size="default"
         @click="finalizeAddMember(group.id)"
       >
         {{ t('groups.addMemberNow') }}
@@ -315,14 +315,14 @@
     </div>
     <div v-if="isCurrentUserPendingOwner(group)" class="flex gap-2">
       <el-button
-        size="medium"
+        size="default"
         type="success"
         @click="approveOwnershipTransfer(group.id)"
       >
         {{ t('groups.acceptOwnership') }}
       </el-button>
       <el-button
-        size="medium"
+        size="default"
         type="danger"
         @click="rejectOwnershipTransfer(group.id)"
       >

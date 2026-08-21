@@ -31,9 +31,9 @@ function resolveMaxFiles(maxFiles) {
   return Number.isFinite(parsed) && parsed > 1 ? parsed : 1
 }
 
-function deleteReceiptMetas(metas = []) {
+function deleteReceiptMetas(metas = [], context = null) {
   metas.forEach((meta) => {
-    if (meta?.url) deleteReceipt(meta)
+    if (meta?.url) deleteReceipt(meta, context)
   })
 }
 
@@ -87,7 +87,10 @@ export function useReceiptUpload({ existingUrls, existingMeta, maxFiles = 1 }) {
     receiptFiles.value = []
   }
 
-  async function uploadSelectedFiles({ replaceExisting = false } = {}) {
+  async function uploadSelectedFiles({
+    replaceExisting = false,
+    deleteContext = null
+  } = {}) {
     const previousUrls = [...existingReceiptUrls.value]
     const previousMeta = [...existingReceiptMeta.value]
 
@@ -107,7 +110,7 @@ export function useReceiptUpload({ existingUrls, existingMeta, maxFiles = 1 }) {
       const receiptMeta = uploaded // already full meta objects with provider field
 
       if (replaceExisting) {
-        deleteReceiptMetas(previousMeta)
+        deleteReceiptMetas(previousMeta, deleteContext)
       }
 
       return {
@@ -122,8 +125,8 @@ export function useReceiptUpload({ existingUrls, existingMeta, maxFiles = 1 }) {
     }
   }
 
-  function deleteExistingReceipts() {
-    deleteReceiptMetas(existingReceiptMeta.value)
+  function deleteExistingReceipts(deleteContext = null) {
+    deleteReceiptMetas(existingReceiptMeta.value, deleteContext)
   }
 
   return {

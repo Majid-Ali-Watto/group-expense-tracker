@@ -65,9 +65,7 @@ export const Login = () => {
   const {
     clearLoginAttempts,
     isLoginLocked,
-    recordFailedAttempt,
-    getRateLimitData,
-    MAX_ATTEMPTS
+    recordFailedAttempt
   } = useRateLimit()
   const isSubmitting = ref(false)
 
@@ -188,7 +186,7 @@ export const Login = () => {
   }
 
   async function completeLogin(payload, message) {
-    clearLoginAttempts()
+    await clearLoginAttempts(payload.email)
     userStore.addUser({
       uid: payload.uid,
       name: payload.name || '',
@@ -355,21 +353,23 @@ export const Login = () => {
   async function handleSubmit() {
     if (!loginForm.value || isSubmitting.value) return
 
-    const minutesLocked = isLoginLocked()
-    if (minutesLocked) {
-      return showError(
-        t('authMessages.tooManyFailedAttempts', { minutes: minutesLocked })
-      )
-    }
-
-    try {
-      await loginForm.value.validate()
-    } catch {
-      return showError(t('authMessages.fillRequiredFields'))
-    }
-
     isSubmitting.value = true
     try {
+      const minutesLocked = await isLoginLocked(
+        form.value.email.trim().toLowerCase()
+      )
+      if (minutesLocked) {
+        return showError(
+          t('authMessages.tooManyFailedAttempts', { minutes: minutesLocked })
+        )
+      }
+
+      try {
+        await loginForm.value.validate()
+      } catch {
+        return showError(t('authMessages.fillRequiredFields'))
+      }
+
       if (mode.value === 'register') {
         await withTrace('auth_register', handleRegistration)
       } else {
@@ -587,19 +587,19 @@ export const Login = () => {
       })
     } catch (error) {
       console.error('Login error:', error)
-      recordFailedAttempt()
 
-      if (
+      if (error.code === 'auth/user-not-found') {
+        // Firebase returns this when email enumeration protection is disabled
+        showError(t('authMessages.noAccountFound'))
+      } else if (
         error.code === 'auth/wrong-password' ||
         error.code === 'auth/invalid-credential' ||
-        error.code === 'auth/user-not-found' ||
         error.code === 'auth/firebase-app-check-token-is-invalid'
       ) {
-        const { count } = getRateLimitData()
-        const left = MAX_ATTEMPTS - count
+        const { attemptsLeft } = await recordFailedAttempt(emailValue)
         showError(
-          left > 0
-            ? t('authMessages.incorrectCredentialsWithAttempts', { left })
+          attemptsLeft > 0
+            ? t('authMessages.incorrectCredentialsWithAttempts', { left: attemptsLeft })
             : t('authMessages.incorrectCredentials')
         )
       } else if (error.code === 'auth/too-many-requests') {

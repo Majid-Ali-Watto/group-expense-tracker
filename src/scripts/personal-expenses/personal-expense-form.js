@@ -203,8 +203,15 @@ export const PersonalExpenseForm = (props, emit) => {
 
     expenseForm.value.validate(async (valid) => {
       if (valid) {
+        const expenseDocumentPath =
+          isEditMode.value && props.row?.id
+            ? `${DB_NODES.PERSONAL_EXPENSES}/${activeUserUid.value}/months/${existingMonth.value || selectedMonth.value}/expenses/${props.row.id}`
+            : null
         const uploadedReceipts = await uploadSelectedFiles({
-          replaceExisting: whatTask === 'Update'
+          replaceExisting: whatTask === 'Update',
+          deleteContext: expenseDocumentPath
+            ? { documentPath: expenseDocumentPath }
+            : null
         })
         if (!uploadedReceipts) return
 
@@ -228,15 +235,15 @@ export const PersonalExpenseForm = (props, emit) => {
           )
         } else if (whatTask == 'Update') {
           updateData(
-            `${DB_NODES.PERSONAL_EXPENSES}/${activeUserUid.value}/months/${existingMonth.value || selectedMonth.value}/expenses/${props.row.id}`,
+            expenseDocumentPath,
             () => getExpenseData(receiptUrls, receiptMeta),
             t('personalExpenses.expenseUpdated')
           )
           emit('closeModal')
         } else if (whatTask == 'Delete') {
-          deleteExistingReceipts()
+          deleteExistingReceipts({ documentPath: expenseDocumentPath })
           deleteData(
-            `${DB_NODES.PERSONAL_EXPENSES}/${activeUserUid.value}/months/${existingMonth.value || selectedMonth.value}/expenses/${props.row.id}`,
+            expenseDocumentPath,
             t('personalExpenses.expenseDeleted')
           )
           emit('closeModal')

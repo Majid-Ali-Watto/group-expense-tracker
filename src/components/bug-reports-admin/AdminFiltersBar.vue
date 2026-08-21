@@ -5,7 +5,7 @@
       <div class="bra-filter-group">
         <el-select
           :model-value="activeStatusFilter"
-          size="medium"
+          size="default"
           class="bra-status-filter-select"
           popper-class="bra-status-filter-popper"
           @change="$emit('update:activeStatusFilter', $event)"
@@ -31,7 +31,7 @@
           :filterable="false"
           :clearable="false"
           :wrap-form-item="false"
-          size="medium"
+          size="default"
           select-class="w-full"
           class="bra-severity-filter-select"
           @update:model-value="$emit('update:activeSeverityFilter', $event)"

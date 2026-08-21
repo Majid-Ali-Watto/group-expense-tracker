@@ -1,5 +1,6 @@
 import html2pdf from 'html2pdf.js'
 import * as XLSX from 'xlsx'
+import { getSiteName } from '@/constants'
 import { startLoading, stopLoading } from './loading'
 
 // html2canvas can't parse CSS Color Level 4 `color(srgb r g b)` values that
@@ -43,6 +44,10 @@ function fixUnsupportedColors(clonedDoc) {
   })
 }
 
+function getLocalizedSiteName() {
+  return getSiteName(document.documentElement.lang)
+}
+
 async function downloadPDF(
   pdfContent,
   fileName = 'Details-Sheet',
@@ -50,6 +55,7 @@ async function downloadPDF(
   subtitle = ''
 ) {
   const loading = startLoading()
+  const siteName = getLocalizedSiteName()
   const options = {
     margin: 0.5,
     filename: fileName + new Date().toLocaleString() + '.pdf',
@@ -87,7 +93,7 @@ async function downloadPDF(
   headerDiv.style.cssText =
     'text-align:center;padding:12px 0 10px;border-bottom:2px solid #22c55e;margin-bottom:16px;'
   headerDiv.innerHTML = `
-    <div style="font-size:22px;font-weight:700;color:#22c55e;letter-spacing:.04em;">Kharchafy</div>
+    <div style="font-size:22px;font-weight:700;color:#22c55e;letter-spacing:.04em;">${siteName}</div>
     ${
       title
         ? `<div style="font-size:14px;font-weight:600;color:#1f2937;margin-top:4px;">${title}</div>`
@@ -138,7 +144,7 @@ async function downloadPDF(
           pdf.setFontSize(9)
           pdf.setTextColor(80, 80, 80)
           pdf.text(`Page ${i} of ${totalPages}`, 0.4, pageHeight - 0.28)
-          pdf.text('Kharchafy', pageWidth / 2, pageHeight - 0.28, {
+          pdf.text(siteName, pageWidth / 2, pageHeight - 0.28, {
             align: 'center'
           })
           pdf.text(

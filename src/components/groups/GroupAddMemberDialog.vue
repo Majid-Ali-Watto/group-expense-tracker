@@ -13,7 +13,7 @@
         :label="t('groups.selectMemberToAdd')"
         :options="memberOptions"
         :placeholder="t('groups.selectMemberPlaceholder')"
-        size="medium"
+        size="default"
         :wrap-form-item="false"
         @update:modelValue="$emit('update:selectedMember', $event)"
       />
@@ -34,7 +34,7 @@
           Reset
         </el-button> -->
         <el-button
-          size="medium"
+          size="default"
           style="min-width: 100px"
           @click="$emit('update:modelValue', false)"
         >
@@ -42,7 +42,7 @@
         </el-button>
         <el-button
           type="primary"
-          size="medium"
+          size="default"
           style="min-width: 100px"
           @click="$emit('submit')"
         >

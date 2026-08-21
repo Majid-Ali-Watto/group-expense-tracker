@@ -18,7 +18,7 @@
       "
     >
       <template #clear>
-        <el-button size="medium" @click="$emit('update:modelValue', false)">
+        <el-button size="default" @click="$emit('update:modelValue', false)">
           {{ t('common.cancel') }}
         </el-button>
       </template>

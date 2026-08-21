@@ -2,7 +2,7 @@
   <div class="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 sm:p-6">
     <div class="max-w-4xl mx-auto">
       <div class="flex items-center gap-3 mb-6">
-        <el-button size="medium" @click="router.back()">{{
+        <el-button size="default" @click="router.back()">{{
           t('admin.config.back')
         }}</el-button>
         <h1 class="text-xl font-bold text-gray-800 dark:text-gray-100">

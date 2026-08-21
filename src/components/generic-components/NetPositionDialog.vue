@@ -216,12 +216,12 @@
     </div>
 
     <template #footer>
-      <GenericButton type="default" size="medium" @click="handleClose"
+      <GenericButton type="default" size="default" @click="handleClose"
         >{{ t('common.close') }}</GenericButton
       >
       <GenericButton
         type="success"
-        size="medium"
+        size="default"
         :disabled="!summary"
         @click="downloadPdf"
       >

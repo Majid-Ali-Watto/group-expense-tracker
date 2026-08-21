@@ -33,7 +33,7 @@
                 >({{ getUserName(notif.byMobile) }})</span
               >
             </div>
-            <el-button size="medium" text @click="dismissNotification(notif.id)">
+            <el-button size="default" text @click="dismissNotification(notif.id)">
               ✕
             </el-button>
           </div>
@@ -183,7 +183,7 @@
               </span>
               <el-button
                 type="warning"
-                size="medium"
+                size="default"
                 @click="cancelRequest(request)"
               >
                 {{ t('approval.cancelRequest') }}
@@ -192,14 +192,14 @@
             <div class="flex gap-2 mt-3" v-else-if="!hasUserApproved(request)">
               <el-button
                 type="success"
-                size="medium"
+                size="default"
                 @click="approveRequest(request)"
               >
                 {{ t('common.approve') }}
               </el-button>
               <el-button
                 type="danger"
-                size="medium"
+                size="default"
                 @click="rejectRequest(request)"
               >
                 {{ t('common.reject') }}
@@ -214,7 +214,7 @@
               </span>
               <el-button
                 type="primary"
-                size="medium"
+                size="default"
                 @click="executeRequestManually(request)"
               >
                 {{ t('approval.completeRequest') }}

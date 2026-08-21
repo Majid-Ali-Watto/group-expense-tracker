@@ -98,7 +98,7 @@
                     <span class="text-sm font-medium text-gray-700"
                       >{{ t('sharedExpenses.payers') }}</span
                     >
-                    <el-button size="medium" type="primary" @click="addPayer">
+                    <el-button size="default" type="primary" @click="addPayer">
                       {{ t('sharedExpenses.addPayer') }}
                     </el-button>
                   </div>
@@ -113,7 +113,7 @@
                         v-model="p.uid"
                         :options="usersOptions"
                         :placeholder="t('sharedExpenses.selectPayer')"
-                        size="medium"
+                        size="default"
                         select-class="w-full"
                         :wrap-form-item="false"
                       />
@@ -127,7 +127,7 @@
                       style="width: 120px; flex-shrink: 0"
                     />
                     <el-button
-                      size="medium"
+                      size="default"
                       type="danger"
                       plain
                       style="flex-shrink: 0; padding: 5px 8px"
@@ -170,7 +170,7 @@
                   prop="participants"
                   :options="usersOptions"
                   :placeholder="t('sharedExpenses.selectParticipants')"
-                  size="medium"
+                  size="default"
                   multiple
                   disabled
                   required
@@ -236,7 +236,7 @@
                     >{{ t('sharedExpenses.item', { index: index + 1 }) }}</span
                   >
                   <el-button
-                    size="medium"
+                    size="default"
                     type="danger"
                     text
                     @click="removeSplitItem(index)"
@@ -274,7 +274,7 @@
                     v-model="item.participants"
                     :options="usersOptions"
                     :placeholder="t('sharedExpenses.whoSharedThisItem')"
-                    size="medium"
+                    size="default"
                     multiple
                     :wrap-form-item="false"
                   />
@@ -296,7 +296,7 @@
                   style="width: 120px; flex-shrink: 0"
                 />
                 <el-button
-                  size="medium"
+                  size="default"
                   type="danger"
                   text
                   style="flex-shrink: 0"
@@ -342,7 +342,7 @@
                 <span class="text-sm font-semibold text-gray-700"
                   >{{ t('sharedExpenses.splitItems') }}</span
                 >
-                <el-button size="medium" type="primary" @click="addSplitItem">
+                <el-button size="default" type="primary" @click="addSplitItem">
                   {{ t('sharedExpenses.addItem') }}
                 </el-button>
               </div>
@@ -350,15 +350,15 @@
 
             <!-- Buttons (only for add mode, not dialog edit mode) -->
             <div v-if="!isEditMode" class="flex justify-end gap-2">
-              <el-button type="default" size="medium" @click="resetForm">
+              <el-button type="default" size="default" @click="resetForm">
                 {{ t('common.reset') }}
               </el-button>
-              <el-button type="info" plain size="medium" @click="closeForm">
+              <el-button type="info" plain size="default" @click="closeForm">
                 {{ t('common.cancel') }}
               </el-button>
               <el-button
                 type="success"
-                size="medium"
+                size="default"
                 :loading="receiptUploading || isSubmitting"
                 :disabled="receiptUploading || isSubmitting"
                 @click="() => validateForm()"

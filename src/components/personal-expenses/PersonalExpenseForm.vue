@@ -90,7 +90,7 @@
               >({{ t('common.optional') }})</span
             >
           </span>
-          <el-button size="medium" type="primary" plain @click="addSplitItem">
+          <el-button size="default" type="primary" plain @click="addSplitItem">
             {{ t('personalExpenses.addItem') }}
           </el-button>
         </div>
@@ -126,7 +126,7 @@
               />
             </el-form-item>
             <el-button
-              size="medium"
+              size="default"
               type="danger"
               text
               style="flex-shrink: 0; margin-bottom: 2px"
@@ -153,7 +153,7 @@
               style="width: 120px; flex-shrink: 0"
             />
             <el-button
-              size="medium"
+              size="default"
               type="danger"
               text
               style="flex-shrink: 0"
@@ -201,14 +201,14 @@
       </div>
 
       <div class="flex justify-end gap-2 mt-3" v-if="!isEditMode">
-        <el-button type="default" size="medium" @click="resetForm">
+        <el-button type="default" size="default" @click="resetForm">
           {{ t('common.reset') }}
         </el-button>
         <GenericButton
           v-if="showForm"
           type="info"
           @click="requestClose"
-          size="medium"
+          size="default"
           >{{ t('common.cancel') }}</GenericButton
         >
         <el-button
@@ -216,7 +216,7 @@
           :loading="receiptUploading || receiptExtracting || isSubmitting"
           :disabled="receiptUploading || receiptExtracting || isSubmitting"
           @click="() => validateForm()"
-          size="medium"
+          size="default"
         >
           {{
             receiptUploading

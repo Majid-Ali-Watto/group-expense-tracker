@@ -240,6 +240,57 @@ export const Groups = () => {
     { label: t('groups.allCategoriesOption'), value: '' },
     ...GROUP_CATEGORIES
   ])
+  const sortOptions = computed(() => [
+    { label: t('groups.sortDefault'), value: '' },
+    { label: t('groups.sortAsc'), value: 'asc' },
+    { label: t('groups.sortDesc'), value: 'desc' }
+  ])
+  const filterFields = computed(() => [
+    {
+      key: 'sort',
+      modelValue: sortOrder.value,
+      placeholder: t('groups.sortPlaceholder'),
+      options: sortOptions.value,
+      filterable: false,
+      onChange: (value) => {
+        sortOrder.value = value || ''
+      }
+    },
+    {
+      key: 'category',
+      modelValue: filterByCategory.value,
+      placeholder: t('groups.categoryPlaceholder'),
+      options: allCategoryOptions.value,
+      onChange: (value) => {
+        filterByCategory.value = value || ''
+      }
+    },
+    {
+      key: 'member',
+      modelValue: filterByUser.value,
+      placeholder: t('groups.memberPlaceholder'),
+      options: allGroupMemberOptions.value,
+      onChange: (value) => {
+        filterByUser.value = value || ''
+      }
+    },
+    {
+      key: 'hideBlocked',
+      type: 'checkbox',
+      label: t('groups.hideBlockedGroups'),
+      modelValue: hideBlockedEntities.value,
+      onChange: (value) => {
+        hideBlockedEntities.value = value
+      }
+    }
+  ])
+
+  const clearFilters = () => {
+    sortOrder.value = ''
+    filterByUser.value = ''
+    filterByCategory.value = ''
+    hideBlockedEntities.value = false
+  }
 
   // Filtered groups based on search query, user filter, and sort order
   const filteredGroups = computed(() => {
@@ -1337,6 +1388,49 @@ export const Groups = () => {
     showSuccess(t('groupsMessages.selectedGroupSuccess', { name: group.name }))
   }
 
+  function getSharedActionGroupId(groupId = '') {
+    const requestedGroupId = typeof groupId === 'string' ? groupId : ''
+
+    if (requestedGroupId) {
+      const targetGroup = joinedGroupsForShare.value.find(
+        (group) => group.id === requestedGroupId
+      )
+      return targetGroup?.id || ''
+    }
+
+    const activeGroupId = groupStore.getActiveGroup
+    const activeGroup = joinedGroupsForShare.value.find(
+      (group) => group.id === activeGroupId
+    )
+
+    if (activeGroup) return activeGroup.id
+    return joinedGroupsForShare.value[0]?.id || ''
+  }
+
+  function navigateToSharedPage(path, groupId = '') {
+    if (activeUserIsBlocked.value) {
+      showError(getActiveUserBlockedMessage())
+      return
+    }
+
+    const targetGroupId = getSharedActionGroupId(groupId)
+    if (!targetGroupId) {
+      showError(t('groupsMessages.selectGroupBeforeSharedAction'))
+      return
+    }
+
+    groupStore.setActiveGroup(targetGroupId)
+    router.push({ path: `${path}/${targetGroupId}`, query: { new: '1' } })
+  }
+
+  function navigateToSharedExpense(groupId = '') {
+    navigateToSharedPage('/shared-expenses', groupId)
+  }
+
+  function navigateToSharedLoan(groupId = '') {
+    navigateToSharedPage('/shared-loans', groupId)
+  }
+
   function removeGroupLocally(groupId) {
     memberGroups.value = memberGroups.value.filter((g) => g.id !== groupId)
     availableGroups.value = availableGroups.value.filter(
@@ -2217,7 +2311,8 @@ export const Groups = () => {
       const confirmMessage =
         isOwner && memberCount === 2
           ? t('groupsMessages.ownershipWillTransferTo', {
-              name: userStore.getUserByUid(otherMember.uid)?.name || otherMember.uid
+              name:
+                userStore.getUserByUid(otherMember.uid)?.name || otherMember.uid
             })
           : t('groupsMessages.confirmLeaveGroupBody')
 
@@ -2551,6 +2646,8 @@ export const Groups = () => {
     hideBlockedEntities,
     allGroupMemberOptions,
     allCategoryOptions,
+    filterFields,
+    clearFilters,
     filteredGroups,
     joinedGroups,
     otherGroups,
@@ -2576,6 +2673,8 @@ export const Groups = () => {
     openCreateGroup,
     closeCreateGroup,
     onGroupCreated,
+    navigateToSharedExpense,
+    navigateToSharedLoan,
     selectGroup,
     editGroup,
     updateGroup,

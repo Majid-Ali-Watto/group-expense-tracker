@@ -22,7 +22,7 @@
           <h3 class="font-semibold text-lg">{{ group.name }}</h3>
           <!-- Pin button — desktop only -->
           <el-button
-            size="medium"
+            size="default"
             text
             class="hidden sm:inline-flex"
             :title="pinned ? t('groups.unpinGroup') : t('groups.pinToTop')"
@@ -122,6 +122,27 @@
         :approve-ownership-transfer="approveOwnershipTransfer"
         :reject-ownership-transfer="rejectOwnershipTransfer"
       />
+
+      <div class="mt-3 grid grid-cols-2 gap-2 sm:hidden">
+        <el-button
+          type="primary"
+          plain
+          size="default"
+          class="!m-0 !w-full"
+          @click="$emit('add-expense')"
+        >
+          {{ t('groups.addExpense') }}
+        </el-button>
+        <el-button
+          type="success"
+          plain
+          size="default"
+          class="!m-0 !w-full"
+          @click="$emit('add-loan')"
+        >
+          {{ t('groups.addLoan') }}
+        </el-button>
+      </div>
     </div>
   </div>
 </template>
@@ -162,7 +183,7 @@ const props = defineProps({
   activeUserBlocked: { type: Boolean, default: false }
 })
 
-defineEmits(['toggle-pin'])
+defineEmits(['toggle-pin', 'add-expense', 'add-loan'])
 
 const { t } = useI18n()
 const userStore = useUserStore()

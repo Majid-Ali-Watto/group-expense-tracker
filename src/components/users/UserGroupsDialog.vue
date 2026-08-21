@@ -37,7 +37,7 @@
         </div>
         <el-button
           v-if="!isMember(group) && !hasPendingJoinRequest(group)"
-          size="medium"
+          size="default"
           type="success"
           plain
           @click="$emit('join-group', group)"

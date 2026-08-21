@@ -137,14 +137,14 @@
 
     <div class="bug-form-actions">
       <GenericButton
-        size="medium"
+        size="default"
         type="default"
         :disabled="isClean || submitting"
         @click="$emit('reset')"
         >{{ t('common.reset') }}</GenericButton
       >
       <GenericButton
-        size="medium"
+        size="default"
         type="warning"
         :loading="submitting"
         @click="$emit('submit')"

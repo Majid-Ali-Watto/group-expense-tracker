@@ -1,123 +1,135 @@
 <template>
-  <div class="flex flex-col min-h-screen">
-    <Header
-      @click-log="setLoggedInStatus"
-      @show-net-position="handleShowNetPosition"
-      @navigate-to-tab="({ tab, groupId }) => navigateToTab(tab, groupId)"
-      @tab-change="handleActiveTab"
-      :loggedIn="loggedIn"
-      :tabs="tabs"
-      :activeTab="activeTab"
-      :isDarkTheme="isDarkTheme"
-      :toggleTheme="toggleTheme"
-      :notifications="allNotifications"
-      :notificationCount="notificationCount"
-      :dismissNotification="dismissNotification"
-    />
-
-    <!-- Tab navigation bar — only shown when authenticated -->
+  <el-config-provider>
     <div
-      v-if="loggedIn"
-      class="container mx-auto mt-20"
-      style="max-width: 980px"
+      class="flex flex-col min-h-screen"
+      :dir="locale === 'ur' ? 'rtl' : 'ltr'"
     >
-      <WelcomeBanner
-        :displayName="displayName"
-        :activeTab="activeTab"
-        :isAdminActive="isAdminActive"
-      />
-      <el-tabs
-        v-if="!isAdminActive"
-        :key="tabBarKey"
-        :model-value="activeTab"
+      <Header
+        @click-log="setLoggedInStatus"
+        @show-net-position="handleShowNetPosition"
+        @navigate-to-tab="({ tab, groupId }) => navigateToTab(tab, groupId)"
         @tab-change="handleActiveTab"
-        class="demo-tabs"
-        type="card"
-        tab-position="top"
-      >
-        <el-tab-pane
-          v-for="(tab, index) in tabs"
-          :key="index"
-          :label="tabLabel(tab)"
-          :name="tab"
-          class="px-3 sm:px-0"
-        />
-      </el-tabs>
-    </div>
+        :loggedIn="loggedIn"
+        :tabs="tabs"
+        :activeTab="activeTab"
+        :isDarkTheme="isDarkTheme"
+        :toggleTheme="toggleTheme"
+        :notifications="allNotifications"
+        :notificationCount="notificationCount"
+        :dismissNotification="dismissNotification"
+      />
 
-    <!-- Single RouterView renders everything:
+      <!-- Tab navigation bar — only shown when authenticated -->
+      <div
+        v-if="loggedIn"
+        class="app-tab-header container mx-auto mt-20"
+        >
+        <!-- style="max-width: 980px" -->
+        <WelcomeBanner
+          :displayName="displayName"
+          :activeTab="activeTab"
+          :isAdminActive="isAdminActive"
+        />
+        <div
+          v-if="!isAdminActive"
+          :key="tabBarKey"
+          class="app-tabs"
+          :class="{ 'app-tabs--rtl': locale === 'ur' }"
+        >
+          <button
+            type="button"
+            class="app-tabs__arrow"
+            :disabled="!canScrollTabsPrev"
+            :aria-label="locale === 'ur' ? 'پچھلے ٹیبز' : 'Previous tabs'"
+            @click="scrollTabs('prev')"
+          >
+            <span aria-hidden="true">{{ locale === 'ur' ? '>' : '<' }}</span>
+          </button>
+          <div
+            ref="tabsScroller"
+            class="app-tabs__scroller"
+            role="tablist"
+            @scroll="updateTabsScrollState"
+          >
+            <button
+              v-for="tab in tabs"
+              :key="tab"
+              type="button"
+              role="tab"
+              class="app-tabs__item"
+              :class="{ 'is-active': tab === activeTab }"
+              :aria-selected="tab === activeTab"
+              @click="selectTab(tab)"
+            >
+              {{ tabLabel(tab) }}
+            </button>
+          </div>
+          <button
+            type="button"
+            class="app-tabs__arrow"
+            :disabled="!canScrollTabsNext"
+            :aria-label="locale === 'ur' ? 'اگلے ٹیبز' : 'Next tabs'"
+            @click="scrollTabs('next')"
+          >
+            <span aria-hidden="true">{{ locale === 'ur' ? '<' : '>' }}</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Single RouterView renders everything:
          /login, /register → Login.vue (self-centered)
          /groups etc       → tab content (sits below the tab bar above) -->
-    <div
-      class="flex-1"
-      :class="loggedIn ? 'container mx-auto' : ''"
-      :style="loggedIn ? 'max-width: 980px' : ''"
-    >
-      <div class="tab-stage">
-        <RouterView v-slot="{ Component }">
-          <Transition :name="tabTransitionName" mode="out-in">
-            <component
-              :is="Component"
-              :key="$route.path"
-              class="tab-stage__panel max-[980px]:px-2 mb-4"
-            />
-          </Transition>
-        </RouterView>
+      <div
+        class="flex-1"
+        :class="loggedIn ? 'container mx-auto' : ''"
+        >
+        <!-- :style="loggedIn ? 'max-width: 980px' : ''" -->
+        <div class="tab-stage">
+          <RouterView v-slot="{ Component }">
+            <Transition :name="tabTransitionName" mode="out-in">
+              <component
+                :is="Component"
+                :key="$route.path"
+                class="tab-stage__panel max-[980px]:px-2 mb-4"
+              />
+            </Transition>
+          </RouterView>
+        </div>
       </div>
+
+      <PublicFooter v-if="isPublicPage" />
+
+      <!-- Expenses Summary Dialog -->
+      <NetPositionDialog
+        v-if="loggedIn"
+        v-model="showNetPositionDialog"
+        :summary="netPositionSummary"
+      />
     </div>
-
-    <PublicFooter v-if="isPublicPage" />
-
-    <!-- Expenses Summary Dialog -->
-    <NetPositionDialog
-      v-if="loggedIn"
-      v-model="showNetPositionDialog"
-      :summary="netPositionSummary"
-    />
-  </div>
+  </el-config-provider>
 </template>
 
 <script setup>
 import { App } from '@/scripts/layout'
-import { Tabs } from '@/assets'
-import { loadAsyncComponent } from '@/utils/async-component'
-import { useI18n } from 'vue-i18n'
-
-const { t } = useI18n()
-
-const TAB_LABEL_KEYS = {
-  [Tabs.GROUPS]: 'tabs.groups',
-  [Tabs.USERS]: 'tabs.users',
-  [Tabs.SHARED_EXPENSES]: 'tabs.sharedExpenses',
-  [Tabs.SHARED_LOANS]: 'tabs.sharedLoans',
-  [Tabs.PERSONAL_EXPENSES]: 'tabs.personalExpenses',
-  [Tabs.PERSONAL_LOANS]: 'tabs.personalLoans',
-  [Tabs.BUG_RESOLVER]: 'tabs.bugReports'
-}
-
-function tabLabel(tab) {
-  return TAB_LABEL_KEYS[tab] ? t(TAB_LABEL_KEYS[tab]) : tab
-}
-
-const Header = loadAsyncComponent(
-  () => import('@/components/layout/Header.vue')
-)
-const WelcomeBanner = loadAsyncComponent(
-  () => import('@/components/generic-components/WelcomeBanner.vue')
-)
-const PublicFooter = loadAsyncComponent(
-  () => import('@/components/public/PublicFooter.vue')
-)
-const NetPositionDialog = loadAsyncComponent(
-  () => import('@/components/generic-components/NetPositionDialog.vue')
-)
 
 const {
+  Header,
+  WelcomeBanner,
+  PublicFooter,
+  NetPositionDialog,
+  locale,
   loggedIn,
   tabs,
   displayName,
   activeTab,
   tabBarKey,
+  tabsScroller,
+  canScrollTabsPrev,
+  canScrollTabsNext,
+  tabLabel,
+  scrollTabs,
+  selectTab,
+  updateTabsScrollState,
   tabTransitionName,
   isPublicPage,
   setLoggedInStatus,
@@ -147,6 +159,86 @@ const {
   transform-origin: center center;
   backface-visibility: hidden;
   will-change: transform, opacity, filter;
+}
+
+.app-tabs {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+  margin-top: 0;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--tab-gradient-start);
+  margin-bottom: 12px;
+}
+
+.app-tabs--rtl {
+  direction: rtl;
+}
+
+.app-tabs__scroller {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+}
+
+.app-tabs__scroller::-webkit-scrollbar {
+  display: none;
+}
+
+.app-tabs__arrow,
+.app-tabs__item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  height: 40px;
+  border: 1px solid var(--border-color);
+  background: var(--card-bg);
+  color: var(--text-primary);
+  font-weight: 700;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+
+.app-tabs__arrow {
+  flex: 0 0 32px;
+  padding: 0;
+  font-size: 1.25rem;
+  cursor: pointer;
+}
+
+.app-tabs__arrow:disabled {
+  display: none;
+}
+
+.app-tabs__item {
+  flex: 0 0 auto;
+  padding: 0 18px;
+  cursor: pointer;
+}
+
+.app-tabs__item.is-active {
+  background-color: var(--tab-active-bg);
+  color: var(--success-700);
+}
+
+html[lang='ur'] .app-tabs__arrow,
+html[lang='ur'] .app-tabs__item {
+  line-height: 1.35 !important;
+}
+
+@media (max-width: 767px) {
+  .app-tab-header {
+    margin-bottom: 12px;
+  }
+
+  .app-tabs {
+    display: none;
+  }
 }
 
 .tab-page-forward-enter-active,

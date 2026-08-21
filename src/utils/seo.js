@@ -1,5 +1,6 @@
 import {
   DEFAULT_OG_IMAGE,
+  getSiteName,
   OG_LOCALES,
   PRIVATE_ROBOTS,
   SITE_NAME,
@@ -127,40 +128,75 @@ function replaceSeoTokens(value, replacements) {
   return value
 }
 
+function localizeBrandName(value, locale) {
+  const localizedSiteName = getSiteName(locale)
+  if (localizedSiteName === SITE_NAME) return value
+
+  if (typeof value === 'string') {
+    return value.split(SITE_NAME).join(localizedSiteName)
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((item) => localizeBrandName(item, locale))
+  }
+
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, entry]) => [
+        key,
+        localizeBrandName(entry, locale)
+      ])
+    )
+  }
+
+  return value
+}
+
 export function applySeoForRoute(route) {
   if (typeof window === 'undefined' || !route) return
 
   const origin = window.location.origin || SITE_URL
-  const seo = route.meta?.seo || {
-    title: SITE_NAME,
-    description: `${SITE_NAME} web app`,
-    robots: PRIVATE_ROBOTS
-  }
+  const locale = route.meta?.locale ?? getStoredLocale()
+  const localizedSiteName = getSiteName(locale)
+  const seo = localizeBrandName(
+    route.meta?.seo || {
+      title: SITE_NAME,
+      description: `${SITE_NAME} web app`,
+      robots: PRIVATE_ROBOTS
+    },
+    locale
+  )
   const path = seo.canonicalPath || route.fullPath || route.path || '/'
   const canonicalUrl = new URL(path, origin).toString()
   const imageUrl = resolveAbsoluteUrl(seo.image, origin)
-  const locale = route.meta?.locale ?? getStoredLocale()
 
   document.documentElement.lang = locale
   document.documentElement.dir = locale === 'ur' ? 'rtl' : 'ltr'
-  document.title = seo.title || SITE_NAME
+  document.title = seo.title || localizedSiteName
 
   upsertMeta('description', seo.description)
   upsertMeta('keywords', seo.keywords)
   upsertMeta('robots', seo.robots || PRIVATE_ROBOTS)
-  upsertMeta('author', SITE_NAME)
-  upsertMeta('application-name', SITE_NAME)
+  upsertMeta('author', localizedSiteName)
+  upsertMeta('application-name', localizedSiteName)
 
   upsertMeta('og:type', seo.ogType || 'website', 'property')
-  upsertMeta('og:title', seo.ogTitle || seo.title || SITE_NAME, 'property')
+  upsertMeta(
+    'og:title',
+    seo.ogTitle || seo.title || localizedSiteName,
+    'property'
+  )
   upsertMeta('og:description', seo.ogDescription || seo.description, 'property')
   upsertMeta('og:url', canonicalUrl, 'property')
-  upsertMeta('og:site_name', SITE_NAME, 'property')
+  upsertMeta('og:site_name', localizedSiteName, 'property')
   upsertMeta('og:image', imageUrl, 'property')
   upsertMeta('og:locale', OG_LOCALES[locale] || OG_LOCALES.en, 'property')
 
   upsertMeta('twitter:card', 'summary_large_image')
-  upsertMeta('twitter:title', seo.twitterTitle || seo.title || SITE_NAME)
+  upsertMeta(
+    'twitter:title',
+    seo.twitterTitle || seo.title || localizedSiteName
+  )
   upsertMeta('twitter:description', seo.twitterDescription || seo.description)
   upsertMeta('twitter:image', imageUrl)
 

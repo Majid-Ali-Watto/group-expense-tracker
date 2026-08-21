@@ -65,13 +65,13 @@
 
       <!-- Approve/Reject buttons for members who haven't approved -->
       <div v-if="!hasUserApprovedSettlement" class="flex gap-2">
-        <el-button size="medium" type="success" @click="approveSettlement">
+        <el-button size="default" type="success" @click="approveSettlement">
           {{ t('sharedExpenses.approveSettlement') }}
         </el-button>
         <!-- Show Cancel for the requester -->
         <el-button
           v-if="group.settlementRequest.requestedBy === user"
-          size="medium"
+          size="default"
           type="warning"
           plain
           @click="rejectSettlement"
@@ -80,7 +80,7 @@
         </el-button>
         <!-- Show Reject only for admin who is NOT the requester -->
         <!-- v-else-if="isAdmin" -->
-        <el-button size="medium" type="danger" @click="rejectSettlement">
+        <el-button size="default" type="danger" @click="rejectSettlement">
           {{ t('sharedExpenses.rejectSettlement') }}
         </el-button>
       </div>
@@ -98,10 +98,10 @@
         v-if="isAdmin && allMembersApprovedSettlement"
         class="mt-2 flex gap-2"
       >
-        <el-button type="primary" size="medium" @click="addPaymentsBatch">
+        <el-button type="primary" size="default" @click="addPaymentsBatch">
           {{ t('sharedExpenses.finalizeSettlement') }}
         </el-button>
-        <el-button type="warning" plain size="medium" @click="rejectSettlement">
+        <el-button type="warning" plain size="default" @click="rejectSettlement">
           {{ t('sharedExpenses.cancelSettlementRequest') }}
         </el-button>
       </div>
@@ -115,7 +115,7 @@
         "
         class="mt-2"
       >
-        <el-button size="medium" type="warning" plain @click="rejectSettlement">
+        <el-button size="default" type="warning" plain @click="rejectSettlement">
           {{ t('sharedExpenses.cancelSettlementRequest') }}
         </el-button>
       </div>
@@ -136,7 +136,7 @@
         v-if="activeGroup"
         @click="requestSettlement"
         type="success"
-        size="medium"
+        size="default"
       >
         {{ t('sharedExpenses.requestSettlement') }}
       </GenericButton>

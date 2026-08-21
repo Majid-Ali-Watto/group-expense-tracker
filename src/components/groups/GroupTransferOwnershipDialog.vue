@@ -13,7 +13,7 @@
         :label="t('groups.selectNewOwner')"
         :options="ownerOptions"
         :placeholder="t('groups.selectNewOwnerPlaceholder')"
-        size="medium"
+        size="default"
         :wrap-form-item="false"
         @update:modelValue="$emit('update:newOwner', $event)"
       />
@@ -27,7 +27,7 @@
     <template #footer>
       <div class="flex justify-end gap-2">
         <el-button
-          size="medium"
+          size="default"
           style="min-width: 120px"
           @click="$emit('update:modelValue', false)"
         >
@@ -35,7 +35,7 @@
         </el-button>
         <el-button
           type="primary"
-          size="medium"
+          size="default"
           style="min-width: 120px"
           @click="$emit('submit')"
         >

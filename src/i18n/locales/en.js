@@ -188,8 +188,7 @@ export default {
     },
     googleMobileDialog: {
       title: 'One more step',
-      instructions:
-        'Please enter your mobile number to complete registration.',
+      instructions: 'Please enter your mobile number to complete registration.',
       prioritize: 'Priortize (Easypaisa/Jazzcash), not mandatory',
       placeholder: 'Mobile number (11 digits)',
       cancel: 'Cancel',
@@ -358,7 +357,8 @@ export default {
     selectDate: 'Select date',
     activeUserBlocked:
       'Your account is blocked by admin. Users and groups are disabled.',
-    entityBlocked: 'This {entity} is blocked by admin. Do not interact with it.',
+    entityBlocked:
+      'This {entity} is blocked by admin. Do not interact with it.',
     entityGroup: 'group',
     entityUser: 'user',
     save: 'Save',
@@ -420,8 +420,7 @@ export default {
     rejectConfirm: 'Are you sure you want to reject this {type} request?',
     rejectTitle: 'Confirm Rejection',
     yesRejectBtn: 'Yes, Reject',
-    requestRejected:
-      'Your {type} request for {item} was rejected',
+    requestRejected: 'Your {type} request for {item} was rejected',
     requestRejectedMsg: '{type} request has been rejected.',
     verifyWarning:
       'Please verify the {type} details carefully. Once added, any changes or deletions will require approval from all group members.'
@@ -471,7 +470,7 @@ export default {
       'Please add at least one split item when using Custom split mode.',
     pairwiseSettlements: 'Pairwise Settlements (Who pays whom)',
     allSettled: '✅ All Settled!',
-    allSettledText: 'No pending settlements. Everyone\'s balance is zero.',
+    allSettledText: "No pending settlements. Everyone's balance is zero.",
     settlementRequest: '📋 Settlement Request',
     settlementRequestedBy: 'Requested by: {user} for {month}',
     settlementAllMustApprove:
@@ -577,9 +576,11 @@ export default {
     loanToBeDeleted: 'Loan to be deleted:'
   },
   users: {
-    blockedAccountWarning: 'Your account is blocked by admin. Users are visible for reference only.',
+    blockedAccountWarning:
+      'Your account is blocked by admin. Users are visible for reference only.',
     existingUsers: 'Existing Users (only verified)',
     searchPlaceholder: 'Search by name, mobile, or group...',
+    sortPlaceholder: 'Sort',
     default: 'Default',
     sharedGroupsOnly: 'Shared groups only',
     hideBlockedUsers: 'Hide blocked users',
@@ -587,7 +588,8 @@ export default {
     groups: 'Groups',
     actions: 'Actions',
     noUsersMatch: 'No users match the current filters',
-    clearSearchHint: 'Try clearing the search or removing the shared-group filter.',
+    clearSearchHint:
+      'Try clearing the search or removing the shared-group filter.',
     createGroup: 'Create Group',
     edit: 'Edit',
     delete: 'Delete',
@@ -599,7 +601,8 @@ export default {
     member: 'member',
     requested: 'requested',
     joinGroup: 'Join Group',
-    blockedUserWarning: 'This user is blocked by admin. Do not interact with this account.',
+    blockedUserWarning:
+      'This user is blocked by admin. Do not interact with this account.',
     pendingApprovals: 'Pending Approvals',
     deleteRequestBy: 'Delete request by',
     approvals: 'Approvals: {approved} / {required}',
@@ -613,7 +616,8 @@ export default {
     save: 'Save',
     createGroupDialog: 'Create Group',
     usersGroupsTitle: "{name}'s Groups ({count})",
-    alreadyPendingJoin: 'You already have a pending join request for this group.',
+    alreadyPendingJoin:
+      'You already have a pending join request for this group.',
     joinGroupConfirm: 'Do you want to send a join request for "{name}"?',
     joinGroupTitle: 'Join Group',
     sendRequest: 'Send Request',
@@ -629,14 +633,18 @@ export default {
     updateRequestPending: 'An update request is pending for this user',
     mobileTaken: 'An account with this mobile number already exists',
     userUpdated: 'User updated successfully',
-    deleteUserConfirm: 'Are you sure you want to delete <strong>{name}</strong>?',
-    deleteUserGroupWarning: '<br><br>This user is in one or more groups. All group owners must approve before deletion.',
+    deleteUserConfirm:
+      'Are you sure you want to delete <strong>{name}</strong>?',
+    deleteUserGroupWarning:
+      '<br><br>This user is in one or more groups. All group owners must approve before deletion.',
     deleteUserTitle: 'Delete User',
     proceed: 'Proceed',
     deleteAlreadyPending: 'A delete request is already pending for this user',
-    updatePendingCannotDelete: 'An update request is pending. Cancel it before deleting.',
+    updatePendingCannotDelete:
+      'An update request is pending. Cancel it before deleting.',
     userDeleted: 'User {name} deleted',
-    deleteRequestSentToOwners: 'Delete request sent to group owners for approval',
+    deleteRequestSentToOwners:
+      'Delete request sent to group owners for approval',
     approvalRecorded: 'Approval recorded',
     rejectUserConfirm: 'Reject the {type} request for <strong>{name}</strong>?',
     rejectUserTitle: 'Reject Request',
@@ -654,7 +662,8 @@ export default {
     nameChangedPart: 'changed their name from "{oldName}" to "{newName}"',
     mobileUpdatedPart: 'updated their mobile number',
     memberRenamedNotif: '{newName} has {changes} in group "{groupName}".',
-    deletionRejectedNotif: 'Your account deletion request was rejected by {name}.'
+    deletionRejectedNotif:
+      'Your account deletion request was rejected by {name}.'
   },
   personalExpenses: {
     addNewExpensePrompt: 'Want to add a new expense?',
@@ -738,8 +747,7 @@ export default {
     severity: 'Severity',
     selectSeverity: 'Select severity',
     screenshots: 'Screenshots',
-    uploadHint:
-      'Up to {max} images · JPG, PNG, WebP, GIF · Max {size}MB each',
+    uploadHint: 'Up to {max} images · JPG, PNG, WebP, GIF · Max {size}MB each',
     attachScreenshot: 'Attach Screenshot',
     uploadingScreenshots: 'Uploading screenshots...',
     submitting: 'Submitting...',
@@ -864,7 +872,10 @@ export default {
     blockedNotice:
       'Your account is blocked by admin. Groups are visible for reference only.',
     createPrompt: 'Want to create a new group?',
+    addExpense: 'Add Expense',
+    addLoan: 'Add Loan',
     searchPlaceholder: 'Search by group name, code, owner, or member...',
+    sortPlaceholder: 'Sort',
     sortDefault: 'Default',
     sortAsc: 'A→Z',
     sortDesc: 'Z→A',
@@ -888,7 +899,8 @@ export default {
     categoryOptionalPlaceholder: 'Select a category (optional)',
     create: 'Create',
 
-    groupBlockedByAdmin: 'This group is blocked by admin. Do not interact with it.',
+    groupBlockedByAdmin:
+      'This group is blocked by admin. Do not interact with it.',
     accountBlockedActionsDisabled:
       'Your account is blocked by admin. Group actions are disabled.',
     ownerLabel: 'Owner: {name} ({mobile})',
@@ -1001,7 +1013,8 @@ export default {
     allCategoriesOption: '🗂️ All'
   },
   groupsMessages: {
-    loadAvailableGroupsFailed: 'Failed to load available groups. Please try again.',
+    loadAvailableGroupsFailed:
+      'Failed to load available groups. Please try again.',
     joinedGroupSuccess: 'You have joined the group!',
     invitationDeclined: 'Invitation declined.',
     joinedGroupsShareLabel: 'joined groups',
@@ -1025,13 +1038,16 @@ export default {
     memberAddedToGroup: '{name} has been added to the group',
     approvalRecorded: 'Approval recorded',
     approvedJoinRequest: 'You have approved this join request',
-    allMustApproveBeforeAdding: 'All members must approve before adding to group',
+    allMustApproveBeforeAdding:
+      'All members must approve before adding to group',
     memberAdded: 'Member added',
     joinRequestFromRejected: 'Join request from {name} ({mobile}) was rejected',
     yourJoinRequestRejected: 'Your request to join "{groupName}" was rejected',
     requestRejected: 'Request rejected',
     mustBeMemberToSelect: 'You must be a member of this group to select it',
     selectedGroupSuccess: 'Selected group: {name}',
+    selectGroupBeforeSharedAction:
+      'Please join or select a group before adding shared activity.',
     soleMemberDeleteConfirm:
       'You are the only member in this group. It will be deleted immediately without any approval step.',
     deleteGroupTitle: 'Delete Group',
@@ -1049,10 +1065,12 @@ export default {
       'This will cancel the deletion request. The owner will need to create a new request if they want to delete the group.',
     rejectDeletionRequestTitle: 'Reject Deletion Request',
     rejectButton: 'Reject',
-    deletionCancelledBy: 'Group deletion request cancelled by {name} ({mobile})',
+    deletionCancelledBy:
+      'Group deletion request cancelled by {name} ({mobile})',
     deletionRejectedAndCancelled:
       'Deletion request has been rejected and cancelled',
-    cannotDeleteUntilAllApprove: 'Cannot delete group until all members approve',
+    cannotDeleteUntilAllApprove:
+      'Cannot delete group until all members approve',
     finalDeleteConfirmBody:
       'All members have approved. This will permanently delete the group and all its data. This action cannot be undone.',
     confirmFinalDeletionTitle: 'Confirm Final Deletion',
@@ -1061,7 +1079,8 @@ export default {
     groupNameRequired: 'Group name is required',
     atLeastTwoMembersRequired: 'At least two members are required',
     nameChangedNotif: 'Name: "{oldName}" → "{newName}"',
-    descriptionChangedNotif: 'Description: "{oldDescription}" → "{newDescription}"',
+    descriptionChangedNotif:
+      'Description: "{oldDescription}" → "{newDescription}"',
     emptyPlaceholder: '(empty)',
     groupUpdatedNotif: 'Group updated — {changes}',
     groupUpdatedToast: 'Group updated',
@@ -1086,7 +1105,8 @@ export default {
     nameArrow: 'name → "{name}"',
     addedMembersCount: '+{count} member(s)',
     removedMembersCount: '-{count} member(s)',
-    editCancelledBy: 'Group edit request cancelled by {name} ({mobile}){detail}',
+    editCancelledBy:
+      'Group edit request cancelled by {name} ({mobile}){detail}',
     editRequestRejectedToast: 'Edit request rejected',
     groupNotFound: 'Group not found',
     memberAlreadyInGroup: 'This member is already in the group',
@@ -1118,7 +1138,8 @@ export default {
       'You are the only member in this group. Leaving will immediately delete the empty group.',
     leaveGroupTitle: 'Leave Group',
     leaveAndDeleteGroupButton: 'Leave and Delete Group',
-    leftGroupAutoDeleted: 'You left the group and it was deleted automatically.',
+    leftGroupAutoDeleted:
+      'You left the group and it was deleted automatically.',
     ownerMustTransferBeforeLeaving:
       'You are the group owner. You must transfer ownership to another member before leaving the group.',
     transferOwnershipRequiredTitle: 'Transfer Ownership Required',
@@ -1140,7 +1161,8 @@ export default {
     onlyDesignatedOwnerCanAccept:
       'Only the designated new owner can accept this transfer',
     ownershipTransferredSuccess: 'Ownership has been transferred successfully',
-    cancelTransferConfirmBody: 'This will cancel the ownership transfer request.',
+    cancelTransferConfirmBody:
+      'This will cancel the ownership transfer request.',
     rejectTransferRequestTitle: 'Reject Transfer Request',
     transferRequestToRejected:
       'Ownership transfer request to {name} ({mobile}) was rejected',
@@ -1336,7 +1358,8 @@ export default {
     editorTitle: 'Adjust Receipt',
     editorConfirmLabel: 'Use Receipt',
     editorAlt: 'Receipt editor',
-    editorHint: 'Drag the receipt to reposition, then zoom or rotate as needed.',
+    editorHint:
+      'Drag the receipt to reposition, then zoom or rotate as needed.',
     previewFallbackName: 'Receipt preview',
     receiptIndexName: 'Receipt {index}'
   },

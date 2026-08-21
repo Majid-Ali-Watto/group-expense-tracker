@@ -325,6 +325,8 @@ function handleEditorVisibilityChange(visible) {
     return
   }
 
+  if (!editorVisible.value) return
+
   const nextFiles = props.multiple
     ? [...cropBaseFiles.value, ...croppedFiles.value]
     : croppedFiles.value.slice(0, 1)
@@ -337,7 +339,6 @@ function handleEditorConfirm(blob) {
 
   croppedFiles.value.push(buildReplacementFile(blob, activeEditorFile.value))
   activeEditorFile.value = null
-  editorVisible.value = false
   revokeEditorSourceUrl()
   openNextEditor()
 }

@@ -8,7 +8,7 @@
       v-model="internalValue"
       :placeholder="placeholder"
       :type="type"
-      size="medium"
+      size="default"
       :maxlength="maxlength || undefined"
       :disabled="disabled"
       :show-password="showPassword"

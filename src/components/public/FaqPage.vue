@@ -27,8 +27,7 @@ const faqItems = computed(() => FAQ_ITEMS[locale.value])
 <style scoped>
 .public-page {
   padding: 108px 20px 32px;
-  max-width: 980px;
-  margin: 0 auto;
+  width: 100%;
   color: #173025;
 }
 

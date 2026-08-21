@@ -34,7 +34,7 @@
         prop="members"
         :options="memberOptions"
         :placeholder="t('groups.membersPlaceholder')"
-        size="medium"
+        size="default"
         multiple
       />
     </el-form>
@@ -42,7 +42,7 @@
     <template #footer>
       <div class="flex justify-end gap-2">
         <el-button
-          size="medium"
+          size="default"
           style="min-width: 80px"
           @click="$emit('update:modelValue', false)"
         >
@@ -50,7 +50,7 @@
         </el-button>
         <el-button
           type="primary"
-          size="medium"
+          size="default"
           style="min-width: 80px"
           @click="handleSave"
         >

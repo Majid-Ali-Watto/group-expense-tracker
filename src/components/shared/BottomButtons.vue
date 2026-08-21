@@ -5,7 +5,7 @@
     <el-button
       @click="confirmUpdate"
       type="warning"
-      size="medium"
+      size="default"
       class="text-white py-2 px-4 rounded-lg"
     >
       {{ t('common.update') }}
@@ -13,7 +13,7 @@
     <el-button
       @click="confirmDelete"
       type="danger"
-      size="medium"
+      size="default"
       class="text-white py-2 px-4 rounded-lg"
     >
       {{ t('common.delete') }}
@@ -21,7 +21,7 @@
     <el-button
       @click="confirmDuplicate"
       type="primary"
-      size="medium"
+      size="default"
       class="py-2 px-4 rounded-lg"
     >
       {{ t('common.duplicate') }}
@@ -29,7 +29,7 @@
     <el-button
       @click="$emit('cancel')"
       type="success"
-      size="medium"
+      size="default"
       class="py-2 px-4 rounded-lg"
     >
       {{ t('common.cancel') }}

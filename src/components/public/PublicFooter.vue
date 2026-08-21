@@ -31,8 +31,7 @@ import { PUBLIC_NAV_LINKS } from '@/constants'
 const route = useRoute()
 const { t, locale } = useI18n()
 const navLinks = computed(() => PUBLIC_NAV_LINKS[locale.value])
-const withLocale = (path) =>
-  route.meta?.locale === 'ur' ? `/ur${path}` : path
+const withLocale = (path) => (route.meta?.locale === 'ur' ? `/ur${path}` : path)
 </script>
 
 <style scoped>
@@ -41,8 +40,7 @@ const withLocale = (path) =>
 }
 
 .public-footer__inner {
-  max-width: 1180px;
-  margin: 0 auto;
+  width: 100%;
   padding: 22px 24px;
   border-radius: 22px;
   background: linear-gradient(135deg, #11331d 0%, #166534 100%);

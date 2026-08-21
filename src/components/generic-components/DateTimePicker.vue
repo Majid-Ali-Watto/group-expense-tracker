@@ -15,7 +15,7 @@
       :format="format"
       :value-format="valueFormat"
       style="width: 100%"
-      size="medium"
+      size="default"
     />
   </el-form-item>
 </template>

@@ -57,7 +57,7 @@
             <GenericDropDown
               v-model="selectedGroupId"
               :placeholder="t('welcomeBanner.noGroupSelected')"
-              size="medium"
+              size="default"
               select-class="min-w-0 font-bold"
               :class="joinedGroups.length === 0 ? 'opacity-50' : ''"
               :disabled="joinedGroups.length === 0"

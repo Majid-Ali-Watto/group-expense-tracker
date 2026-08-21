@@ -56,7 +56,7 @@
         </div>
         <div class="flex gap-2 flex-shrink-0">
           <el-button
-            size="medium"
+            size="default"
             type="success"
             :disabled="activeUserBlocked || group.blocked"
             @click="$emit('accept', group.id)"
@@ -64,7 +64,7 @@
             {{ t('groups.accept') }}
           </el-button>
           <el-button
-            size="medium"
+            size="default"
             type="danger"
             plain
             :disabled="activeUserBlocked || group.blocked"

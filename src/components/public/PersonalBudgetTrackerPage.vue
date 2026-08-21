@@ -29,8 +29,7 @@ const benefits = computed(() => BUDGET_BENEFITS[locale.value])
 <style scoped>
 .public-page {
   padding: 108px 20px 32px;
-  max-width: 1080px;
-  margin: 0 auto;
+  width: 100%;
   color: #173025;
 }
 

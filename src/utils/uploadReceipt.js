@@ -100,14 +100,14 @@ export async function uploadReceipt(file) {
  * Handles both Cloudinary and Firebase Storage, plus legacy meta without a
  * provider field (treated as Cloudinary for backwards compatibility).
  */
-export async function deleteReceipt(meta) {
+export async function deleteReceipt(meta, context = null) {
   if (!meta) return
   if (meta.provider === 'firebase') {
     await deleteFromFirebaseStorage(meta.path)
   } else {
     // 'cloudinary' or legacy records that pre-date the provider field
     if (meta.publicId) {
-      await deleteFromCloudinary(meta.publicId, meta.resourceType)
+      await deleteFromCloudinary(meta.publicId, meta.resourceType, context)
     }
   }
 }
@@ -117,13 +117,13 @@ export async function deleteReceipt(meta) {
  * Delete any receipts that were present before an update but are no longer
  * in the new set. Works across both providers.
  */
-export function cleanupOldReceipts(oldMeta, newMeta) {
+export function cleanupOldReceipts(oldMeta, newMeta, context = null) {
   if (!oldMeta || !newMeta) return
   const oldMetas = Array.isArray(oldMeta) ? oldMeta : [oldMeta]
   const newUrls = new Set(
     (Array.isArray(newMeta) ? newMeta : [newMeta]).map((m) => m.url)
   )
   oldMetas.forEach((m) => {
-    if (!newUrls.has(m.url)) deleteReceipt(m)
+    if (!newUrls.has(m.url)) deleteReceipt(m, context)
   })
 }

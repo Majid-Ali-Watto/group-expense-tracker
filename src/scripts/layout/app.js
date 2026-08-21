@@ -56,9 +56,62 @@ import {
   where
 } from '@/firebase'
 import { NetPosition } from '@/scripts/generic'
+import { loadAsyncComponent } from '@/utils/async-component'
+
+const Header = loadAsyncComponent(
+  () => import('@/components/layout/Header.vue')
+)
+const WelcomeBanner = loadAsyncComponent(
+  () => import('@/components/generic-components/WelcomeBanner.vue')
+)
+const PublicFooter = loadAsyncComponent(
+  () => import('@/components/public/PublicFooter.vue')
+)
+const NetPositionDialog = loadAsyncComponent(
+  () => import('@/components/generic-components/NetPositionDialog.vue')
+)
+
+const TAB_LABEL_KEYS = {
+  [Tabs.GROUPS]: 'tabs.groups',
+  [Tabs.USERS]: 'tabs.users',
+  [Tabs.SHARED_EXPENSES]: 'tabs.sharedExpenses',
+  [Tabs.SHARED_LOANS]: 'tabs.sharedLoans',
+  [Tabs.PERSONAL_EXPENSES]: 'tabs.personalExpenses',
+  [Tabs.PERSONAL_LOANS]: 'tabs.personalLoans',
+  [Tabs.BUG_RESOLVER]: 'tabs.bugReports'
+}
+
+let rtlScrollType = null
+
+function getRtlScrollType() {
+  if (rtlScrollType) return rtlScrollType
+  if (typeof document === 'undefined') {
+    rtlScrollType = 'negative'
+    return rtlScrollType
+  }
+
+  const outer = document.createElement('div')
+  const inner = document.createElement('div')
+  outer.dir = 'rtl'
+  outer.style.cssText =
+    'position:absolute;left:-9999px;width:4px;height:1px;overflow:scroll;visibility:hidden;'
+  inner.style.cssText = 'width:8px;height:1px;'
+  outer.appendChild(inner)
+  document.body.appendChild(outer)
+
+  if (outer.scrollLeft > 0) {
+    rtlScrollType = 'reverse'
+  } else {
+    outer.scrollLeft = 1
+    rtlScrollType = outer.scrollLeft === 0 ? 'negative' : 'default'
+  }
+
+  document.body.removeChild(outer)
+  return rtlScrollType
+}
 
 export const App = () => {
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
   const router = useRouter()
   const route = useRoute()
   const authStore = useAuthStore()
@@ -446,9 +499,76 @@ export const App = () => {
   )
   const tabBarKey = ref(0)
   const tabTransitionName = ref('tab-page-forward')
+  const tabsScroller = ref(null)
+  const canScrollTabsPrev = ref(false)
+  const canScrollTabsNext = ref(false)
+  const isRtl = computed(() => locale.value === 'ur')
 
   // Valid app route paths (used to filter out /login, /register, /)
   const validAppRoutes = new Set(Object.values(TAB_ROUTES))
+
+  function tabLabel(tab) {
+    return TAB_LABEL_KEYS[tab] ? t(TAB_LABEL_KEYS[tab]) : tab
+  }
+
+  function getNormalizedScrollLeft(el) {
+    const max = Math.max(el.scrollWidth - el.clientWidth, 0)
+    if (!isRtl.value) return el.scrollLeft
+
+    const type = getRtlScrollType()
+    if (type === 'negative') return -el.scrollLeft
+    if (type === 'reverse') return max - el.scrollLeft
+    return el.scrollLeft
+  }
+
+  function setNormalizedScrollLeft(el, value) {
+    const max = Math.max(el.scrollWidth - el.clientWidth, 0)
+    const next = Math.max(0, Math.min(value, max))
+
+    if (!isRtl.value) {
+      el.scrollTo({ left: next, behavior: 'smooth' })
+      return
+    }
+
+    const type = getRtlScrollType()
+    const left =
+      type === 'negative' ? -next : type === 'reverse' ? max - next : next
+    el.scrollTo({ left, behavior: 'smooth' })
+  }
+
+  function updateTabsScrollState() {
+    const el = tabsScroller.value
+    if (!el) return
+
+    const max = Math.max(el.scrollWidth - el.clientWidth, 0)
+    const current = getNormalizedScrollLeft(el)
+    canScrollTabsPrev.value = current > 1
+    canScrollTabsNext.value = current < max - 1
+  }
+
+  function scrollTabs(direction) {
+    const el = tabsScroller.value
+    if (!el) return
+
+    const amount = Math.max(el.clientWidth * 0.8, 120)
+    const current = getNormalizedScrollLeft(el)
+    const normalizedDelta = direction === 'next' ? amount : -amount
+    setNormalizedScrollLeft(el, current + normalizedDelta)
+    window.setTimeout(updateTabsScrollState, 250)
+  }
+
+  async function scrollActiveTabIntoView() {
+    await nextTick()
+    const el = tabsScroller.value
+    const active = el?.querySelector('.app-tabs__item.is-active')
+    active?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+    updateTabsScrollState()
+  }
+
+  function selectTab(tab) {
+    handleActiveTab(tab)
+    scrollActiveTabIntoView()
+  }
 
   // Keep activeTab in sync when route changes, and persist last route to sessionStorage
   watch(
@@ -493,6 +613,14 @@ export const App = () => {
       if (gid) sessionStorage.setItem('_lastGroupId', gid)
       else sessionStorage.removeItem('_lastGroupId')
     }
+  )
+
+  watch(
+    [activeTab, () => tabs.value?.length, locale],
+    () => {
+      scrollActiveTabIntoView()
+    },
+    { flush: 'post' }
   )
 
   function updateTabTransition(nextTab) {
@@ -658,6 +786,7 @@ export const App = () => {
   onUnmounted(() => {
     stopActiveUserTabConfigSync()
     stopInactivityTracking()
+    window.removeEventListener('resize', updateTabsScrollState)
     if (verifyInterval) clearInterval(verifyInterval)
   })
 
@@ -745,7 +874,17 @@ export const App = () => {
     { immediate: true }
   )
 
+  onMounted(() => {
+    scrollActiveTabIntoView()
+    window.addEventListener('resize', updateTabsScrollState)
+  })
+
   return {
+    Header,
+    WelcomeBanner,
+    PublicFooter,
+    NetPositionDialog,
+    locale,
     loggedIn,
     authStore,
     tabStore,
@@ -757,6 +896,13 @@ export const App = () => {
     isPublicPage,
     activeTab,
     tabBarKey,
+    tabsScroller,
+    canScrollTabsPrev,
+    canScrollTabsNext,
+    tabLabel,
+    scrollTabs,
+    selectTab,
+    updateTabsScrollState,
     tabTransitionName,
     allNotifications,
     notificationCount,

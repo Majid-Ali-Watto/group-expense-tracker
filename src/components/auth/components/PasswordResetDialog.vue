@@ -31,7 +31,7 @@
           custom-class="flex-1"
           :loading="isLoading"
           :disabled="isLoading"
-          size="medium"
+          size="default"
           @click="$emit('send')"
         >
           {{ t('auth.passwordReset.send') }}
@@ -40,7 +40,7 @@
         <GenericButton
           type="default"
           :disabled="isLoading"
-          size="medium"
+          size="default"
           @click="dialogVisible = false"
         >
           {{ t('auth.passwordReset.cancel') }}

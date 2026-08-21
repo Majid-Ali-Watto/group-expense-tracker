@@ -27,7 +27,7 @@
           label-position="top"
           :options="usersOptions"
           :placeholder="t('groups.membersPlaceholder')"
-          size="medium"
+          size="default"
           multiple
           required
         />
@@ -40,16 +40,16 @@
           label-position="top"
           :options="categoryOptions"
           :placeholder="t('groups.categoryOptionalPlaceholder')"
-          size="medium"
+          size="default"
         />
         <div class="flex flex-row justify-end gap-2">
           <slot name="clear"></slot>
-          <el-button size="medium" @click="resetCreateForm">{{
+          <el-button size="default" @click="resetCreateForm">{{
             t('common.reset')
           }}</el-button>
           <el-button
             type="primary"
-            size="medium"
+            size="default"
             :loading="isSubmitting"
             :disabled="isSubmitting"
             @click="createGroup"
