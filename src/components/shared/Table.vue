@@ -508,7 +508,7 @@
       destroy-on-close
       append-to-body
       v-model="dialogFormVisible"
-      :width="dialogWidth + 'px'"
+      :width="dialogWidth"
       :before-close="handleDialogBeforeClose"
       @close="deleteMode = false"
     >

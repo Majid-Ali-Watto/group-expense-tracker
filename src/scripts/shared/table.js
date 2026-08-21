@@ -77,7 +77,6 @@ export const Table = (props) => {
   const dialogFormVisible = ref(false)
   const deleteMode = ref(false)
   const state = reactive({ row: null })
-  const screenWidth = ref(window.innerWidth)
   const tabStore = useTabStore()
   const groupStore = useGroupStore()
   const dataStore = useDataStore()
@@ -252,21 +251,10 @@ export const Table = (props) => {
     if (canClose) done()
   }
 
-  function updateScreenWidth() {
-    screenWidth.value = window.innerWidth
-  }
-
-  onMounted(() => {
-    window.addEventListener('resize', updateScreenWidth)
-  })
-
-  onUnmounted(() => {
-    window.removeEventListener('resize', updateScreenWidth)
-  })
-
-  const dialogWidth = computed(() => {
-    return screenWidth.value < 600 ? screenWidth.value * 0.95 : 500
-  })
+  // Fills most of the viewport on small screens, then grows past the old
+  // fixed 500px cap so the two-column form fields have room to breathe on
+  // large screens, capping out at 640px.
+  const dialogWidth = 'clamp(300px, 95vw, 640px)'
 
   function hasAnyRowValue(key) {
     return props.rows.some((row) => {
