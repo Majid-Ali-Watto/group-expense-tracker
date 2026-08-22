@@ -50,7 +50,11 @@
               class="cursor-pointer"
               @click="showMembersDialog = true"
             >
-              {{ t('groups.moreCount', { count: memberCount - initialMemberLoadCount }) }}
+              {{
+                t('groups.moreCount', {
+                  count: memberCount - initialMemberLoadCount
+                })
+              }}
             </el-tag>
           </div>
         </div>

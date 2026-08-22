@@ -270,6 +270,7 @@ export const Loans = () => {
     userNotifications,
     dismissNotification,
     pendingRequests,
+    activePendingNames,
     hasUserApproved,
     isFullyApproved,
     executeRequestManually,
@@ -302,9 +303,7 @@ export const Loans = () => {
       if (!deletedMeta) return
 
       const metas = Array.isArray(deletedMeta) ? deletedMeta : [deletedMeta]
-      metas.forEach((meta) =>
-        deleteReceipt(meta, { documentPath: itemPath })
-      )
+      metas.forEach((meta) => deleteReceipt(meta, { documentPath: itemPath }))
     },
     buildUpdatedItem: (loan, request, notification, itemPath) => {
       cleanupOldReceipts(loan?.receiptMeta, request.changes?.receiptMeta, {
@@ -418,6 +417,7 @@ export const Loans = () => {
     userNotifications,
     dismissNotification,
     pendingRequests,
+    activePendingNames,
     getTotalMembers,
     getUserName,
     hasUserApproved,

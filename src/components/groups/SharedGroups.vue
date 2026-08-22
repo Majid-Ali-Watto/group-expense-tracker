@@ -88,7 +88,9 @@
                     v-if="group.category"
                     class="text-xs text-gray-500 dark:text-gray-400"
                   >
-                    {{ t('groups.categoryInline', { category: group.category }) }}
+                    {{
+                      t('groups.categoryInline', { category: group.category })
+                    }}
                   </p>
                 </div>
               </div>

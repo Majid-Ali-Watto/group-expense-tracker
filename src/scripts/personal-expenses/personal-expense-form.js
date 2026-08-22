@@ -242,10 +242,7 @@ export const PersonalExpenseForm = (props, emit) => {
           emit('closeModal')
         } else if (whatTask == 'Delete') {
           deleteExistingReceipts({ documentPath: expenseDocumentPath })
-          deleteData(
-            expenseDocumentPath,
-            t('personalExpenses.expenseDeleted')
-          )
+          deleteData(expenseDocumentPath, t('personalExpenses.expenseDeleted'))
           emit('closeModal')
         }
       }

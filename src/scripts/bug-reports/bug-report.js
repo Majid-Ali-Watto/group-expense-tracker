@@ -35,10 +35,16 @@ const BUG_NUMBER_PREFIX = 'khata-bug'
 const BUG_NUMBER_PAD = 6
 
 export const ALL_CATEGORIES = [
-  { labelKey: 'bugReports.categories.sharedExpenses', value: 'shared-expenses' },
+  {
+    labelKey: 'bugReports.categories.sharedExpenses',
+    value: 'shared-expenses'
+  },
   { labelKey: 'bugReports.categories.sharedLoans', value: 'shared-loans' },
   { labelKey: 'bugReports.categories.personalLoans', value: 'personal-loans' },
-  { labelKey: 'bugReports.categories.personalExpenses', value: 'personal-expenses' },
+  {
+    labelKey: 'bugReports.categories.personalExpenses',
+    value: 'personal-expenses'
+  },
   { labelKey: 'bugReports.categories.groups', value: 'groups' },
   { labelKey: 'bugReports.categories.notifications', value: 'notifications' },
   { labelKey: 'bugReports.categories.auth', value: 'auth' },
@@ -134,10 +140,7 @@ export const BugReport = (props) => {
 
   const statusLabel = computed(() =>
     Object.fromEntries(
-      Object.entries(STATUS_LABEL_KEYS).map(([status, key]) => [
-        status,
-        t(key)
-      ])
+      Object.entries(STATUS_LABEL_KEYS).map(([status, key]) => [status, t(key)])
     )
   )
 
@@ -290,7 +293,9 @@ export const BugReport = (props) => {
         for (let i = 0; i < screenshots.value.length; i++) {
           uploadProgress.value[i].percent = 30
           try {
-            const result = await uploadReceipt(screenshots.value[i].file)
+            const result = await uploadReceipt(screenshots.value[i].file, {
+              maxSizeBytes: MAX_SIZE_BYTES
+            })
             screenshotMeta.push({
               url: result.url,
               provider: result.provider,
@@ -544,7 +549,9 @@ export const BugReport = (props) => {
     try {
       const newMeta = []
       for (const item of editNewScreenshots.value) {
-        const result = await uploadReceipt(item.file)
+        const result = await uploadReceipt(item.file, {
+          maxSizeBytes: MAX_SIZE_BYTES
+        })
         newMeta.push({
           url: result.url,
           provider: result.provider,

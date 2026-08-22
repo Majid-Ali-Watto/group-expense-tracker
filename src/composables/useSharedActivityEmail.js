@@ -4,7 +4,7 @@ import { useEmailLimit } from '@/composables/useEmailLimit'
 import { getApiAuthHeaders, getIdentity } from '@/utils'
 
 const API_BASE_URL = import.meta.env.VITE_NODE_BE_API_URL?.trim()
-const PRODUCTION = true//import.meta.env.PROD
+const PRODUCTION = true //import.meta.env.PROD
 const BUG_REPORT_RECIPIENT = import.meta.env.VITE_BUG_REPORT_HELP_EMAIL?.trim()
 
 export function useSharedActivityEmail() {

@@ -21,7 +21,12 @@
             </span>
           </div>
           <div class="text-xs text-gray-500 mt-1">
-            {{ t('users.approvals', { approved: item.request.approvals?.length || 0, required: item.request.requiredApprovals?.length || 0 }) }}
+            {{
+              t('users.approvals', {
+                approved: item.request.approvals?.length || 0,
+                required: item.request.requiredApprovals?.length || 0
+              })
+            }}
           </div>
         </div>
         <div class="flex gap-1 flex-shrink-0">

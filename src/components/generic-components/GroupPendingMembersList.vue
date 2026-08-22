@@ -3,7 +3,9 @@
     <div
       class="text-xs font-medium text-orange-500 mb-2 flex items-center gap-1"
     >
-      <span>{{ t('groups.pendingInvitationsCount', { count: pendingMemberCount }) }}</span>
+      <span>{{
+        t('groups.pendingInvitationsCount', { count: pendingMemberCount })
+      }}</span>
     </div>
     <div class="flex flex-wrap gap-2">
       <el-tag
@@ -25,13 +27,19 @@
         class="cursor-pointer"
         @click="showDialog = true"
       >
-        {{ t('groups.moreCount', { count: pendingMemberCount - initialMemberLoadCount }) }}
+        {{
+          t('groups.moreCount', {
+            count: pendingMemberCount - initialMemberLoadCount
+          })
+        }}
       </el-tag>
     </div>
 
     <el-dialog
       v-model="showDialog"
-      :title="t('groups.pendingInvitationsDialogTitle', { count: pendingMemberCount })"
+      :title="
+        t('groups.pendingInvitationsDialogTitle', { count: pendingMemberCount })
+      "
       width="340px"
       append-to-body
       align-center
@@ -57,9 +65,9 @@
               ({{ displayMobileForGroup(member.uid, group) }})
             </span>
           </div>
-          <el-tag size="small" type="warning" class="ml-auto shrink-0"
-            >{{ t('groups.pendingTag') }}</el-tag
-          >
+          <el-tag size="small" type="warning" class="ml-auto shrink-0">{{
+            t('groups.pendingTag')
+          }}</el-tag>
         </div>
       </div>
     </el-dialog>

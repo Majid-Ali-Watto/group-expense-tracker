@@ -202,7 +202,8 @@
     <div v-if="replyingTo" class="nt-reply-banner">
       <span class="nt-reply-banner-label">
         {{ t('bugReports.replyingTo') }}
-        <strong>{{ replyingTo.authorName }}</strong>:
+        <strong>{{ replyingTo.authorName }}</strong
+        >:
         <span class="nt-reply-banner-preview">{{
           replyingTo.text.slice(0, 80)
         }}</span>

@@ -11,9 +11,7 @@
       </div>
 
       <div v-if="loading" class="flex justify-center py-16">
-        <el-text class="text-gray-500">{{
-          t('admin.config.loading')
-        }}</el-text>
+        <el-text class="text-gray-500">{{ t('admin.config.loading') }}</el-text>
       </div>
 
       <div v-else class="grid gap-4 sm:grid-cols-2">

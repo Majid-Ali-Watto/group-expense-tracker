@@ -20,10 +20,7 @@
       />
 
       <!-- Tab navigation bar — only shown when authenticated -->
-      <div
-        v-if="loggedIn"
-        class="app-tab-header container mx-auto mt-20"
-        >
+      <div v-if="loggedIn" class="app-tab-header container mx-auto mt-20">
         <!-- style="max-width: 980px" -->
         <WelcomeBanner
           :displayName="displayName"
@@ -79,10 +76,7 @@
       <!-- Single RouterView renders everything:
          /login, /register → Login.vue (self-centered)
          /groups etc       → tab content (sits below the tab bar above) -->
-      <div
-        class="flex-1"
-        :class="loggedIn ? 'container mx-auto' : ''"
-        >
+      <div class="flex-1" :class="loggedIn ? 'container mx-auto' : ''">
         <!-- :style="loggedIn ? 'max-width: 980px' : ''" -->
         <div class="tab-stage">
           <RouterView v-slot="{ Component }">

@@ -278,7 +278,9 @@ const props = defineProps({
 })
 
 const { t, locale } = useI18n()
-const alternateLocale = computed(() => getAlternateLocalePath(props.routePath || '/'))
+const alternateLocale = computed(() =>
+  getAlternateLocalePath(props.routePath || '/')
+)
 const alternateLocalePath = computed(() => alternateLocale.value.path)
 const alternateLocaleCode = computed(() =>
   alternateLocale.value.locale.toUpperCase()

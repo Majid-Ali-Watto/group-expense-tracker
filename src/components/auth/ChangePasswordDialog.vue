@@ -62,9 +62,9 @@
     </el-form>
 
     <template #footer>
-      <el-button size="default" :disabled="isSubmitting" @click="closeDialog"
-        >{{ t('common.cancel') }}</el-button
-      >
+      <el-button size="default" :disabled="isSubmitting" @click="closeDialog">{{
+        t('common.cancel')
+      }}</el-button>
       <el-button
         type="primary"
         size="default"

@@ -65,7 +65,10 @@ const props = defineProps({
 // Emit event for two-way binding
 defineEmits(['update:modelValue'])
 
-const resolvedLabel = computed(() => props.label || t('common.amount'))
+const resolvedLabel = computed(() => {
+  const label = props.label || t('common.amount')
+  return props.required ? label : `${label} (${t('common.optional')})`
+})
 
 // Internal value to sync with the parent
 const internalValue = ref(props.modelValue)

@@ -4,9 +4,9 @@
   <el-collapse v-model="activePanel" class="my-4 no-print-pdf">
     <el-collapse-item name="expense-summary">
       <template #title>
-        <span class="font-semibold text-sm lg:text-base px-2"
-          >{{ t('sharedExpenses.expenseSummary') }}</span
-        >
+        <span class="font-semibold text-sm lg:text-base px-2">{{
+          t('sharedExpenses.expenseSummary')
+        }}</span>
       </template>
 
       <div class="w-full mx-auto px-2 pb-4 space-y-4">
@@ -35,7 +35,9 @@
             </el-descriptions-item>
           </template>
           <template v-for="(friend, index) in friendTotals" :key="index">
-            <el-descriptions-item :label="t('sharedExpenses.personPaid', { name: friend.name })">
+            <el-descriptions-item
+              :label="t('sharedExpenses.personPaid', { name: friend.name })"
+            >
               {{ formatAmount(friend.total) }}
             </el-descriptions-item>
           </template>
@@ -47,12 +49,17 @@
           class="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2"
         >
           <div class="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
-            <DonutChart :title="t('sharedExpenses.whoPaid')" :segments="chartPayerSegments" />
+            <DonutChart
+              :title="t('sharedExpenses.whoPaid')"
+              :segments="chartPayerSegments"
+            />
           </div>
           <div class="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3">
             <BarChart
               :title="
-                hasCustomSplits ? t('sharedExpenses.eachPersonPays') : t('sharedExpenses.amountPaidPerPerson')
+                hasCustomSplits
+                  ? t('sharedExpenses.eachPersonPays')
+                  : t('sharedExpenses.amountPaidPerPerson')
               "
               :items="chartBarItems"
             />

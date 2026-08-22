@@ -7,6 +7,7 @@
           v-model="groupForm.name"
           :label="t('groups.nameLabel')"
           prop="name"
+          required
           label-position="top"
           :placeholder="t('groups.namePlaceholder')"
           :maxlength="50"
@@ -32,7 +33,12 @@
           required
         />
         <p class="text-xs text-gray-500 -mt-2 mb-2">
-          {{ t('groups.selectedCount', { count: memberCount, max: MAX_GROUP_MEMBERS }) }}
+          {{
+            t('groups.selectedCount', {
+              count: memberCount,
+              max: MAX_GROUP_MEMBERS
+            })
+          }}
         </p>
         <GenericDropDown
           v-model="groupForm.category"

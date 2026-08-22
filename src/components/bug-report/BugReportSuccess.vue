@@ -6,9 +6,9 @@
       {{ t('bugReports.bugNumber') }} <strong>#{{ bugNumber }}</strong>
     </p>
     <p class="bug-success-text">{{ t('bugReports.thankYou') }}</p>
-    <GenericButton type="default" size="default" @click="$emit('reset')"
-      >{{ t('bugReports.submitAnother') }}</GenericButton
-    >
+    <GenericButton type="default" size="default" @click="$emit('reset')">{{
+      t('bugReports.submitAnother')
+    }}</GenericButton>
   </div>
 </template>
 

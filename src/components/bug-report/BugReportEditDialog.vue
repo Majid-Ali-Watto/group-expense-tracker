@@ -162,7 +162,10 @@
         @click="$emit('close')"
         >{{ t('common.cancel') }}</GenericButton
       >
-      <GenericButton type="primary" :loading="editSaving" @click="$emit('save')"
+      <GenericButton
+        type="primary"
+        :loading="editSaving"
+        @click="$emit('save')"
         >{{ t('bugReports.saveChanges') }}</GenericButton
       >
     </template>

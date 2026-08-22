@@ -29,7 +29,11 @@
             show-icon
           >
             <template #default>
-              {{ t('approval.verifyWarning', { type: t('sharedExpenses.transactionDetails') }) }}
+              {{
+                t('approval.verifyWarning', {
+                  type: t('sharedExpenses.transactionDetails')
+                })
+              }}
             </template>
           </el-alert>
 
@@ -64,12 +68,16 @@
 
                 <!-- Payer Mode Toggle -->
                 <div class="flex items-center justify-between mb-4">
-                  <span class="text-sm font-medium text-gray-700"
-                    >{{ t('sharedExpenses.payerMode') }}</span
-                  >
+                  <span class="text-sm font-medium text-gray-700">{{
+                    t('sharedExpenses.payerMode')
+                  }}</span>
                   <el-radio-group v-model="formData.payerMode" size="small">
-                    <el-radio-button value="single">{{ t('common.single') }}</el-radio-button>
-                    <el-radio-button value="multiple">{{ t('common.multiple') }}</el-radio-button>
+                    <el-radio-button value="single">{{
+                      t('common.single')
+                    }}</el-radio-button>
+                    <el-radio-button value="multiple">{{
+                      t('common.multiple')
+                    }}</el-radio-button>
                   </el-radio-group>
                 </div>
 
@@ -95,9 +103,9 @@
                 <!-- Multiple Payers -->
                 <div v-else class="space-y-2 mb-4">
                   <div class="flex items-center justify-between">
-                    <span class="text-sm font-medium text-gray-700"
-                      >{{ t('sharedExpenses.payers') }}</span
-                    >
+                    <span class="text-sm font-medium text-gray-700">{{
+                      t('sharedExpenses.payers')
+                    }}</span>
                     <el-button size="default" type="primary" @click="addPayer">
                       {{ t('sharedExpenses.addPayer') }}
                     </el-button>
@@ -142,7 +150,9 @@
                     v-if="formData.payers.length > 0"
                     class="flex items-center gap-2 text-sm"
                   >
-                    <span class="text-gray-600">{{ t('sharedExpenses.payersTotal') }}</span>
+                    <span class="text-gray-600">{{
+                      t('sharedExpenses.payersTotal')
+                    }}</span>
                     <span
                       :class="
                         payersTotal === parseFloat(formData.amount || 0)
@@ -160,7 +170,9 @@
                     >
                       {{ t('common.balanced') }}
                     </el-tag>
-                    <el-tag v-else type="warning" size="small">{{ t('common.mismatch') }}</el-tag>
+                    <el-tag v-else type="warning" size="small">{{
+                      t('common.mismatch')
+                    }}</el-tag>
                   </div>
                 </div>
 
@@ -218,10 +230,16 @@
 
             <!-- Split Mode -->
             <div class="flex items-center justify-between mb-4">
-              <span class="text-sm font-medium text-gray-700">{{ t('sharedExpenses.splitMode') }}</span>
+              <span class="text-sm font-medium text-gray-700">{{
+                t('sharedExpenses.splitMode')
+              }}</span>
               <el-radio-group v-model="formData.splitMode" size="small">
-                <el-radio-button value="equal">{{ t('common.equal') }}</el-radio-button>
-                <el-radio-button value="custom">{{ t('common.custom') }}</el-radio-button>
+                <el-radio-button value="equal">{{
+                  t('common.equal')
+                }}</el-radio-button>
+                <el-radio-button value="custom">{{
+                  t('common.custom')
+                }}</el-radio-button>
               </el-radio-group>
             </div>
             <!-- Custom Split Items -->
@@ -232,9 +250,9 @@
                 class="border border-gray-200 rounded-lg p-3 bg-gray-50 space-y-2"
               >
                 <div class="flex items-center justify-between">
-                  <span class="text-xs font-medium text-gray-500"
-                    >{{ t('sharedExpenses.item', { index: index + 1 }) }}</span
-                  >
+                  <span class="text-xs font-medium text-gray-500">{{
+                    t('sharedExpenses.item', { index: index + 1 })
+                  }}</span>
                   <el-button
                     size="default"
                     type="danger"
@@ -246,7 +264,10 @@
                 </div>
 
                 <div class="flex gap-2 items-end mb-1">
-                  <el-form-item :label="t('sharedExpenses.itemDescription')" class="mb-0 flex-1 min-w-0">
+                  <el-form-item
+                    :label="t('sharedExpenses.itemDescription')"
+                    class="mb-0 flex-1 min-w-0"
+                  >
                     <GenericInputField
                       v-model="item.description"
                       :placeholder="t('sharedExpenses.itemPlaceholder')"
@@ -269,7 +290,10 @@
                   </el-form-item>
                 </div>
 
-                <el-form-item :label="t('sharedExpenses.itemParticipants')" class="mb-0">
+                <el-form-item
+                  :label="t('sharedExpenses.itemParticipants')"
+                  class="mb-0"
+                >
                   <GenericDropDown
                     v-model="item.participants"
                     :options="usersOptions"
@@ -286,7 +310,9 @@
                 v-show="receiptTax != null"
                 class="flex items-center gap-2 border border-dashed border-gray-300 rounded-lg px-3 py-2 bg-gray-50"
               >
-                <span class="text-sm text-gray-600 flex-1">{{ t('common.tax') }}</span>
+                <span class="text-sm text-gray-600 flex-1">{{
+                  t('common.tax')
+                }}</span>
                 <GenericInputNumber
                   v-model="receiptTax"
                   :min="0"
@@ -336,12 +362,14 @@
                 >
                   {{ t('common.balanced') }}
                 </el-tag>
-                <el-tag v-else type="warning" size="small">{{ t('common.mismatch') }}</el-tag>
+                <el-tag v-else type="warning" size="small">{{
+                  t('common.mismatch')
+                }}</el-tag>
               </div>
               <div class="flex items-center justify-between">
-                <span class="text-sm font-semibold text-gray-700"
-                  >{{ t('sharedExpenses.splitItems') }}</span
-                >
+                <span class="text-sm font-semibold text-gray-700">{{
+                  t('sharedExpenses.splitItems')
+                }}</span>
                 <el-button size="default" type="primary" @click="addSplitItem">
                   {{ t('sharedExpenses.addItem') }}
                 </el-button>
@@ -363,7 +391,11 @@
                 :disabled="receiptUploading || isSubmitting"
                 @click="() => validateForm()"
               >
-                {{ receiptUploading ? t('common.uploading') : t('sharedExpenses.addPayment') }}
+                {{
+                  receiptUploading
+                    ? t('common.uploading')
+                    : t('sharedExpenses.addPayment')
+                }}
               </el-button>
             </div>
           </el-form>

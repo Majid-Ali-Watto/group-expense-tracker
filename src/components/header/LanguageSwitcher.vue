@@ -7,7 +7,11 @@
   >
     {{ toggleLabel }}
   </button>
-  <RouterLink v-else-if="isVisible" class="language-switcher" :to="alternatePath">
+  <RouterLink
+    v-else-if="isVisible"
+    class="language-switcher"
+    :to="alternatePath"
+  >
     {{ alternateLabel }}
   </RouterLink>
 </template>

@@ -143,13 +143,19 @@ const mappedOptions = computed(
   // .filter((item) => item.label !== '' || item.value !== '')
 )
 
+const resolvedLabel = computed(() =>
+  props.label && !props.required
+    ? `${props.label} (${t('common.optional')})`
+    : props.label
+)
+
 const wrapperProps = computed(() => {
   if (!props.wrapFormItem) {
     return {}
   }
 
   return {
-    label: props.label,
+    label: resolvedLabel.value,
     prop: props.prop,
     required: props.required,
     labelPosition: props.labelPosition || undefined,

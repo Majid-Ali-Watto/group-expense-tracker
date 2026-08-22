@@ -21,8 +21,13 @@
         <UserAvatar
           :image-url="user.photoUrl"
           :preview-url="user.photoUrl"
+          :name="user.name"
           :alt="t('users.profilePhotoAlt')"
-          :preview-title="t('users.profilePhotoTitle', { name: user.name || t('common.guest') })"
+          :preview-title="
+            t('users.profilePhotoTitle', {
+              name: user.name || t('common.guest')
+            })
+          "
           :preview-on-click="true"
           :disabled="!user.photoUrl"
           size="md"
@@ -77,10 +82,14 @@
               class="group-chip group-chip--more"
               @click="$emit('open-groups')"
             >
-              <span class="group-chip__name">{{ t('users.morGroups', { count: groups.length - 2 }) }}</span>
+              <span class="group-chip__name">{{
+                t('users.morGroups', { count: groups.length - 2 })
+              }}</span>
             </button>
           </template>
-          <span v-else class="text-gray-400 text-xs">{{ t('users.noGroups') }}</span>
+          <span v-else class="text-gray-400 text-xs">{{
+            t('users.noGroups')
+          }}</span>
         </div>
 
         <!-- Actions -->
@@ -121,7 +130,12 @@
               </el-button>
             </template>
             <el-button v-else size="default" disabled>
-              {{ t('users.deletePending', { approved: user.deleteRequest.approvals?.length || 0, required: user.deleteRequest.requiredApprovals?.length || 0 }) }}
+              {{
+                t('users.deletePending', {
+                  approved: user.deleteRequest.approvals?.length || 0,
+                  required: user.deleteRequest.requiredApprovals?.length || 0
+                })
+              }}
             </el-button>
           </template>
         </div>
@@ -155,9 +169,7 @@ const isInteractionBlocked = computed(
 
 const showBlockedWarning = computed(() => props.user?.blocked === true)
 
-const blockedMessage = computed(
-  () => t('users.blockedUserWarning')
-)
+const blockedMessage = computed(() => t('users.blockedUserWarning'))
 
 function getGroupStatus(group) {
   if (props.isMember(group)) return 'member'

@@ -392,7 +392,10 @@ export const PersonalLoans = () => {
       label: t('common.month'),
       placeholder: t('common.selectMonth'),
       modelValue: selectedMonth.value,
-      options: [{ label: t('common.allMonths'), value: 'All' }, ...months.value],
+      options: [
+        { label: t('common.allMonths'), value: 'All' },
+        ...months.value
+      ],
       onChange: (v) => {
         selectedMonth.value = v
         fetchLoans()

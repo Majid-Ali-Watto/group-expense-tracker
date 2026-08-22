@@ -5,7 +5,11 @@
     class="mt-3 pt-3 border-t border-gray-200"
   >
     <div class="text-sm font-medium text-gray-700 mb-2">
-      {{ t('groups.joinRequestsCount', { count: getJoinRequests(group.id).length }) }}
+      {{
+        t('groups.joinRequestsCount', {
+          count: getJoinRequests(group.id).length
+        })
+      }}
     </div>
     <div class="space-y-2">
       <div
@@ -149,7 +153,11 @@
       {{ t('groups.groupEditRequestTitle') }}
     </div>
     <div class="text-xs text-blue-700 mb-2">
-      {{ t('groups.requestedByLabel', { name: formatUser(group.editRequest.requestedBy) }) }}
+      {{
+        t('groups.requestedByLabel', {
+          name: formatUser(group.editRequest.requestedBy)
+        })
+      }}
     </div>
 
     <!-- Show what's changing -->
@@ -228,7 +236,11 @@
       {{ t('groups.addMemberRequestTitle') }}
     </div>
     <div class="text-xs text-green-700 mb-2">
-      {{ t('groups.requestedByLabel', { name: formatUser(group.addMemberRequest.requestedBy) }) }}
+      {{
+        t('groups.requestedByLabel', {
+          name: formatUser(group.addMemberRequest.requestedBy)
+        })
+      }}
     </div>
     <div class="text-xs text-gray-700 mb-2">
       <strong>{{ t('groups.newMemberLabel') }}</strong>

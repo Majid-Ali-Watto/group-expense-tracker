@@ -67,7 +67,10 @@ const props = defineProps({
 
 defineEmits(['update:modelValue'])
 
-const resolvedLabel = computed(() => props.label || t('common.date'))
+const resolvedLabel = computed(() => {
+  const label = props.label || t('common.date')
+  return props.required ? label : `${label} (${t('common.optional')})`
+})
 
 function disabledFutureDates(time) {
   return props.disableFuture && time.getTime() > Date.now()

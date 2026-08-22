@@ -11,11 +11,19 @@ export const SUPPORTED_LOCALES = ['en', 'ur']
 // works in src/scripts/layout/app.js.
 const LOCALE_STORAGE_KEY = 'appLocale'
 
+// Guarded for SSG prerendering, where there is no localStorage (Node) —
+// mirrors the hasSession() guard in src/router/index.js.
+function hasLocalStorage() {
+  return typeof localStorage !== 'undefined'
+}
+
 export function getStoredLocale() {
+  if (!hasLocalStorage()) return 'en'
   return localStorage.getItem(LOCALE_STORAGE_KEY) === 'ur' ? 'ur' : 'en'
 }
 
 export function setStoredLocale(locale) {
+  if (!hasLocalStorage()) return
   localStorage.setItem(LOCALE_STORAGE_KEY, locale)
 }
 

@@ -26,6 +26,9 @@
 
 <script setup>
 import { ref, watch, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const props = defineProps({
   modelValue: { type: String, default: '' },
@@ -63,10 +66,16 @@ function onInput() {
   emit('input', internalValue.value)
 }
 
+const resolvedLabel = computed(() =>
+  props.label && !props.required
+    ? `${props.label} (${t('common.optional')})`
+    : props.label
+)
+
 const wrapperProps = computed(() => {
   if (!props.wrapFormItem) return {}
   const p = {
-    label: props.label,
+    label: resolvedLabel.value,
     prop: props.prop,
     required: props.required,
     class: props.formItemClass

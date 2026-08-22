@@ -10,6 +10,7 @@
             <UserAvatar
               :image-url="currentUserPhotoUrl"
               :preview-url="currentUserPhotoUrl"
+              :name="displayName"
               alt="Profile"
               preview-title="Profile Photo"
               :show-zoom-button="true"

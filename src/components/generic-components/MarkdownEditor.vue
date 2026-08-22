@@ -134,6 +134,8 @@ import { ref, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { PhotoIcon, XIcon } from '@/components/icons'
 import AppImage from './AppImage.vue'
+import { showError } from '@/utils'
+import { MAX_RECEIPT_FILE_SIZE_BYTES } from '@/constants'
 
 const { t } = useI18n()
 
@@ -273,6 +275,10 @@ function handleFiles(e) {
   const files = Array.from(e.target.files || [])
   const remaining = props.maxImages - localImages.value.length
   files.slice(0, remaining).forEach((file) => {
+    if (file.size > MAX_RECEIPT_FILE_SIZE_BYTES) {
+      showError(`"${file.name}" is larger than 1MB and was skipped.`)
+      return
+    }
     const reader = new FileReader()
     reader.onload = (ev) => {
       localImages.value = [

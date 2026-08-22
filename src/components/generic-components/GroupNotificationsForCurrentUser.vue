@@ -10,7 +10,11 @@
         <span
           v-if="notif.updatedBy || notif.rejectedBy"
           class="text-gray-600 ml-2"
-          >{{ t('groups.byActor', { actor: formatActor(notif.updatedBy || notif.rejectedBy) }) }}</span
+          >{{
+            t('groups.byActor', {
+              actor: formatActor(notif.updatedBy || notif.rejectedBy)
+            })
+          }}</span
         >
       </div>
       <el-button

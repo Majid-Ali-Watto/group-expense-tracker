@@ -52,11 +52,18 @@ export function useRateLimit() {
   // Returns { attemptsLeft, locked, minutesLeft } so the caller
   // can display the remaining attempts without a second round-trip.
   async function recordFailedAttempt(email) {
-    if (!email) return { attemptsLeft: MAX_ATTEMPTS, locked: false, minutesLeft: null }
+    if (!email)
+      return { attemptsLeft: MAX_ATTEMPTS, locked: false, minutesLeft: null }
     try {
       const h = await hashEmail(email)
       const result = await callApi('record', h)
-      return result ?? { attemptsLeft: MAX_ATTEMPTS, locked: false, minutesLeft: null }
+      return (
+        result ?? {
+          attemptsLeft: MAX_ATTEMPTS,
+          locked: false,
+          minutesLeft: null
+        }
+      )
     } catch {
       return { attemptsLeft: MAX_ATTEMPTS, locked: false, minutesLeft: null }
     }

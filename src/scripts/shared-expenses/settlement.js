@@ -236,9 +236,7 @@ export const Settlement = (props) => {
 
         await batch.commit()
       }
-      showSuccess(
-        t('sharedExpenses.finalizeSuccess', { month: selectedMonth })
-      )
+      showSuccess(t('sharedExpenses.finalizeSuccess', { month: selectedMonth }))
     } catch (error) {
       if (error != 'cancel') showError(error)
     }

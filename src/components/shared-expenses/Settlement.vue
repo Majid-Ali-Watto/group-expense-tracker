@@ -9,7 +9,9 @@
         v-if="settlements.length === 0"
         class="settled-message text-center py-8 rounded-lg border"
       >
-        <p class="settled-title text-lg mb-2">{{ t('sharedExpenses.allSettled') }}</p>
+        <p class="settled-title text-lg mb-2">
+          {{ t('sharedExpenses.allSettled') }}
+        </p>
         <p class="settled-text text-sm">
           {{ t('sharedExpenses.allSettledText') }}
         </p>
@@ -32,13 +34,19 @@
         {{ t('sharedExpenses.settlementRequest') }}
       </div>
       <div class="text-xs mb-2">
-        {{ t('sharedExpenses.settlementRequestedBy', { user: formatUser(group.settlementRequest.requestedBy), month: group.settlementRequest.month }) }}
+        {{
+          t('sharedExpenses.settlementRequestedBy', {
+            user: formatUser(group.settlementRequest.requestedBy),
+            month: group.settlementRequest.month
+          })
+        }}
       </div>
       <div class="text-xs mb-2">
         {{ t('sharedExpenses.settlementAllMustApprove') }}
       </div>
       <div class="text-sm mb-2">
-        {{ t('sharedExpenses.approvals') }} {{ getSettlementApprovals.length }} /
+        {{ t('sharedExpenses.approvals') }}
+        {{ getSettlementApprovals.length }} /
         {{ getAllSettlementMembers.length }}
       </div>
       <!-- Show who has approved -->
@@ -101,7 +109,12 @@
         <el-button type="primary" size="default" @click="addPaymentsBatch">
           {{ t('sharedExpenses.finalizeSettlement') }}
         </el-button>
-        <el-button type="warning" plain size="default" @click="rejectSettlement">
+        <el-button
+          type="warning"
+          plain
+          size="default"
+          @click="rejectSettlement"
+        >
           {{ t('sharedExpenses.cancelSettlementRequest') }}
         </el-button>
       </div>
@@ -115,7 +128,12 @@
         "
         class="mt-2"
       >
-        <el-button size="default" type="warning" plain @click="rejectSettlement">
+        <el-button
+          size="default"
+          type="warning"
+          plain
+          @click="rejectSettlement"
+        >
           {{ t('sharedExpenses.cancelSettlementRequest') }}
         </el-button>
       </div>

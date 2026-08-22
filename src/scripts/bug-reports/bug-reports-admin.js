@@ -22,8 +22,16 @@ import { NoteThread } from './note-thread'
 
 export const STATUS_OPTIONS = [
   { icon: '🔴', labelKey: 'bugReports.statuses.open', value: 'open' },
-  { icon: '🟡', labelKey: 'bugReports.statuses.inProgress', value: 'in-progress' },
-  { icon: '🔵', labelKey: 'bugReports.statuses.needsInfo', value: 'needs-info' },
+  {
+    icon: '🟡',
+    labelKey: 'bugReports.statuses.inProgress',
+    value: 'in-progress'
+  },
+  {
+    icon: '🔵',
+    labelKey: 'bugReports.statuses.needsInfo',
+    value: 'needs-info'
+  },
   { icon: '🟣', labelKey: 'bugReports.statuses.duplicate', value: 'duplicate' },
   { icon: '⚪', labelKey: 'bugReports.statuses.wontFix', value: 'wont-fix' },
   { icon: '🟢', labelKey: 'bugReports.statuses.resolved', value: 'resolved' },

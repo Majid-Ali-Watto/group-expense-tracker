@@ -70,6 +70,7 @@
         v-model="googleMobileDialogVisible"
         :title="t('auth.googleMobileDialog.title')"
         width="320px"
+        append-to-body
         :close-on-click-modal="false"
         :close-on-press-escape="false"
         :show-close="false"

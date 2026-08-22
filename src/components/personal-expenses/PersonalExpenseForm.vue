@@ -55,6 +55,7 @@
             v-model="form.location"
             :label="t('common.location')"
             prop="location"
+            required
             :placeholder="t('common.enterLocation')"
             :maxlength="100"
           />
@@ -64,6 +65,7 @@
             v-model="form.recipient"
             :label="t('personalExpenses.recipient')"
             prop="recipient"
+            required
             :placeholder="t('personalExpenses.recipientPlaceholder')"
             :options="recipientOptions"
             :allow-create="true"

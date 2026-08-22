@@ -1,7 +1,9 @@
 <template>
   <div class="your-position-card">
     <div class="flex items-center justify-between mb-2">
-      <span class="text-xs font-semibold position-title">{{ t('groups.yourPosition') }}</span>
+      <span class="text-xs font-semibold position-title">{{
+        t('groups.yourPosition')
+      }}</span>
       <el-tag size="small" type="info">{{ currentUserLabel }}</el-tag>
     </div>
     <div v-if="balance.loading" class="text-xs position-text">
@@ -9,7 +11,9 @@
     </div>
     <div v-else class="space-y-2 text-sm">
       <div class="flex justify-between gap-2">
-        <span class="position-text shrink-0">{{ t('groups.sharedExpensesLabel') }}</span>
+        <span class="position-text shrink-0">{{
+          t('groups.sharedExpensesLabel')
+        }}</span>
         <div class="flex items-center gap-1.5 flex-wrap justify-end">
           <el-tag
             :type="expenseState.type"
@@ -24,7 +28,9 @@
         </div>
       </div>
       <div class="flex items-center justify-between gap-2">
-        <span class="position-text shrink-0">{{ t('groups.sharedLoansLabel') }}</span>
+        <span class="position-text shrink-0">{{
+          t('groups.sharedLoansLabel')
+        }}</span>
         <div class="flex items-center gap-1.5 flex-wrap justify-end">
           <el-tag
             :type="loanState.type"
@@ -40,7 +46,9 @@
       </div>
       <el-divider class="!my-2" />
       <div class="flex items-center justify-between gap-2">
-        <span class="position-label shrink-0">{{ t('groups.netAmountLabel') }}</span>
+        <span class="position-label shrink-0">{{
+          t('groups.netAmountLabel')
+        }}</span>
         <div class="flex items-center gap-1.5 flex-wrap justify-end">
           <el-tag
             :type="netState.type"

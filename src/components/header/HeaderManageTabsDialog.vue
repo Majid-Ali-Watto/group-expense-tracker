@@ -82,10 +82,7 @@ async function saveManageTabs() {
   try {
     const sel = tabSelection.value
     if (!sel.shared && !sel.personal) {
-      return showError(
-        t('authMessages.selectFeatureGroup'),
-        { duration: 0 }
-      )
+      return showError(t('authMessages.selectFeatureGroup'), { duration: 0 })
     }
     if (
       sel.shared &&
@@ -93,20 +90,14 @@ async function saveManageTabs() {
       !sel[USER_TAB_KEYS.SHARED_LOANS] &&
       !sel[USER_TAB_KEYS.USERS]
     ) {
-      return showError(
-        t('authMessages.sharedNoTabsEnabled'),
-        { duration: 0 }
-      )
+      return showError(t('authMessages.sharedNoTabsEnabled'), { duration: 0 })
     }
     if (
       sel.personal &&
       !sel[USER_TAB_KEYS.PERSONAL_EXPENSES] &&
       !sel[USER_TAB_KEYS.PERSONAL_LOANS]
     ) {
-      return showError(
-        t('authMessages.personalNoTabsEnabled'),
-        { duration: 0 }
-      )
+      return showError(t('authMessages.personalNoTabsEnabled'), { duration: 0 })
     }
     const userTabConfig = buildUserTabConfig(sel)
     if (!hasEnabledUserTabs(userTabConfig)) {

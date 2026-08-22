@@ -284,6 +284,37 @@ export const LoanForm = (props, emit) => {
     formData.value.loanReceiver = user.name || ''
   })
 
+  // ========== Auto-fill the other party when unambiguous ==========
+  // Shared (non-personal) loans only: if excluding the person just picked
+  // leaves exactly one selectable group member, auto-fill them into the
+  // other field — e.g. a 2-person group, or a larger group where blocked
+  // members reduce the effective pool to 2. Never overwrites a value the
+  // user (or edit-mode data load) already set.
+  function otherSelectableParty(excludeUid) {
+    const remaining = options.value.filter(
+      (o) => !o.disabled && o.value !== excludeUid
+    )
+    return remaining.length === 1 ? remaining[0].value : null
+  }
+
+  watch(
+    () => formData.value.loanGiver,
+    (giver) => {
+      if (props.isPersonal || !giver || formData.value.loanReceiver) return
+      const other = otherSelectableParty(giver)
+      if (other) formData.value.loanReceiver = other
+    }
+  )
+
+  watch(
+    () => formData.value.loanReceiver,
+    (receiver) => {
+      if (props.isPersonal || !receiver || formData.value.loanGiver) return
+      const other = otherSelectableParty(receiver)
+      if (other) formData.value.loanGiver = other
+    }
+  )
+
   watch(
     () => props.row,
     async (newRow) => {

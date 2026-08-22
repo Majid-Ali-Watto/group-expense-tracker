@@ -3,6 +3,7 @@
     :model-value="visible"
     :title="resolvedTitle"
     width="min(92vw, 560px)"
+    append-to-body
     :close-on-click-modal="false"
     :close-on-press-escape="false"
     :show-close="showClose"

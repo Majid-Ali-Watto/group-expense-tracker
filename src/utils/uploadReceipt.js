@@ -49,7 +49,7 @@ function getProviderOrder() {
  * Upload a single file to the best available provider.
  * Returns a meta object: { url, provider, ...providerSpecificFields }
  */
-export async function uploadReceipt(file) {
+export async function uploadReceipt(file, { maxSizeBytes } = {}) {
   const order = getProviderOrder()
 
   if (order.length === 0) {
@@ -61,7 +61,7 @@ export async function uploadReceipt(file) {
   for (const provider of order) {
     try {
       if (provider === 'cloudinary') {
-        const result = await uploadToCloudinary(file)
+        const result = await uploadToCloudinary(file, { maxSizeBytes })
         _cloudinaryHealthy = true
         return {
           url: result.url,
@@ -70,7 +70,7 @@ export async function uploadReceipt(file) {
           resourceType: result.resourceType
         }
       } else {
-        const result = await uploadToFirebaseStorage(file)
+        const result = await uploadToFirebaseStorage(file, { maxSizeBytes })
         _firebaseHealthy = true
         return {
           url: result.url,

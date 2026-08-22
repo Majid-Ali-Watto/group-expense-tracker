@@ -2,7 +2,8 @@
   <!-- Show payment details -->
   <div class="text-sm text-gray-700 mb-2">
     <p v-if="request.type === 'update'">
-      <strong>{{ t('approval.proposedChanges') }}</strong><br />
+      <strong>{{ t('approval.proposedChanges') }}</strong
+      ><br />
       <template v-if="request.changes.amount !== undefined">
         {{ t('sharedExpenses.proposedAmountLabel') }}
         <span
@@ -88,7 +89,8 @@
       </template>
     </p>
     <p v-else>
-      <strong>{{ t('sharedExpenses.paymentToBeDeleted') }}</strong><br />
+      <strong>{{ t('sharedExpenses.paymentToBeDeleted') }}</strong
+      ><br />
       {{ t('sharedExpenses.proposedAmountLabel') }}
       {{ formatAmount(request.payment.amount) }}<br />
       {{ t('sharedExpenses.proposedPayerLabel') }}

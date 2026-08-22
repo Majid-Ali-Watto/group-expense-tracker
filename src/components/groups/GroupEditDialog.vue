@@ -17,6 +17,7 @@
         v-model="localForm.name"
         :label="t('groups.groupNameLabel')"
         prop="name"
+        required
         :placeholder="t('groups.namePlaceholder')"
         :maxlength="50"
       />
@@ -32,6 +33,7 @@
         v-model="localForm.members"
         :label="t('groups.membersLabelPlain')"
         prop="members"
+        required
         :options="memberOptions"
         :placeholder="t('groups.membersPlaceholder')"
         size="default"

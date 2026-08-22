@@ -35,7 +35,9 @@
     </el-form>
     <template #footer>
       <div class="flex gap-2 justify-end">
-        <el-button size="default" @click="handleReset">{{ t('common.reset') }}</el-button>
+        <el-button size="default" @click="handleReset">{{
+          t('common.reset')
+        }}</el-button>
         <el-button size="default" @click="$emit('update:modelValue', false)">
           {{ t('common.cancel') }}
         </el-button>

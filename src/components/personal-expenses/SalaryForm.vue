@@ -43,6 +43,7 @@
           v-model="form.salary"
           :label="t('personalExpenses.monthlySalary')"
           prop="salary"
+          required
           :min="1"
           :placeholder="t('personalExpenses.enterSalary')"
         />

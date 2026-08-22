@@ -21,9 +21,9 @@
           <!-- Summary Statistics -->
           <el-collapse-item name="summary">
             <template #title>
-              <span class="font-semibold text-sm lg:text-base px-2"
-                >{{ t('personalLoans.loanSummary') }}</span
-              >
+              <span class="font-semibold text-sm lg:text-base px-2">{{
+                t('personalLoans.loanSummary')
+              }}</span>
             </template>
             <div class="space-y-4 pb-2">
               <el-descriptions :column="isMobileScreen ? 1 : 2" :border="true">
@@ -37,7 +37,9 @@
                     formatAmount(totalDebting)
                   }}</span>
                 </el-descriptions-item>
-                <el-descriptions-item :label="t('personalLoans.overallBalance')">
+                <el-descriptions-item
+                  :label="t('personalLoans.overallBalance')"
+                >
                   <span
                     :class="
                       netPosition >= 0 ? 'text-green-500' : 'text-red-500'
@@ -87,9 +89,9 @@
           <!-- Who Owes Whom -->
           <el-collapse-item name="settlements">
             <template #title>
-              <span class="font-semibold text-sm lg:text-base px-2"
-                >{{ t('personalLoans.whoPaysWhom') }}</span
-              >
+              <span class="font-semibold text-sm lg:text-base px-2">{{
+                t('personalLoans.whoPaysWhom')
+              }}</span>
             </template>
             <BalanceSummaryCard
               :columns="settlementColumns"
@@ -108,6 +110,7 @@
           :dataRef="loanContent"
           :showPopup="true"
           :reportMonth="selectedMonth"
+          @table-write="onTableWrite"
         />
       </div>
     </template>
@@ -156,6 +159,13 @@ const onFormClose = () => {
   closeLoanForm()
   fetchMonths()
   fetchLoans()
+}
+
+// Table's inline edit/duplicate/delete dialog has no live listener to fall back on
+// while viewing "All months" (see personal-loans.js fetchLoans) — refetch explicitly
+// so a duplicated/edited/deleted row actually shows up without switching months.
+const onTableWrite = () => {
+  if (selectedMonth.value === 'All') fetchLoans()
 }
 
 const openPanels = ref([])

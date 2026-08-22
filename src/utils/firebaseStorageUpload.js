@@ -6,10 +6,20 @@ import {
   deleteObject
 } from 'firebase/storage'
 import { app } from '@/firebase'
+import { MAX_RECEIPT_FILE_SIZE_BYTES } from '@/constants'
 
 const storage = getStorage(app)
 
-export async function uploadToFirebaseStorage(file) {
+export async function uploadToFirebaseStorage(
+  file,
+  { maxSizeBytes = MAX_RECEIPT_FILE_SIZE_BYTES } = {}
+) {
+  if (file.size > maxSizeBytes) {
+    throw new Error(
+      `File size must be less than ${Math.round(maxSizeBytes / (1024 * 1024))}MB.`
+    )
+  }
+
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
   const path = `receipts/${Date.now()}_${Math.random().toString(36).slice(2)}_${safeName}`
   const fileRef = storageRef(storage, path)

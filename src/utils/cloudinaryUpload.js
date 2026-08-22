@@ -1,4 +1,5 @@
 import { getApiAuthHeaders } from './apiAuth'
+import { MAX_RECEIPT_FILE_SIZE_BYTES } from '@/constants'
 
 const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
 const API_BASE = import.meta.env.VITE_NODE_BE_API_URL?.trim()
@@ -26,7 +27,16 @@ async function getUploadSignature() {
   return res.json()
 }
 
-export async function uploadToCloudinary(file) {
+export async function uploadToCloudinary(
+  file,
+  { maxSizeBytes = MAX_RECEIPT_FILE_SIZE_BYTES } = {}
+) {
+  if (file.size > maxSizeBytes) {
+    throw new Error(
+      `File size must be less than ${Math.round(maxSizeBytes / (1024 * 1024))}MB.`
+    )
+  }
+
   const signed = await getUploadSignature()
   const formData = new FormData()
   formData.append('file', file)

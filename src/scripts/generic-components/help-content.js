@@ -106,7 +106,10 @@ export const HELP_SECTIONS = {
           description:
             'Click the "+" button. Enter description, amount, date, and choose who paid and how to split.'
         },
-        { term: 'Single Payer', description: 'One person paid the full amount.' },
+        {
+          term: 'Single Payer',
+          description: 'One person paid the full amount.'
+        },
         {
           term: 'Multiple Payers',
           description: 'More than one person paid different portions.'
@@ -182,7 +185,10 @@ export const HELP_SECTIONS = {
           term: 'Filter',
           description: 'Filter by month to see loans for a specific period.'
         },
-        { term: 'Download', description: 'Export loan records to PDF or Excel.' },
+        {
+          term: 'Download',
+          description: 'Export loan records to PDF or Excel.'
+        },
         {
           term: 'Two-person flow',
           description:
@@ -460,7 +466,8 @@ export const HELP_SECTIONS = {
         },
         {
           term: 'لاگ ان',
-          description: 'سائن ان کرنے کے لیے اپنا ای میل اور پاس ورڈ استعمال کریں۔'
+          description:
+            'سائن ان کرنے کے لیے اپنا ای میل اور پاس ورڈ استعمال کریں۔'
         },
         {
           term: 'مجھے یاد رکھیں',
@@ -529,7 +536,10 @@ export const HELP_SECTIONS = {
           description:
             '"+" بٹن پر کلک کریں۔ تفصیل، رقم، تاریخ درج کریں، اور منتخب کریں کہ کس نے ادائیگی کی اور کیسے تقسیم ہوگی۔'
         },
-        { term: 'واحد ادائیگی کنندہ', description: 'ایک شخص نے پوری رقم ادا کی۔' },
+        {
+          term: 'واحد ادائیگی کنندہ',
+          description: 'ایک شخص نے پوری رقم ادا کی۔'
+        },
         {
           term: 'متعدد ادائیگی کنندگان',
           description: 'ایک سے زیادہ افراد نے مختلف حصے ادا کیے۔'
@@ -544,7 +554,8 @@ export const HELP_SECTIONS = {
         },
         {
           term: 'رسید منسلک کریں',
-          description: 'رسید کی تصویر اپ لوڈ کریں (JPG، PNG، زیادہ سے زیادہ 1 MB)۔'
+          description:
+            'رسید کی تصویر اپ لوڈ کریں (JPG، PNG، زیادہ سے زیادہ 1 MB)۔'
         },
         {
           term: 'ترمیم / حذف',
@@ -568,7 +579,8 @@ export const HELP_SECTIONS = {
         },
         {
           term: 'ڈاؤن لوڈ',
-          description: 'کسی بھی اخراجات کی فہرست سے PDF یا Excel میں ایکسپورٹ کریں۔'
+          description:
+            'کسی بھی اخراجات کی فہرست سے PDF یا Excel میں ایکسپورٹ کریں۔'
         }
       ]
     },
@@ -603,9 +615,13 @@ export const HELP_SECTIONS = {
         },
         {
           term: 'فلٹر',
-          description: 'کسی مخصوص مدت کے قرضے دیکھنے کے لیے مہینے کے حساب سے فلٹر کریں۔'
+          description:
+            'کسی مخصوص مدت کے قرضے دیکھنے کے لیے مہینے کے حساب سے فلٹر کریں۔'
         },
-        { term: 'ڈاؤن لوڈ', description: 'قرض کے ریکارڈز کو PDF یا Excel میں ایکسپورٹ کریں۔' },
+        {
+          term: 'ڈاؤن لوڈ',
+          description: 'قرض کے ریکارڈز کو PDF یا Excel میں ایکسپورٹ کریں۔'
+        },
         {
           term: 'دو فریقی طریقہ کار',
           description:
@@ -634,7 +650,8 @@ export const HELP_SECTIONS = {
         },
         {
           term: 'میں؟ چیک باکس',
-          description: 'دینے والے یا وصول کنندہ کے طور پر اپنی تفصیلات جلدی سے بھریں۔'
+          description:
+            'دینے والے یا وصول کنندہ کے طور پر اپنی تفصیلات جلدی سے بھریں۔'
         },
         {
           term: 'مہینے کے حساب سے فلٹر',
@@ -688,16 +705,21 @@ export const HELP_SECTIONS = {
       items: [
         {
           term: 'صارفین دیکھیں',
-          description: 'تمام رجسٹرڈ صارفین دیکھیں۔ رازداری کے لیے موبائل نمبرز چھپائے جاتے ہیں۔'
+          description:
+            'تمام رجسٹرڈ صارفین دیکھیں۔ رازداری کے لیے موبائل نمبرز چھپائے جاتے ہیں۔'
         },
-        { term: 'تلاش', description: 'نام، موبائل، یا گروپ کے نام سے تلاش کریں۔' },
+        {
+          term: 'تلاش',
+          description: 'نام، موبائل، یا گروپ کے نام سے تلاش کریں۔'
+        },
         {
           term: 'ترتیب',
           description: 'صارفین کو حروفِ تہجی کے مطابق A–Z یا Z–A ترتیب دیں۔'
         },
         {
           term: 'صرف مشترکہ گروپس',
-          description: 'صرف ان صارفین کو دکھانے کے لیے فلٹر کریں جو آپ کے ساتھ گروپ میں ہیں۔'
+          description:
+            'صرف ان صارفین کو دکھانے کے لیے فلٹر کریں جو آپ کے ساتھ گروپ میں ہیں۔'
         },
         {
           term: 'صارف کے گروپس',
@@ -711,7 +733,8 @@ export const HELP_SECTIONS = {
       items: [
         {
           term: 'کھولیں',
-          description: 'اوپر ہیڈر بار میں "اخراجات کا خلاصہ" پر کلک کریں (یا موبائل پر مینو)۔'
+          description:
+            'اوپر ہیڈر بار میں "اخراجات کا خلاصہ" پر کلک کریں (یا موبائل پر مینو)۔'
         },
         {
           term: 'یہ کیا دکھاتا ہے',
@@ -725,7 +748,8 @@ export const HELP_SECTIONS = {
         },
         {
           term: 'چارٹس',
-          description: 'مجموعی تقسیم کے لیے ڈونٹ چارٹ اور فی زمرہ تفصیل کے لیے بار چارٹ۔'
+          description:
+            'مجموعی تقسیم کے لیے ڈونٹ چارٹ اور فی زمرہ تفصیل کے لیے بار چارٹ۔'
         },
         {
           term: 'PDF ڈاؤن لوڈ کریں',
@@ -775,7 +799,8 @@ export const HELP_SECTIONS = {
         },
         {
           term: 'جانے کے لیے کلک کریں',
-          description: 'متعلقہ سیکشن پر براہِ راست جانے کے لیے کسی بھی اطلاع پر ٹیپ کریں۔'
+          description:
+            'متعلقہ سیکشن پر براہِ راست جانے کے لیے کسی بھی اطلاع پر ٹیپ کریں۔'
         },
         {
           term: 'صفحے کے اندر انتباہات',
@@ -790,7 +815,8 @@ export const HELP_SECTIONS = {
       items: [
         {
           term: 'ڈونٹ چارٹس',
-          description: 'تناسب دکھاتے ہیں، مثلاً کس نے کتنا حصہ ادا کیا، یا دیا بمقابلہ لیا۔'
+          description:
+            'تناسب دکھاتے ہیں، مثلاً کس نے کتنا حصہ ادا کیا، یا دیا بمقابلہ لیا۔'
         },
         {
           term: 'بار چارٹس',
@@ -804,7 +830,8 @@ export const HELP_SECTIONS = {
         },
         {
           term: 'خودکار اپڈیٹ',
-          description: 'فلٹرز تبدیل کرنے پر چارٹس خودکار طور پر اپڈیٹ ہو جاتے ہیں۔'
+          description:
+            'فلٹرز تبدیل کرنے پر چارٹس خودکار طور پر اپڈیٹ ہو جاتے ہیں۔'
         }
       ]
     },
@@ -829,7 +856,8 @@ export const HELP_SECTIONS = {
         },
         {
           term: 'رپورٹ کا مہینہ',
-          description: 'ڈاؤن لوڈ شدہ فائل کے نام میں آسان فائلنگ کے لیے موجودہ مہینہ شامل ہوتا ہے۔'
+          description:
+            'ڈاؤن لوڈ شدہ فائل کے نام میں آسان فائلنگ کے لیے موجودہ مہینہ شامل ہوتا ہے۔'
         }
       ]
     },
@@ -849,7 +877,8 @@ export const HELP_SECTIONS = {
         },
         {
           term: 'موبائل',
-          description: 'موبائل پر، تھیم ٹوگل اوپر دائیں طرف ہیمبرگر مینو کے اندر ہوتا ہے۔'
+          description:
+            'موبائل پر، تھیم ٹوگل اوپر دائیں طرف ہیمبرگر مینو کے اندر ہوتا ہے۔'
         },
         {
           term: 'مدد تک رسائی',

@@ -25,7 +25,11 @@
             "
             @click="$emit('extract')"
           >
-            {{ extracting ? t('receiptOcr.extracting') : t('receiptOcr.extractText') }}
+            {{
+              extracting
+                ? t('receiptOcr.extracting')
+                : t('receiptOcr.extractText')
+            }}
           </el-button>
         </div>
         <p

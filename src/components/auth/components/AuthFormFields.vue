@@ -4,6 +4,7 @@
     :model-value="modelValue.name"
     :label="t('auth.formFields.nameLabel')"
     prop="name"
+    required
     :placeholder="t('auth.formFields.namePlaceholder')"
     :maxlength="50"
     @update:modelValue="updateField('name', $event.toCapitalize())"
@@ -14,6 +15,7 @@
     :model-value="modelValue.mobile"
     :label="t('auth.formFields.mobileLabel')"
     prop="mobile"
+    required
     :placeholder="t('auth.formFields.mobilePlaceholder')"
     :maxlength="11"
     @update:modelValue="updateField('mobile', sanitizeMobile($event))"
@@ -23,6 +25,7 @@
     :model-value="modelValue.email"
     :label="t('auth.formFields.emailLabel')"
     prop="email"
+    required
     type="email"
     :placeholder="t('auth.formFields.emailPlaceholder')"
     @update:modelValue="updateField('email', $event)"
@@ -32,6 +35,7 @@
     :model-value="modelValue.password"
     :label="t('auth.formFields.passwordLabel')"
     prop="password"
+    required
     type="password"
     :placeholder="t('auth.formFields.passwordPlaceholder')"
     :show-password="true"

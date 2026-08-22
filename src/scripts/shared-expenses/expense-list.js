@@ -181,8 +181,7 @@ export const ExpenseList = (props) => {
       },
       () => {
         paymentsLoaded.value = true
-        if (activeGroup.value)
-          showError(t('sharedExpenses.failedLoadExpenses'))
+        if (activeGroup.value) showError(t('sharedExpenses.failedLoadExpenses'))
       }
     )
   }
@@ -252,6 +251,7 @@ export const ExpenseList = (props) => {
     userNotifications,
     dismissNotification,
     pendingRequests,
+    activePendingNames,
     hasUserApproved,
     isFullyApproved,
     executeRequestManually,
@@ -284,9 +284,7 @@ export const ExpenseList = (props) => {
       if (!deletedMeta) return
 
       const metas = Array.isArray(deletedMeta) ? deletedMeta : [deletedMeta]
-      metas.forEach((meta) =>
-        deleteReceipt(meta, { documentPath: itemPath })
-      )
+      metas.forEach((meta) => deleteReceipt(meta, { documentPath: itemPath }))
     },
     buildUpdatedItem: (payment, request, notification, itemPath) => {
       cleanupOldReceipts(payment?.receiptMeta, request.changes?.receiptMeta, {
@@ -333,7 +331,10 @@ export const ExpenseList = (props) => {
       label: t('sharedExpenses.payer'),
       placeholder: t('sharedExpenses.selectPayer_filter'),
       modelValue: selectedFriend.value,
-      options: [{ label: t('common.all'), value: 'All' }, ...usersOptions.value],
+      options: [
+        { label: t('common.all'), value: 'All' },
+        ...usersOptions.value
+      ],
       onChange: (v) => {
         selectedFriend.value = v
       }
@@ -398,6 +399,7 @@ export const ExpenseList = (props) => {
     userNotifications,
     dismissNotification,
     pendingRequests,
+    activePendingNames,
     getTotalMembers,
     getUserName,
     hasUserApproved,

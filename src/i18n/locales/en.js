@@ -152,7 +152,7 @@ export default {
     },
     infoAlert: {
       registerText:
-        'Create a new account with your name, mobile, email, and login code.',
+        'Create a new account with your name, mobile, email, and Password.',
       registerWarning:
         'You must verify your email within 48 hours to activate your account.',
       loginText: 'Login with your email and password.'

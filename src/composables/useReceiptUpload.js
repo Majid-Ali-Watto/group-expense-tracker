@@ -1,5 +1,6 @@
 import { computed, ref, unref } from 'vue'
 import { uploadReceipt, deleteReceipt, showError } from '@/utils'
+import { MAX_RECEIPT_FILE_SIZE_BYTES } from '@/constants'
 
 const ALLOWED_TYPES = [
   'image/jpeg',
@@ -9,7 +10,7 @@ const ALLOWED_TYPES = [
   'image/webp'
 ]
 
-const MAX_FILE_SIZE = 1024 * 1024
+const MAX_FILE_SIZE = MAX_RECEIPT_FILE_SIZE_BYTES
 
 function normalizeList(value) {
   if (Array.isArray(value)) {

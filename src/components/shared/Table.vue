@@ -544,6 +544,7 @@
             :listenersToPass="{
               closeModal: () => {
                 dialogFormVisible = false
+                emit('table-write')
               }
             }"
             ref="childRef"
@@ -556,7 +557,12 @@
         v-else
         :componentToBeRendered="activeTabComponent()"
         :componentProps="dialogComponentProps"
-        :listenersToPass="{ closeModal: () => (dialogFormVisible = false) }"
+        :listenersToPass="{
+          closeModal: () => {
+            dialogFormVisible = false
+            emit('table-write')
+          }
+        }"
         ref="childRef"
       />
 
@@ -679,7 +685,7 @@ const props = defineProps({
   reportMonth: { type: String, default: '' },
   showPopup: { type: Boolean, default: true }
 })
-const emit = defineEmits(['selection-change'])
+const emit = defineEmits(['selection-change', 'table-write'])
 
 const {
   dialogFormVisible,

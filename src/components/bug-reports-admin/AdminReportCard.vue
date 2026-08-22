@@ -124,9 +124,9 @@
             >{{ report.reporter.email }}</a
           >
         </template>
-        <span v-if="report.reporter?.isGuest" class="bra-guest-badge"
-          >{{ t('bugReports.guest') }}</span
-        >
+        <span v-if="report.reporter?.isGuest" class="bra-guest-badge">{{
+          t('bugReports.guest')
+        }}</span>
       </span>
       <span class="bra-date">{{ formatDate(report.submittedAt) }}</span>
     </div>
@@ -139,9 +139,8 @@
       >
         <span class="bra-notes-toggle-left">
           <ChatBubbleIcon class="w-3.5 h-3.5" />
-          {{ t('bugReports.notes') }}{{
-            notesOf(report).length ? ` (${notesOf(report).length})` : ''
-          }}
+          {{ t('bugReports.notes')
+          }}{{ notesOf(report).length ? ` (${notesOf(report).length})` : '' }}
           <span v-if="report.hasReporterReply" class="bra-notes-new-badge"
             >&#128276; {{ t('bugReports.newReply') }}</span
           >

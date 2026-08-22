@@ -57,7 +57,9 @@
                   {{ notif.description }}
                 </div>
                 <div
-                  v-overflow-popup="{ title: t('headerActions.relatedSection') }"
+                  v-overflow-popup="{
+                    title: t('headerActions.relatedSection')
+                  }"
                   class="notif-group"
                 >
                   {{ notif.title }}

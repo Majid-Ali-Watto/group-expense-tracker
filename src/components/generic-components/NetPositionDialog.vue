@@ -207,7 +207,9 @@
         v-if="summary.totalLender + summary.totalDebtor > 0"
         class="section-card"
       >
-        <div class="section-header">{{ t('netPosition.categoryBreakdown') }}</div>
+        <div class="section-header">
+          {{ t('netPosition.categoryBreakdown') }}
+        </div>
         <BarChart
           :title="t('netPosition.categoryChartTitle')"
           :items="categoryBarItems"
@@ -216,9 +218,9 @@
     </div>
 
     <template #footer>
-      <GenericButton type="default" size="default" @click="handleClose"
-        >{{ t('common.close') }}</GenericButton
-      >
+      <GenericButton type="default" size="default" @click="handleClose">{{
+        t('common.close')
+      }}</GenericButton>
       <GenericButton
         type="success"
         size="default"

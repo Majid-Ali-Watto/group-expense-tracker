@@ -14,83 +14,103 @@
         <h3 class="pending-title text-lg font-semibold mb-3 text-orange-600">
           {{ t('approval.pendingTitle') }}
         </h3>
-        <div
-          v-for="(request, index) in pendingRequests"
-          :key="index"
-          class="pending-card pending-request-card rounded-lg p-4 mb-3"
+        <el-collapse
+          v-model="activePendingNames"
+          class="pending-requests-accordion"
         >
-          <div class="flex justify-between items-start mb-2">
-            <div>
-              <strong class="text-gray-800">
-                {{ request.type === 'delete' ? t('approval.deleteRequest') : t('approval.updateRequest') }}
-              </strong>
-              <p class="text-sm text-gray-600">
-                {{ t('approval.requestedBy') }}
-                <strong>{{ getUserName(request.requestedBy) }}</strong>
-                <span v-if="request.requestedAt">
-                  {{ t('approval.on') }} {{ request.requestedAt }}</span
+          <el-collapse-item
+            v-for="(request, index) in pendingRequests"
+            :key="index"
+            :name="index"
+          >
+            <template #title>
+              <div class="flex justify-between items-center w-full pr-2">
+                <span>
+                  <strong class="text-gray-800">
+                    {{
+                      request.type === 'delete'
+                        ? t('approval.deleteRequest')
+                        : t('approval.updateRequest')
+                    }}
+                  </strong>
+                  — {{ t('approval.requestedBy') }}
+                  {{ getUserName(request.requestedBy) }}
+                </span>
+                <el-tag
+                  :type="request.type === 'delete' ? 'danger' : 'warning'"
                 >
+                  {{ request.approvals.length }} / {{ getTotalMembers() }}
+                  {{ t('approval.approved') }}
+                </el-tag>
+              </div>
+            </template>
+            <div class="pending-card pending-request-card rounded-lg p-4 mb-3">
+              <p v-if="request.requestedAt" class="text-sm text-gray-600 mb-2">
+                {{ t('approval.on') }} {{ request.requestedAt }}
               </p>
+
+              <!-- Show payment details -->
+              <ShowPaymentDetails
+                :getUserName="getUserName"
+                :request="request"
+              />
+
+              <!-- Approval buttons -->
+              <div
+                class="flex gap-2 mt-3"
+                v-if="request.requestedBy === activeUserUid"
+              >
+                <span class="text-blue-600 text-sm font-semibold">
+                  {{ t('approval.youRequestedThis', { type: request.type }) }}
+                </span>
+                <el-button
+                  type="warning"
+                  size="default"
+                  @click="cancelRequest(request)"
+                >
+                  {{ t('approval.cancelRequest') }}
+                </el-button>
+              </div>
+              <div
+                class="flex gap-2 mt-3"
+                v-else-if="!hasUserApproved(request)"
+              >
+                <el-button
+                  type="success"
+                  size="default"
+                  @click="approveRequest(request)"
+                >
+                  {{ t('common.approve') }}
+                </el-button>
+                <el-button
+                  type="danger"
+                  size="default"
+                  @click="rejectRequest(request)"
+                >
+                  {{ t('common.reject') }}
+                </el-button>
+              </div>
+              <div
+                v-else-if="isFullyApproved(request)"
+                class="flex gap-2 mt-3 items-center"
+              >
+                <span class="text-green-600 text-sm font-semibold">
+                  {{ t('approval.allMembersApproved') }}
+                </span>
+                <el-button
+                  type="primary"
+                  size="default"
+                  @click="executeRequestManually(request)"
+                >
+                  {{ t('approval.completeRequest') }}
+                </el-button>
+              </div>
+              <div v-else class="text-green-600 text-sm font-semibold">
+                {{ t('approval.youApprovedRequest') }}
+              </div>
             </div>
-            <el-tag :type="request.type === 'delete' ? 'danger' : 'warning'">
-              {{ request.approvals.length }} / {{ getTotalMembers() }} {{ t('approval.approved') }}
-            </el-tag>
-          </div>
-
-          <!-- Show payment details -->
-          <ShowPaymentDetails :getUserName="getUserName" :request="request" />
-
-          <!-- Approval buttons -->
-          <div
-            class="flex gap-2 mt-3"
-            v-if="request.requestedBy === activeUserUid"
-          >
-            <span class="text-blue-600 text-sm font-semibold">
-              {{ t('approval.youRequestedThis', { type: request.type }) }}
-            </span>
-            <el-button
-              type="warning"
-              size="default"
-              @click="cancelRequest(request)"
-            >
-              {{ t('approval.cancelRequest') }}
-            </el-button>
-          </div>
-          <div class="flex gap-2 mt-3" v-else-if="!hasUserApproved(request)">
-            <el-button
-              type="success"
-              size="default"
-              @click="approveRequest(request)"
-            >
-              {{ t('common.approve') }}
-            </el-button>
-            <el-button
-              type="danger"
-              size="default"
-              @click="rejectRequest(request)"
-            >
-              {{ t('common.reject') }}
-            </el-button>
-          </div>
-          <div
-            v-else-if="isFullyApproved(request)"
-            class="flex gap-2 mt-3 items-center"
-          >
-            <span class="text-green-600 text-sm font-semibold">
-              {{ t('approval.allMembersApproved') }}
-            </span>
-            <el-button
-              type="primary"
-              size="default"
-              @click="executeRequestManually(request)"
-            >
-              {{ t('approval.completeRequest') }}
-            </el-button>
-          </div>
-          <div v-else class="text-green-600 text-sm font-semibold">
-            {{ t('approval.youApprovedRequest') }}
-          </div>
-        </div>
+          </el-collapse-item>
+        </el-collapse>
       </div>
       <!-- Filters -->
       <FilterBar :fields="filterFields" @clear="clearFilters" />
@@ -112,7 +132,9 @@
             :value="filteredPayments.length"
             class="item mr-4"
             type="info"
-            >{{ selectedFriend }}:<el-text tag="b"> {{ t('common.transactions') }}</el-text>
+            >{{ selectedFriend }}:<el-text tag="b">
+              {{ t('common.transactions') }}</el-text
+            >
           </el-badge>
         </div>
 
@@ -162,6 +184,7 @@ const {
   activeUserUid,
   userNotifications,
   pendingRequests,
+  activePendingNames,
   dismissNotification,
   getTotalMembers,
   getUserName,
@@ -175,3 +198,13 @@ const {
   clearFilters
 } = ExpenseList(props)
 </script>
+
+<style scoped>
+.pending-requests-accordion :deep(.el-collapse-item__header) {
+  padding-inline: 12px;
+}
+.pending-requests-accordion :deep(.el-collapse-item__content) {
+  padding-inline: 12px;
+  padding-top: 12px;
+}
+</style>

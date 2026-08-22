@@ -1,4 +1,4 @@
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessageBox } from 'element-plus'
 import { appendNotificationForUser, maskMobile } from '@/utils'
@@ -118,6 +118,18 @@ export function useApprovalRequests({
     return requests
   })
 
+  // Pending requests render as an accordion so several of them don't push
+  // the rest of the page down. A single request stays expanded by default;
+  // two or more start collapsed so the user opts in to each one.
+  const activePendingNames = ref([])
+  watch(
+    () => pendingRequests.value.length,
+    (len) => {
+      activePendingNames.value = len === 1 ? [0] : []
+    },
+    { immediate: true }
+  )
+
   const hasUserApproved = (request) => {
     return request.approvals.includes(activeUserUid.value)
   }
@@ -200,7 +212,11 @@ export function useApprovalRequests({
       const notification = {
         id: Date.now().toString() + Math.random(),
         type: 'approved',
-        message: t('approval.requestApprovedByAll', { type: request.type, item: itemLabel }) + changesSummary,
+        message:
+          t('approval.requestApprovedByAll', {
+            type: request.type,
+            item: itemLabel
+          }) + changesSummary,
         timestamp: Date.now()
       }
 
@@ -312,7 +328,9 @@ export function useApprovalRequests({
     const notification = {
       id: Date.now().toString() + Math.random(),
       type: 'rejected',
-      message: t('approval.requestRejected', { type: request.type, item: itemLabel }) + changesSummary,
+      message:
+        t('approval.requestRejected', { type: request.type, item: itemLabel }) +
+        changesSummary,
       byMobile: rejector?.mobile || activeUserUid.value,
       timestamp: Date.now()
     }
@@ -335,6 +353,7 @@ export function useApprovalRequests({
     userNotifications,
     dismissNotification,
     pendingRequests,
+    activePendingNames,
     hasUserApproved,
     isFullyApproved,
     executeRequestManually,

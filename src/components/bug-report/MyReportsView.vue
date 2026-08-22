@@ -154,10 +154,9 @@
                 id-prefix="bug-mr-note"
                 :avatar-char-fn="
                   (note) =>
-                    (
-                      note.authorType === 'admin'
-                        ? t('bugReports.admin')
-                        : note.authorName || '?'
+                    (note.authorType === 'admin'
+                      ? t('bugReports.admin')
+                      : note.authorName || '?'
                     )
                       .charAt(0)
                       .toUpperCase()

@@ -28,7 +28,11 @@
           show-icon
         >
           <template #default>
-            {{ t('approval.verifyWarning', { type: t('sharedLoans.loanDetails') }) }}
+            {{
+              t('approval.verifyWarning', {
+                type: t('sharedLoans.loanDetails')
+              })
+            }}
           </template>
         </el-alert>
 
@@ -65,7 +69,9 @@
                 :options="categoryOptions"
                 :allow-create="isPersonal"
                 :placeholder="
-                  isPersonal ? t('sharedLoans.addOrSelectCategory') : t('common.selectCategory')
+                  isPersonal
+                    ? t('sharedLoans.addOrSelectCategory')
+                    : t('common.selectCategory')
                 "
               />
             </el-col>
@@ -308,7 +314,11 @@
               :disabled="receiptUploading || receiptExtracting || isSubmitting"
               @click="() => validateForm()"
             >
-              {{ receiptUploading ? t('common.uploading') : t('sharedLoans.addLoan') }}
+              {{
+                receiptUploading
+                  ? t('common.uploading')
+                  : t('sharedLoans.addLoan')
+              }}
             </el-button>
           </div>
         </el-form>

@@ -1,7 +1,9 @@
 <template>
   <el-dialog
     :model-value="modelValue"
-    :title="t('users.usersGroupsTitle', { name: userName, count: groups.length })"
+    :title="
+      t('users.usersGroupsTitle', { name: userName, count: groups.length })
+    "
     width="360px"
     append-to-body
     align-center

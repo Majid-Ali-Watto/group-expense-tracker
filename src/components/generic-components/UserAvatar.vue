@@ -8,12 +8,14 @@
       @click="handlePreview"
     >
       <AppImage
-        v-if="imageUrl"
+        v-if="imageUrl && !imageLoadError"
         :src="imageUrl"
         :alt="resolvedAlt"
         :class="imageClasses"
         :fit="fit"
+        @error="imageLoadError = true"
       />
+      <span v-else-if="initials" :class="initialsClasses">{{ initials }}</span>
       <UserIcon v-else :class="iconClasses" />
     </component>
 
@@ -38,7 +40,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { UserIcon } from '@/components/icons'
 import AppImage from './AppImage.vue'
@@ -49,6 +51,7 @@ const { t } = useI18n()
 const props = defineProps({
   imageUrl: { type: String, default: '' },
   previewUrl: { type: String, default: '' },
+  name: { type: String, default: '' },
   alt: { type: String, default: '' },
   previewTitle: { type: String, default: '' },
   previewWidth: { type: String, default: 'min(92vw, 560px)' },
@@ -69,6 +72,23 @@ const props = defineProps({
 })
 
 const previewVisible = ref(false)
+const imageLoadError = ref(false)
+
+watch(
+  () => props.imageUrl,
+  () => {
+    imageLoadError.value = false
+  }
+)
+
+const initials = computed(() => {
+  const words = props.name.trim().split(/\s+/).filter(Boolean)
+  if (!words.length) return ''
+  if (words.length === 1) return words[0].charAt(0).toUpperCase()
+  // First name + last name initials, skipping any middle names —
+  // e.g. "Majid Ali" -> "MA", "Majid Ali Watto" -> "MW"
+  return (words[0].charAt(0) + words[words.length - 1].charAt(0)).toUpperCase()
+})
 
 const resolvedAlt = computed(() => props.alt || t('common.profileAlt'))
 const resolvedPreviewTitle = computed(
@@ -105,6 +125,11 @@ const iconClasses = computed(() => [
   `ua-fallback--${props.iconSize}`,
   `ua-fallback--${props.iconTone}`,
   props.iconClass
+])
+const initialsClasses = computed(() => [
+  'ua-initials',
+  `ua-initials--${props.size}`,
+  `ua-initials--${props.iconTone}`
 ])
 
 function handlePreview() {
@@ -214,6 +239,40 @@ function handlePreview() {
 }
 
 .ua-fallback--current {
+  color: currentColor;
+}
+
+.ua-initials {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-weight: 600;
+  line-height: 1;
+  user-select: none;
+}
+
+.ua-initials--xs {
+  font-size: 0.55rem;
+  letter-spacing: -0.02em;
+}
+
+.ua-initials--md {
+  font-size: 0.9rem;
+  letter-spacing: -0.02em;
+}
+
+.ua-initials--lg {
+  font-size: 1.05rem;
+  letter-spacing: -0.02em;
+}
+
+.ua-initials--white {
+  color: #ffffff;
+}
+
+.ua-initials--current {
   color: currentColor;
 }
 

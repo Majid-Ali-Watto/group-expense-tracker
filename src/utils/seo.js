@@ -120,7 +120,10 @@ export function buildHeadConfig(route) {
     { name: 'application-name', content: localizedSiteName },
     { property: 'og:type', content: seo.ogType || 'website' },
     { property: 'og:title', content: ogTitle },
-    { property: 'og:description', content: seo.ogDescription || seo.description },
+    {
+      property: 'og:description',
+      content: seo.ogDescription || seo.description
+    },
     { property: 'og:url', content: canonicalUrl },
     { property: 'og:site_name', content: localizedSiteName },
     { property: 'og:image', content: imageUrl },
@@ -130,8 +133,14 @@ export function buildHeadConfig(route) {
     { property: 'og:locale', content: OG_LOCALES[locale] || OG_LOCALES.en },
     { name: 'twitter:card', content: 'summary_large_image' },
     { name: 'twitter:site', content: '@Kharchafy' },
-    { name: 'twitter:title', content: seo.twitterTitle || seo.title || localizedSiteName },
-    { name: 'twitter:description', content: seo.twitterDescription || seo.description },
+    {
+      name: 'twitter:title',
+      content: seo.twitterTitle || seo.title || localizedSiteName
+    },
+    {
+      name: 'twitter:description',
+      content: seo.twitterDescription || seo.description
+    },
     { name: 'twitter:image', content: imageUrl },
     { name: 'twitter:image:alt', content: ogTitle }
   ].filter((entry) => entry && entry.content)
@@ -160,7 +169,12 @@ export function buildHeadConfig(route) {
 
   const script =
     structuredData && (!Array.isArray(structuredData) || structuredData.length)
-      ? [{ type: 'application/ld+json', innerHTML: JSON.stringify(structuredData) }]
+      ? [
+          {
+            type: 'application/ld+json',
+            innerHTML: JSON.stringify(structuredData)
+          }
+        ]
       : []
 
   return {

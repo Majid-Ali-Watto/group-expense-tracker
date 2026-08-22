@@ -2,7 +2,7 @@ import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessageBox } from 'element-plus'
 import { database, doc, updateDoc, deleteField } from '@/firebase'
-import { DB_NODES } from '@/constants'
+import { DB_NODES, MAX_RECEIPT_FILE_SIZE_BYTES } from '@/constants'
 import {
   uploadToCloudinary,
   showError,
@@ -184,6 +184,10 @@ export const NoteThread = ({ actorKeyFn, idPrefix, pickerWrapClass }) => {
   async function uploadNoteImages(editorImages = []) {
     const result = []
     for (const img of editorImages) {
+      if (img.file.size > MAX_RECEIPT_FILE_SIZE_BYTES) {
+        showError(`"${img.file.name}" is larger than 1MB and was skipped.`)
+        continue
+      }
       const uploaded = await uploadToCloudinary(img.file)
       result.push({ url: uploaded.url, publicId: uploaded.publicId })
     }
