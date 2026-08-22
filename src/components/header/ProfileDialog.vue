@@ -254,7 +254,10 @@
         />
       </el-form-item>
 
-      <el-form-item :label="t('profile.confirmNewEmailLabel')" prop="confirmEmail">
+      <el-form-item
+        :label="t('profile.confirmNewEmailLabel')"
+        prop="confirmEmail"
+      >
         <GenericInputField
           ref="confirmEmailInputRef"
           :model-value="emailForm.confirmEmail"
@@ -473,9 +476,19 @@ const canEditVerifiedEmail = computed(
     ) === true
 )
 const isBlocked = computed(() => props.user?.blocked === true)
-const isAdminUser = computed(() => props.user?.isAdmin === true)
-const isBugResolver = computed(() => props.user?.bugResolver === true)
-const isBilledUser = computed(() => props.user?.billedUser === true)
+// isAdmin/billedUser/bugResolver live in user-admin-flags/{uid}, not on the
+// users/{uid} doc — this dialog is always for the active/logged-in user
+// (see Header.vue's :user="activeUserProfile"), so the active-user store
+// slice is the correct source here.
+const isAdminUser = computed(
+  () => userStore.getActiveUserAdminFlags?.isAdmin === true
+)
+const isBugResolver = computed(
+  () => userStore.getActiveUserAdminFlags?.bugResolver === true
+)
+const isBilledUser = computed(
+  () => userStore.getActiveUserAdminFlags?.billedUser === true
+)
 const activeUserTabConfig = computed(
   () => userStore.getActiveUserTabConfig || {}
 )
@@ -894,9 +907,7 @@ async function requestDeleteAccount() {
         }
       } catch (authError) {
         console.error('Error deleting user from Firebase Auth:', authError)
-        showError(
-          t('profile.accountDeletedAuthFailed')
-        )
+        showError(t('profile.accountDeletedAuthFailed'))
       }
 
       await clearDeletedSession(uid)
@@ -1157,9 +1168,7 @@ async function submitEmailUpdate() {
       handleCodeInApp: false
     })
 
-    showSuccess(
-      t('profile.verificationEmailSentBody', { email: newEmail })
-    )
+    showSuccess(t('profile.verificationEmailSentBody', { email: newEmail }))
     handleEmailVisibilityChange(false)
   } catch (error) {
     if (
@@ -1172,9 +1181,7 @@ async function submitEmailUpdate() {
     } else if (error.code === 'auth/invalid-email') {
       showError(t('authMessages.invalidEmail'))
     } else if (error.code === 'auth/requires-recent-login') {
-      showError(
-        t('profile.emailChangeSessionExpired')
-      )
+      showError(t('profile.emailChangeSessionExpired'))
     } else if (error.code === 'auth/too-many-requests') {
       showError(t('authMessages.tooManyRequests'))
     } else {

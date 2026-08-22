@@ -95,6 +95,9 @@ export const SharedGroups = () => {
       ])
 
       if (!usersData.empty) {
+        // isAdmin/billedUser/bugResolver deliberately not picked here — they
+        // live in user-admin-flags/{uid} and are never needed for anyone but
+        // the active user (see userStore.getActiveUserAdminFlags).
         const users = usersData.docs.map((docSnap) => {
           const user = docSnap.data()
           return {
@@ -105,10 +108,7 @@ export const SharedGroups = () => {
             photoUrl: user.photoUrl || '',
             photoMeta: user.photoMeta || null,
             maskedMobile: maskMobile(user.mobile || ''),
-            billedUser: user.billedUser === true,
-            bugResolver: user.bugResolver === true,
-            blocked: user.blocked === true,
-            isAdmin: user.isAdmin === true
+            blocked: user.blocked === true
           }
         })
         userStore.setUsers(users)
@@ -149,7 +149,9 @@ export const SharedGroups = () => {
         timestamp: Date.now()
       })
       await router.push('/groups')
-      showSuccess(t('groupsMessages.selectedGroupSuccess', { name: group.name }))
+      showSuccess(
+        t('groupsMessages.selectedGroupSuccess', { name: group.name })
+      )
     } finally {
       actioningGroupId.value = null
     }
@@ -170,9 +172,13 @@ export const SharedGroups = () => {
       const me = userStore.getUserByUid(activeUserUid.value)
       const myName = me?.name || activeUserUid.value
       const myMobile = me?.mobile || activeUserUid.value
+      // No `mobile` field on the stored request — every display/approval path
+      // resolves the requester via userStore.getUserByUid(uid), and storing it
+      // here would leak a phone number to any authenticated stranger browsing
+      // groups (groups/{groupId} is world-readable).
       const newRequests = [
         ...(group.joinRequests || []),
-        { uid: activeUserUid.value, mobile: myMobile, approvals: [] }
+        { uid: activeUserUid.value, approvals: [] }
       ]
 
       let payload = { joinRequests: newRequests }

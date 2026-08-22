@@ -35,7 +35,7 @@ export const Header = (props, emit, options = {}) => {
     () => props.loggedIn && getBugReportConfig().report
   )
   const canShowAdmin = computed(
-    () => props.loggedIn && activeUserProfile.value?.isAdmin === true
+    () => props.loggedIn && userStore.getActiveUserAdminFlags?.isAdmin === true
   )
   const isPublicPage = computed(
     () =>

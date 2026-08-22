@@ -271,9 +271,13 @@ export const Users = () => {
       const me = userStore.getUserByUid(activeUserUid.value)
       const myName = me?.name || activeUserUid.value
       const myMobile = me?.mobile || activeUserUid.value
+      // No `mobile` field on the stored request — every display/approval path
+      // resolves the requester via userStore.getUserByUid(uid), and storing it
+      // here would leak a phone number to any authenticated stranger browsing
+      // groups (groups/{groupId} is world-readable).
       const newRequests = [
         ...(group.joinRequests || []),
-        { uid: activeUserUid.value, mobile: myMobile, approvals: [] }
+        { uid: activeUserUid.value, approvals: [] }
       ]
 
       let payload = { joinRequests: newRequests }
@@ -383,6 +387,9 @@ export const Users = () => {
           if (uid === activeUserUid.value) return list
 
           const u = docSnap.data()
+          // isAdmin/billedUser/bugResolver deliberately not picked here — they
+          // live in user-admin-flags/{uid} and are never needed for anyone but
+          // the active user (see userStore.getActiveUserAdminFlags).
           const user = {
             uid,
             mobile: u.mobile || '',
@@ -394,10 +401,7 @@ export const Users = () => {
             maskedMobile: maskMobile(u.mobile || ''),
             deleteRequest: u.deleteRequest || null,
             updateRequest: u.updateRequest || null,
-            billedUser: u.billedUser === true,
-            bugResolver: u.bugResolver === true,
-            blocked: u.blocked === true,
-            isAdmin: u.isAdmin === true
+            blocked: u.blocked === true
           }
 
           userStore.addUser(user)

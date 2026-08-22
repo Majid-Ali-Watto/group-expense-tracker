@@ -168,10 +168,6 @@ export const Groups = () => {
     return true
   }
 
-  function getActiveUserMobile() {
-    return userStore.getUserByUid(authStore.getActiveUserUid)?.mobile || ''
-  }
-
   function matchesActiveUserIdentity(value) {
     const activeUid = authStore.getActiveUserUid
     return value === activeUid
@@ -739,6 +735,9 @@ export const Groups = () => {
 
       usersSnapshot.docs.forEach((docSnap) => {
         const user = docSnap.data()
+        // isAdmin/billedUser/bugResolver deliberately not picked here — they
+        // live in user-admin-flags/{uid} and are never needed for anyone but
+        // the active user (see userStore.getActiveUserAdminFlags).
         userStore.addUser({
           uid: docSnap.id,
           mobile: user.mobile || '',
@@ -747,10 +746,7 @@ export const Groups = () => {
           photoUrl: user.photoUrl || '',
           photoMeta: user.photoMeta || null,
           maskedMobile: maskMobile(user.mobile || ''),
-          billedUser: user.billedUser === true,
-          bugResolver: user.bugResolver === true,
-          blocked: user.blocked === true,
-          isAdmin: user.isAdmin === true
+          blocked: user.blocked === true
         })
       })
     } catch (error) {
@@ -1136,7 +1132,6 @@ export const Groups = () => {
       if (!ensureGroupInteractionAllowed(group)) return
 
       const uid = authStore.getActiveUserUid
-      const mobile = getActiveUserMobile() || uid
 
       // Initialize joinRequests array if it doesn't exist
       if (!group.joinRequests) {
@@ -1144,19 +1139,19 @@ export const Groups = () => {
       }
 
       // Prevent duplicate requests for the same user identity.
-      const alreadyRequested = group.joinRequests.some(
-        (request) =>
-          matchesActiveUserIdentity(request.uid) ||
-          matchesActiveUserIdentity(request.mobile)
+      const alreadyRequested = group.joinRequests.some((request) =>
+        matchesActiveUserIdentity(request.uid)
       )
       if (alreadyRequested) {
         return showSuccess(t('groupsMessages.joinRequestAlreadyPending'))
       }
 
-      // Add request with empty approvals array
+      // Add request with empty approvals array. No `mobile` field — every
+      // display/approval path resolves the requester via userStore.getUserByUid(uid),
+      // and storing it here would leak a phone number to any authenticated
+      // stranger browsing groups (groups/{groupId} is world-readable).
       group.joinRequests.push({
         uid,
-        mobile,
         approvals: [] // Initialize approvals for all members to vote
       })
 
@@ -1184,9 +1179,7 @@ export const Groups = () => {
 
       const currentRequests = group.joinRequests || []
       const nextRequests = currentRequests.filter(
-        (request) =>
-          !matchesActiveUserIdentity(request.uid) &&
-          !matchesActiveUserIdentity(request.mobile)
+        (request) => !matchesActiveUserIdentity(request.uid)
       )
 
       if (nextRequests.length === currentRequests.length) {
@@ -1318,7 +1311,7 @@ export const Groups = () => {
 
       showSuccess(
         t('groupsMessages.memberAddedToGroup', {
-          name: userStore.getUserByUid(request.uid)?.name || request.mobile
+          name: userStore.getUserByUid(request.uid)?.name || request.uid
         })
       )
     } catch (err) {

@@ -8,10 +8,12 @@ import {
   canAccessTab,
   getDefaultAccessibleTab,
   findUserTabConfigByUid,
+  findUserAdminFlagsByUid,
   canAccessManageTabs
 } from '@/helpers'
 import { maskMobile } from '@/utils/maskMobile'
 import { auth } from '@/firebase'
+import { setStoredLocale } from '@/i18n'
 
 // Standard dynamic imports — do NOT use loadAsyncComponent here.
 // loadAsyncComponent sets suspensible:false which conflicts with Vue Router's
@@ -114,12 +116,20 @@ const publicRoutes = PUBLIC_PAGES.flatMap(({ path, component, seoKey }) => [
   {
     path,
     component,
-    meta: { publicPage: true, locale: 'en', seo: SEO_PAGES_BY_LOCALE.en[seoKey] }
+    meta: {
+      publicPage: true,
+      locale: 'en',
+      seo: SEO_PAGES_BY_LOCALE.en[seoKey]
+    }
   },
   {
     path: path === '/' ? '/ur' : `/ur${path}`,
     component,
-    meta: { publicPage: true, locale: 'ur', seo: SEO_PAGES_BY_LOCALE.ur[seoKey] }
+    meta: {
+      publicPage: true,
+      locale: 'ur',
+      seo: SEO_PAGES_BY_LOCALE.ur[seoKey]
+    }
   }
 ])
 
@@ -141,12 +151,20 @@ const guestRoutes = GUEST_PAGES.flatMap(({ path, seoKey }) => [
   {
     path,
     component: Login,
-    meta: { requiresGuest: true, locale: 'en', seo: SEO_PAGES_BY_LOCALE.en[seoKey] }
+    meta: {
+      requiresGuest: true,
+      locale: 'en',
+      seo: SEO_PAGES_BY_LOCALE.en[seoKey]
+    }
   },
   {
     path: `/ur${path}`,
     component: Login,
-    meta: { requiresGuest: true, locale: 'ur', seo: SEO_PAGES_BY_LOCALE.ur[seoKey] }
+    meta: {
+      requiresGuest: true,
+      locale: 'ur',
+      seo: SEO_PAGES_BY_LOCALE.ur[seoKey]
+    }
   }
 ])
 
@@ -275,10 +293,15 @@ async function getCurrentUserProfile() {
     email: user.email || '',
     emailVerified: user.emailVerified !== false,
     maskedMobile: maskMobile(user.mobile || ''),
+    blocked: user.blocked === true
+  })
+  // resolveUserFromAuth already merged these in from user-admin-flags/{uid} —
+  // seed the store slice here too so getCurrentUserAdminFlags() below (and any
+  // other reader) doesn't have to fetch them a second time.
+  userStore.setActiveUserAdminFlags({
+    isAdmin: user.isAdmin === true,
     billedUser: user.billedUser === true,
-    bugResolver: user.bugResolver === true,
-    blocked: user.blocked === true,
-    isAdmin: user.isAdmin === true
+    bugResolver: user.bugResolver === true
   })
 
   return userStore.getUserByUid(user.uid) || user
@@ -298,6 +321,17 @@ async function getCurrentUserTabConfig(uid) {
   return config
 }
 
+async function getCurrentUserAdminFlags(uid) {
+  const userStore = useUserStore()
+  if (userStore.isActiveUserAdminFlagsLoaded) {
+    return userStore.getActiveUserAdminFlags
+  }
+
+  const flags = await findUserAdminFlagsByUid(uid)
+  userStore.setActiveUserAdminFlags(flags)
+  return flags
+}
+
 function getFallbackPath(userTabConfig, groupId = null) {
   const tab = getDefaultAccessibleTab(userTabConfig, {
     hasActiveGroup: !!groupId
@@ -315,6 +349,15 @@ function getFallbackPath(userTabConfig, groupId = null) {
 // (memory on the server during prerender, web on the client).
 export function setupRouterGuard(router) {
   router.beforeEach(async (to) => {
+    // Persist the locale carried by an explicit /ur URL before any redirect
+    // below can strip it away. App routes (dashboard, tabs) have no
+    // `meta.locale` of their own and fall back to this saved preference
+    // (see src/i18n/index.js) — without saving it here first, a returning
+    // user hitting `/ur` gets silently bounced back to English mid-navigation.
+    if (to.meta.locale) {
+      setStoredLocale(to.meta.locale)
+    }
+
     const session = hasSession()
 
     if ((to.path === '/' || to.path === '/ur') && session) {
@@ -362,12 +405,18 @@ export function setupRouterGuard(router) {
         if (!allowed) return fallbackPath
       }
 
-      if (to.meta.requiresBugResolver && !user?.bugResolver) {
-        return fallbackPath
-      }
+      if (to.meta.requiresBugResolver || to.meta.requiresAdmin) {
+        // isAdmin/bugResolver live in user-admin-flags/{uid}, not on the
+        // users/{uid} doc returned by getCurrentUserProfile().
+        const adminFlags = await getCurrentUserAdminFlags(user?.uid)
 
-      if (to.meta.requiresAdmin && !user?.isAdmin) {
-        return fallbackPath
+        if (to.meta.requiresBugResolver && !adminFlags?.bugResolver) {
+          return fallbackPath
+        }
+
+        if (to.meta.requiresAdmin && !adminFlags?.isAdmin) {
+          return fallbackPath
+        }
       }
     }
   })

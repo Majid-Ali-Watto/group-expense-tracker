@@ -14,10 +14,10 @@ export function useEmailLimit() {
   })
 
   const tabConfig = computed(() => userStore.getActiveUserTabConfig)
-  const activeUser = computed(() =>
-    userStore.getUserByUid(authStore.getActiveUserUid)
+  // billedUser lives in user-admin-flags/{uid}, not on the users/{uid} doc.
+  const billedUser = computed(
+    () => userStore.getActiveUserAdminFlags?.billedUser === true
   )
-  const billedUser = computed(() => activeUser.value?.billedUser === true)
 
   const limit = computed(() => {
     const cfg = getEmailConfig()

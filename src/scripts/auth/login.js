@@ -15,6 +15,7 @@ import {
   hasSavedUserTabConfig,
   hasEnabledUserTabs,
   findUserTabConfigByUid,
+  findUserAdminFlagsByUid,
   buildUserTabConfigDocument,
   canAccessManageTabs,
   hasSharedFeatures
@@ -57,11 +58,8 @@ export const Login = () => {
   const groupStore = useGroupStore()
   const userStore = useUserStore()
   const { setData } = useFireBase()
-  const {
-    clearLoginAttempts,
-    isLoginLocked,
-    recordFailedAttempt
-  } = useRateLimit()
+  const { clearLoginAttempts, isLoginLocked, recordFailedAttempt } =
+    useRateLimit()
   const isSubmitting = ref(false)
 
   const createInitialForm = () => ({
@@ -84,7 +82,8 @@ export const Login = () => {
   watch(
     () => route.path,
     (path) => {
-      const next = stripLocalePrefix(path) === '/register' ? 'register' : 'login'
+      const next =
+        stripLocalePrefix(path) === '/register' ? 'register' : 'login'
       if (mode.value !== next) mode.value = next
     }
   )
@@ -190,10 +189,16 @@ export const Login = () => {
       photoUrl: payload.photoUrl || '',
       photoMeta: payload.photoMeta || null,
       emailVerified: payload.emailVerified !== false,
-      blocked: payload.blocked === true,
+      blocked: payload.blocked === true
+    })
+    // isAdmin/billedUser/bugResolver live in user-admin-flags/{uid} — every
+    // caller of completeLogin is expected to have already fetched them
+    // (resolveUserFromAuth merges them in; the Google-returning-user path
+    // fetches them explicitly) and passed them through on payload.
+    userStore.setActiveUserAdminFlags({
+      isAdmin: payload.isAdmin === true,
       billedUser: payload.billedUser === true,
-      bugResolver: payload.bugResolver === true,
-      isAdmin: payload.isAdmin === true
+      bugResolver: payload.bugResolver === true
     })
     userStore.setActiveUserTabAccess({
       config: payload.userTabConfig || null,
@@ -429,17 +434,17 @@ export const Login = () => {
 
       await sendEmailVerification(userCredential.user, actionCodeSettings)
 
-      // Save user data to Firestore
+      // Save user data to Firestore. isAdmin/billedUser/bugResolver are
+      // intentionally NOT included here — they live in the admin-only
+      // user-admin-flags/{uid} doc (see firestore.rules), and default to
+      // false there when absent.
       const userData = {
         uid: userCredential.user.uid,
         name: normalizedName,
         mobile: mobileValue,
         email: emailValue,
         emailVerified: false, // Will be set to true on first successful login
-        blocked: false,
-        billedUser: false,
-        isAdmin: false,
-        bugResolver: false
+        blocked: false
       }
 
       await setData(
@@ -594,7 +599,9 @@ export const Login = () => {
         const { attemptsLeft } = await recordFailedAttempt(emailValue)
         showError(
           attemptsLeft > 0
-            ? t('authMessages.incorrectCredentialsWithAttempts', { left: attemptsLeft })
+            ? t('authMessages.incorrectCredentialsWithAttempts', {
+                left: attemptsLeft
+              })
             : t('authMessages.incorrectCredentials')
         )
       } else if (error.code === 'auth/too-many-requests') {
@@ -727,13 +734,19 @@ export const Login = () => {
           openFeatureSelectionDialog(existingUser, null, tabConfigDoc)
           return
         }
+        // isAdmin/billedUser/bugResolver live in user-admin-flags/{uid}, not on
+        // the users/{uid} doc findUserByEmail read — fetch them explicitly so
+        // an admin/bug-resolver/billed user keeps that status after signing in
+        // this way.
+        const adminFlags = await findUserAdminFlagsByUid(existingUser.uid)
         await completeLogin({
           name: existingUser.name,
           mobile: existingUser.mobile,
           email: existingUser.email,
           uid: existingUser.uid,
           password: null,
-          userTabConfig: tabConfigDoc
+          userTabConfig: tabConfigDoc,
+          ...adminFlags
         })
       } else {
         // New Google user — collect mobile number before saving to DB
@@ -782,16 +795,15 @@ export const Login = () => {
       const name = (firebaseUser.displayName || email.split('@')[0]).trim()
       const uid = firebaseUser.uid
 
+      // isAdmin/billedUser/bugResolver intentionally omitted — they live in
+      // the admin-only user-admin-flags/{uid} doc and default to false there.
       const userData = {
         uid,
         name,
         mobile,
         email,
         emailVerified: true,
-        blocked: false,
-        billedUser: false,
-        isAdmin: false,
-        bugResolver: false
+        blocked: false
       }
 
       await setDoc(doc(database, DB_NODES.USERS, uid), userData)
