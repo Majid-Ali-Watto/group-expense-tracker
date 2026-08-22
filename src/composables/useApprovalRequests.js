@@ -1,7 +1,7 @@
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessageBox } from 'element-plus'
-import { appendNotificationForUser, maskMobile } from '@/utils'
+import { appendNotificationForUser, getIdentity, maskMobile } from '@/utils'
 import { deleteField } from '@/firebase'
 import { withTrace } from '@/utils/performance'
 
@@ -72,6 +72,11 @@ export function useApprovalRequests({
     return notifications.sort((left, right) => right.timestamp - left.timestamp)
   })
 
+  const normalizeApproval = (approval) => getIdentity(approval) || approval
+  const uniqueApprovals = (approvals = []) => [
+    ...new Set((approvals || []).map(normalizeApproval).filter(Boolean))
+  ]
+
   const pendingRequests = computed(() => {
     if (!rawItems.value) return []
 
@@ -90,7 +95,7 @@ export function useApprovalRequests({
           type: 'delete',
           ...commonItem,
           requestedBy: item.deleteRequest.requestedBy,
-          approvals: item.deleteRequest.approvals || [],
+          approvals: uniqueApprovals(item.deleteRequest.approvals),
           requestedAt: item.deleteRequest.requestedAt
         })
       }
@@ -100,7 +105,7 @@ export function useApprovalRequests({
           type: 'update',
           ...commonItem,
           requestedBy: item.updateRequest.requestedBy,
-          approvals: item.updateRequest.approvals || [],
+          approvals: uniqueApprovals(item.updateRequest.approvals),
           requestedAt: item.updateRequest.requestedAt,
           changes: item.updateRequest.changes,
           current: {
@@ -131,11 +136,11 @@ export function useApprovalRequests({
   )
 
   const hasUserApproved = (request) => {
-    return request.approvals.includes(activeUserUid.value)
+    return uniqueApprovals(request.approvals).includes(activeUserUid.value)
   }
 
   const isFullyApproved = (request) => {
-    return request.approvals.length >= getTotalMembers()
+    return uniqueApprovals(request.approvals).length >= getTotalMembers()
   }
 
   async function dismissNotification(notificationId) {
@@ -201,13 +206,9 @@ export function useApprovalRequests({
         itemId
       })
 
-      // No separate "clear the request field" write here (deliberately — see
-      // Firestore rules): the delete path removes the whole doc below, and the
-      // update path's buildUpdatedItem() already strips deleteRequest/updateRequest
-      // from the object it returns, so the request's approvals stay intact on
-      // the document right up until the single write/delete that acts on them.
-      // That's what lets security rules validate "was this fully approved?" at
-      // the moment it matters, instead of after the evidence was already erased.
+      // Clear the request evidence in the same write that applies the update.
+      // Firestore updateDoc() merges objects, so omitting updateRequest from
+      // buildUpdatedItem() would leave the pending request stuck in the DB.
 
       const changesSummary =
         request.type === 'update' ? summarizeChanges(request.changes) : ''
@@ -248,7 +249,7 @@ export function useApprovalRequests({
 
       await updateData(
         itemPath,
-        () => updatedItem,
+        () => ({ ...updatedItem, [`${request.type}Request`]: deleteField() }),
         t('approval.itemUpdated', { label: listLabel })
       )
     })
@@ -292,7 +293,10 @@ export function useApprovalRequests({
         monthYear: request.monthYear,
         itemId: request[itemIdKey]
       })
-      const updatedApprovals = [...request.approvals, activeUserUid.value]
+      const updatedApprovals = uniqueApprovals([
+        ...request.approvals,
+        activeUserUid.value
+      ])
 
       await updateData(
         itemPath,
@@ -301,7 +305,10 @@ export function useApprovalRequests({
       )
 
       if (updatedApprovals.length >= getTotalMembers()) {
-        await executeRequest(request, groupId)
+        await executeRequest(
+          { ...request, approvals: updatedApprovals },
+          groupId
+        )
       }
     })
   }

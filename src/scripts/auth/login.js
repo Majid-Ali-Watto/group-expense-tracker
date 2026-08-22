@@ -6,7 +6,6 @@ import { stripLocalePrefix } from '@/utils/seo'
 import { useFireBase, loadAppConfig, useRateLimit } from '@/composables'
 import {
   validateEmail,
-  findUserByEmail,
   findUserByMobile,
   resolveUserFromAuth,
   USER_TAB_KEYS,
@@ -15,7 +14,6 @@ import {
   hasSavedUserTabConfig,
   hasEnabledUserTabs,
   findUserTabConfigByUid,
-  findUserAdminFlagsByUid,
   buildUserTabConfigDocument,
   canAccessManageTabs,
   hasSharedFeatures
@@ -469,6 +467,12 @@ export const Login = () => {
       // Store email for potential resend
       lastRegisteredEmail.value = emailValue
 
+      try {
+        await signOut(auth)
+      } catch (signOutError) {
+        console.warn('Failed to clear registration auth state:', signOutError)
+      }
+
       await ElMessageBox.alert(
         t('authMessages.registrationSuccessBody', { email: emailValue }),
         t('authMessages.registrationSuccessTitle'),
@@ -729,8 +733,7 @@ export const Login = () => {
       const result = await signInWithPopup(auth, provider)
       const firebaseUser = result.user
 
-      const email = firebaseUser.email?.trim().toLowerCase()
-      const existingUser = await findUserByEmail(email)
+      const existingUser = await resolveUserFromAuth(firebaseUser)
 
       if (existingUser) {
         // Returning user — run the normal post-auth flow
@@ -739,11 +742,6 @@ export const Login = () => {
           openFeatureSelectionDialog(existingUser, null, tabConfigDoc)
           return
         }
-        // isAdmin/billedUser/bugResolver live in user-admin-flags/{uid}, not on
-        // the users/{uid} doc findUserByEmail read — fetch them explicitly so
-        // an admin/bug-resolver/billed user keeps that status after signing in
-        // this way.
-        const adminFlags = await findUserAdminFlagsByUid(existingUser.uid)
         await completeLogin({
           name: existingUser.name,
           mobile: existingUser.mobile,
@@ -751,7 +749,9 @@ export const Login = () => {
           uid: existingUser.uid,
           password: null,
           userTabConfig: tabConfigDoc,
-          ...adminFlags
+          billedUser: existingUser.billedUser === true,
+          bugResolver: existingUser.bugResolver === true,
+          isAdmin: existingUser.isAdmin === true
         })
       } else {
         // New Google user — collect mobile number before saving to DB

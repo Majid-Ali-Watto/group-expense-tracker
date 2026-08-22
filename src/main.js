@@ -7,7 +7,7 @@ import { routes, scrollBehavior, setupRouterGuard } from './router'
 import overflowPopup from '@/directives/overflow-popup'
 import { initializeAnalytics } from '@/utils/analytics'
 import { toCapitalize } from '@/utils/string-formatting'
-import i18n, { getStoredLocale } from '@/i18n'
+import { createAppI18n, getStoredLocale } from '@/i18n'
 import './main.css'
 
 const PKR = new Intl.NumberFormat('en-PK', {
@@ -30,12 +30,26 @@ String.prototype.toCapitalize = toCapitalize
 export const createApp = ViteSSG(
   App,
   { routes, base: '/', scrollBehavior },
-  ({ app, router, isClient }) => {
+  ({ app, router, isClient, routePath }) => {
+    const currentPath =
+      routePath ||
+      (typeof window !== 'undefined' ? window.location.pathname : '/')
+    const initialLocale =
+      router.resolve(currentPath).meta?.locale ?? getStoredLocale()
+    const i18n = createAppI18n(initialLocale)
+    const applyLocaleForRoute = (to) => {
+      i18n.global.locale.value = to.meta?.locale ?? getStoredLocale()
+    }
+
     app.provide('formatAmount', formatAmount)
     app.directive('overflow-popup', overflowPopup)
     app.use(ElementPlus)
     app.use(createPinia())
     app.use(i18n)
+
+    router.beforeEach((to) => {
+      applyLocaleForRoute(to)
+    })
 
     setupRouterGuard(router)
 
@@ -44,7 +58,7 @@ export const createApp = ViteSSG(
     // preference (see src/i18n/index.js). Registered before the initial
     // navigation resolves, so it also covers the first render.
     router.afterEach((to) => {
-      i18n.global.locale.value = to.meta?.locale ?? getStoredLocale()
+      applyLocaleForRoute(to)
     })
 
     // Analytics is meaningless during SSG prerendering — client only.

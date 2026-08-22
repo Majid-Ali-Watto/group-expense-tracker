@@ -27,11 +27,37 @@ export function setStoredLocale(locale) {
   localStorage.setItem(LOCALE_STORAGE_KEY, locale)
 }
 
-const i18n = createI18n({
-  legacy: false,
-  locale: 'en',
-  fallbackLocale: 'en',
-  messages: { en, ur }
-})
+let activeI18n = null
+
+export function createAppI18n(locale = 'en') {
+  activeI18n = createI18n({
+    legacy: false,
+    locale,
+    fallbackLocale: 'en',
+    messages: { en, ur }
+  })
+
+  return activeI18n
+}
+
+function getActiveI18n() {
+  if (!activeI18n) {
+    activeI18n = createAppI18n()
+  }
+
+  return activeI18n
+}
+
+// Some non-component helpers translate outside `setup()`. Keep their default
+// import bound to the current app i18n without forcing the app itself to use a
+// shared singleton during SSG.
+const i18n = new Proxy(
+  {},
+  {
+    get(_target, property) {
+      return getActiveI18n()[property]
+    }
+  }
+)
 
 export default i18n

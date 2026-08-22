@@ -218,12 +218,14 @@ export const PersonalExpenseForm = (props, emit) => {
         const receiptUrls = uploadedReceipts.receiptUrls
         const receiptMeta = uploadedReceipts.receiptMeta
 
-        if (whatTask == 'Save') {
+        if (whatTask == 'Save' || whatTask == 'Duplicate') {
           saveData(
             `${DB_NODES.PERSONAL_EXPENSES}/${activeUserUid.value}/months/${dateToMonthNode(form.value.date)}/expenses`,
             () => getExpenseData(receiptUrls, receiptMeta),
             expenseForm,
-            t('personalExpenses.expenseAdded'),
+            whatTask == 'Duplicate'
+              ? t('personalExpenses.transactionDuplicated')
+              : t('personalExpenses.expenseAdded'),
             () => {
               if (isEditMode.value) {
                 emit('closeModal')

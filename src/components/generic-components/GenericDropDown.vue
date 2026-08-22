@@ -12,16 +12,13 @@
       :allow-create="allowCreate"
       :collapse-tags="collapseTags"
       :collapse-tags-tooltip="collapseTagsTooltip"
+      :value-key="valueKey"
       popper-class="gdd-popper"
-      @change="$emit('update:modelValue', internalValue)"
+      :options="mappedOptions"
     >
-      <el-option
-        v-for="opt in mappedOptions"
-        :key="opt.value"
-        :label="opt.label"
-        :value="opt.value"
-        :disabled="opt.disabled"
-      />
+      <template #label="{ label, value }">
+        <span>{{ resolveSelectedLabel(label, value) }}</span>
+      </template>
     </el-select>
   </component>
 </template>
@@ -125,9 +122,14 @@ const props = defineProps({
   }
 })
 
-defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue'])
 
-const { internalValue, getLabel, getValue } = GenericDropDown(props)
+const {
+  internalValue,
+  getLabel,
+  getValue,
+  resolveSelectedLabel: resolveSelectedLabelFromOptions
+} = GenericDropDown(props, emit)
 
 const resolvedPlaceholder = computed(
   () => props.placeholder || t('common.selectOption')
@@ -142,6 +144,9 @@ const mappedOptions = computed(
     }))
   // .filter((item) => item.label !== '' || item.value !== '')
 )
+
+const resolveSelectedLabel = (label, value) =>
+  resolveSelectedLabelFromOptions(label, value, mappedOptions.value)
 
 const resolvedLabel = computed(() =>
   props.label && !props.required

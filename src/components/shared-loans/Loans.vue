@@ -204,8 +204,23 @@
 
                 <!-- Approval buttons -->
                 <div
+                  v-if="isFullyApproved(request)"
+                  class="flex gap-2 mt-3 items-center"
+                >
+                  <span class="text-green-600 text-sm font-semibold">
+                    {{ t('approval.allMembersApproved') }}
+                  </span>
+                  <el-button
+                    type="primary"
+                    size="default"
+                    @click="executeRequestManually(request)"
+                  >
+                    {{ t('approval.completeRequest') }}
+                  </el-button>
+                </div>
+                <div
                   class="flex gap-2 mt-3"
-                  v-if="request.requestedBy === activeUserUid"
+                  v-else-if="request.requestedBy === activeUserUid"
                 >
                   <span class="text-blue-600 text-sm font-semibold">
                     {{ t('approval.youRequestedThis', { type: request.type }) }}
@@ -235,21 +250,6 @@
                     @click="rejectRequest(request)"
                   >
                     {{ t('common.reject') }}
-                  </el-button>
-                </div>
-                <div
-                  v-else-if="isFullyApproved(request)"
-                  class="flex gap-2 mt-3 items-center"
-                >
-                  <span class="text-green-600 text-sm font-semibold">
-                    {{ t('approval.allMembersApproved') }}
-                  </span>
-                  <el-button
-                    type="primary"
-                    size="default"
-                    @click="executeRequestManually(request)"
-                  >
-                    {{ t('approval.completeRequest') }}
                   </el-button>
                 </div>
                 <div v-else class="text-green-600 text-sm font-semibold">

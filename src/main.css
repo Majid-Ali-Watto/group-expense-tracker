@@ -83,6 +83,29 @@ html[lang='ur'] .el-dropdown-menu__item {
   line-height: 1.45 !important;
 }
 
+/* Element Plus 2.14 renders selected select text through the placeholder
+   layer. Keep that layer above the filter input when it contains a value. */
+.el-select__placeholder:not(.is-transparent) {
+  color: var(--text-primary) !important;
+  opacity: 1;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.el-select__input-wrapper {
+  position: relative;
+  z-index: 1;
+}
+
+.el-select__input-wrapper.is-hidden {
+  z-index: -1;
+}
+
+.el-select__placeholder.is-transparent {
+  z-index: 0;
+  pointer-events: none;
+}
+
 /* Theme-aware colors */
 legend,
 h2,

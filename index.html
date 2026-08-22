@@ -1,11 +1,11 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-	<head>
-		<meta charset="UTF-8" />
-		<link rel="icon" type="image/*" href="/expenses.png" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Kharchafy | Group Expense & Budget Tracker</title>
-		<!--
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/*" href="/expenses.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kharchafy | Group Expense & Budget Tracker</title>
+    <!--
 			Generic fallback only — every real route's title/description/OG/
 			Twitter/canonical/hreflang/JSON-LD is injected reactively via
 			useHead() (see src/scripts/layout/app.js + src/utils/seo.js) and,
@@ -14,67 +14,73 @@
 			This tag only briefly shows before that runs, e.g. on
 			client-only private app routes.
 		-->
-		<meta
-			name="description"
-			content="Kharchafy is a Vue-powered group expense, shared loan, and personal budgeting app that keeps settlements transparent and receipts organized."
-		/>
-		<meta name="author" content="Kharchafy" />
-		<meta name="theme-color" content="#16a34a" />
-		<link rel="manifest" href="/manifest.webmanifest" />
-		<link rel="apple-touch-icon" href="/expenses.png" />
-		<meta name="application-name" content="Kharchafy" />
-		<meta name="mobile-web-app-capable" content="yes" />
-		<meta name="apple-mobile-web-app-capable" content="yes" />
-		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-		<meta name="apple-mobile-web-app-title" content="Kharchafy" />
+    <meta
+      name="description"
+      content="Kharchafy is a Vue-powered group expense, shared loan, and personal budgeting app that keeps settlements transparent and receipts organized."
+    />
+    <meta name="author" content="Kharchafy" />
+    <meta name="theme-color" content="#16a34a" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/expenses.png" />
+    <meta name="application-name" content="Kharchafy" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <meta name="apple-mobile-web-app-title" content="Kharchafy" />
+    <!-- Apply theme immediately to prevent flash -->
+    <script>
+      ;(function () {
+        const applyTheme = () => {
+          const savedTheme = localStorage.getItem('theme') || 'light'
+          const htmlElement = document.documentElement
+          const bodyElement = document.body
+          if (!bodyElement) return
 
-		<!-- Apply theme immediately to prevent flash -->
-		<script>
-			(function () {
-				const applyTheme = () => {
-					const savedTheme = localStorage.getItem('theme') || 'light';
-					const htmlElement = document.documentElement;
-					const bodyElement = document.body;
-					if (!bodyElement) return;
+          if (savedTheme === 'dark') {
+            htmlElement.classList.add('dark-theme')
+            htmlElement.classList.remove('light-theme')
+            bodyElement.classList.add('dark-theme')
+            bodyElement.classList.remove('light-theme')
+          } else {
+            htmlElement.classList.add('light-theme')
+            htmlElement.classList.remove('dark-theme')
+            bodyElement.classList.add('light-theme')
+            bodyElement.classList.remove('dark-theme')
+          }
+        }
 
-					if (savedTheme === 'dark') {
-						htmlElement.classList.add('dark-theme');
-						htmlElement.classList.remove('light-theme');
-						bodyElement.classList.add('dark-theme');
-						bodyElement.classList.remove('light-theme');
-					} else {
-						htmlElement.classList.add('light-theme');
-						htmlElement.classList.remove('dark-theme');
-						bodyElement.classList.add('light-theme');
-						bodyElement.classList.remove('dark-theme');
-					}
-				};
-
-				document.addEventListener('DOMContentLoaded', applyTheme);
-			})();
-		</script>
-	</head>
-	<body style="padding: 0%; margin: 0%; box-sizing: border-box">
-		<noscript>
-			<div style="padding: 24px; font-family: Arial, sans-serif; line-height: 1.6">
-				<h1>Kharchafy</h1>
-				<p>
-					Kharchafy is a group expense tracker for shared bills, shared loans, and
-					personal budgeting.
-				</p>
-				<p>Useful public pages:</p>
-				<ul>
-					<li><a href="/">Home</a></li>
-					<li><a href="/features">Features</a></li>
-					<li><a href="/group-expense-tracker">Group Expense Tracker</a></li>
-					<li><a href="/personal-budget-tracker">Personal Budget Tracker</a></li>
-					<li><a href="/faq">FAQ</a></li>
-					<li><a href="/login">Login</a></li>
-					<li><a href="/register">Register</a></li>
-				</ul>
-			</div>
-		</noscript>
-		<div id="app"></div>
-		<script type="module" src="/src/main.js"></script>
-	</body>
+        document.addEventListener('DOMContentLoaded', applyTheme)
+      })()
+    </script>
+  </head>
+  <body style="padding: 0%; margin: 0%; box-sizing: border-box">
+    <noscript>
+      <div
+        style="padding: 24px; font-family: Arial, sans-serif; line-height: 1.6"
+      >
+        <h1>Kharchafy</h1>
+        <p>
+          Kharchafy is a group expense tracker for shared bills, shared loans,
+          and personal budgeting.
+        </p>
+        <p>Useful public pages:</p>
+        <ul>
+          <li><a href="/">Home</a></li>
+          <li><a href="/features">Features</a></li>
+          <li><a href="/group-expense-tracker">Group Expense Tracker</a></li>
+          <li>
+            <a href="/personal-budget-tracker">Personal Budget Tracker</a>
+          </li>
+          <li><a href="/faq">FAQ</a></li>
+          <li><a href="/login">Login</a></li>
+          <li><a href="/register">Register</a></li>
+        </ul>
+      </div>
+    </noscript>
+    <div id="app"></div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
 </html>
