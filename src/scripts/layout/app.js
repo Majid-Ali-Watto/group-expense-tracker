@@ -8,6 +8,7 @@ import {
   useUserStore
 } from '@/stores'
 import { loadAppConfig, stopAppConfigSync } from '@/composables/useAppConfig'
+import { checkForAppUpdate } from '@/composables/useAppUpdate'
 import useFireBase from '@/composables/useFirebase'
 import { useGlobalNotifications } from '@/composables/useGlobalNotifications'
 import { useInactivityLogout } from '@/composables/useInactivityLogout'
@@ -303,6 +304,12 @@ export const App = () => {
   let authUnsubscribe = null
   onMounted(() => {
     applyTheme()
+
+    // Runs for every route (App.vue mounts once, above every page including
+    // /login) so an already-authenticated user who never revisits /login
+    // still gets checked — checkForAppUpdate() is idempotent and only shows
+    // its notification once per session either way.
+    checkForAppUpdate()
 
     authUnsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       // Firebase has no authenticated user — check for a stale _session left over

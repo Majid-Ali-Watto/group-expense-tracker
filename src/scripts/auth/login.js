@@ -3,12 +3,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { ElMessageBox } from 'element-plus'
 import { stripLocalePrefix } from '@/utils/seo'
-import {
-  useFireBase,
-  checkForAppUpdate,
-  loadAppConfig,
-  useRateLimit
-} from '@/composables'
+import { useFireBase, loadAppConfig, useRateLimit } from '@/composables'
 import {
   validateEmail,
   findUserByEmail,
@@ -137,8 +132,8 @@ export const Login = () => {
   }
 
   onMounted(async () => {
-    // Check for a new app version and notify the user if one is being applied
-    checkForAppUpdate()
+    // App-update check now runs once from App.vue's own onMounted (src/scripts/layout/app.js)
+    // so it covers every route, not just this one — see checkForAppUpdate() there.
 
     const storedEmail = localStorage.getItem('rememberedEmail')
     if (storedEmail) {
