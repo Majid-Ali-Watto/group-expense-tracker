@@ -5,7 +5,8 @@ import {
   useAuthStore,
   useTabStore,
   useGroupStore,
-  useUserStore
+  useUserStore,
+  useDataStore
 } from '@/stores'
 import { loadAppConfig, stopAppConfigSync } from '@/composables/useAppConfig'
 import useFireBase from '@/composables/useFirebase'
@@ -20,10 +21,12 @@ import {
   getAccessibleTabs,
   getDefaultAccessibleTab,
   findUserTabConfigByUid,
+  DEFAULT_USER_ADMIN_FLAGS,
   canAccessManageTabs,
   needsSharedTabsUpgrade,
   buildUpgradedSharedTabConfig,
-  hasSharedFeatures
+  hasSharedFeatures,
+  hasSavedUserTabConfig
 } from '@/helpers'
 import {
   setAnalyticsIdentity,
@@ -119,6 +122,7 @@ export const App = () => {
   const tabStore = useTabStore()
   const groupStore = useGroupStore()
   const userStore = useUserStore()
+  const dataStore = useDataStore()
   const isAdminActive = computed(() => route.path.startsWith('/admin'))
 
   // Route-driven <head> — title, description, OG/Twitter, canonical,
@@ -138,10 +142,6 @@ export const App = () => {
       : t('layout.inactivityMinutes', { count: minutes })
   }
 
-  const getActiveUserProfile = () => {
-    const uid = authStore.getActiveUserUid
-    return uid ? userStore.getUserByUid(uid) : null
-  }
   let activeUserTabConfigUnsubscribe = null
 
   function stopActiveUserTabConfigSync() {
@@ -176,6 +176,37 @@ export const App = () => {
     )
   }
 
+  let activeUserAdminFlagsUnsubscribe = null
+
+  function stopActiveUserAdminFlagsSync() {
+    if (activeUserAdminFlagsUnsubscribe) {
+      activeUserAdminFlagsUnsubscribe()
+      activeUserAdminFlagsUnsubscribe = null
+    }
+  }
+
+  function startActiveUserAdminFlagsSync(uid) {
+    stopActiveUserAdminFlagsSync()
+    if (!uid) {
+      userStore.clearActiveUserAdminFlags()
+      return
+    }
+
+    activeUserAdminFlagsUnsubscribe = onSnapshot(
+      doc(database, DB_NODES.USER_ADMIN_FLAGS, uid),
+      (snap) => {
+        userStore.setActiveUserAdminFlags(
+          snap.exists()
+            ? { ...DEFAULT_USER_ADMIN_FLAGS, ...snap.data() }
+            : { ...DEFAULT_USER_ADMIN_FLAGS }
+        )
+      },
+      () => {
+        userStore.setActiveUserAdminFlags({ ...DEFAULT_USER_ADMIN_FLAGS })
+      }
+    )
+  }
+
   function buildPathForTab(tab, groupId = groupStore.getActiveGroup) {
     return GROUP_TABS.has(tab) && groupId
       ? `${TAB_ROUTES[tab]}/${groupId}`
@@ -197,7 +228,7 @@ export const App = () => {
     }
 
     if (basePath === '/admin') {
-      return getActiveUserProfile()?.isAdmin === true
+      return userStore.getActiveUserAdminFlags?.isAdmin === true
     }
 
     if (!tab) return false
@@ -334,6 +365,13 @@ export const App = () => {
 
         const uid = userData.uid
         const userTabConfig = await findUserTabConfigByUid(uid)
+        // Only auto-restore a session for a user who has already completed the
+        // app's own onboarding (tabs selection) at least once. Without this,
+        // Firebase Auth's persisted, verified user alone would be enough to grant
+        // a full session — skipping password re-verification and the onboarding
+        // dialog entirely. Force those users through the normal login form instead,
+        // which already gates on the same hasSavedUserTabConfig check.
+        if (!hasSavedUserTabConfig(userTabConfig)) return
         const token = generateUUID()
         const dataForEncryption = {
           name: userData.name,
@@ -354,6 +392,14 @@ export const App = () => {
         userStore.setActiveUserTabAccess({
           config: userTabConfig,
           accessManageTabs: canAccessManageTabs(userTabConfig)
+        })
+        // Seed admin flags synchronously (resolveUserFromAuth already merged
+        // them into userData) so there's no gap before startActiveUserAdminFlagsSync
+        // takes over below.
+        userStore.setActiveUserAdminFlags({
+          isAdmin: userData.isAdmin === true,
+          billedUser: userData.billedUser === true,
+          bugResolver: userData.bugResolver === true
         })
 
         // Populate the active user immediately so displayName is never "Guest".
@@ -474,8 +520,8 @@ export const App = () => {
   // Computed tabs based on active group + bugResolver privilege
   const tabs = computed(() => {
     const activeGroup = groupStore.getActiveGroup
-    const user = getActiveUserProfile()
-    const isBugResolver = user?.bugResolver === true
+    const isBugResolver =
+      userStore.getActiveUserAdminFlags?.bugResolver === true
 
     let base = getAccessibleTabs(userStore.getActiveUserTabConfig, {
       hasActiveGroup: !!activeGroup
@@ -653,14 +699,19 @@ export const App = () => {
     logoutPromise = (async () => {
       stopInactivityTracking()
       stopActiveUserTabConfigSync()
-      userStore.clearActiveUserTabAccess()
+      stopActiveUserAdminFlagsSync()
       stopAppConfigSync()
       await trackAnalyticsEvent('logout', { reason })
       clearAllCache()
       authStore.setActiveUserUid(null)
-      groupStore.setActiveGroup(null)
       authStore.setSessionToken(null)
       authStore.setActivePassword(null)
+      // Reset stores fully — not just the auth-critical fields — so the next
+      // login in this tab never inherits a previous user's users/groups/tab lists.
+      userStore.$reset()
+      groupStore.$reset()
+      dataStore.$reset()
+      tabStore.$reset()
       sessionStorage.removeItem('_session')
       sessionStorage.removeItem('_lastRoute')
       sessionStorage.removeItem('_lastGroupId')
@@ -749,6 +800,7 @@ export const App = () => {
   watch(loggedIn, async (isLoggedIn) => {
     if (isLoggedIn) {
       startActiveUserTabConfigSync(authStore.getActiveUserUid)
+      startActiveUserAdminFlagsSync(authStore.getActiveUserUid)
       // Fresh login from /login or /register (or their /ur equivalents) →
       // navigate immediately so the login form is replaced at once;
       // verification runs in the background.
@@ -783,7 +835,9 @@ export const App = () => {
       }, 5 * 60_000)
     } else {
       stopActiveUserTabConfigSync()
+      stopActiveUserAdminFlagsSync()
       userStore.clearActiveUserTabAccess()
+      userStore.clearActiveUserAdminFlags()
       clearAnalyticsIdentity()
       stopInactivityTracking()
       if (verifyInterval) {
@@ -795,6 +849,7 @@ export const App = () => {
 
   onUnmounted(() => {
     stopActiveUserTabConfigSync()
+    stopActiveUserAdminFlagsSync()
     stopInactivityTracking()
     window.removeEventListener('resize', updateTabsScrollState)
     if (verifyInterval) clearInterval(verifyInterval)

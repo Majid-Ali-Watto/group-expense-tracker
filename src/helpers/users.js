@@ -11,6 +11,7 @@ import {
 } from '@/firebase'
 import { DB_NODES } from '@/constants'
 import { getIdentity, maskMobile } from '@/utils'
+import { findUserAdminFlagsByUid } from './user-admin-flags'
 // Check if current user is a member of the group
 
 function hasApproval(approvals, identity) {
@@ -260,7 +261,12 @@ export async function resolveUserFromAuth(firebaseUser) {
 
   if (!user) return null
 
-  return syncFirestoreUserFromAuth(user, firebaseUser)
+  const synced = await syncFirestoreUserFromAuth(user, firebaseUser)
+  // isAdmin/billedUser/bugResolver live in user-admin-flags/{uid}, not on the
+  // users/{uid} doc itself (see firestore.rules) — merge them in here so every
+  // caller of resolveUserFromAuth gets the real values with no further lookup.
+  const adminFlags = await findUserAdminFlagsByUid(synced.uid)
+  return { ...synced, ...adminFlags }
 }
 
 export async function findUserByMobile(mobile) {

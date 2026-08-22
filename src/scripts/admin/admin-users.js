@@ -4,25 +4,65 @@ import { database, collection, doc, setDoc, onSnapshot } from '@/firebase'
 import { DB_NODES } from '@/constants'
 import { showError, showSuccess } from '@/utils'
 
+// isAdmin/billedUser/bugResolver live in user-admin-flags/{uid} — a separate,
+// admin-only-writable collection (see firestore.rules) — not on users/{uid}.
+const ADMIN_FLAG_FIELDS = new Set(['isAdmin', 'billedUser', 'bugResolver'])
+const DEFAULT_ADMIN_FLAGS = {
+  isAdmin: false,
+  billedUser: false,
+  bugResolver: false
+}
+
 export function AdminUsers() {
   const { t } = useI18n()
-  const users = ref([])
+  const rawUsers = ref([])
+  const adminFlags = ref({})
   const userTabConfigs = ref({})
   const usersLoaded = ref(false)
+  const adminFlagsLoaded = ref(false)
   const userTabConfigsLoaded = ref(false)
   const loading = computed(
-    () => !usersLoaded.value || !userTabConfigsLoaded.value
+    () =>
+      !usersLoaded.value ||
+      !adminFlagsLoaded.value ||
+      !userTabConfigsLoaded.value
   )
   const saving = ref(false)
+
+  // Merges each users/{uid} row with its isAdmin/billedUser/bugResolver from
+  // user-admin-flags/{uid}, so the rest of this composable (and AdminUsers.vue)
+  // can keep treating "users" as one flat row per user.
+  const users = computed(() =>
+    rawUsers.value.map((u) => ({
+      ...DEFAULT_ADMIN_FLAGS,
+      ...u,
+      ...(adminFlags.value[u.uid] || {})
+    }))
+  )
 
   const unsubscribeUsers = onSnapshot(
     collection(database, DB_NODES.USERS),
     (snap) => {
-      users.value = snap.docs.map((d) => ({ uid: d.id, ...d.data() }))
+      rawUsers.value = snap.docs.map((d) => ({ uid: d.id, ...d.data() }))
       usersLoaded.value = true
     },
     () => {
       usersLoaded.value = true
+    }
+  )
+
+  const unsubscribeAdminFlags = onSnapshot(
+    collection(database, DB_NODES.USER_ADMIN_FLAGS),
+    (snap) => {
+      adminFlags.value = snap.docs.reduce((acc, entry) => {
+        acc[entry.id] = { ...DEFAULT_ADMIN_FLAGS, ...entry.data() }
+        return acc
+      }, {})
+      adminFlagsLoaded.value = true
+    },
+    () => {
+      adminFlags.value = {}
+      adminFlagsLoaded.value = true
     }
   )
 
@@ -43,6 +83,7 @@ export function AdminUsers() {
 
   onUnmounted(() => {
     unsubscribeUsers()
+    unsubscribeAdminFlags()
     unsubscribeUserTabConfigs()
   })
 
@@ -50,13 +91,31 @@ export function AdminUsers() {
     if (saving.value) return
     saving.value = true
     try {
+      const isAdminFlagField = ADMIN_FLAG_FIELDS.has(field)
       await setDoc(
-        doc(database, DB_NODES.USERS, uid),
+        doc(
+          database,
+          isAdminFlagField ? DB_NODES.USER_ADMIN_FLAGS : DB_NODES.USERS,
+          uid
+        ),
         { [field]: value },
         { merge: true }
       )
-      const idx = users.value.findIndex((u) => u.uid === uid)
-      if (idx !== -1) users.value[idx] = { ...users.value[idx], [field]: value }
+      if (isAdminFlagField) {
+        adminFlags.value = {
+          ...adminFlags.value,
+          [uid]: {
+            ...DEFAULT_ADMIN_FLAGS,
+            ...adminFlags.value[uid],
+            [field]: value
+          }
+        }
+      } else {
+        const idx = rawUsers.value.findIndex((u) => u.uid === uid)
+        if (idx !== -1) {
+          rawUsers.value[idx] = { ...rawUsers.value[idx], [field]: value }
+        }
+      }
       showSuccess(t('admin.users.userUpdated'))
     } catch {
       showError(t('admin.users.userUpdateFailed'))

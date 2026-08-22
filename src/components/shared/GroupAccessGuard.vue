@@ -324,10 +324,11 @@ async function sendJoinRequest() {
       return
     }
 
-    const newRequests = [
-      ...existing,
-      { uid: me.value, mobile: myMobile, approvals: [] }
-    ]
+    // No `mobile` field on the stored request — every display/approval path
+    // resolves the requester via userStore.getUserByUid(uid), and storing it
+    // here would leak a phone number to any authenticated stranger browsing
+    // groups (groups/{groupId} is world-readable).
+    const newRequests = [...existing, { uid: me.value, approvals: [] }]
     let payload = { joinRequests: newRequests }
 
     // Notify all existing members

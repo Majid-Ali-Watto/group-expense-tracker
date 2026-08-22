@@ -682,13 +682,12 @@ export function useGlobalNotifications() {
   // ─── Admin bug report notifications ───────────────────────────────────────
   const rawAdminBugReportNotifs = ref([])
 
-  // Read bugResolver directly from Firestore to avoid user-store timing issues
-  const isBugResolver = ref(false)
-  const bugResolverDocRef = dbRef(`${DB_NODES.USERS}/${activeUserUid.value}`)
-  const bugResolverUnsub = onSnapshot(bugResolverDocRef, (snap) => {
-    isBugResolver.value = snap.exists() && snap.data().bugResolver === true
-  })
-  bugListeners.push(bugResolverUnsub)
+  // bugResolver lives in user-admin-flags/{uid} (see firestore.rules), kept
+  // live in the store by app.js's startActiveUserAdminFlagsSync — read it from
+  // there instead of a second dedicated listener on the same field.
+  const isBugResolver = computed(
+    () => userStore.getActiveUserAdminFlags?.bugResolver === true
+  )
 
   const adminBrRef = dbRef(`${DB_NODES.BUG_REPORT_NOTIFICATIONS}/admin/items`)
   const adminBrUnsub = onSnapshot(adminBrRef, (snap) => {
@@ -758,6 +757,9 @@ export function useGlobalNotifications() {
           snap.docs.forEach((docSnap) => {
             const uid = docSnap.id
             const u = docSnap.data()
+            // isAdmin/billedUser/bugResolver deliberately not picked here —
+            // they live in user-admin-flags/{uid} and are never needed for
+            // anyone but the active user (see userStore.getActiveUserAdminFlags).
             userStore.addUser({
               uid,
               mobile: u.mobile || '',
@@ -767,11 +769,8 @@ export function useGlobalNotifications() {
               maskedMobile: maskMobile(u.mobile || ''),
               deleteRequest: u.deleteRequest || null,
               updateRequest: u.updateRequest || null,
-              billedUser: u.billedUser === true,
-              bugResolver: u.bugResolver === true,
               rejectionNotification: u.rejectionNotification || null,
-              blocked: u.blocked === true,
-              isAdmin: u.isAdmin === true
+              blocked: u.blocked === true
             })
           })
         }

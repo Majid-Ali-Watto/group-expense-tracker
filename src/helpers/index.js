@@ -1,4 +1,5 @@
 export * from './users'
 export * from './blocked'
 export * from './user-tab-access'
+export * from './user-admin-flags'
 export * from './validateEmail'
