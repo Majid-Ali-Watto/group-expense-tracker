@@ -112,10 +112,21 @@ service cloud.firestore {
         );
     }
 
+    // Non-owner/admin members may write any group field EXCEPT name/description/
+    // ownerUid — renaming or reassigning ownership is owner/admin-only, even
+    // though the same doc is otherwise wide-open to member writes (notifications,
+    // join requests, delete/settlement requests, membership changes).
+    function groupCoreIdentityUnchanged() {
+      return request.resource.data.get('name', null) == resource.data.get('name', null)
+        && request.resource.data.get('description', null) == resource.data.get('description', null)
+        && request.resource.data.get('ownerUid', null) == resource.data.get('ownerUid', null);
+    }
+
     function callerCanWriteGroup(groupId) {
       return request.auth != null
         && callerIsNotBlocked()
         && groupIsNotBlocked(groupId)
+        && (groupCoreIdentityUnchanged() || callerIsAdmin() || callerIsGroupOwner(groupId))
         && (
           callerIsAdmin()
           || callerIsGroupOwner(groupId)
@@ -145,6 +156,36 @@ service cloud.firestore {
         && callerIsNotBlocked()
         && groupIsNotBlocked(groupId)
         && (callerIsAdmin() || callerIsGroupMember(groupId));
+    }
+
+    // ── Shared-expense/loan item approval enforcement ──────────────────────────
+    // Mirrors callerCanDeleteGroup()'s deleteRequest.approvals check, extended to
+    // per-item update/delete requests and to settlement finalization. Requires
+    // useApprovalRequests.js's executeRequest() to apply the change/delete in the
+    // SAME write that would otherwise clear the request field — see its comment.
+
+    function sharedItemMemberCount(groupId) {
+      return groupDoc(groupId).data.get('members', []).size();
+    }
+
+    // .toSet() dedupes the approvals array so a member can't inflate the count
+    // by pushing duplicate/forged uids into it in a single write.
+    function sharedItemRequestApproved(fieldName, groupId) {
+      return resource.data.get(fieldName, {}).get('approvals', []).toSet().size()
+        >= sharedItemMemberCount(groupId);
+    }
+
+    function sharedItemSettlementApproved(groupId) {
+      return groupDoc(groupId).data.get('settlementRequest', {}).get('approvals', []).toSet().size()
+        >= sharedItemMemberCount(groupId);
+    }
+
+    // Members may always propose/approve/cancel/reject a request or clear their
+    // own notification — narrowly scoped the same way callerCanModifyOwnJoinRequest()
+    // restricts join-request writes to just the joinRequests field.
+    function sharedItemRequestMetaOnly() {
+      return request.resource.data.diff(resource.data).affectedKeys()
+        .hasOnly(['deleteRequest', 'updateRequest', 'notifications']);
     }
 
     // Same migration-tolerant shape as callerIsAdmin(): bugResolver is checked
@@ -222,6 +263,23 @@ service cloud.firestore {
       allow write: if request.auth != null && callerIsAdmin();
     }
 
+    // Private user fields (currently just email) — split out of users/{uid} for
+    // the same reason as user-admin-flags: that doc is readable by any
+    // authenticated user, and Firestore has no field-level read ACL. Unlike
+    // admin flags, the owner may write their own (email is set once at
+    // registration; a future "change email" flow would write here too).
+    // mobile deliberately stays on users/{uid} — it's a functional identifier
+    // used across group invites, split-matching, etc., not just PII; splitting
+    // it out is a larger follow-up, not done here.
+    match /user-private/{uid} {
+      allow read: if request.auth != null
+                  && (request.auth.uid == uid || callerIsAdmin());
+      allow create: if request.auth != null && request.auth.uid == uid;
+      allow update: if request.auth != null
+                    && (request.auth.uid == uid || callerIsAdmin());
+      allow delete: if false;
+    }
+
     // Groups — any authenticated user can read (required for the "browse/join
     // other groups" flow and for shared-group links, both of which must resolve
     // groups the caller is not yet a member of; Firestore has no field-level read
@@ -248,15 +306,33 @@ service cloud.firestore {
     // data is a single document) — no rule is declared for them, so they default
     // to fully denied rather than staying open dead attack surface.
 
-    // Shared expenses — blocked user cannot write; writes into a blocked group are denied
+    // Shared expenses — blocked user cannot write; writes into a blocked group are denied.
+    // Payment items require full-member approval (or a fully-approved settlement)
+    // before a destructive/data-changing write goes through — see the
+    // sharedItem*() helpers above. Everything else under a group (the month doc
+    // itself, request/notification bookkeeping) stays member-writable as before.
     match /shared-expenses/{groupId} {
       allow read, write: if callerCanAccessSharedGroup(groupId);
     }
-    match /shared-expenses/{groupId}/{document=**} {
+    match /shared-expenses/{groupId}/months/{monthYear} {
       allow read, write: if callerCanAccessSharedGroup(groupId);
     }
+    match /shared-expenses/{groupId}/months/{monthYear}/payments/{itemId} {
+      allow read, create: if callerCanAccessSharedGroup(groupId);
+      allow update: if callerCanAccessSharedGroup(groupId)
+                    && (
+                      sharedItemRequestMetaOnly()
+                      || sharedItemRequestApproved('updateRequest', groupId)
+                    );
+      allow delete: if callerCanAccessSharedGroup(groupId)
+                    && (
+                      sharedItemRequestApproved('deleteRequest', groupId)
+                      || sharedItemSettlementApproved(groupId)
+                    );
+    }
 
-    // Shared expenses backup — same restrictions
+    // Shared expenses backup — non-destructive archival copies (settlement
+    // finalize writes here before deleting the source); no approval gating needed.
     match /shared-expenses-backup/{groupId} {
       allow read, write: if callerCanAccessSharedGroup(groupId);
     }
@@ -264,12 +340,25 @@ service cloud.firestore {
       allow read, write: if callerCanAccessSharedGroup(groupId);
     }
 
-    // Shared loans — same restrictions
+    // Shared loans — same approval-gated shape as shared-expenses above.
     match /shared-loans/{groupId} {
       allow read, write: if callerCanAccessSharedGroup(groupId);
     }
-    match /shared-loans/{groupId}/{document=**} {
+    match /shared-loans/{groupId}/months/{monthYear} {
       allow read, write: if callerCanAccessSharedGroup(groupId);
+    }
+    match /shared-loans/{groupId}/months/{monthYear}/loans/{itemId} {
+      allow read, create: if callerCanAccessSharedGroup(groupId);
+      allow update: if callerCanAccessSharedGroup(groupId)
+                    && (
+                      sharedItemRequestMetaOnly()
+                      || sharedItemRequestApproved('updateRequest', groupId)
+                    );
+      allow delete: if callerCanAccessSharedGroup(groupId)
+                    && (
+                      sharedItemRequestApproved('deleteRequest', groupId)
+                      || sharedItemSettlementApproved(groupId)
+                    );
     }
 
     // Personal expenses — read restricted to owner; blocked user cannot write

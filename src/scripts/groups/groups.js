@@ -737,12 +737,13 @@ export const Groups = () => {
         const user = docSnap.data()
         // isAdmin/billedUser/bugResolver deliberately not picked here — they
         // live in user-admin-flags/{uid} and are never needed for anyone but
-        // the active user (see userStore.getActiveUserAdminFlags).
+        // the active user (see userStore.getActiveUserAdminFlags). email is
+        // the same story — it lives in user-private/{uid} (see
+        // userStore.getActiveUserPrivate).
         userStore.addUser({
           uid: docSnap.id,
           mobile: user.mobile || '',
           name: user.name || '',
-          email: user.email || '',
           photoUrl: user.photoUrl || '',
           photoMeta: user.photoMeta || null,
           maskedMobile: maskMobile(user.mobile || ''),

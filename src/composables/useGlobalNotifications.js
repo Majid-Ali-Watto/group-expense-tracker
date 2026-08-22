@@ -760,11 +760,12 @@ export function useGlobalNotifications() {
             // isAdmin/billedUser/bugResolver deliberately not picked here —
             // they live in user-admin-flags/{uid} and are never needed for
             // anyone but the active user (see userStore.getActiveUserAdminFlags).
+            // email is the same story — it lives in user-private/{uid} (see
+            // userStore.getActiveUserPrivate).
             userStore.addUser({
               uid,
               mobile: u.mobile || '',
               name: u.name || '',
-              email: u.email || '',
               addedBy: u.addedBy || null,
               maskedMobile: maskMobile(u.mobile || ''),
               deleteRequest: u.deleteRequest || null,

@@ -6,12 +6,10 @@ import {
   reauthenticateWithCredential,
   EmailAuthProvider
 } from '@/firebase'
-import { useAuthStore } from '@/stores'
 import { showError, showSuccess } from '@/utils'
 
 export const ChangePassword = () => {
   const { t } = useI18n()
-  const authStore = useAuthStore()
 
   const dialogVisible = ref(true)
   const isSubmitting = ref(false)
@@ -101,9 +99,6 @@ export const ChangePassword = () => {
       )
       await reauthenticateWithCredential(user, credential)
       await updatePassword(user, form.value.newPassword)
-
-      // Keep the stored password in sync so session remains valid
-      authStore.setActivePassword(form.value.newPassword)
 
       showSuccess(t('authMessages.changePasswordSuccess'))
       closeDialog()

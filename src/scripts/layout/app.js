@@ -208,6 +208,36 @@ export const App = () => {
     )
   }
 
+  let activeUserPrivateUnsubscribe = null
+
+  function stopActiveUserPrivateSync() {
+    if (activeUserPrivateUnsubscribe) {
+      activeUserPrivateUnsubscribe()
+      activeUserPrivateUnsubscribe = null
+    }
+  }
+
+  // email lives in user-private/{uid} — same reasoning as user-admin-flags
+  // above: users/{uid} is readable by any authenticated user, so anything
+  // that shouldn't be moves to a self/admin-only doc instead.
+  function startActiveUserPrivateSync(uid) {
+    stopActiveUserPrivateSync()
+    if (!uid) {
+      userStore.clearActiveUserPrivate()
+      return
+    }
+
+    activeUserPrivateUnsubscribe = onSnapshot(
+      doc(database, DB_NODES.USER_PRIVATE, uid),
+      (snap) => {
+        userStore.setActiveUserPrivate(snap.exists() ? snap.data() : { email: '' })
+      },
+      () => {
+        userStore.setActiveUserPrivate({ email: '' })
+      }
+    )
+  }
+
   function buildPathForTab(tab, groupId = groupStore.getActiveGroup) {
     return GROUP_TABS.has(tab) && groupId
       ? `${TAB_ROUTES[tab]}/${groupId}`
@@ -394,7 +424,6 @@ export const App = () => {
         sessionStorage.setItem('_session', encryptedSession)
         authStore.setActiveUserUid(uid)
         authStore.setSessionToken(encryptedStore)
-        authStore.setActivePassword('')
         loadAppConfig() // fire-and-forget: load remote config flags on auto-login
         userStore.setActiveUserTabAccess({
           config: userTabConfig,
@@ -408,6 +437,7 @@ export const App = () => {
           billedUser: userData.billedUser === true,
           bugResolver: userData.bugResolver === true
         })
+        userStore.setActiveUserPrivate({ email: userData.email || '' })
 
         // Populate the active user immediately so displayName is never "Guest".
         userStore.addUser({
@@ -707,12 +737,12 @@ export const App = () => {
       stopInactivityTracking()
       stopActiveUserTabConfigSync()
       stopActiveUserAdminFlagsSync()
+      stopActiveUserPrivateSync()
       stopAppConfigSync()
       await trackAnalyticsEvent('logout', { reason })
       clearAllCache()
       authStore.setActiveUserUid(null)
       authStore.setSessionToken(null)
-      authStore.setActivePassword(null)
       // Reset stores fully — not just the auth-critical fields — so the next
       // login in this tab never inherits a previous user's users/groups/tab lists.
       userStore.$reset()
@@ -808,6 +838,7 @@ export const App = () => {
     if (isLoggedIn) {
       startActiveUserTabConfigSync(authStore.getActiveUserUid)
       startActiveUserAdminFlagsSync(authStore.getActiveUserUid)
+      startActiveUserPrivateSync(authStore.getActiveUserUid)
       // Fresh login from /login or /register (or their /ur equivalents) →
       // navigate immediately so the login form is replaced at once;
       // verification runs in the background.
@@ -843,8 +874,10 @@ export const App = () => {
     } else {
       stopActiveUserTabConfigSync()
       stopActiveUserAdminFlagsSync()
+      stopActiveUserPrivateSync()
       userStore.clearActiveUserTabAccess()
       userStore.clearActiveUserAdminFlags()
+      userStore.clearActiveUserPrivate()
       clearAnalyticsIdentity()
       stopInactivityTracking()
       if (verifyInterval) {
@@ -857,6 +890,7 @@ export const App = () => {
   onUnmounted(() => {
     stopActiveUserTabConfigSync()
     stopActiveUserAdminFlagsSync()
+    stopActiveUserPrivateSync()
     stopInactivityTracking()
     window.removeEventListener('resize', updateTabsScrollState)
     if (verifyInterval) clearInterval(verifyInterval)

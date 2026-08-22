@@ -859,7 +859,6 @@ async function clearDeletedSession(uid) {
   )
   authStore.setActiveUserUid(null)
   authStore.setSessionToken(null)
-  authStore.setActivePassword(null)
   groupStore.setActiveGroup(null)
   sessionStorage.removeItem('_session')
   emit('update:visible', false)

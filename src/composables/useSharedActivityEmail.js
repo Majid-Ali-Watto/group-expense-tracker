@@ -114,6 +114,12 @@ export function useSharedActivityEmail() {
     const actorId = authStore.getActiveUserUid
     const actor = userStore.getUserByUid(actorId)
 
+    // email is no longer readable client-side for anyone but the active user
+    // (it lives in the self/admin-only user-private/{uid} doc) — and it
+    // doesn't need to be: the backend re-resolves the real recipient list
+    // itself from Firestore via the Admin SDK before sending anything
+    // (firebase-user.service.ts's buildRecipients()), ignoring whatever this
+    // payload says. This just needs to identify *which* members to notify.
     const recipients = group.members
       .map((member) => {
         const identity = getIdentity(member)
@@ -121,16 +127,12 @@ export function useSharedActivityEmail() {
         return userStore.getUserByUid(identity)
       })
       .filter((user, index, list) => {
-        if (!user?.email) return false
-        return (
-          index ===
-          list.findIndex((candidate) => candidate?.email === user.email)
-        )
+        if (!user?.uid) return false
+        return index === list.findIndex((candidate) => candidate?.uid === user.uid)
       })
       .map((user) => ({
         uid: user.uid || '',
         name: user.name || '',
-        email: user.email || '',
         mobile: user.mobile || ''
       }))
 
@@ -150,7 +152,6 @@ export function useSharedActivityEmail() {
       },
       actor: {
         name: actor?.name || '',
-        email: actor?.email || '',
         uid: actorId || '',
         mobile: actor?.mobile || ''
       },

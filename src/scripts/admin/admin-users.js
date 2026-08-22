@@ -17,26 +17,32 @@ export function AdminUsers() {
   const { t } = useI18n()
   const rawUsers = ref([])
   const adminFlags = ref({})
+  const userPrivate = ref({})
   const userTabConfigs = ref({})
   const usersLoaded = ref(false)
   const adminFlagsLoaded = ref(false)
+  const userPrivateLoaded = ref(false)
   const userTabConfigsLoaded = ref(false)
   const loading = computed(
     () =>
       !usersLoaded.value ||
       !adminFlagsLoaded.value ||
+      !userPrivateLoaded.value ||
       !userTabConfigsLoaded.value
   )
   const saving = ref(false)
 
   // Merges each users/{uid} row with its isAdmin/billedUser/bugResolver from
-  // user-admin-flags/{uid}, so the rest of this composable (and AdminUsers.vue)
-  // can keep treating "users" as one flat row per user.
+  // user-admin-flags/{uid} and its email from user-private/{uid} (both split
+  // off users/{uid} because that doc is readable by any authenticated user),
+  // so the rest of this composable (and AdminUsers.vue) can keep treating
+  // "users" as one flat row per user.
   const users = computed(() =>
     rawUsers.value.map((u) => ({
       ...DEFAULT_ADMIN_FLAGS,
       ...u,
-      ...(adminFlags.value[u.uid] || {})
+      ...(adminFlags.value[u.uid] || {}),
+      email: userPrivate.value[u.uid]?.email || ''
     }))
   )
 
@@ -66,6 +72,21 @@ export function AdminUsers() {
     }
   )
 
+  const unsubscribeUserPrivate = onSnapshot(
+    collection(database, DB_NODES.USER_PRIVATE),
+    (snap) => {
+      userPrivate.value = snap.docs.reduce((acc, entry) => {
+        acc[entry.id] = entry.data()
+        return acc
+      }, {})
+      userPrivateLoaded.value = true
+    },
+    () => {
+      userPrivate.value = {}
+      userPrivateLoaded.value = true
+    }
+  )
+
   const unsubscribeUserTabConfigs = onSnapshot(
     collection(database, DB_NODES.USER_TAB_CONFIGS),
     (snap) => {
@@ -84,6 +105,7 @@ export function AdminUsers() {
   onUnmounted(() => {
     unsubscribeUsers()
     unsubscribeAdminFlags()
+    unsubscribeUserPrivate()
     unsubscribeUserTabConfigs()
   })
 

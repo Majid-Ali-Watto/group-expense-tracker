@@ -201,11 +201,13 @@ export function useApprovalRequests({
         itemId
       })
 
-      await updateData(
-        itemPath,
-        () => ({ [`${request.type}Request`]: deleteField() }),
-        ''
-      )
+      // No separate "clear the request field" write here (deliberately — see
+      // Firestore rules): the delete path removes the whole doc below, and the
+      // update path's buildUpdatedItem() already strips deleteRequest/updateRequest
+      // from the object it returns, so the request's approvals stay intact on
+      // the document right up until the single write/delete that acts on them.
+      // That's what lets security rules validate "was this fully approved?" at
+      // the moment it matters, instead of after the evidence was already erased.
 
       const changesSummary =
         request.type === 'update' ? summarizeChanges(request.changes) : ''

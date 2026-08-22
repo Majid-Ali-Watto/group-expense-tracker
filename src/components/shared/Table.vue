@@ -621,15 +621,17 @@
     destroy-on-close
   >
     <ol class="list-decimal pl-4 space-y-2 text-black dark:text-gray-300">
-      <li
-        v-for="(item, idx) in showMoreItems"
-        :key="idx"
-        v-html="
-          typeof item === 'object'
-            ? `<a href='${item.href}' target='_blank' rel='noopener' class='text-blue-600 dark:text-blue-400 hover:underline'>${item.label}</a>`
-            : item
-        "
-      ></li>
+      <li v-for="(item, idx) in showMoreItems" :key="idx">
+        <a
+          v-if="typeof item === 'object' && /^https?:\/\//.test(item.href)"
+          :href="item.href"
+          target="_blank"
+          rel="noopener"
+          class="text-blue-600 dark:text-blue-400 hover:underline"
+          >{{ item.label }}</a
+        >
+        <template v-else>{{ item }}</template>
+      </li>
     </ol>
   </el-dialog>
 

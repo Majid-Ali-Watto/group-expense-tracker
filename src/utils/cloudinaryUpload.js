@@ -42,6 +42,10 @@ export async function uploadToCloudinary(
   formData.append('file', file)
   formData.append('api_key', signed.apiKey)
   formData.append('timestamp', String(signed.timestamp))
+  // Must match exactly what the server signed, or Cloudinary rejects the
+  // signature — this is what makes the format restriction actually enforced
+  // server-side rather than just a client-side convention.
+  formData.append('allowed_formats', signed.allowedFormats)
   formData.append('signature', signed.signature)
 
   const res = await fetch(

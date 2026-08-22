@@ -213,7 +213,6 @@ export const Login = () => {
     sessionStorage.setItem('_session', encryptedSession)
     authStore.setActiveUserUid(payload.uid)
     authStore.setSessionToken(encryptedStore)
-    authStore.setActivePassword(payload.password)
     activateUserGroup(payload.uid)
     loadAppConfig() // fire-and-forget: load remote config flags after login
     trackAnalyticsEvent('login', { method: 'password' })
@@ -437,12 +436,13 @@ export const Login = () => {
       // Save user data to Firestore. isAdmin/billedUser/bugResolver are
       // intentionally NOT included here — they live in the admin-only
       // user-admin-flags/{uid} doc (see firestore.rules), and default to
-      // false there when absent.
+      // false there when absent. email is likewise kept off this doc — it
+      // lives in the self/admin-only user-private/{uid} doc instead, since
+      // users/{uid} is readable by any authenticated user.
       const userData = {
         uid: userCredential.user.uid,
         name: normalizedName,
         mobile: mobileValue,
-        email: emailValue,
         emailVerified: false, // Will be set to true on first successful login
         blocked: false
       }
@@ -450,6 +450,11 @@ export const Login = () => {
       await setData(
         `${DB_NODES.USERS}/${userCredential.user.uid}`,
         userData,
+        ''
+      )
+      await setData(
+        `${DB_NODES.USER_PRIVATE}/${userCredential.user.uid}`,
+        { email: emailValue },
         ''
       )
       trackAnalyticsEvent('sign_up', { method: 'password' })
@@ -797,16 +802,19 @@ export const Login = () => {
 
       // isAdmin/billedUser/bugResolver intentionally omitted — they live in
       // the admin-only user-admin-flags/{uid} doc and default to false there.
+      // email is likewise omitted — it lives in the self/admin-only
+      // user-private/{uid} doc instead, since users/{uid} is readable by any
+      // authenticated user.
       const userData = {
         uid,
         name,
         mobile,
-        email,
         emailVerified: true,
         blocked: false
       }
 
       await setDoc(doc(database, DB_NODES.USERS, uid), userData)
+      await setDoc(doc(database, DB_NODES.USER_PRIVATE, uid), { email })
       trackAnalyticsEvent('sign_up', { method: 'google' })
 
       googleMobileDialogVisible.value = false

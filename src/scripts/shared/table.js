@@ -1,6 +1,7 @@
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   computed,
+  h,
   inject,
   nextTick,
   onMounted,
@@ -352,20 +353,20 @@ export const Table = (props) => {
       : t('table.notAvailable')
     const when = row?.whenAdded || t('table.notAvailable')
 
+    // Built as a VNode (not an HTML string + dangerouslyUseHTMLString) so
+    // addedBy/when — user-controlled display name, ultimately — render as
+    // plain text and can never be interpreted as markup.
     ElMessage({
       type: 'info',
       duration: 5000,
       showClose: true,
       customClass: 'table-toast',
-      dangerouslyUseHTMLString: true,
-      message: `
-        <div class="table-toast__content">
-          <div class="table-toast__label">${t('table.addedBy')}</div>
-          <div class="table-toast__value">${addedBy}</div>
-          <div class="table-toast__label">${t('common.date')}</div>
-          <div class="table-toast__value">${when}</div>
-        </div>
-      `
+      message: h('div', { class: 'table-toast__content' }, [
+        h('div', { class: 'table-toast__label' }, t('table.addedBy')),
+        h('div', { class: 'table-toast__value' }, addedBy),
+        h('div', { class: 'table-toast__label' }, t('common.date')),
+        h('div', { class: 'table-toast__value' }, when)
+      ])
     })
   }
 

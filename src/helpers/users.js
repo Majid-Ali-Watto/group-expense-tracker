@@ -12,6 +12,7 @@ import {
 import { DB_NODES } from '@/constants'
 import { getIdentity, maskMobile } from '@/utils'
 import { findUserAdminFlagsByUid } from './user-admin-flags'
+import { findUserPrivateByUid, syncUserPrivateEmailFromAuth } from './user-private'
 // Check if current user is a member of the group
 
 function hasApproval(approvals, identity) {
@@ -225,12 +226,9 @@ async function syncFirestoreUserFromAuth(user, firebaseUser) {
   const nextEmailVerified = firebaseUser.emailVerified === true
   const updates = {}
 
-  if (
-    normalizedAuthEmail &&
-    user.email?.trim()?.toLowerCase() !== normalizedAuthEmail
-  ) {
-    updates.email = normalizedAuthEmail
-  }
+  // email lives in user-private/{uid} now, not on users/{uid} — sync it
+  // there directly instead of folding it into the `updates` object below.
+  await syncUserPrivateEmailFromAuth(user.uid, normalizedAuthEmail)
 
   if (user.emailVerified !== nextEmailVerified) {
     updates.emailVerified = nextEmailVerified
@@ -262,11 +260,13 @@ export async function resolveUserFromAuth(firebaseUser) {
   if (!user) return null
 
   const synced = await syncFirestoreUserFromAuth(user, firebaseUser)
-  // isAdmin/billedUser/bugResolver live in user-admin-flags/{uid}, not on the
-  // users/{uid} doc itself (see firestore.rules) — merge them in here so every
-  // caller of resolveUserFromAuth gets the real values with no further lookup.
+  // isAdmin/billedUser/bugResolver live in user-admin-flags/{uid}, and email
+  // lives in user-private/{uid} — neither is on the users/{uid} doc itself
+  // (see firestore.rules) — merge them in here so every caller of
+  // resolveUserFromAuth gets the real values with no further lookup.
   const adminFlags = await findUserAdminFlagsByUid(synced.uid)
-  return { ...synced, ...adminFlags }
+  const userPrivate = await findUserPrivateByUid(synced.uid)
+  return { ...synced, ...adminFlags, ...userPrivate }
 }
 
 export async function findUserByMobile(mobile) {
