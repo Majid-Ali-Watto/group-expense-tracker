@@ -1,5 +1,6 @@
 export const SECTION_NAMES = [
   'start',
+  'new-features',
   'groups',
   'expenses',
   'shared-loans',
@@ -16,7 +17,7 @@ export const SECTION_NAMES = [
 
 export const HELP_INTRO = {
   en: 'Kharchafy helps you track, split, and settle shared expenses and loans with your friends and groups. Here is everything you can do:',
-  ur: 'خرچے فائی آپ کو دوستوں اور گروپس کے ساتھ مشترکہ اخراجات اور قرضے ٹریک کرنے، تقسیم کرنے، اور طے کرنے میں مدد دیتا ہے۔ یہاں وہ سب کچھ ہے جو آپ کر سکتے ہیں:'
+  ur: 'خرچے فائی دوستوں، گھر والوں، اور گروپس کے ساتھ خرچ، قرضے، بل تقسیم، اور سیٹلمنٹ کا حساب آسان رکھتا ہے۔ یہاں دیکھیں آپ ایپ میں کیا کیا کر سکتے ہیں:'
 }
 
 export const HELP_SECTIONS = {
@@ -37,12 +38,23 @@ export const HELP_SECTIONS = {
         },
         {
           term: 'Login',
-          description: 'Use your email and password to sign in.'
+          description:
+            'Use your email and password, or continue with Google if your account uses Google sign-in.'
+        },
+        {
+          term: 'Google Sign-in',
+          description:
+            'New Google users complete mobile number once. Existing users keep their saved account details.'
+        },
+        {
+          term: 'Choose Your Tabs',
+          description:
+            'After account setup, select only the tabs you want: shared features, personal features, and optional email notifications.'
         },
         {
           term: 'Remember Me',
           description:
-            'Optionally keep your email pre-filled and use longer Firebase auth persistence on this device.'
+            'Optionally keep your email pre-filled and stay signed in longer on this device.'
         },
         {
           term: 'Forgot Password',
@@ -53,6 +65,52 @@ export const HELP_SECTIONS = {
           term: 'Session Timeout',
           description:
             'Logged-in sessions auto-logout after inactivity and show a message explaining what happened.'
+        }
+      ]
+    },
+    {
+      name: 'new-features',
+      title: 'New & Useful Features',
+      items: [
+        {
+          term: 'Configurable Tabs',
+          description:
+            'Turn shared expenses, shared loans, personal expenses, personal loans, users, and email notifications on or off based on what you actually use.'
+        },
+        {
+          term: 'Approval Workflow',
+          description:
+            'Group-sensitive changes such as member changes, expense edits/deletes, loan changes, and settlements wait for participant approval before they update records.'
+        },
+        {
+          term: 'Complete Approved Requests',
+          description:
+            'When every required participant approves, the requester can finish the request and the approved change is applied.'
+        },
+        {
+          term: 'Refresh & Shared Links',
+          description:
+            'Shared expense and loan links remember the selected group, so refreshing or sharing a link returns to the same screen after the app reloads.'
+        },
+        {
+          term: 'Receipts & Attachments',
+          description:
+            'Attach receipts to supported expense and loan records, then preview or include them in detailed reports where available.'
+        },
+        {
+          term: 'Duplicate Records',
+          description:
+            'Use Duplicate on personal expenses to quickly copy a similar transaction and adjust only the fields that changed.'
+        },
+        {
+          term: 'Detailed Reports',
+          description:
+            'PDF and Excel exports include useful summaries plus detailed rows for personal expenses, shared expenses, shared loans, and personal loans.'
+        },
+        {
+          term: 'Share Links',
+          description:
+            'Use the share action on supported pages to send the current page to another participant.'
         }
       ]
     },
@@ -84,6 +142,11 @@ export const HELP_SECTIONS = {
           term: 'Pending Invitations',
           description:
             'If someone added you to a group, you will see an invitation to accept or decline.'
+        },
+        {
+          term: 'Shared Groups',
+          description:
+            'Use Shared Groups to review groups you belong to and jump back into the right shared expense or loan flow.'
         },
         {
           term: 'Edit / Delete Group',
@@ -127,6 +190,11 @@ export const HELP_SECTIONS = {
           description: 'Upload a photo of the receipt (JPG, PNG, up to 1 MB).'
         },
         {
+          term: 'Duplicate / Reuse Details',
+          description:
+            'When available, duplicate similar records to avoid retyping payer, split, category, and note details.'
+        },
+        {
           term: 'Edit / Delete',
           description:
             'Requests an edit or delete that all group members must approve before it takes effect.'
@@ -139,7 +207,7 @@ export const HELP_SECTIONS = {
         {
           term: 'Expense Summary',
           description:
-            'Expandable accordion showing totals, who paid what, and visual charts.'
+            'Expandable accordion showing totals, who paid what, and visual charts. It can calculate in the background so the main page remains usable.'
         },
         {
           term: 'Settlement',
@@ -148,7 +216,8 @@ export const HELP_SECTIONS = {
         },
         {
           term: 'Download',
-          description: 'Export to PDF or Excel from any expense list.'
+          description:
+            'Export to PDF or Excel from any expense list. Reports include summaries, detailed records, dates, people, notes, and receipts where available.'
         }
       ]
     },
@@ -187,7 +256,8 @@ export const HELP_SECTIONS = {
         },
         {
           term: 'Download',
-          description: 'Export loan records to PDF or Excel.'
+          description:
+            'Export loan records to PDF or Excel with loan summary, who-pays-whom details, participants, dates, and notes.'
         },
         {
           term: 'Two-person flow',
@@ -209,6 +279,11 @@ export const HELP_SECTIONS = {
           term: 'Add Loan',
           description:
             'Enter giver name and mobile, receiver name and mobile, amount, date, and optional note.'
+        },
+        {
+          term: 'Categories & Notes',
+          description:
+            'Classify personal loans by category and add descriptions so the report stays understandable later.'
         },
         {
           term: 'Select from Users',
@@ -236,7 +311,11 @@ export const HELP_SECTIONS = {
           term: 'Who Pays Whom',
           description: 'Simplified settlement table for all personal loans.'
         },
-        { term: 'Download', description: 'Export to PDF or Excel.' }
+        {
+          term: 'Download',
+          description:
+            'Export to PDF or Excel with a loan summary, who-pays-whom table, full loan records, participant names, masked mobiles, dates, and descriptions.'
+        }
       ]
     },
     {
@@ -262,6 +341,11 @@ export const HELP_SECTIONS = {
           term: 'Finalize',
           description:
             'Once all members approve, the group admin can finalize the settlement. Payments are recorded automatically.'
+        },
+        {
+          term: 'Pending Status',
+          description:
+            'Pending banners and bell notifications stay visible until the request is completed or rejected, so everyone can see what still needs action.'
         }
       ]
     },
@@ -316,6 +400,11 @@ export const HELP_SECTIONS = {
         {
           term: 'Download PDF',
           description: 'Save the full summary including charts as a PDF.'
+        },
+        {
+          term: 'Background Calculation',
+          description:
+            'The summary can calculate without blocking your current page, then opens the result when it is ready.'
         }
       ]
     },
@@ -334,6 +423,16 @@ export const HELP_SECTIONS = {
         {
           term: 'Add Personal Expenses',
           description: 'Record your own expenses for that month.'
+        },
+        {
+          term: 'Categories, Location, Recipient',
+          description:
+            'Track category, date, description, location, and recipient so your personal expense report is easier to audit.'
+        },
+        {
+          term: 'Duplicate Expense',
+          description:
+            'Duplicate a personal expense when you repeat a similar transaction and only need to change the amount, date, or note.'
         },
         {
           term: 'Balance',
@@ -358,6 +457,11 @@ export const HELP_SECTIONS = {
           term: 'Types of notifications',
           description:
             'Pending expense edit/delete approvals, loan approvals, group member requests, and settlement requests.'
+        },
+        {
+          term: 'Approval Progress',
+          description:
+            'Approval notifications show who has approved and keep the request visible until it is completed or dismissed.'
         },
         {
           term: 'Click to navigate',
@@ -403,7 +507,7 @@ export const HELP_SECTIONS = {
         {
           term: 'Download PDF',
           description:
-            'Captures the full page (including summary cards and charts) as a formatted PDF with the Kharchafy branding and page numbers.'
+            'Creates a formatted report with Kharchafy branding, summary sections, detailed records, readable dates, participant names, and page numbers.'
         },
         {
           term: 'Download Excel',
@@ -413,7 +517,12 @@ export const HELP_SECTIONS = {
         {
           term: 'Available on',
           description:
-            'Shared Expenses list, Shared Loans list, Personal Loans list, and the Expenses Summary dialog.'
+            'Shared Expenses list, Shared Loans list, Personal Expenses list, Personal Loans list, and the Expenses Summary dialog.'
+        },
+        {
+          term: 'Report Detail',
+          description:
+            'Personal expense and personal loan PDFs include summary tables plus complete record details such as amount, category, date, description, people, and receipts when present.'
         },
         {
           term: 'Report month',
@@ -445,6 +554,11 @@ export const HELP_SECTIONS = {
           term: 'Help Access',
           description:
             'Guests can read the public help page at `/help`, and logged-in users can also open the help dialog from the header.'
+        },
+        {
+          term: 'Language',
+          description:
+            'The app supports English and Urdu and keeps your selected language while you move around the app.'
         }
       ]
     }
@@ -452,37 +566,93 @@ export const HELP_SECTIONS = {
   ur: [
     {
       name: 'start',
-      title: 'ابتدائیات',
+      title: 'شروع کیسے کریں',
       items: [
         {
           term: 'رجسٹریشن',
           description:
-            'اپنے نام، موبائل نمبر، ای میل، اور پاس ورڈ کے ساتھ سائن اپ کریں۔'
+            'اپنا نام، موبائل نمبر، ای میل، اور پاس ورڈ دے کر اکاؤنٹ بنائیں۔'
         },
         {
           term: 'ای میل کی تصدیق',
           description:
-            'تصدیقی لنک کے لیے اپنا ان باکس چیک کریں۔ لاگ ان کرنے سے پہلے تصدیق ضروری ہے۔'
+            'اپنے ان باکس میں تصدیقی لنک چیک کریں۔ لاگ ان سے پہلے ای میل کی تصدیق ضروری ہے۔'
         },
         {
           term: 'لاگ ان',
           description:
-            'سائن ان کرنے کے لیے اپنا ای میل اور پاس ورڈ استعمال کریں۔'
+            'اپنی ای میل اور پاس ورڈ سے لاگ ان کریں، یا Google والا اکاؤنٹ ہے تو Google سے جاری رکھیں۔'
+        },
+        {
+          term: 'Google سائن اِن',
+          description:
+            'نئے Google یوزرز موبائل نمبر صرف ایک بار دیتے ہیں۔ پرانے یوزرز کی محفوظ معلومات ویسی ہی رہتی ہیں۔'
+        },
+        {
+          term: 'اپنے ٹیبز منتخب کریں',
+          description:
+            'سیٹ اپ کے بعد صرف وہ ٹیبز آن رکھیں جو آپ واقعی استعمال کرتے ہیں، جیسے گروپ خرچ، ذاتی خرچ، قرضے، یوزرز، یا ای میل نوٹیفکیشن۔'
         },
         {
           term: 'مجھے یاد رکھیں',
           description:
-            'اختیاری طور پر اپنا ای میل پہلے سے بھرا رکھیں اور اس ڈیوائس پر طویل تر Firebase تصدیقی مدت استعمال کریں۔'
+            'چاہیں تو اس ڈیوائس پر ای میل پہلے سے بھری رہے گی اور آپ زیادہ دیر تک لاگ اِن رہ سکیں گے۔'
         },
         {
           term: 'پاس ورڈ بھول گئے',
           description:
-            'ری سیٹ ای میل حاصل کرنے کے لیے لاگ ان اسکرین پر "پاس ورڈ بھول گئے" لنک استعمال کریں۔'
+            'پاس ورڈ ری سیٹ کرنے کے لیے لاگ ان اسکرین پر "پاس ورڈ بھول گئے" لنک استعمال کریں۔'
         },
         {
           term: 'سیشن ٹائم آؤٹ',
           description:
-            'غیر فعالیت کے بعد لاگ ان سیشنز خودکار طور پر لاگ آؤٹ ہو جاتے ہیں اور وضاحتی پیغام دکھاتے ہیں۔'
+            'کافی دیر ایپ استعمال نہ کریں تو سیشن خود لاگ آؤٹ ہو جاتا ہے اور وجہ کا پیغام دکھاتا ہے۔'
+        }
+      ]
+    },
+    {
+      name: 'new-features',
+      title: 'نئے اور کام کے فیچرز',
+      items: [
+        {
+          term: 'اپنی مرضی کے ٹیبز',
+          description:
+            'گروپ خرچ، مشترکہ قرضے، ذاتی خرچ، ذاتی قرضے، یوزرز، اور ای میل نوٹیفکیشن اپنی ضرورت کے مطابق آن یا آف کریں۔'
+        },
+        {
+          term: 'منظوری والا فلو',
+          description:
+            'ممبر بدلنا، خرچ ایڈٹ یا ڈیلیٹ کرنا، قرض بدلنا، یا سیٹلمنٹ کرنا پہلے متعلقہ لوگوں کی منظوری لیتا ہے، پھر حساب بدلتا ہے۔'
+        },
+        {
+          term: 'منظور شدہ درخواست مکمل کریں',
+          description:
+            'جب سب ضروری لوگ منظوری دے دیں تو درخواست بنانے والا اسے مکمل کر سکتا ہے، پھر تبدیلی لاگو ہو جاتی ہے۔'
+        },
+        {
+          term: 'ریفریش اور شیئر لنکس',
+          description:
+            'گروپ خرچ اور قرض کے لنکس منتخب گروپ یاد رکھتے ہیں، اس لیے ریفریش یا شیئر کیا ہوا لنک ایپ کو دوبارہ اسی اسکرین پر لے آتا ہے۔'
+        },
+        {
+          term: 'رسیدیں اور اٹیچمنٹ',
+          description:
+            'جہاں سہولت ہو وہاں خرچ یا قرض کے ساتھ رسید لگا دیں، پھر اسے دیکھیں یا رپورٹ میں شامل رکھیں۔'
+        },
+        {
+          term: 'ریکارڈ کاپی کریں',
+          description:
+            'ذاتی خرچ میں ڈپلیکیٹ استعمال کر کے ملتا جلتا خرچ کاپی کریں اور صرف بدلی ہوئی چیزیں درست کریں۔'
+        },
+        {
+          term: 'تفصیلی رپورٹس',
+          description:
+            'PDF اور Excel رپورٹس میں ذاتی خرچ، گروپ خرچ، مشترکہ قرضے، اور ذاتی قرضوں کا خلاصہ بھی آتا ہے اور مکمل ریکارڈ بھی۔'
+        },
+        {
+          term: 'لنکس شیئر کریں',
+          description:
+            'جہاں شیئر کا آپشن ہو وہاں موجودہ صفحے کا لنک دوسرے شریک کو بھیج سکتے ہیں۔'
         }
       ]
     },
@@ -493,94 +663,104 @@ export const HELP_SECTIONS = {
         {
           term: 'گروپ بنائیں',
           description:
-            'گروپس ٹیب پر جائیں، "گروپ بنائیں" پر کلک کریں، اسے نام دیں، اور کم از کم ایک اور رکن شامل کریں۔'
+            'گروپس ٹیب پر جائیں، "گروپ بنائیں" پر کلک کریں، نام دیں، اور کم از کم ایک ممبر شامل کریں۔'
         },
         {
           term: 'فعال گروپ منتخب کریں',
           description:
-            'کسی بھی گروپ کو فعال بنانے کے لیے "منتخب کریں" پر کلک کریں۔ مشترکہ اخراجات اور قرضے اسی گروپ کو استعمال کریں گے۔'
+            'جس گروپ پر کام کرنا ہو اس پر "منتخب کریں" دبائیں۔ گروپ خرچ اور قرضے اسی گروپ کے حساب سے چلیں گے۔'
         },
         {
-          term: 'اراکین شامل کریں',
+          term: 'ممبرز شامل کریں',
           description:
-            'نام یا موبائل کے ذریعے رجسٹرڈ صارفین تلاش کریں اور گروپ میں شمولیت کی درخواست بھیجیں۔ تمام موجودہ اراکین کی منظوری ضروری ہے۔'
+            'نام یا موبائل سے رجسٹرڈ یوزرز تلاش کریں اور گروپ میں شامل ہونے کی درخواست بھیجیں۔ موجودہ ممبرز کی منظوری ضروری ہے۔'
         },
         {
-          term: 'اراکین ہٹائیں',
+          term: 'ممبرز ہٹائیں',
           description:
-            'کوئی بھی رکن اخراج کی درخواست دے سکتا ہے؛ باقی تمام اراکین کی منظوری ضروری ہے۔'
+            'کوئی بھی ممبر ہٹانے کی درخواست دے سکتا ہے؛ باقی ممبرز کی منظوری چاہیے ہوگی۔'
         },
         {
-          term: 'زیرِ التوا دعوت نامے',
+          term: 'زیر التوا دعوتیں',
           description:
-            'اگر کسی نے آپ کو گروپ میں شامل کیا ہے تو آپ کو قبول یا مسترد کرنے کے لیے ایک دعوت نامہ نظر آئے گا۔'
+            'اگر کسی نے آپ کو گروپ میں شامل کیا ہے تو آپ کو قبول یا مسترد کرنے کی دعوت نظر آئے گی۔'
         },
         {
-          term: 'گروپ میں ترمیم / حذف',
+          term: 'مشترکہ گروپس',
           description:
-            'صرف گروپ کا مالک گروپ کا نام تبدیل یا اسے حذف کر سکتا ہے۔ حذف کرنے کے لیے تمام اراکین کی منظوری درکار ہے۔'
+            'شیئرڈ گروپس میں اپنے تمام گروپس دیکھیں اور فوراً صحیح خرچ یا قرض والے صفحے پر جائیں۔'
+        },
+        {
+          term: 'گروپ ایڈٹ / ڈیلیٹ کریں',
+          description:
+            'صرف گروپ مالک نام بدل سکتا ہے یا گروپ ڈیلیٹ کر سکتا ہے۔ ڈیلیٹ کرنے کے لیے سب ممبرز کی منظوری چاہیے۔'
         },
         {
           term: 'فلٹر اور ترتیب',
           description:
-            'گروپس کو A–Z یا Z–A ترتیب دیں۔ کسی مخصوص رکن کے حساب سے گروپس فلٹر کریں۔'
+            'گروپس کو A-Z یا Z-A ترتیب دیں، یا کسی ممبر کے حساب سے فلٹر کریں۔'
         }
       ]
     },
     {
       name: 'expenses',
-      title: 'مشترکہ اخراجات',
+      title: 'گروپ اخراجات',
       items: [
         {
           term: 'خرچ شامل کریں',
           description:
-            '"+" بٹن پر کلک کریں۔ تفصیل، رقم، تاریخ درج کریں، اور منتخب کریں کہ کس نے ادائیگی کی اور کیسے تقسیم ہوگی۔'
+            '"+" بٹن دبائیں۔ تفصیل، رقم، تاریخ لکھیں، پھر منتخب کریں کس نے پیسے دیے اور خرچ کیسے تقسیم ہوگا۔'
         },
         {
-          term: 'واحد ادائیگی کنندہ',
+          term: 'ایک ادائیگی کرنے والا',
           description: 'ایک شخص نے پوری رقم ادا کی۔'
         },
         {
-          term: 'متعدد ادائیگی کنندگان',
-          description: 'ایک سے زیادہ افراد نے مختلف حصے ادا کیے۔'
+          term: 'ایک سے زیادہ ادائیگی کرنے والے',
+          description: 'ایک سے زیادہ لوگوں نے رقم کے مختلف حصے ادا کیے۔'
         },
         {
           term: 'برابر تقسیم',
-          description: 'کل رقم تمام اراکین میں برابر تقسیم کی جاتی ہے۔'
+          description: 'کل رقم سب ممبرز میں برابر تقسیم ہو جاتی ہے۔'
         },
         {
-          term: 'حسبِ ضرورت تقسیم',
-          description: 'ہر رکن پر واجب الادا صحیح رقم مقرر کریں۔'
+          term: 'اپنی مرضی کی تقسیم',
+          description: 'ہر ممبر کے ذمے اصل رقم خود مقرر کریں۔'
         },
         {
-          term: 'رسید منسلک کریں',
+          term: 'رسید لگائیں',
           description:
             'رسید کی تصویر اپ لوڈ کریں (JPG، PNG، زیادہ سے زیادہ 1 MB)۔'
         },
         {
-          term: 'ترمیم / حذف',
+          term: 'تفصیل کاپی کریں',
           description:
-            'ترمیم یا حذف کی درخواست دیتا ہے جسے نافذ ہونے سے پہلے تمام گروپ اراکین کی منظوری درکار ہوتی ہے۔'
+            'جہاں آپشن موجود ہو، ملتا جلتا ریکارڈ ڈپلیکیٹ کریں تاکہ ادائیگی کرنے والا، تقسیم، کیٹیگری، اور نوٹ دوبارہ لکھنا نہ پڑے۔'
+        },
+        {
+          term: 'ایڈٹ / ڈیلیٹ',
+          description:
+            'ایڈٹ یا ڈیلیٹ کی درخواست بنتی ہے۔ تبدیلی لاگو ہونے سے پہلے گروپ ممبرز کی منظوری چاہیے ہوتی ہے۔'
         },
         {
           term: 'فلٹرز',
           description:
-            'فہرست کو مہینے، ادائیگی کنندہ، ادائیگی موڈ (واحد/متعدد)، یا تقسیم موڈ (برابر/حسبِ ضرورت) کے حساب سے فلٹر کریں۔'
+            'فہرست کو مہینے، ادائیگی کرنے والے، ادائیگی کے طریقے، یا تقسیم کے طریقے کے حساب سے فلٹر کریں۔'
         },
         {
           term: 'اخراجات کا خلاصہ',
           description:
-            'پھیلنے والا حصہ جو کل رقم، کس نے کیا ادا کیا، اور بصری چارٹس دکھاتا ہے۔'
+            'یہ حصہ کل رقم، کس نے کیا ادا کیا، اور چارٹس دکھاتا ہے۔ حساب پس منظر میں بھی چل سکتا ہے تاکہ مرکزی صفحہ قابل استعمال رہے۔'
         },
         {
-          term: 'تصفیہ',
+          term: 'سیٹلمنٹ',
           description:
-            'دکھاتا ہے کہ موجودہ اخراجات کے تصفیے کے لیے کس نے کسے ادائیگی کرنی ہے۔ نیچے تصفیہ سیکشن دیکھیں۔'
+            'دکھاتا ہے کہ حساب برابر کرنے کے لیے کس نے کس کو کتنے پیسے دینے ہیں۔ نیچے سیٹلمنٹ والا حصہ دیکھیں۔'
         },
         {
           term: 'ڈاؤن لوڈ',
           description:
-            'کسی بھی اخراجات کی فہرست سے PDF یا Excel میں ایکسپورٹ کریں۔'
+            'کسی بھی خرچ کی فہرست سے PDF یا Excel رپورٹ نکالیں۔ رپورٹ میں خلاصہ، مکمل ریکارڈ، تاریخیں، لوگ، نوٹس، اور جہاں موجود ہوں رسیدیں شامل ہوتی ہیں۔'
         }
       ]
     },
@@ -591,41 +771,42 @@ export const HELP_SECTIONS = {
         {
           term: 'قرض شامل کریں',
           description:
-            'گروپ اراکین کے درمیان قرض ریکارڈ کریں: کس نے دیا، کس نے وصول کیا، رقم، اور تاریخ۔'
+            'گروپ ممبرز کے درمیان قرض ریکارڈ کریں: کس نے دیا، کس نے لیا، رقم، اور تاریخ۔'
         },
         {
           term: 'میں؟ چیک باکس',
           description:
-            'اپنی تفصیلات ٹائپ کیے بغیر جلدی سے خود کو دینے والا یا وصول کنندہ منتخب کریں۔'
+            'اپنی تفصیل لکھے بغیر فوراً خود کو دینے والا یا لینے والا منتخب کریں۔'
         },
         {
-          term: 'صارفین سے منتخب کریں',
+          term: 'یوزرز سے منتخب کریں',
           description:
-            'رجسٹرڈ صارفین کی فہرست سے دینے والے یا وصول کنندہ کو خودکار طور پر بھرنے کے لیے "صارفین سے منتخب کریں" ڈراپ ڈاؤن استعمال کریں۔'
+            'رجسٹرڈ یوزرز کی فہرست سے دینے والا یا لینے والا خود بھرنے کے لیے ڈراپ ڈاؤن استعمال کریں۔'
         },
         {
           term: 'قرض کا خلاصہ',
           description:
-            'چارٹس کے ساتھ کل دیا گیا، کل لیا گیا، اور آپ کا خالص بیلنس دیکھیں۔'
+            'چارٹس کے ساتھ کل دیا ہوا، کل لیا ہوا، اور اپنا نیٹ بیلنس دیکھیں۔'
         },
         {
-          term: 'کون کسے ادا کرتا ہے',
+          term: 'کس نے کس کو دینا ہے',
           description:
-            'تمام قرض کے شراکت داروں کے درمیان سادہ تصفیے کو ظاہر کرنے والا جدول۔'
+            'قرض میں شامل لوگوں کے درمیان آسان سیٹلمنٹ جدول دکھاتا ہے۔'
         },
         {
           term: 'فلٹر',
           description:
-            'کسی مخصوص مدت کے قرضے دیکھنے کے لیے مہینے کے حساب سے فلٹر کریں۔'
+            'کسی خاص مہینے کے قرضے دیکھنے کے لیے مہینے کا فلٹر استعمال کریں۔'
         },
         {
           term: 'ڈاؤن لوڈ',
-          description: 'قرض کے ریکارڈز کو PDF یا Excel میں ایکسپورٹ کریں۔'
+          description:
+            'قرض ریکارڈز کو PDF یا Excel میں خلاصے، سیٹلمنٹ جدول، لوگ، تاریخیں، اور نوٹس کے ساتھ ڈاؤن لوڈ کریں۔'
         },
         {
-          term: 'دو فریقی طریقہ کار',
+          term: 'دو لوگوں والا حساب',
           description:
-            'اگر گروپ میں دو سے زیادہ اراکین ہوں تو ایپ ایک انتباہ دکھاتی ہے کیونکہ مشترکہ قرضے دو فریقی گروپس کے لیے بہترین کام کرتے ہیں۔'
+            'اگر گروپ میں دو سے زیادہ ممبرز ہوں تو ایپ تنبیہ دکھاتی ہے، کیونکہ مشترکہ قرضے دو لوگوں والے حساب میں زیادہ صاف رہتے ہیں۔'
         }
       ]
     },
@@ -636,22 +817,27 @@ export const HELP_SECTIONS = {
         {
           term: 'یہ کیا ہے',
           description:
-            'کسی بھی دو افراد کے درمیان، کسی گروپ سے باہر، ون آن ون قرضے ریکارڈ کریں۔'
+            'کسی گروپ سے الگ، دو لوگوں کے درمیان ذاتی قرض ریکارڈ کریں۔'
         },
         {
           term: 'قرض شامل کریں',
           description:
-            'دینے والے کا نام اور موبائل، وصول کنندہ کا نام اور موبائل، رقم، تاریخ، اور اختیاری نوٹ درج کریں۔'
+            'دینے والے کا نام اور موبائل، لینے والے کا نام اور موبائل، رقم، تاریخ، اور اختیاری نوٹ لکھیں۔'
         },
         {
-          term: 'صارفین سے منتخب کریں',
+          term: 'کیٹیگریز اور نوٹس',
           description:
-            'رجسٹرڈ صارف منتخب کرنے کے لیے ڈراپ ڈاؤن استعمال کریں؛ ان کا نام اور چھپا ہوا موبائل خودکار طور پر بھر جاتا ہے۔'
+            'ذاتی قرضوں کو کیٹیگری کے حساب سے رکھیں اور تفصیل لکھ دیں تاکہ بعد میں رپورٹ سمجھنا آسان رہے۔'
+        },
+        {
+          term: 'یوزرز سے منتخب کریں',
+          description:
+            'رجسٹرڈ یوزر منتخب کرنے کے لیے ڈراپ ڈاؤن استعمال کریں؛ نام اور چھپا ہوا موبائل خود بھر جاتا ہے۔'
         },
         {
           term: 'میں؟ چیک باکس',
           description:
-            'دینے والے یا وصول کنندہ کے طور پر اپنی تفصیلات جلدی سے بھریں۔'
+            'دینے والے یا لینے والے کے طور پر اپنی تفصیل فوراً بھر دیں۔'
         },
         {
           term: 'مہینے کے حساب سے فلٹر',
@@ -659,54 +845,62 @@ export const HELP_SECTIONS = {
         },
         {
           term: 'دینے والے کے حساب سے فلٹر',
-          description: 'صرف کسی مخصوص شخص کے قرضے دکھائیں۔'
+          description: 'صرف کسی خاص شخص کے قرضے دکھائیں۔'
         },
         {
           term: 'قرض کا خلاصہ',
           description:
-            'ڈونٹ اور بار چارٹس کے ساتھ آپ کا دیا گیا کل، لیا گیا کل، اور مجموعی بیلنس۔'
+            'ڈونٹ اور بار چارٹس کے ساتھ کل دیا ہوا، کل لیا ہوا، اور مجموعی بیلنس دیکھیں۔'
         },
         {
-          term: 'کون کسے ادا کرتا ہے',
-          description: 'تمام ذاتی قرضوں کے لیے سادہ تصفیہ جدول۔'
+          term: 'کس نے کس کو دینا ہے',
+          description: 'تمام ذاتی قرضوں کے لیے آسان سیٹلمنٹ جدول۔'
         },
-        { term: 'ڈاؤن لوڈ', description: 'PDF یا Excel میں ایکسپورٹ کریں۔' }
+        {
+          term: 'ڈاؤن لوڈ',
+          description:
+            'قرض کا خلاصہ، سیٹلمنٹ جدول، مکمل قرض ریکارڈ، لوگوں کے نام، چھپا ہوا موبائل، تاریخیں، اور تفصیلات کے ساتھ PDF یا Excel رپورٹ نکالیں۔'
+        }
       ]
     },
     {
       name: 'settlement',
-      title: 'تصفیہ',
+      title: 'سیٹلمنٹ',
       items: [
         {
           term: 'یہ کیا ہے',
           description:
-            'اخراجات ریکارڈ ہونے کے بعد، خرچے فائی تمام بیلنس طے کرنے کے لیے کم از کم ادائیگیوں کا حساب لگاتا ہے۔'
+            'خرچے ریکارڈ ہونے کے بعد خرچے فائی حساب لگاتا ہے کہ کم سے کم ادائیگیوں سے سب کا بیلنس کیسے صاف ہوگا۔'
         },
         {
-          term: 'تصفیے کی درخواست',
+          term: 'سیٹلمنٹ درخواست',
           description:
-            'کوئی بھی رکن منتخب مہینے کے لیے تصفیے کی درخواست دے سکتا ہے۔ تمام اراکین کو منظوری کے لیے اطلاع ملتی ہے۔'
+            'کوئی بھی ممبر منتخب مہینے کے لیے سیٹلمنٹ درخواست دے سکتا ہے۔ باقی ممبرز کو منظوری کے لیے نوٹیفکیشن ملتی ہے۔'
         },
         {
           term: 'منظور / مسترد',
-          description:
-            'ہر رکن تصفیے کی درخواست کا جائزہ لیتا ہے اور اسے منظور یا مسترد کرتا ہے۔'
+          description: 'ہر ممبر درخواست دیکھ کر اسے منظور یا مسترد کر سکتا ہے۔'
         },
         {
-          term: 'حتمی شکل دیں',
+          term: 'مکمل کریں',
           description:
-            'جب تمام اراکین منظور کر لیں تو گروپ ایڈمن تصفیے کو حتمی شکل دے سکتا ہے۔ ادائیگیاں خودکار طور پر ریکارڈ ہو جاتی ہیں۔'
+            'جب سب منظوری دے دیں تو گروپ ایڈمن سیٹلمنٹ مکمل کر سکتا ہے۔ ادائیگیاں خود ریکارڈ ہو جاتی ہیں۔'
+        },
+        {
+          term: 'زیر التوا حالت',
+          description:
+            'زیر التوا بینرز اور گھنٹی کی نوٹیفکیشن تب تک نظر آتی ہیں جب تک درخواست مکمل یا مسترد نہ ہو، تاکہ سب کو پتا رہے کیا باقی ہے۔'
         }
       ]
     },
     {
       name: 'users',
-      title: 'صارفین',
+      title: 'یوزرز',
       items: [
         {
-          term: 'صارفین دیکھیں',
+          term: 'یوزرز دیکھیں',
           description:
-            'تمام رجسٹرڈ صارفین دیکھیں۔ رازداری کے لیے موبائل نمبرز چھپائے جاتے ہیں۔'
+            'تمام رجسٹرڈ یوزرز دیکھیں۔ پرائیویسی کے لیے موبائل نمبرز چھپائے جاتے ہیں۔'
         },
         {
           term: 'تلاش',
@@ -714,16 +908,16 @@ export const HELP_SECTIONS = {
         },
         {
           term: 'ترتیب',
-          description: 'صارفین کو حروفِ تہجی کے مطابق A–Z یا Z–A ترتیب دیں۔'
+          description: 'یوزرز کو A-Z یا Z-A ترتیب دیں۔'
         },
         {
           term: 'صرف مشترکہ گروپس',
           description:
-            'صرف ان صارفین کو دکھانے کے لیے فلٹر کریں جو آپ کے ساتھ گروپ میں ہیں۔'
+            'صرف وہ یوزرز دکھانے کے لیے فلٹر کریں جو آپ کے ساتھ کسی گروپ میں ہیں۔'
         },
         {
-          term: 'صارف کے گروپس',
-          description: 'ہر صارف کارڈ دکھاتا ہے کہ وہ کن گروپس میں ہے۔'
+          term: 'یوزر کے گروپس',
+          description: 'ہر یوزر کارڈ دکھاتا ہے کہ وہ کن گروپس میں شامل ہے۔'
         }
       ]
     },
@@ -734,156 +928,184 @@ export const HELP_SECTIONS = {
         {
           term: 'کھولیں',
           description:
-            'اوپر ہیڈر بار میں "اخراجات کا خلاصہ" پر کلک کریں (یا موبائل پر مینو)۔'
+            'اوپر ہیڈر میں "اخراجات کا خلاصہ" پر کلک کریں، یا موبائل پر مینو سے کھولیں۔'
         },
         {
           term: 'یہ کیا دکھاتا ہے',
           description:
-            'آپ کی مکمل مالی تصویر: مشترکہ اخراجات، مشترکہ قرضوں، اور ذاتی قرضوں میں آپ کو کتنا ملنا ہے بمقابلہ کتنا دینا ہے۔'
+            'یہ آپ کا مجموعی حساب دکھاتا ہے: گروپ خرچ، مشترکہ قرضے، اور ذاتی قرضوں میں آپ کو کتنا لینا ہے اور کتنا دینا ہے۔'
         },
         {
-          term: 'خالص پوزیشن',
+          term: 'نیٹ پوزیشن',
           description:
-            'ایک ہی نمبر جو آپ کا مجموعی بیلنس دکھاتا ہے۔ مثبت کا مطلب ہے دوسرے آپ کو ادا کریں گے؛ منفی کا مطلب ہے آپ دوسروں کو ادا کریں گے۔'
+            'ایک نمبر میں مجموعی بیلنس دکھتا ہے۔ مثبت ہو تو لوگوں نے آپ کو دینا ہے، منفی ہو تو آپ نے لوگوں کو دینا ہے۔'
         },
         {
           term: 'چارٹس',
           description:
-            'مجموعی تقسیم کے لیے ڈونٹ چارٹ اور فی زمرہ تفصیل کے لیے بار چارٹ۔'
+            'مجموعی تقسیم کے لیے ڈونٹ چارٹ اور کیٹیگری کے حساب سے تفصیل کے لیے بار چارٹ۔'
         },
         {
           term: 'PDF ڈاؤن لوڈ کریں',
           description: 'چارٹس سمیت مکمل خلاصہ PDF کے طور پر محفوظ کریں۔'
+        },
+        {
+          term: 'پس منظر میں حساب',
+          description:
+            'خلاصہ آپ کا موجودہ صفحہ روکے بغیر تیار ہو سکتا ہے، پھر تیار ہونے پر نتیجہ کھل جاتا ہے۔'
         }
       ]
     },
     {
       name: 'salary',
-      title: 'ماہانہ تنخواہ منیجر',
+      title: 'ماہانہ تنخواہ اور بجٹ',
       items: [
         {
           term: 'یہ کیا ہے',
-          description: 'گروپ اخراجات سے علیحدہ ایک ذاتی مالیاتی ٹول۔'
+          description: 'گروپ خرچ سے الگ آپ کا ذاتی بجٹ ٹول۔'
         },
         {
           term: 'تنخواہ شامل کریں',
-          description: 'کسی بھی مہینے کے لیے اپنی ماہانہ تنخواہ درج کریں۔'
+          description: 'کسی بھی مہینے کے لیے اپنی ماہانہ تنخواہ لکھیں۔'
         },
         {
           term: 'ذاتی اخراجات شامل کریں',
-          description: 'اس مہینے کے لیے اپنے اخراجات ریکارڈ کریں۔'
+          description: 'اس مہینے کے اپنے ذاتی اخراجات ریکارڈ کریں۔'
+        },
+        {
+          term: 'کیٹیگری، جگہ، کس کو دیا',
+          description:
+            'کیٹیگری، تاریخ، تفصیل، جگہ، اور جسے پیسے دیے وہ محفوظ کریں تاکہ رپورٹ بعد میں آسانی سے سمجھ آئے۔'
+        },
+        {
+          term: 'خرچ ڈپلیکیٹ کریں',
+          description:
+            'ملتا جلتا خرچ دوبارہ آئے تو اسے ڈپلیکیٹ کریں اور صرف رقم، تاریخ، یا نوٹ بدل دیں۔'
         },
         {
           term: 'بیلنس',
-          description: 'ہر مہینے اخراجات کے بعد اپنی خالص آمدنی دیکھیں۔'
+          description: 'ہر مہینے خرچ کے بعد اپنی باقی رقم دیکھیں۔'
         },
         {
           term: 'ڈاؤن لوڈ',
-          description: 'اپنی تنخواہ اور اخراجات کے ریکارڈز ایکسپورٹ کریں۔'
+          description: 'اپنی تنخواہ اور اخراجات کا ریکارڈ ڈاؤن لوڈ کریں۔'
         }
       ]
     },
     {
       name: 'notifications',
-      title: 'اطلاعات',
+      title: 'نوٹیفکیشن',
       items: [
         {
           term: 'گھنٹی کا آئیکن',
           description:
-            'اوپر ہیڈر میں گھنٹی زیرِ التوا اقدامات کی تعداد دکھاتی ہے جن پر آپ کی توجہ درکار ہے۔'
+            'اوپر ہیڈر میں گھنٹی کا آئیکن بتاتا ہے کہ کتنے زیر التوا کام آپ کی توجہ چاہتے ہیں۔'
         },
         {
-          term: 'اطلاعات کی اقسام',
+          term: 'نوٹیفکیشن کی اقسام',
           description:
-            'زیرِ التوا خرچ ترمیم/حذف کی منظوریاں، قرض کی منظوریاں، گروپ رکنیت کی درخواستیں، اور تصفیے کی درخواستیں۔'
+            'زیر التوا خرچ ایڈٹ/ڈیلیٹ منظوری، قرض کی منظوری، گروپ ممبرشپ درخواستیں، اور سیٹلمنٹ درخواستیں۔'
         },
         {
-          term: 'جانے کے لیے کلک کریں',
+          term: 'منظوری کی پیش رفت',
           description:
-            'متعلقہ سیکشن پر براہِ راست جانے کے لیے کسی بھی اطلاع پر ٹیپ کریں۔'
+            'منظوری کی نوٹیفکیشن بتاتی ہے کس نے منظوری دی ہے، اور درخواست مکمل یا مسترد ہونے تک نظر آتی رہتی ہے۔'
         },
         {
-          term: 'صفحے کے اندر انتباہات',
+          term: 'کھولنے کے لیے ٹیپ کریں',
           description:
-            'کچھ صفحات اوپر زیرِ التوا درخواستیں بھی دکھاتے ہیں تاکہ آپ فوری طور پر منظور یا مسترد کر سکیں۔'
+            'متعلقہ حصے پر سیدھا جانے کے لیے کسی بھی نوٹیفکیشن پر ٹیپ کریں۔'
+        },
+        {
+          term: 'صفحے کے الرٹس',
+          description:
+            'کچھ صفحات اوپر زیر التوا درخواستیں بھی دکھاتے ہیں تاکہ آپ فوراً منظور یا مسترد کر سکیں۔'
         }
       ]
     },
     {
       name: 'charts',
-      title: 'چارٹس اور بصری تصاویر',
+      title: 'چارٹس',
       items: [
         {
           term: 'ڈونٹ چارٹس',
           description:
-            'تناسب دکھاتے ہیں، مثلاً کس نے کتنا حصہ ادا کیا، یا دیا بمقابلہ لیا۔'
+            'تناسب دکھاتے ہیں، جیسے کس نے کتنا حصہ ادا کیا یا کتنا دیا بمقابلہ کتنا لیا۔'
         },
         {
           term: 'بار چارٹس',
           description:
-            'رقوم کا شانہ بشانہ موازنہ کرتے ہیں، مثلاً ہر شخص نے کتنا ادا کیا یا واجب ہے۔'
+            'رقم کا ساتھ ساتھ موازنہ دکھاتے ہیں، جیسے ہر بندے نے کتنا ادا کیا یا کتنا دینا ہے۔'
         },
         {
           term: 'کہاں ملیں گے',
           description:
-            'مشترکہ اخراجات کے اخراجات خلاصہ حصے میں، ذاتی اور مشترکہ قرضوں کے قرض خلاصہ حصے میں، اور اخراجات کا خلاصہ ڈائیلاگ میں۔'
+            'گروپ خرچ کے خلاصے، ذاتی/مشترکہ قرض کے خلاصے، اور Expense Summary ڈائیلاگ میں چارٹس ملیں گے۔'
         },
         {
-          term: 'خودکار اپڈیٹ',
-          description:
-            'فلٹرز تبدیل کرنے پر چارٹس خودکار طور پر اپڈیٹ ہو جاتے ہیں۔'
+          term: 'خود اپ ڈیٹ',
+          description: 'فلٹرز بدلتے ہی چارٹس خود اپ ڈیٹ ہو جاتے ہیں۔'
         }
       ]
     },
     {
       name: 'export',
-      title: 'ڈیٹا ایکسپورٹ کرنا',
+      title: 'رپورٹس ڈاؤن لوڈ کرنا',
       items: [
         {
           term: 'PDF ڈاؤن لوڈ کریں',
           description:
-            'پورے صفحے (خلاصہ کارڈز اور چارٹس سمیت) کو خرچے فائی برانڈنگ اور صفحہ نمبروں کے ساتھ فارمیٹڈ PDF کے طور پر محفوظ کرتا ہے۔'
+            'خرچے فائی برانڈنگ، خلاصہ، مکمل ریکارڈ، پڑھنے والی تاریخیں، لوگوں کے نام، اور صفحہ نمبرز کے ساتھ صاف PDF رپورٹ بناتا ہے۔'
         },
         {
           term: 'Excel ڈاؤن لوڈ کریں',
           description:
-            'تمام نظر آنے والی قطاروں کو کسی بھی اسپریڈشیٹ ایپ میں استعمال کے لیے اسپریڈشیٹ (.xlsx) کے طور پر ایکسپورٹ کرتا ہے۔'
+            'اسکرین پر نظر آنے والی قطاروں کو سپریڈشیٹ (.xlsx) کے طور پر ڈاؤن لوڈ کریں، جسے Excel یا کسی سپریڈشیٹ ایپ میں کھولا جا سکتا ہے۔'
         },
         {
-          term: 'دستیاب ہے',
+          term: 'کہاں دستیاب ہے',
           description:
-            'مشترکہ اخراجات کی فہرست، مشترکہ قرضوں کی فہرست، ذاتی قرضوں کی فہرست، اور اخراجات کا خلاصہ ڈائیلاگ میں۔'
+            'گروپ اخراجات، مشترکہ قرضے، ذاتی اخراجات، ذاتی قرضے، اور Expense Summary ڈائیلاگ میں رپورٹس دستیاب ہیں۔'
+        },
+        {
+          term: 'رپورٹ کی تفصیل',
+          description:
+            'ذاتی اخراجات اور ذاتی قرضوں کی PDFs میں خلاصہ جدول اور مکمل تفصیلات آتی ہیں، جیسے رقم، کیٹیگری، تاریخ، تفصیل، لوگ، اور موجود رسیدیں۔'
         },
         {
           term: 'رپورٹ کا مہینہ',
           description:
-            'ڈاؤن لوڈ شدہ فائل کے نام میں آسان فائلنگ کے لیے موجودہ مہینہ شامل ہوتا ہے۔'
+            'ڈاؤن لوڈ فائل کے نام میں موجودہ مہینہ شامل ہوتا ہے تاکہ بعد میں فائل ڈھونڈنا آسان ہو۔'
         }
       ]
     },
     {
       name: 'theme',
-      title: 'تھیم اور ظاہری شکل',
+      title: 'تھیم اور زبان',
       items: [
         {
           term: 'ٹوگل',
           description:
-            'لائٹ اور ڈارک موڈ کے درمیان تبدیل کرنے کے لیے ہیڈر میں سورج/چاند آئیکن پر کلک کریں۔'
+            'لائٹ اور ڈارک موڈ بدلنے کے لیے ہیڈر میں سورج/چاند والا آئیکن دبائیں۔'
         },
         {
-          term: 'برقرار رہتا ہے',
+          term: 'ترجیح یاد رہتی ہے',
           description:
-            'آپ کی تھیم ترجیح محفوظ ہو جاتی ہے اور ہر بار ایپ کھولنے پر خودکار طور پر بحال ہو جاتی ہے۔'
+            'آپ کی تھیم کی ترجیح محفوظ رہتی ہے اور ایپ دوبارہ کھولنے پر خود واپس آ جاتی ہے۔'
         },
         {
           term: 'موبائل',
-          description:
-            'موبائل پر، تھیم ٹوگل اوپر دائیں طرف ہیمبرگر مینو کے اندر ہوتا ہے۔'
+          description: 'موبائل پر تھیم ٹوگل اوپر مینو کے اندر ہوتا ہے۔'
         },
         {
           term: 'مدد تک رسائی',
           description:
-            'مہمان `/help` پر عوامی مدد صفحہ پڑھ سکتے ہیں، اور لاگ ان صارفین ہیڈر سے مدد ڈائیلاگ بھی کھول سکتے ہیں۔'
+            'مہمان یوزرز `/help` پر مدد کا صفحہ پڑھ سکتے ہیں، اور لاگ اِن یوزرز ہیڈر سے مدد ڈائیلاگ بھی کھول سکتے ہیں۔'
+        },
+        {
+          term: 'زبان',
+          description:
+            'ایپ English اور Urdu دونوں سپورٹ کرتی ہے اور آپ کی منتخب زبان یاد رکھتی ہے۔'
         }
       ]
     }

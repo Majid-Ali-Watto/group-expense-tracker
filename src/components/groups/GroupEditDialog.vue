@@ -64,15 +64,15 @@
 </template>
 
 <script setup>
-import { ref, reactive, watch } from 'vue'
+import { computed, ref, reactive, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { groupRules } from '@/assets'
+import { getGroupRules } from '@/assets'
 import {
   GenericInputField,
   GenericDropDown
 } from '@/components/generic-components'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
 const props = defineProps({
   modelValue: { type: Boolean, required: true },
@@ -82,7 +82,7 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'save'])
 
-const rules = groupRules
+const rules = computed(() => getGroupRules(locale.value))
 const formRef = ref(null)
 const localForm = reactive({ name: '', description: '', members: [] })
 

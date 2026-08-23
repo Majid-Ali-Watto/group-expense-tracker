@@ -76,9 +76,21 @@
       <!-- Single RouterView renders everything:
          /login, /register → Login.vue (self-centered)
          /groups etc       → tab content (sits below the tab bar above) -->
-      <div class="flex-1" :class="loggedIn ? 'container mx-auto' : ''">
+      <div class="flex-1" :class="useAppContainer ? 'container mx-auto' : ''">
         <!-- :style="loggedIn ? 'max-width: 980px' : ''" -->
-        <div class="tab-stage">
+        <div v-if="isBootingPrivateRoute" class="private-route-boot">
+          <div
+            class="private-route-boot__loader"
+            role="status"
+            aria-live="polite"
+          >
+            <span class="private-route-boot__spinner" aria-hidden="true"></span>
+            <span>{{
+              locale === 'ur' ? 'دوبارہ لوڈ ہو رہا ہے...' : 'Reloading...'
+            }}</span>
+          </div>
+        </div>
+        <div v-else class="tab-stage">
           <RouterView v-slot="{ Component }">
             <Transition :name="tabTransitionName" mode="out-in">
               <component
@@ -91,7 +103,7 @@
         </div>
       </div>
 
-      <PublicFooter v-if="isPublicPage" />
+      <PublicFooter v-if="showPublicFooter" />
 
       <!-- Expenses Summary Dialog -->
       <NetPositionDialog
@@ -125,7 +137,9 @@ const {
   selectTab,
   updateTabsScrollState,
   tabTransitionName,
-  isPublicPage,
+  showPublicFooter,
+  useAppContainer,
+  isBootingPrivateRoute,
   setLoggedInStatus,
   handleActiveTab,
   isDarkTheme,
@@ -153,6 +167,42 @@ const {
   transform-origin: center center;
   backface-visibility: hidden;
   will-change: transform, opacity, filter;
+}
+
+.private-route-boot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 360px;
+  padding: 112px 10px 32px;
+}
+
+.private-route-boot__loader {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 10px 16px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--card-bg);
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.private-route-boot__spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(34, 197, 94, 0.22);
+  border-top-color: var(--success-700);
+  border-radius: 50%;
+  animation: private-route-boot-spin 0.8s linear infinite;
+}
+
+@keyframes private-route-boot-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .app-tabs {

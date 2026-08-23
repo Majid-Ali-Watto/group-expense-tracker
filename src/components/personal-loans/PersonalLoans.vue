@@ -100,6 +100,77 @@
           </el-collapse-item>
         </el-collapse>
 
+        <div class="pdf-only-summary personal-loans-pdf" style="display: none">
+          <table class="pdf-report-table">
+            <thead>
+              <tr>
+                <th colspan="2">{{ t('personalLoans.loanSummary') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>{{ t('personalLoans.totalLent') }}</td>
+                <td class="amount-positive">
+                  {{ formatAmount(totalLending) }}
+                </td>
+              </tr>
+              <tr>
+                <td>{{ t('personalLoans.totalBorrowed') }}</td>
+                <td class="amount-negative">
+                  {{ formatAmount(totalDebting) }}
+                </td>
+              </tr>
+              <tr>
+                <td>{{ t('personalLoans.overallBalance') }}</td>
+                <td
+                  :class="
+                    netPosition >= 0 ? 'amount-positive' : 'amount-negative'
+                  "
+                >
+                  {{
+                    netPosition >= 0
+                      ? t('sharedLoans.willReceive')
+                      : t('sharedLoans.willPay')
+                  }}
+                  - {{ formatAmount(Math.abs(netPosition)) }}
+                </td>
+              </tr>
+              <tr>
+                <td>{{ t('personalLoans.totalTransactions') }}</td>
+                <td>{{ filteredLoans.length }}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <table class="pdf-report-table">
+            <thead>
+              <tr>
+                <th colspan="3">{{ t('personalLoans.whoPaysWhom') }}</th>
+              </tr>
+              <tr>
+                <th>{{ t('personalLoans.pays') }}</th>
+                <th>{{ t('personalLoans.receives') }}</th>
+                <th>{{ t('common.amount') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-if="pairwiseSettlements.length === 0">
+                <td colspan="3">{{ t('table.noSettlementsPdf') }}</td>
+              </tr>
+              <tr
+                v-for="(settlement, index) in pairwiseSettlements"
+                :key="index"
+              >
+                <td>{{ settlement.from }}</td>
+                <td>{{ settlement.to }}</td>
+                <td class="amount-warning">
+                  {{ formatAmount(settlement.amount) }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
         <!-- ===== LOANS ===== -->
         <h2 class="mt-6">{{ t('personalLoans.loanRecords') }}</h2>
 
@@ -215,5 +286,55 @@ const settlementColumns = computed(() => [
 <style scoped>
 .mt-6 {
   margin-top: 24px;
+}
+
+.personal-loans-pdf {
+  margin-bottom: 18px;
+  font-family: Poppins, sans-serif;
+}
+
+.pdf-report-table {
+  width: 100%;
+  margin-bottom: 14px;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.pdf-report-table th {
+  padding: 8px 12px;
+  border: 1px solid #16a34a;
+  background: #22c55e;
+  color: #ffffff;
+  font-weight: 700;
+  text-align: left;
+  letter-spacing: 0.04em;
+}
+
+.pdf-report-table td {
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  color: #111827;
+  text-align: left;
+  word-break: break-word;
+}
+
+.pdf-report-table tbody tr:nth-child(odd) td {
+  background: #f9fafb;
+}
+
+.amount-positive {
+  color: #16a34a !important;
+  font-weight: 700;
+}
+
+.amount-negative {
+  color: #dc2626 !important;
+  font-weight: 700;
+}
+
+.amount-warning {
+  color: #f97316 !important;
+  font-weight: 700;
 }
 </style>

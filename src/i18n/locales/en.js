@@ -68,79 +68,79 @@ export default {
   footer: {
     brand: 'Kharchafy',
     tagline:
-      'Shared expense tracking, shared loans, and personal budgeting in one place.',
+      'Split bills, track loans, manage budgets, and keep money records clear.',
     publicNavLabel: 'Public pages'
   },
   landing: {
-    eyebrow: 'Shared spending made clearer',
-    heroTitle:
-      'Group expense tracking for trips, roommates, and monthly budgets',
+    eyebrow: 'Split bills, track loans, manage budgets',
+    heroTitle: 'A clearer way to manage shared and personal money',
     heroText:
-      'Kharchafy helps you split bills, track shared loans, store receipts, and manage personal budgets without losing track of who paid, who owes, or what changed.',
+      'Kharchafy helps friends, roommates, families, and travelers split bills, track shared loans, manage personal expenses, save receipts, approve important changes, and download detailed reports.',
     createAccount: 'Create account',
     openApp: 'Open app',
-    useCasesEyebrow: 'Common use cases',
-    exploreEyebrow: 'Explore more',
+    useCasesEyebrow: 'Built for real spending',
+    exploreEyebrow: 'Choose what you need',
     explore: {
       features: {
-        title: 'Features',
+        title: 'All features',
         description:
-          'See shared expense, loan, approval, and export capabilities.'
+          'See group expenses, loans, personal budgets, receipts, approvals, notifications, and reports.'
       },
       groupExpenseTracker: {
         title: 'Group expense tracker',
         description:
-          'Learn how Kharchafy handles roommates, trips, and shared bills.'
+          'Split bills for roommates, trips, family costs, events, and any shared spending.'
       },
       personalBudgetTracker: {
         title: 'Personal budget tracker',
         description:
-          'Review salary, monthly expenses, and personal finance workflows.'
+          'Track salary, daily expenses, personal loans, remaining balance, and monthly reports.'
       },
       faq: {
         title: 'FAQ',
-        description: 'Read practical answers before you create an account.'
+        description:
+          'Read practical answers about accounts, groups, approvals, reports, languages, and privacy.'
       }
     }
   },
   features: {
     eyebrow: 'Feature overview',
-    title: 'Everything Kharchafy can handle in the current app',
+    title: 'Everything you need to split, track, approve, and report expenses',
     intro:
-      'Kharchafy combines shared expense tracking, shared loans, personal budgeting, and approval-driven collaboration in one product.'
+      'Kharchafy brings group expense tracking, shared loans, personal expenses, personal loans, receipts, approvals, notifications, and downloadable reports into one simple finance workspace.'
   },
   groupExpenseTracker: {
     eyebrow: 'Group expense tracker',
-    title: 'Split bills and track shared costs with less confusion',
+    title: 'Split bills and settle shared costs with less confusion',
     intro:
-      'Use Kharchafy to manage roommate costs, trip spending, food runs, household bills, and shared lending without depending on scattered chat messages.',
-    benefitsHeading: 'Why this flow matters',
-    useCasesHeading: 'Typical use cases',
+      'Use Kharchafy to manage roommate costs, trip spending, food orders, household bills, events, shared lending, receipt proof, approvals, and settlements without depending on scattered messages.',
+    benefitsHeading: 'What it helps you do',
+    useCasesHeading: 'Useful for',
     useCases: [
-      'Roommate rent, groceries, and utility tracking',
-      'Trip spending across transport, food, and stays',
-      'Family or event planning with multiple contributors',
-      'Any shared bill splitting workflow that needs visibility'
+      'Roommate rent, groceries, utilities, fuel, and top-ups',
+      'Trip costs across transport, food, tickets, hotel stays, and local payments',
+      'Family spending, event planning, and shared household purchases',
+      'Group loans, settlements, and expense changes that need participant approval'
     ]
   },
   personalBudgetTracker: {
     eyebrow: 'Personal budget tracker',
-    title: 'Keep monthly salary, expenses, and personal loans visible',
+    title: 'Keep salary, daily expenses, personal loans, and reports visible',
     intro:
-      'Kharchafy is not only a shared bill app. It also gives you a practical personal budget tracker for monthly expenses and salary planning.',
+      'Kharchafy is not only a shared bill app. It also gives you a practical personal budget tracker for monthly salary, day-to-day spending, private loans, categories, recipients, and downloadable records.',
     benefitsHeading: 'What you can manage'
   },
   faq: {
     eyebrow: 'Frequently asked questions',
     title: 'Questions people ask before using Kharchafy',
     intro:
-      'These answers explain what the app does, who it is for, and what parts of the product should be public versus private in search.'
+      'Quick user-focused answers about split bills, groups, approvals, receipts, personal budgeting, loans, reports, languages, and privacy.'
   },
   help: {
-    eyebrow: 'Public help page',
-    title: 'How to use Kharchafy',
+    eyebrow: 'Help guide',
+    title: 'Learn how Kharchafy handles your everyday money workflows',
     intro:
-      "This page explains the app's current workflows, including registration, groups, shared expenses, shared loans, personal budgeting, exports, and notifications.",
+      'Use this guide to understand accounts, groups, shared expenses, shared loans, personal expenses, personal loans, approvals, receipts, notifications, Expense Summary, and reports.',
     dialogTitle: 'How to Use Kharchafy',
     needHelp: 'Need help?',
     emailSupportTitle: 'Email support'
@@ -189,7 +189,7 @@ export default {
     googleMobileDialog: {
       title: 'One more step',
       instructions: 'Please enter your mobile number to complete registration.',
-      prioritize: 'Priortize (Easypaisa/Jazzcash), not mandatory',
+      prioritize: 'Prioritize (Easypaisa/Jazzcash), not mandatory',
       placeholder: 'Mobile number (11 digits)',
       cancel: 'Cancel',
       continue: 'Continue'
@@ -268,7 +268,7 @@ export default {
     resendFailed: 'Failed to resend verification email.',
     enterEmailAddress: 'Please enter your email address',
     resetEmailSentBody:
-      "A password reset link has been sent to <strong>{email}</strong>.<br><br>Click the link in your email to reset your password on the secure Firebase page. You'll be redirected back to this page when done.",
+      "A password reset link has been sent to <strong>{email}</strong>.<br><br>Click the link in your email to reset your password on the secure reset page. You'll be redirected back to this page when done.",
     resetEmailSentTitle: 'Reset Email Sent',
     noAccountForEmail: 'No account found with this email address.',
     invalidEmailAddressFormat: 'Invalid email address format.',
@@ -313,7 +313,31 @@ export default {
     emailPattern: 'Please enter a valid email address (e.g., user@example.com)',
     passwordRequired: 'Password is required',
     passwordMin: 'Password must be at least 6 characters',
-    passwordMax: 'Password must not exceed 15 characters'
+    passwordMax: 'Password must not exceed 15 characters',
+    amountRequired: 'Amount is required',
+    amountMin: 'Amount should be greater than zero',
+    payerRequired: 'Payer is required',
+    participantsRequired: 'At least one participant is required',
+    dateRequired: 'Date is required',
+    categoryRequired: 'Category is required',
+    descriptionRequired: 'Description is required',
+    descriptionMinLength: 'Description should be at least 5 characters',
+    loanGiverRequired: 'Loan giver is required',
+    loanGiverMinLength: 'Loan giver should be at least 5 characters',
+    loanReceiverRequired: 'Loan receiver is required',
+    loanReceiverMinLength: 'Loan receiver should be at least 2 characters',
+    giverMobileRequired: 'Giver mobile is required',
+    receiverMobileRequired: 'Receiver mobile is required',
+    loanMobilePattern: 'Mobile must be 11 digits starting with 03',
+    salaryRequired: 'Salary is required',
+    salaryMin: 'Salary should be greater than zero',
+    locationRequired: 'Location is required',
+    locationMinLength: 'Location should be at least 5 characters',
+    recipientRequired: 'Recipient is required',
+    recipientMinLength: 'Recipient should be at least 5 characters',
+    groupNameRequired: 'Group name is required',
+    groupNameMinLength: 'Group name should be at least 5 characters',
+    groupMembersRequired: 'At least one member is required'
   },
   common: {
     me: 'ME?',
@@ -468,6 +492,8 @@ export default {
       'Payers total ({payersTotal}) must equal the transaction amount ({amount}).',
     splitItemError:
       'Please add at least one split item when using Custom split mode.',
+    splitItemsTotalMismatch:
+      'Split items total ({splitTotal}) must equal the transaction amount ({amount}).',
     pairwiseSettlements: 'Pairwise Settlements (Who pays whom)',
     allSettled: '✅ All Settled!',
     allSettledText: "No pending settlements. Everyone's balance is zero.",
@@ -500,7 +526,7 @@ export default {
     allMustApproveFirst:
       'All group members must approve before settlement can be finalized',
     finalizeConfirm:
-      'Are you sure to move expenses to backup and finalize settlement?',
+      'Are you sure you want to move expenses to backup and finalize settlement?',
     finalizeTitle: 'Finalize Settlement',
     ok: 'OK',
     finalizeSuccess:
@@ -689,7 +715,7 @@ export default {
     salaryAdded: 'Salary added successfully!',
     salaryAddFailed: 'Failed to add salary. Please try again.',
     salaryUpdated: 'Salary updated successfully!',
-    salaryUpdateConfirm: 'Are you sure to update Salary. Continue?',
+    salaryUpdateConfirm: 'Are you sure you want to update the salary? Continue?',
     noSalaryToUpdate: 'No existing salary to update for this month.',
     unexpectedError: 'An unexpected error occurred.',
     failedLoadSalaryData: 'Failed to load salary data. Please try again.',
@@ -698,7 +724,9 @@ export default {
     failedLoadExpenses: 'Failed to load expenses. Please try again.',
     expenseAdded: 'Expense added successfully!',
     expenseUpdated: 'Expense updated successfully',
-    expenseDeleted: 'Expense deleted successfully'
+    expenseDeleted: 'Expense deleted successfully',
+    splitItemsTotalMismatch:
+      'Split items total ({splitTotal}) must equal the transaction amount ({amount}).'
   },
   personalLoans: {
     loanSummary: 'Loan Summary',
@@ -1250,6 +1278,7 @@ export default {
     receiptsTitle: 'Receipts',
     editDuplicate: 'Edit / Duplicate',
     addedBy: 'Added By',
+    whenAdded: 'Added At',
     noResultsFound: 'No results found',
     noResultsMatch: 'No rows match "{search}"',
     tryDifferentSearch: 'Try a different search.',
@@ -1263,7 +1292,7 @@ export default {
     downloadExcel: 'Download Excel',
     downloadPdf: 'Download PDF',
     reorderColumnsTitle: 'Reorder Columns',
-    dragToReorderHint: 'Drag rows to reorder columns.',
+    dragToReorderHint: 'Drag items to reorder columns.',
     formNotReady: 'Form is not ready. Please try again.',
     pendingRequestOwn:
       'You have a pending {type} request. Please wait for approval or cancel it from the pending requests section.',
@@ -1383,7 +1412,7 @@ export default {
       ocrTitle: 'OCR / Receipt Extraction',
       allowReceiptUploads: 'Allow receipt uploads',
       enableCloudinary: 'Enable Cloudinary provider',
-      enableFirebaseStorage: 'Enable Firebase Storage provider',
+      enableFirebaseStorage: 'Enable receipt storage provider',
       enableQueryCaching: 'Enable query caching',
       allowPdfDownloads: 'Allow PDF downloads',
       allowExcelDownloads: 'Allow Excel downloads',
@@ -1511,7 +1540,7 @@ export default {
     photoRemoved: 'Profile photo removed successfully',
     photoUpdateFailed: 'Failed to update profile photo.',
     accountDeletedAuthFailed:
-      'Account deleted from database but Firebase Authentication deletion failed. You may need to sign in again to complete deletion.',
+      'Account data was removed, but sign-in access could not be fully cleared. You may need to sign in again to complete deletion.',
     emailAlreadyExists: 'An account with this email already exists.',
     emailChangeSessionExpired:
       'Session expired. Please log out and log back in before changing your email.',

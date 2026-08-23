@@ -46,7 +46,10 @@
               v-for="notif in notifsByCategory[category]"
               :key="notif.id"
               class="notif-item"
+              role="button"
+              tabindex="0"
               @click="emit('navigate', notif)"
+              @keydown.enter="emit('navigate', notif)"
             >
               <span class="notif-icon">{{ notif.icon }}</span>
               <div class="notif-text">

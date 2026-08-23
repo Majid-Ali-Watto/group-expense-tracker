@@ -74,125 +74,143 @@ export function getLoginRules(locale = 'en') {
 
 export const loginRules = getLoginRules('en')
 
-export const rules = {
-  amount: [
-    { required: true, message: 'Amount is required', trigger: 'blur' },
-    {
-      type: 'number',
-      min: 1,
-      message: 'Amount should be greater than zero',
-      trigger: 'blur'
-    }
-  ],
-  payer: [{ required: true, message: 'Payer is required', trigger: 'change' }],
-  participants: [
-    {
-      type: 'array',
-      required: true,
-      min: 1,
-      message: 'At least one participant is required',
-      trigger: 'change'
-    }
-  ],
-  date: [{ required: true, message: 'Date is required', trigger: 'change' }],
-  category: [
-    { required: true, message: 'Category is required', trigger: 'change' }
-  ],
-  description: [
-    { required: true, message: 'Description is required', trigger: 'blur' },
-    {
-      min: 5,
-      message: 'Description should be at least 5 characters',
-      trigger: 'blur'
-    }
-  ],
+// Both below were plain objects with hard-coded English messages — every
+// form using them (expenses, salary, loans, group create/edit) showed raw
+// English validation errors regardless of the active locale. Converted to
+// locale-aware functions mirroring getLoginRules() above; call sites now
+// resolve them reactively via `computed(() => getRules(locale.value))`,
+// same pattern as Login.vue's `loginRules`.
+export function getRules(locale = 'en') {
+  const m = VALIDATION_MESSAGES[locale] || VALIDATION_MESSAGES.en
 
-  loanGiver: [
-    {
-      required: true,
-      message: 'Loan giver is required',
-      trigger: ['change', 'blur']
-    },
-    {
-      min: 5,
-      message: 'Loan giver should be at least 5 characters',
-      trigger: 'blur'
-    }
-  ],
-  loanReceiver: [
-    {
-      required: true,
-      message: 'Loan receiver is required',
-      trigger: ['change', 'blur']
-    },
-    {
-      min: 2,
-      message: 'Loan receiver should be at least 2 characters',
-      trigger: 'blur'
-    }
-  ],
-  loanGiverMobile: [
-    { required: true, message: 'Giver mobile is required', trigger: 'blur' },
-    {
-      pattern: /^03\d{9}$/,
-      message: 'Mobile must be 11 digits starting with 03',
-      trigger: 'blur'
-    }
-  ],
-  loanReceiverMobile: [
-    { required: true, message: 'Receiver mobile is required', trigger: 'blur' },
-    {
-      pattern: /^03\d{9}$/,
-      message: 'Mobile must be 11 digits starting with 03',
-      trigger: 'blur'
-    }
-  ],
+  return {
+    amount: [
+      { required: true, message: m.amountRequired, trigger: 'blur' },
+      {
+        type: 'number',
+        min: 1,
+        message: m.amountMin,
+        trigger: 'blur'
+      }
+    ],
+    payer: [{ required: true, message: m.payerRequired, trigger: 'change' }],
+    participants: [
+      {
+        type: 'array',
+        required: true,
+        min: 1,
+        message: m.participantsRequired,
+        trigger: 'change'
+      }
+    ],
+    date: [{ required: true, message: m.dateRequired, trigger: 'change' }],
+    category: [
+      { required: true, message: m.categoryRequired, trigger: 'change' }
+    ],
+    description: [
+      { required: true, message: m.descriptionRequired, trigger: 'blur' },
+      {
+        min: 5,
+        message: m.descriptionMinLength,
+        trigger: 'blur'
+      }
+    ],
 
-  salary: [
-    { required: true, message: 'Salary is required', trigger: 'blur' },
-    {
-      type: 'number',
-      min: 1,
-      message: 'Salary should be greater than zero',
-      trigger: 'blur'
-    }
-  ],
+    loanGiver: [
+      {
+        required: true,
+        message: m.loanGiverRequired,
+        trigger: ['change', 'blur']
+      },
+      {
+        min: 5,
+        message: m.loanGiverMinLength,
+        trigger: 'blur'
+      }
+    ],
+    loanReceiver: [
+      {
+        required: true,
+        message: m.loanReceiverRequired,
+        trigger: ['change', 'blur']
+      },
+      {
+        min: 2,
+        message: m.loanReceiverMinLength,
+        trigger: 'blur'
+      }
+    ],
+    loanGiverMobile: [
+      { required: true, message: m.giverMobileRequired, trigger: 'blur' },
+      {
+        pattern: /^03\d{9}$/,
+        message: m.loanMobilePattern,
+        trigger: 'blur'
+      }
+    ],
+    loanReceiverMobile: [
+      { required: true, message: m.receiverMobileRequired, trigger: 'blur' },
+      {
+        pattern: /^03\d{9}$/,
+        message: m.loanMobilePattern,
+        trigger: 'blur'
+      }
+    ],
 
-  location: [
-    { required: true, message: 'Location is required', trigger: 'blur' },
-    {
-      min: 5,
-      message: 'Location should be at least 5 characters',
-      trigger: 'blur'
-    }
-  ],
-  recipient: [
-    { required: true, message: 'Recipient is required', trigger: 'blur' },
-    {
-      min: 5,
-      message: 'Recipient should be at least 5 characters',
-      trigger: 'blur'
-    }
-  ]
+    salary: [
+      { required: true, message: m.salaryRequired, trigger: 'blur' },
+      {
+        type: 'number',
+        min: 1,
+        message: m.salaryMin,
+        trigger: 'blur'
+      }
+    ],
+
+    location: [
+      { required: true, message: m.locationRequired, trigger: 'blur' },
+      {
+        min: 5,
+        message: m.locationMinLength,
+        trigger: 'blur'
+      }
+    ],
+    recipient: [
+      { required: true, message: m.recipientRequired, trigger: 'blur' },
+      {
+        min: 5,
+        message: m.recipientMinLength,
+        trigger: 'blur'
+      }
+    ]
+  }
 }
 
-export const groupRules = {
-  name: [
-    { required: true, message: 'Group name is required', trigger: 'blur' },
-    {
-      min: 5,
-      message: 'Group name should be at least 5 characters',
-      trigger: 'blur',
-      max: 50
-    }
-  ],
-  members: [
-    {
-      type: 'array',
-      required: true,
-      min: 1,
-      message: 'At least one member is required',
-      trigger: 'change'
-    }
-  ]
+export const rules = getRules('en')
+
+export function getGroupRules(locale = 'en') {
+  const m = VALIDATION_MESSAGES[locale] || VALIDATION_MESSAGES.en
+
+  return {
+    name: [
+      { required: true, message: m.groupNameRequired, trigger: 'blur' },
+      {
+        min: 5,
+        message: m.groupNameMinLength,
+        trigger: 'blur',
+        max: 50
+      }
+    ],
+    members: [
+      {
+        type: 'array',
+        required: true,
+        min: 1,
+        message: m.groupMembersRequired,
+        trigger: 'change'
+      }
+    ]
+  }
 }
+
+export const groupRules = getGroupRules('en')

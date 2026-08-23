@@ -263,12 +263,28 @@ export const SharedExpenses = (props, emit) => {
       }
     }
 
-    if (
-      formData.value.splitMode === 'custom' &&
-      formData.value.splitItems.length === 0
-    ) {
-      ElMessage.error(t('sharedExpenses.splitItemError'))
-      return
+    if (formData.value.splitMode === 'custom') {
+      if (formData.value.splitItems.length === 0) {
+        ElMessage.error(t('sharedExpenses.splitItemError'))
+        return
+      }
+
+      // Same tolerance check as the multi-payer total above — without this,
+      // a mismatch between what's itemized and the actual transaction
+      // amount silently corrupts the group's balances (whatever isn't
+      // itemized is credited to the payer but never assigned to anyone as
+      // owed, so it can never be collected in settlement).
+      const splitTotal = splitItemsTotal.value
+      const total = parseFloat(formData.value.amount || 0)
+      if (total > 0 && Math.abs(splitTotal - total) > 0.01) {
+        ElMessage.error(
+          t('sharedExpenses.splitItemsTotalMismatch', {
+            splitTotal: splitTotal.toFixed(2),
+            amount: total.toFixed(2)
+          })
+        )
+        return
+      }
     }
 
     transactionForm.value.validate(async (valid) => {

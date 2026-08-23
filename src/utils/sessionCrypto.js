@@ -6,9 +6,22 @@
  *   _storeKey    — AES-CBC 256  → used for the Pinia store value
  *
  * On verification both blobs are decrypted independently; the two resulting
- * plain tokens must match each other.  An attacker who reads sessionStorage
- * gets useless GCM ciphertext.  One who reads the Pinia store gets useless
- * CBC ciphertext.  Even with both blobs, neither key is ever exportable.
+ * plain tokens must match each other.  An attacker who can only read raw
+ * storage (sessionStorage or the Pinia store) gets useless ciphertext with
+ * no usable key material to decrypt it with — this defends against
+ * storage-scraping (devtools, a backup/export tool, another script reading
+ * localStorage/sessionStorage directly).
+ *
+ * This is NOT protection against XSS: an attacker who achieves arbitrary JS
+ * execution runs in the same realm as this module and can simply import it
+ * and call decryptFromSession()/decryptFromStore() directly — the keys
+ * being "non-exportable" only stops them being extracted as raw bytes, not
+ * being used in-process. What's actually encrypted here is a synthetic
+ * per-session UUID plus profile fields (see login.js), not the real Firebase
+ * ID token (the Firebase SDK manages that separately) — so an XSS bypass of
+ * this scheme leaks that PII, not the real auth credential. The only real
+ * mitigation for XSS-driven exfiltration is preventing XSS in the first
+ * place (CSP, output escaping), not a client-side encryption scheme.
  *
  * Fallback: If crypto.subtle is unavailable (non-HTTPS context), uses base64
  * encoding as a fallback. This is less secure but allows the app to function.

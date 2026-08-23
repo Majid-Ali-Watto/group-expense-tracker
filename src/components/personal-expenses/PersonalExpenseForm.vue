@@ -232,7 +232,8 @@
 </template>
 
 <script setup>
-import { rules } from '@/assets'
+import { computed } from 'vue'
+import { getRules } from '@/assets'
 import { useI18n } from 'vue-i18n'
 import {
   GenericButton,
@@ -274,7 +275,8 @@ const {
   removeSplitItem,
   isSubmitting
 } = PersonalExpenseForm(props, emit)
-const { t } = useI18n()
+const { t, locale } = useI18n()
+const rules = computed(() => getRules(locale.value))
 
 defineExpose({
   validateForm,

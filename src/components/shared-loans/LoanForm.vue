@@ -328,9 +328,9 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { rules } from '@/assets'
+import { getRules } from '@/assets'
 import { maskMobile } from '@/utils'
 import {
   AmountInput,
@@ -343,7 +343,8 @@ import { LoanForm } from '@/scripts/shared-loans'
 import { DB_NODES } from '@/constants'
 import { AddNewTransactionButton } from '@/components/generic-components'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
+const rules = computed(() => getRules(locale.value))
 const emit = defineEmits(['closeModal', 'closeForm'])
 const props = defineProps({
   row: Object,

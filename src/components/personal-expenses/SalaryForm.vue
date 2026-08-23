@@ -74,9 +74,9 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { rules } from '@/assets'
+import { getRules } from '@/assets'
 import { GenericButton } from '@/components/generic-components'
 import { SalaryForm } from '@/scripts/personal-expenses'
 import {
@@ -85,7 +85,8 @@ import {
 } from '@/components/generic-components'
 
 const activePanel = ref([])
-const { t } = useI18n()
+const { t, locale } = useI18n()
+const rules = computed(() => getRules(locale.value))
 
 const {
   formatAmount,

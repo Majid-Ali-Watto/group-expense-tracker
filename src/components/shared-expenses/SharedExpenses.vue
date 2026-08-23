@@ -409,6 +409,7 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { HOC } from '@/components/layout'
 import { GroupAccessGuard } from '@/components/shared'
@@ -424,11 +425,12 @@ import {
   GenericInputNumber,
   AddNewTransactionButton
 } from '@/components/generic-components'
-import { rules } from '@/assets'
+import { getRules } from '@/assets'
 import { SharedExpenses } from '@/scripts/shared-expenses'
 import { loadAsyncComponent } from '@/utils'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
+const rules = computed(() => getRules(locale.value))
 const ExpenseList = loadAsyncComponent(() => import('./ExpenseList.vue'))
 const emit = defineEmits(['closeModal'])
 const props = defineProps({

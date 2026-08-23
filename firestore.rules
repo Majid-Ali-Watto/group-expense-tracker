@@ -99,10 +99,10 @@ service cloud.firestore {
     // it cannot, on its own, prove a withdrawal removed the caller's own entry
     // specifically rather than a stranger's — closing that fully would require
     // moving `joinRequests` to a subcollection keyed by uid.
-    function callerCanModifyOwnJoinRequest() {
+    function callerCanModifyOwnJoinRequest(changedKeys) {
       let oldRequests = resource.data.get('joinRequests', []);
       let newRequests = request.resource.data.get('joinRequests', []);
-      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['joinRequests'])
+      return changedKeys.hasOnly(['joinRequests'])
         && (
           (newRequests.size() == oldRequests.size() + 1
             && newRequests.hasAll(oldRequests)
@@ -112,27 +112,264 @@ service cloud.firestore {
         );
     }
 
-    // Non-owner/admin members may write any group field EXCEPT name/description/
-    // ownerUid — renaming or reassigning ownership is owner/admin-only, even
-    // though the same doc is otherwise wide-open to member writes (notifications,
-    // join requests, delete/settlement requests, membership changes).
-    function groupCoreIdentityUnchanged() {
-      return request.resource.data.get('name', null) == resource.data.get('name', null)
-        && request.resource.data.get('description', null) == resource.data.get('description', null)
-        && request.resource.data.get('ownerUid', null) == resource.data.get('ownerUid', null);
+    // Zero-`get()` equivalents of groupIsNotBlocked()/callerIsGroupOwner()/
+    // callerIsGroupMember()/callerIsPendingGroupMember() for use ONLY where
+    // `resource` already IS the group document being written — i.e. inside
+    // callerCanWriteGroup()/callerCanDeleteGroup() below, never elsewhere.
+    // Those get()-based originals re-fetch the exact same document from
+    // scratch every time they're called; doing that repeatedly across a big
+    // OR chain of alternatives is what blew Firestore's per-request
+    // expression-evaluation budget (a real group update was hitting "maximum
+    // of 1000 expressions to evaluate" and failing outright, verified
+    // against the emulator, before this fix).
+    function selfGroupIsNotBlocked() {
+      return !resource.data.get('blocked', false);
+    }
+    function callerOwnsThisGroup() {
+      return resource.data.get('ownerUid', '') == request.auth.uid;
+    }
+    function callerIsMemberOfThisGroup() {
+      return resource.data.get('members', []).hasAny([{ 'uid': request.auth.uid }]);
+    }
+    function callerIsPendingMemberOfThisGroup() {
+      return resource.data.get('pendingMembers', []).hasAny([{ 'uid': request.auth.uid }]);
+    }
+
+    // ── Membership & approval-forgery closures ────────────────────────────────
+    // Non-owner/admin members used to be able to write ANY group field except
+    // name/description/ownerUid — including `members`/`pendingMembers` and
+    // every *Request.approvals array — with nothing checking WHAT changed
+    // beyond those three names. That let any member (even one only in
+    // pendingMembers, not yet accepted) rewrite `members` directly — add an
+    // accomplice, evict the owner, wipe the group — and let any member forge
+    // a *Request.approvals array with every member's uid in a single write,
+    // instantly faking the unanimous consent the app's approval flows are
+    // supposed to require before a destructive/data-changing write goes
+    // through. The functions below replace that blanket permission with an
+    // allow-list of the exact write shapes the app's real flows produce (see
+    // groups.js / shared-groups.js / GroupAccessGuard.vue / settlement.js /
+    // useApprovalRequests.js) — everything else now falls through to
+    // "owner/admin only", failing safe instead of failing open.
+    //
+    // Approval arrays are plain uid strings, never {uid} objects, precisely
+    // so `.toSet()` can dedupe them for unanimity checks. Arrays have no
+    // per-element predicate in these rules, but every real write appends at
+    // the end, so "the last element is new and it's the caller's own uid,
+    // every earlier element is untouched" pins a write down to exactly one
+    // addition — and it can only ever be the caller's own real,
+    // cryptographically-verified uid, never someone else's. One known,
+    // accepted gap: a member could still call the append-mutation several
+    // times across SEPARATE writes to accumulate more than one entry
+    // crediting themself, so a threshold check is only proof against
+    // forgery-in-one-write, not against a single already-participating
+    // member padding the count over multiple calls — narrower by orders of
+    // magnitude than the original bug, and bounded to members who already
+    // have real standing in that specific group.
+
+    function newMembersField() { return request.resource.data.get('members', []); }
+    function newPendingField() { return request.resource.data.get('pendingMembers', []); }
+
+    // Every check below used to call request.resource.data.diff(resource.data)
+    // itself, computing the same whole-document diff up to ~19 times per
+    // write — expensive enough to blow Firestore's 1000-subexpression
+    // evaluation budget on a real, only-moderately-sized group document.
+    // `changedKeys` is computed once in callerCanWriteGroup() and threaded
+    // through every helper below instead.
+
+    // Caller changes their OWN standing in the group in one of three ways —
+    // accept a pending invite (pendingMembers → members), decline one
+    // (pendingMembers only), or leave voluntarily (members only) — folded
+    // into one function (rather than three) since Firestore charges a fixed
+    // evaluation-complexity cost per function tried in the big OR chain
+    // below, and a real group document blew that budget with one function
+    // per pattern. ownerUid may also change here only when the caller
+    // currently reads as the group's owner (auto-transfer on leave).
+    function callerModifiesOwnMembership(changedKeys) {
+      let oldM = resource.data.get('members', []);
+      let oldP = resource.data.get('pendingMembers', []);
+      let newM = newMembersField();
+      let newP = newPendingField();
+      let selfUid = [{ 'uid': request.auth.uid }];
+      return (
+        // accept: self added to members, self removed from pendingMembers
+        (changedKeys.hasOnly(['members', 'pendingMembers', 'memberUids', 'notifications'])
+          && oldP.hasAny(selfUid) && !newP.hasAny(selfUid)
+          && newP.size() == oldP.size() - 1 && oldP.hasAll(newP)
+          && newM.size() == oldM.size() + 1 && newM.hasAll(oldM) && newM.hasAny(selfUid))
+        // decline: self removed from pendingMembers only
+        || (changedKeys.hasOnly(['pendingMembers', 'memberUids', 'notifications'])
+          && oldP.hasAny(selfUid) && !newP.hasAny(selfUid)
+          && newP.size() == oldP.size() - 1 && oldP.hasAll(newP))
+        // leave: self removed from members only (ownerUid may auto-transfer)
+        || (changedKeys.hasOnly(['members', 'ownerUid', 'memberUids', 'notifications'])
+          && oldM.hasAny(selfUid) && !newM.hasAny(selfUid)
+          && newM.size() == oldM.size() - 1 && oldM.hasAll(newM)
+          && (!changedKeys.hasAny(['ownerUid']) || callerOwnsThisGroup()))
+      );
+    }
+
+    // A single new entry was appended to `newList` relative to `oldList`,
+    // and it's the caller's own uid — the core primitive every
+    // approvals-array check below builds on.
+    function approvalAddedByCaller(oldList, newList) {
+      return newList.size() == oldList.size() + 1
+        && newList.hasAll(oldList)
+        && newList[newList.size() - 1] == request.auth.uid;
+    }
+
+    // Resolves to whichever ONE of the four group-level *Request fields this
+    // write actually touched (or '' if none/more than one) — computed once
+    // so the approval-added/created/cleared checks below run their
+    // (comparatively expensive) logic against a single resolved field
+    // instead of trying all 4 fields × 3 checks = 12 function calls per write.
+    function changedRequestField(changedKeys) {
+      return changedKeys.hasOnly(['deleteRequest']) ? 'deleteRequest'
+        : changedKeys.hasOnly(['editRequest']) ? 'editRequest'
+        : changedKeys.hasOnly(['addMemberRequest']) ? 'addMemberRequest'
+        : changedKeys.hasOnly(['settlementRequest']) ? 'settlementRequest'
+        : '';
+    }
+
+    // True when writing `fieldName` (a *Request object living directly on
+    // the group doc — deleteRequest / editRequest / addMemberRequest /
+    // settlementRequest) only appended the caller's own uid to its
+    // `approvals` list, touching no other field.
+    function groupRequestApprovalAdded(fieldName) {
+      // `let` bindings evaluate eagerly, before the `fieldName != ''` check
+      // below ever runs, so .get() always needs a real field name to probe
+      // even on the "nothing relevant changed" path — falling back to a
+      // fixed, always-valid name here (its value is discarded whenever
+      // fieldName is actually '') avoids that call ever seeing '' itself.
+      let probeField = fieldName == '' ? 'deleteRequest' : fieldName;
+      let oldApprovals = resource.data.get(probeField, {}).get('approvals', []);
+      let newApprovals = request.resource.data.get(probeField, {}).get('approvals', []);
+      return fieldName != ''
+        && approvalAddedByCaller(oldApprovals, newApprovals);
+    }
+
+    // A brand-new `fieldName` request was created by the caller, with the
+    // caller as requester and the shape's own starting approvals: settlement
+    // and addMember requests self-approve on creation, delete and edit don't
+    // (see requestGroupDeletion()/updateGroup() vs requestAddMember()/
+    // settlement.js's requestSettlement()).
+    function groupRequestCreatedByCaller(fieldName) {
+      // Same eager-`let` reasoning as groupRequestApprovalAdded() above.
+      let probeField = fieldName == '' ? 'deleteRequest' : fieldName;
+      let newReq = request.resource.data.get(probeField, {});
+      let startingApprovals = (fieldName == 'addMemberRequest' || fieldName == 'settlementRequest')
+        ? [request.auth.uid] : [];
+      return fieldName != ''
+        && !(fieldName in resource.data)
+        && newReq.get('requestedBy', '') == request.auth.uid
+        && newReq.get('approvals', []) == startingApprovals;
+    }
+
+    // `fieldName` existed and was removed entirely (cancel/reject/finalize
+    // clearing the request marker) with nothing else changing — any member
+    // may do this (matches the app's existing "no owner/uid check" reject
+    // flows; low risk since it only discards a pending proposal).
+    function groupRequestClearedByAnyMember(fieldName) {
+      return fieldName != ''
+        && (fieldName in resource.data)
+        && !(fieldName in request.resource.data);
+    }
+
+    // Only the LAST entry in `joinRequests` may gain an approval via this
+    // path — arrays have no per-element predicate, and every real approval
+    // targets one arbitrary pending request out of possibly several, so
+    // there's no general way here to prove "exactly one arbitrary-position
+    // entry changed, nothing else did." Approving anything other than the
+    // most-recent pending join request still works, just via the
+    // owner/admin fallback instead of this member shortcut.
+    function joinRequestApprovalAdded(changedKeys) {
+      let oldRequests = resource.data.get('joinRequests', []);
+      let newRequests = request.resource.data.get('joinRequests', []);
+      return changedKeys.hasOnly(['joinRequests'])
+        && oldRequests.size() > 0
+        && newRequests.size() == oldRequests.size()
+        && newRequests[newRequests.size() - 1].uid == oldRequests[oldRequests.size() - 1].uid
+        && approvalAddedByCaller(
+             oldRequests[oldRequests.size() - 1].get('approvals', []),
+             newRequests[newRequests.size() - 1].get('approvals', [])
+           );
+    }
+
+    // Finalizes a fully-approved join request: the sole request is removed
+    // from joinRequests and its requester is added to members. Only handles
+    // the single-pending-request case for the same reason noted above —
+    // finalizing while multiple join requests are pending falls back to
+    // owner/admin.
+    function callerFinalizesJoinRequest(changedKeys) {
+      let oldRequests = resource.data.get('joinRequests', []);
+      let newRequests = request.resource.data.get('joinRequests', []);
+      let oldM = resource.data.get('members', []);
+      let newM = newMembersField();
+      return changedKeys.hasOnly(['joinRequests', 'members', 'memberUids'])
+        && oldRequests.size() == 1
+        && newRequests.size() == 0
+        && oldRequests[0].get('approvals', []).toSet().size() >= oldM.size()
+        && newM.size() == oldM.size() + 1
+        && newM.hasAll(oldM)
+        && newM.hasAny([{ 'uid': oldRequests[0].uid }]);
+    }
+
+    // Finalizes a fully-approved edit request: replaces name/members with
+    // exactly what was proposed (never something else) and drops
+    // editRequest, once approvals have reached the pre-write member count.
+    function callerFinalizesEditRequest(changedKeys) {
+      let oldReq = resource.data.get('editRequest', {});
+      let oldM = resource.data.get('members', []);
+      let newM = newMembersField();
+      return changedKeys.hasOnly(['editRequest', 'name', 'members', 'memberUids'])
+        && !('editRequest' in request.resource.data)
+        && oldReq.get('approvals', []).toSet().size() >= oldM.size()
+        && newM == oldReq.get('newMembers', oldM)
+        && request.resource.data.get('name', null) == oldReq.get('name', resource.data.get('name', null));
+    }
+
+    // Finalizes a fully-approved add-member request: adds exactly the
+    // proposed newMember (never something else) and drops addMemberRequest,
+    // once approvals have reached the pre-write member count.
+    function callerFinalizesAddMemberRequest(changedKeys) {
+      let oldReq = resource.data.get('addMemberRequest', {});
+      let oldM = resource.data.get('members', []);
+      let newM = newMembersField();
+      return changedKeys.hasOnly(['addMemberRequest', 'members', 'memberUids'])
+        && !('addMemberRequest' in request.resource.data)
+        && oldReq.get('approvals', []).toSet().size() >= oldM.size()
+        && newM.size() == oldM.size() + 1
+        && newM.hasAll(oldM)
+        && newM.hasAny([oldReq.get('newMember', {})]);
     }
 
     function callerCanWriteGroup(groupId) {
+      let changedKeys = request.resource.data.diff(resource.data).affectedKeys();
+      // Resolved once — at most one of these three can ever be true for a
+      // given write (a *Request field is either being created, having an
+      // approval added, or being cleared, never two of those at once), so
+      // this replaces what would otherwise be 3 fields × 4 names = 12
+      // separate (and separately costed) function calls with 3.
+      let requestField = changedRequestField(changedKeys);
       return request.auth != null
         && callerIsNotBlocked()
-        && groupIsNotBlocked(groupId)
-        && (groupCoreIdentityUnchanged() || callerIsAdmin() || callerIsGroupOwner(groupId))
+        && (selfGroupIsNotBlocked() || callerIsAdmin())
         && (
           callerIsAdmin()
-          || callerIsGroupOwner(groupId)
-          || callerIsGroupMember(groupId)
-          || callerIsPendingGroupMember(groupId)
-          || callerCanModifyOwnJoinRequest()
+          || callerOwnsThisGroup()
+          || callerCanModifyOwnJoinRequest(changedKeys) // a stranger proposing/withdrawing their own join request
+          || (
+            (callerIsMemberOfThisGroup() || callerIsPendingMemberOfThisGroup())
+            && (
+              callerModifiesOwnMembership(changedKeys)
+              || joinRequestApprovalAdded(changedKeys)
+              || callerFinalizesJoinRequest(changedKeys)
+              || callerFinalizesEditRequest(changedKeys)
+              || callerFinalizesAddMemberRequest(changedKeys)
+              || groupRequestApprovalAdded(requestField)
+              || groupRequestCreatedByCaller(requestField)
+              || groupRequestClearedByAnyMember(requestField)
+            )
+          )
         );
     }
 
@@ -141,11 +378,13 @@ service cloud.firestore {
         && callerIsNotBlocked()
         && (
           callerIsAdmin()
-          || callerIsGroupOwner(groupId)
+          || callerOwnsThisGroup()
           || (
-            callerIsGroupMember(groupId)
+            callerIsMemberOfThisGroup()
             && resource.data.get('deleteRequest', {}).get('requested', false) == true
-            && resource.data.get('deleteRequest', {}).get('approvals', []).size()
+            // .toSet() dedupes — approvals are plain uid strings — so a
+            // padded/duplicated array can't fake reaching the threshold.
+            && resource.data.get('deleteRequest', {}).get('approvals', []).toSet().size()
               >= resource.data.get('members', []).size()
           )
         );
@@ -180,12 +419,34 @@ service cloud.firestore {
         >= sharedItemMemberCount(groupId);
     }
 
+    // Validates one transition of `fieldName` (deleteRequest/updateRequest on
+    // a payment/loan item): created fresh by the caller (self-approved from
+    // the start, matching buildRequestMeta.js), cleared entirely
+    // (cancel/reject), or had exactly the caller's own uid appended to its
+    // approvals — never an arbitrary full-array replace. Closes the same
+    // forgery hole as groupRequestApprovalAdded() above, for item-level
+    // requests specifically (whose approvals were already plain uid strings).
+    function sharedItemRequestValid(fieldName) {
+      let oldReq = resource.data.get(fieldName, {});
+      let newReq = request.resource.data.get(fieldName, {});
+      return (!(fieldName in resource.data) && (fieldName in request.resource.data)
+                && newReq.get('requestedBy', '') == request.auth.uid
+                && newReq.get('approvals', []) == [request.auth.uid])
+        || ((fieldName in resource.data) && !(fieldName in request.resource.data))
+        || ((fieldName in resource.data) && (fieldName in request.resource.data)
+              && approvalAddedByCaller(oldReq.get('approvals', []), newReq.get('approvals', [])));
+    }
+
     // Members may always propose/approve/cancel/reject a request or clear their
     // own notification — narrowly scoped the same way callerCanModifyOwnJoinRequest()
-    // restricts join-request writes to just the joinRequests field.
+    // restricts join-request writes to just the joinRequests field, and now also
+    // validates *what* changed on deleteRequest/updateRequest, not just that only
+    // those keys changed (see sharedItemRequestValid()).
     function sharedItemRequestMetaOnly() {
-      return request.resource.data.diff(resource.data).affectedKeys()
-        .hasOnly(['deleteRequest', 'updateRequest', 'notifications']);
+      let changedKeys = request.resource.data.diff(resource.data).affectedKeys();
+      return changedKeys.hasOnly(['deleteRequest', 'updateRequest', 'notifications'])
+        && (!changedKeys.hasAny(['deleteRequest']) || sharedItemRequestValid('deleteRequest'))
+        && (!changedKeys.hasAny(['updateRequest']) || sharedItemRequestValid('updateRequest'));
     }
 
     // Same migration-tolerant shape as callerIsAdmin(): bugResolver is checked

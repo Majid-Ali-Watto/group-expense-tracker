@@ -29,10 +29,11 @@ export const NetPosition = () => {
   /**
    * Calculate net position from shared expenses (payments)
    * @param {string} groupId - The group ID
-   * @param {string} userMobile - The user's mobile number
+   * @param {string} userUid - The user's Firebase uid (payers/split entries
+   *   are keyed by uid, never mobile — see shared-expenses.js's getPaymentData())
    * @returns {Promise<Object>} Object with lender and debtor amounts
    */
-  async function calculateSharedExpensesPosition(groupId, userMobile) {
+  async function calculateSharedExpensesPosition(groupId, userUid) {
     const result = {
       lenderAmount: 0,
       debtorAmount: 0
@@ -60,25 +61,27 @@ export const NetPosition = () => {
           let userPaid = 0
           let userOwes = 0
 
-          // Calculate how much user paid
+          // Calculate how much user paid. payers/split entries are always
+          // {uid, amount} (see shared-expenses.js's getPaymentData()) — they
+          // never carry a `mobile` field, so comparing against `.mobile`
+          // here silently matched nothing and made every non-payer look
+          // like they owed $0 on every shared expense.
           if (payment.payerMode === 'multiple' && payment.payers?.length) {
-            const userPayer = payment.payers.find(
-              (p) => p.mobile === userMobile
-            )
+            const userPayer = payment.payers.find((p) => p.uid === userUid)
             if (userPayer) {
               userPaid = userPayer.amount || 0
             }
-          } else if (payment.payer === userMobile) {
+          } else if (payment.payer === userUid) {
             userPaid = payment.amount || 0
           }
 
           // Calculate how much user owes
           if (payment.split?.length) {
-            const userSplit = payment.split.find((s) => s.mobile === userMobile)
+            const userSplit = payment.split.find((s) => s.uid === userUid)
             if (userSplit) {
               userOwes = userSplit.amount || 0
             }
-          } else if (payment.participants?.includes(userMobile)) {
+          } else if (payment.participants?.includes(userUid)) {
             // Equal split
             const participantCount = payment.participants.length
             userOwes =
@@ -109,10 +112,11 @@ export const NetPosition = () => {
   /**
    * Calculate net position from shared loans
    * @param {string} groupId - The group ID
-   * @param {string} userMobile - The user's mobile number
+   * @param {string} userUid - The user's Firebase uid (giver/receiver on a
+   *   shared loan are keyed by uid when the party is a registered app user)
    * @returns {Promise<Object>} Object with lender and debtor amounts
    */
-  async function calculateSharedLoansPosition(groupId, userMobile) {
+  async function calculateSharedLoansPosition(groupId, userUid) {
     const result = {
       lenderAmount: 0,
       debtorAmount: 0
@@ -137,10 +141,10 @@ export const NetPosition = () => {
         Object.values(loans).forEach((loan) => {
           if (!loan || !loan.amount) return
 
-          if (loan.giver === userMobile) {
+          if (loan.giver === userUid) {
             // User is the lender
             result.lenderAmount += loan.amount
-          } else if (loan.receiver === userMobile) {
+          } else if (loan.receiver === userUid) {
             // User is the debtor
             result.debtorAmount += loan.amount
           }

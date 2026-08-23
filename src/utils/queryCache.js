@@ -93,9 +93,28 @@ export function invalidateByPrefix(prefix) {
   }
 }
 
+// Must match the `cacheName` Workbox is configured with in vite.config.js's
+// PWA runtimeCaching entry — this is the Cache Storage bucket the service
+// worker actually writes fetched images into (CacheFirst, 30-day TTL).
+const SERVICE_WORKER_IMAGE_CACHE = 'firebase-images'
+
 /**
  * Wipe the entire cache (e.g. on logout).
+ *
+ * Only clears the in-memory query cache by itself — it never touched the
+ * service worker's own Cache Storage, so receipt/avatar images fetched
+ * during the session stayed recoverable (via browser devtools) on a shared
+ * device for up to the cache's 30-day expiration, well after logout. Purge
+ * that too, best-effort: Cache Storage can be unavailable (e.g. private
+ * browsing in some browsers) or there may be no service worker at all in
+ * dev, so failures here are swallowed rather than surfaced to the user.
  */
 export function clearAllCache() {
   _cache.clear()
+
+  if (typeof caches === 'undefined') return
+
+  caches.delete(SERVICE_WORKER_IMAGE_CACHE).catch(() => {
+    // best-effort — nothing the user can act on
+  })
 }

@@ -9,7 +9,8 @@ import {
   formatDateForStorage,
   mergeCategoryOptions,
   formatUserDisplay,
-  showSuccess
+  showSuccess,
+  showError
 } from '@/utils'
 import {
   useFireBase,
@@ -189,6 +190,24 @@ export const PersonalExpenseForm = (props, emit) => {
   }
 
   const validateForm = async (whatTask = 'Save') => {
+    // Itemization is optional (the breakdown UI only shows once a split
+    // item exists), but once a user starts itemizing, the total should
+    // match the amount — otherwise the "balanced/mismatch" indicator in the
+    // template is silently ignorable and the saved receipt breakdown
+    // permanently disagrees with the actual charge.
+    if (form.value.splitItems.length > 0) {
+      const total = parseFloat(form.value.amount || 0)
+      if (total > 0 && Math.abs(splitItemsTotal.value - total) > 0.01) {
+        showError(
+          t('personalExpenses.splitItemsTotalMismatch', {
+            splitTotal: splitItemsTotal.value.toFixed(2),
+            amount: total.toFixed(2)
+          })
+        )
+        return
+      }
+    }
+
     // Wait for form ref to be available with retries
     let retries = 0
     while (!expenseForm.value && retries < 30) {

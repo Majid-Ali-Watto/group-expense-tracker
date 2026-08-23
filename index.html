@@ -30,6 +30,74 @@
       content="black-translucent"
     />
     <meta name="apple-mobile-web-app-title" content="Kharchafy" />
+    <style>
+      #private-route-reloader {
+        display: none;
+      }
+
+      html.private-route-reloading #app {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      html.private-route-reloading #private-route-reloader {
+        position: fixed;
+        inset: 0;
+        z-index: 2147483647;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f9fafb;
+        color: #111827;
+        font-family:
+          Inter,
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          sans-serif;
+      }
+
+      html.private-route-reloading.dark-theme #private-route-reloader {
+        background: #111827;
+        color: #f9fafb;
+      }
+
+      .private-route-reloader__box {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        min-height: 44px;
+        padding: 10px 16px;
+        border: 1px solid rgba(34, 197, 94, 0.28);
+        border-radius: 6px;
+        background: #ffffff;
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+        font-size: 15px;
+        font-weight: 700;
+      }
+
+      html.private-route-reloading.dark-theme .private-route-reloader__box {
+        background: #1f2937;
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+      }
+
+      .private-route-reloader__spinner {
+        width: 18px;
+        height: 18px;
+        border: 2px solid rgba(34, 197, 94, 0.22);
+        border-top-color: #16a34a;
+        border-radius: 50%;
+        animation: private-route-reloader-spin 0.8s linear infinite;
+      }
+
+      @keyframes private-route-reloader-spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
     <!-- Apply theme immediately to prevent flash -->
     <script>
       ;(function () {
@@ -53,6 +121,30 @@
         }
 
         document.addEventListener('DOMContentLoaded', applyTheme)
+      })()
+    </script>
+    <script>
+      ;(function () {
+        var publicBasePaths = [
+          '/',
+          '/features',
+          '/faq',
+          '/help',
+          '/group-expense-tracker',
+          '/personal-budget-tracker',
+          '/login',
+          '/register'
+        ]
+        var path = window.location.pathname || '/'
+        if (path === '/ur') path = '/'
+        if (path.indexOf('/ur/') === 0) path = path.slice(3) || '/'
+
+        var firstSegment = path.split('/').filter(Boolean)[0]
+        var basePath = firstSegment ? '/' + firstSegment : '/'
+
+        if (publicBasePaths.indexOf(basePath) === -1) {
+          document.documentElement.classList.add('private-route-reloading')
+        }
       })()
     </script>
   </head>
@@ -80,6 +172,23 @@
         </ul>
       </div>
     </noscript>
+    <div id="private-route-reloader" role="status" aria-live="polite">
+      <div class="private-route-reloader__box">
+        <span class="private-route-reloader__spinner" aria-hidden="true"></span>
+        <span id="private-route-reloader-text">Reloading...</span>
+      </div>
+    </div>
+    <script>
+      ;(function () {
+        var text = document.getElementById('private-route-reloader-text')
+        if (!text) return
+        var isUrdu =
+          window.location.pathname === '/ur' ||
+          window.location.pathname.indexOf('/ur/') === 0 ||
+          localStorage.getItem('appLocale') === 'ur'
+        if (isUrdu) text.textContent = 'دوبارہ لوڈ ہو رہا ہے...'
+      })()
+    </script>
     <div id="app"></div>
     <script type="module" src="/src/main.js"></script>
   </body>

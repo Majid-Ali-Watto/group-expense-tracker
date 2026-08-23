@@ -15,7 +15,7 @@ import { useGlobalNotifications } from '@/composables/useGlobalNotifications'
 import { useInactivityLogout } from '@/composables/useInactivityLogout'
 import { DB_NODES } from '@/constants'
 import { tabs as allTabs, Tabs } from '@/assets'
-import { TAB_ROUTES, ROUTE_TABS, GROUP_TABS } from '@/router'
+import { TAB_ROUTES, ROUTE_TABS, GROUP_TABS, routes } from '@/router'
 import {
   resolveUserFromAuth,
   canAccessTab,
@@ -88,6 +88,27 @@ const TAB_LABEL_KEYS = {
 
 let rtlScrollType = null
 
+function getBasePath(path = '/') {
+  const cleanPath = stripLocalePrefix(path).split(/[?#]/)[0]
+  const firstSegment = cleanPath.split('/').filter(Boolean)[0]
+  return firstSegment ? `/${firstSegment}` : '/'
+}
+
+const PRIVATE_ROUTE_BASE_PATHS = new Set(
+  routes
+    .filter((routeConfig) => routeConfig.meta?.requiresAuth)
+    .map((routeConfig) => getBasePath(routeConfig.path))
+)
+
+function isPrivateAppPath(path = '/') {
+  return PRIVATE_ROUTE_BASE_PATHS.has(getBasePath(path))
+}
+
+function clearPrivateRouteReloader() {
+  if (typeof document === 'undefined') return
+  document.documentElement.classList.remove('private-route-reloading')
+}
+
 function getRtlScrollType() {
   if (rtlScrollType) return rtlScrollType
   if (typeof document === 'undefined') {
@@ -124,6 +145,9 @@ export const App = () => {
   const groupStore = useGroupStore()
   const userStore = useUserStore()
   const dataStore = useDataStore()
+  const isBootingPrivateRoute = ref(
+    typeof window !== 'undefined' && isPrivateAppPath(window.location.pathname)
+  )
   const isAdminActive = computed(() => route.path.startsWith('/admin'))
 
   // Route-driven <head> — title, description, OG/Twitter, canonical,
@@ -230,7 +254,9 @@ export const App = () => {
     activeUserPrivateUnsubscribe = onSnapshot(
       doc(database, DB_NODES.USER_PRIVATE, uid),
       (snap) => {
-        userStore.setActiveUserPrivate(snap.exists() ? snap.data() : { email: '' })
+        userStore.setActiveUserPrivate(
+          snap.exists() ? snap.data() : { email: '' }
+        )
       },
       () => {
         userStore.setActiveUserPrivate({ email: '' })
@@ -585,6 +611,12 @@ export const App = () => {
   const isPublicPage = computed(
     () => !loggedIn.value && route.meta?.publicPage === true
   )
+  const showPublicFooter = computed(
+    () => isPublicPage.value && !isBootingPrivateRoute.value
+  )
+  const useAppContainer = computed(
+    () => loggedIn.value || isBootingPrivateRoute.value
+  )
 
   // Active tab derived from current route path; synced back to tabStore
   const activeTab = ref(
@@ -712,6 +744,16 @@ export const App = () => {
     [activeTab, () => tabs.value?.length, locale],
     () => {
       scrollActiveTabIntoView()
+    },
+    { flush: 'post' }
+  )
+
+  watch(
+    () => route.fullPath,
+    async () => {
+      if (!isBootingPrivateRoute.value) return
+      await nextTick()
+      isBootingPrivateRoute.value = false
     },
     { flush: 'post' }
   )
@@ -981,6 +1023,14 @@ export const App = () => {
   )
 
   onMounted(() => {
+    clearPrivateRouteReloader()
+    if (isBootingPrivateRoute.value) {
+      router.isReady().then(async () => {
+        await nextTick()
+        isBootingPrivateRoute.value = false
+        clearPrivateRouteReloader()
+      })
+    }
     scrollActiveTabIntoView()
     window.addEventListener('resize', updateTabsScrollState)
   })
@@ -1000,6 +1050,9 @@ export const App = () => {
     displayName,
     activeGroup,
     isPublicPage,
+    showPublicFooter,
+    useAppContainer,
+    isBootingPrivateRoute,
     activeTab,
     tabBarKey,
     tabsScroller,

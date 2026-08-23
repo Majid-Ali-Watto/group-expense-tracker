@@ -295,6 +295,7 @@ export const PersonalExpenseList = () => {
     expenses,
     filteredExpenses,
     keys,
+    salary,
     totalSpent,
     remaining,
     months,

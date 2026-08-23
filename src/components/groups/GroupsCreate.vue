@@ -68,13 +68,15 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { groupRules, GROUP_CATEGORIES } from '@/assets'
+import { getGroupRules, GROUP_CATEGORIES } from '@/assets'
 import { GroupsCreate } from '@/scripts/groups'
 import { GenericDropDown } from '@/components/generic-components'
 import { GenericInputField } from '@/components/generic-components'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
+const groupRules = computed(() => getGroupRules(locale.value))
 
 const emit = defineEmits(['groupCreated'])
 const props = defineProps({

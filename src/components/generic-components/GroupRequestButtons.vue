@@ -34,7 +34,7 @@
         <div class="flex flex-wrap gap-1 mb-2">
           <el-tag
             v-for="approval in getJoinRequestApprovals(group, request.uid)"
-            :key="approval.uid"
+            :key="getIdentity(approval)"
             size="small"
             type="success"
           >
@@ -107,7 +107,7 @@
     <div class="flex flex-wrap gap-1 mb-2">
       <el-tag
         v-for="approval in getDeleteApprovals(group)"
-        :key="approval.uid"
+        :key="getIdentity(approval)"
         size="small"
         type="success"
       >
@@ -199,7 +199,7 @@
     <div class="flex flex-wrap gap-1 mb-2">
       <el-tag
         v-for="approval in getEditApprovals(group)"
-        :key="approval.uid"
+        :key="getIdentity(approval)"
         size="small"
         type="success"
       >
@@ -259,7 +259,7 @@
     <div class="flex flex-wrap gap-1 mb-2">
       <el-tag
         v-for="approval in getAddMemberRequestApprovals(group)"
-        :key="approval.uid"
+        :key="getIdentity(approval)"
         size="small"
         type="success"
       >
@@ -367,7 +367,7 @@ import {
   hasUserApprovedAddMemberRequest,
   isCurrentUserPendingOwner
 } from '@/helpers'
-import { formatMemberDisplay, formatUserDisplay } from '@/utils'
+import { formatMemberDisplay, formatUserDisplay, getIdentity } from '@/utils'
 import { useStoreProxy } from '@/composables'
 import { useAuthStore } from '@/stores'
 

@@ -143,10 +143,13 @@
                 height: '100%'
               }"
               draggable="true"
+              role="button"
+              tabindex="0"
               @dragstart.stop="handleDragStart(column.key)"
               @dragover.prevent
               @drop.prevent="handleDrop(column.key)"
               @click.stop="toggleSort(column.key)"
+              @keydown.enter.stop="toggleSort(column.key)"
             >
               <span
                 style="
@@ -452,7 +455,14 @@
               placement="bottom-end"
               @command="(cmd) => handleTableAction(cmd, rowData)"
             >
-              <button class="et-actions-btn" @click.stop>&#8942;</button>
+              <button
+                class="et-actions-btn"
+                :aria-label="t('table.actions')"
+                :title="t('table.actions')"
+                @click.stop
+              >
+                &#8942;
+              </button>
               <template #dropdown>
                 <el-dropdown-menu>
                   <el-dropdown-item v-if="showPopup" command="edit"

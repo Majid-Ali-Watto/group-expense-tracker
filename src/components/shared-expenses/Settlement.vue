@@ -53,7 +53,7 @@
       <div class="flex flex-wrap gap-1 mb-2">
         <el-tag
           v-for="approval in getSettlementApprovals"
-          :key="approval.uid"
+          :key="getIdentity(approval)"
           size="small"
           type="success"
         >
@@ -61,7 +61,7 @@
         </el-tag>
         <el-tag
           v-for="member in getAllSettlementMembers.filter(
-            (m) => !getSettlementApprovals.some((a) => a.uid === m.uid)
+            (m) => !getSettlementApprovals.some((a) => getIdentity(a) === getIdentity(m))
           )"
           :key="member.uid"
           size="small"
@@ -177,7 +177,7 @@ import { useI18n } from 'vue-i18n'
 import { GenericButton } from '@/components/generic-components'
 import { BalanceSummaryCard } from '@/components/shared'
 import { Settlement } from '@/scripts/shared-expenses'
-import { formatMemberDisplay, formatUserDisplay } from '@/utils'
+import { formatMemberDisplay, formatUserDisplay, getIdentity } from '@/utils'
 
 const { t } = useI18n()
 const props = defineProps({

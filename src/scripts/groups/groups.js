@@ -18,7 +18,8 @@ import {
   appendNotificationForUser,
   removeNotificationForUser,
   formatMemberDisplay,
-  formatUserDisplay
+  formatUserDisplay,
+  getIdentity
 } from '@/utils'
 import { getDisplayMobile } from '@/utils/user-display'
 import { createUserDisplayStoreProxy } from '@/composables'
@@ -1223,8 +1224,9 @@ export const Groups = () => {
         request.approvals = []
       }
 
-      // Add approval
-      request.approvals.push({ uid })
+      // Add approval — plain uid string (not {uid}) so Firestore rules can
+      // dedupe approvals with a simple .toSet() when checking unanimity.
+      request.approvals.push(uid)
 
       // Auto-add member if all existing members have now approved
       if (allMembersApprovedJoinRequest(group, requestMobile)) {
@@ -1509,11 +1511,11 @@ export const Groups = () => {
         group.deleteRequest.approvals = []
       }
 
-      group.deleteRequest.approvals.push({
-        uid,
-        mobile: uid,
-        approvedAt: new Date().toISOString()
-      })
+      // Plain uid string (not {uid, mobile, approvedAt}) — mobile duplicated
+      // uid's role and approvedAt was never read anywhere; keeping this a
+      // plain string lets Firestore rules dedupe approvals with .toSet()
+      // when checking unanimity.
+      group.deleteRequest.approvals.push(uid)
 
       if (allMembersApproved(group)) {
         // All members approved — delete the group immediately
@@ -1834,12 +1836,14 @@ export const Groups = () => {
       // Create new editRequest with added approval
       const currentApprovals = group.editRequest.approvals || []
 
-      // Check if user already approved
-      if (currentApprovals.some((a) => a.uid === uid)) {
+      // Check if user already approved (getIdentity tolerates older
+      // in-flight requests still shaped as {uid} objects pre-migration)
+      if (currentApprovals.some((a) => getIdentity(a) === uid)) {
         return showSuccess(t('groupsMessages.alreadyApprovedRequest'))
       }
 
-      const newApprovals = [...currentApprovals, { uid }]
+      // Plain uid string — lets Firestore rules dedupe with .toSet().
+      const newApprovals = [...currentApprovals, uid]
 
       const updatedEditRequest = {
         ...group.editRequest,
@@ -1979,7 +1983,7 @@ export const Groups = () => {
         requestedBy: uid,
         requestedAt: new Date().toISOString(),
         newMember: newMember,
-        approvals: [{ uid }]
+        approvals: [uid]
       }
 
       await updateData(
@@ -2002,13 +2006,13 @@ export const Groups = () => {
 
       const currentApprovals = group.addMemberRequest.approvals || []
 
-      if (currentApprovals.some((a) => a.uid === uid)) {
+      if (currentApprovals.some((a) => getIdentity(a) === uid)) {
         return showSuccess(t('groupsMessages.alreadyApprovedRequest'))
       }
 
       const updatedRequest = {
         ...group.addMemberRequest,
-        approvals: [...currentApprovals, { uid }]
+        approvals: [...currentApprovals, uid]
       }
 
       await updateData(

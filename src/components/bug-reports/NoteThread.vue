@@ -57,7 +57,10 @@
           <div
             v-if="note.replyTo"
             class="nt-quote"
+            role="button"
+            tabindex="0"
             @click="$emit('scroll-to', note.replyTo.noteId)"
+            @keydown.enter="$emit('scroll-to', note.replyTo.noteId)"
           >
             <span class="nt-quote-author">
               <ReplyIcon

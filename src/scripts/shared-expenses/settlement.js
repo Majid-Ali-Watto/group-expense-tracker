@@ -2,7 +2,7 @@ import { computed, inject, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore, useGroupStore, useUserStore } from '@/stores'
 import { useFireBase } from '@/composables'
-import { showError, showSuccess } from '@/utils'
+import { showError, showSuccess, getIdentity } from '@/utils'
 import { createUserDisplayStoreProxy } from '@/composables'
 import { ElMessageBox } from 'element-plus'
 import { DB_NODES } from '@/constants'
@@ -45,7 +45,9 @@ export const Settlement = (props) => {
     if (!hasSettlementRequest.value) return false
     const uid = authStore.getActiveUserUid
     return (
-      settlementRequest.value.approvals?.some((a) => a.uid === uid) || false
+      settlementRequest.value.approvals?.some(
+        (a) => getIdentity(a) === uid
+      ) || false
     )
   })
 
@@ -66,7 +68,7 @@ export const Settlement = (props) => {
     const approvals = getSettlementApprovals.value
     const allMembers = getAllSettlementMembers.value
     return allMembers.every((member) =>
-      approvals.some((approval) => approval.uid === member.uid)
+      approvals.some((approval) => getIdentity(approval) === getIdentity(member))
     )
   })
 
@@ -96,7 +98,7 @@ export const Settlement = (props) => {
         requestedBy: uid,
         requestedAt: new Date().toISOString(),
         month: props.selectedMonth,
-        approvals: [{ uid }]
+        approvals: [uid]
       }
 
       const groupId = activeGroup.value
@@ -122,7 +124,8 @@ export const Settlement = (props) => {
         updatedRequest.approvals = []
       }
 
-      updatedRequest.approvals.push({ uid })
+      // Plain uid string — lets Firestore rules dedupe with .toSet().
+      updatedRequest.approvals.push(uid)
 
       const groupId = activeGroup.value
       await updateData(
@@ -276,13 +279,27 @@ export const Settlement = (props) => {
           share: p.share
         }))
       } else {
-        const equalShare = participants.length
-          ? amount / participants.length
+        // Only reachable for legacy pre-migration payments with no `split`
+        // array — every current write path always populates one (see
+        // shared-expenses.js's getPaymentData()). Uses the same
+        // floor-then-remainder technique as that write path so old records
+        // sum back to the exact total instead of being a cent short
+        // (100/3 → 33.33+33.33+33.33 = 99.99 with a plain division).
+        const participantCount = participants.length
+        const equalShare = participantCount
+          ? Math.floor((amount / participantCount) * 100) / 100
           : 0
-        shares = participants.map((p) => ({
-          id: typeof p === 'string' ? p : p.userId || p.name,
-          share: equalShare
-        }))
+        let acc = 0
+        shares = participants.map((p, index) => {
+          const id = typeof p === 'string' ? p : p.userId || p.name
+          let share = equalShare
+          if (index === participantCount - 1) {
+            share = parseFloat((amount - acc).toFixed(2))
+          } else {
+            acc += share
+          }
+          return { id, share }
+        })
       }
 
       shares.forEach((s) => {

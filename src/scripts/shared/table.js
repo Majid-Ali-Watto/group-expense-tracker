@@ -545,13 +545,25 @@ export const Table = (props) => {
           share: p.share
         }))
       } else {
-        const equalShare = participants.length
-          ? amount / participants.length
+        // Only reachable for legacy pre-migration payments with no `split`
+        // array — see the matching comment in settlement.js's identical
+        // fallback. Same floor-then-remainder technique so old records sum
+        // back to the exact total instead of being a cent short.
+        const participantCount = participants.length
+        const equalShare = participantCount
+          ? Math.floor((amount / participantCount) * 100) / 100
           : 0
-        shares = participants.map((p) => ({
-          id: typeof p === 'string' ? p : p.userId || p.name,
-          share: equalShare
-        }))
+        let acc = 0
+        shares = participants.map((p, index) => {
+          const id = typeof p === 'string' ? p : p.userId || p.name
+          let share = equalShare
+          if (index === participantCount - 1) {
+            share = parseFloat((amount - acc).toFixed(2))
+          } else {
+            acc += share
+          }
+          return { id, share }
+        })
       }
       shares.forEach((s) => {
         map[s.id] = (map[s.id] || 0) - s.share
@@ -789,6 +801,8 @@ export const Table = (props) => {
         } else if (key === 'loanGiver' || key === 'loanReceiver') {
           const name = key === 'loanGiver' ? row.giverName : row.receiverName
           td.textContent = row[key] ? formatUser(row[key], name) : '-'
+        } else if (key === 'whoAdded') {
+          td.textContent = row[key] ? formatUser(row[key]) : '-'
         } else if (key === 'recipient') {
           td.textContent = row[key] ? formatRecipient(row[key]) : '-'
         } else if (key === 'receiptUrls') {
@@ -816,6 +830,65 @@ export const Table = (props) => {
     return table
   }
 
+  function getPrintHeaders() {
+    if (activeTab.value === Tabs.PERSONAL_EXPENSES) {
+      const detailHeaders = [
+        { key: 'amount', label: t('common.amount') },
+        { key: 'category', label: t('common.category') },
+        { key: 'date', label: t('common.date') },
+        { key: 'description', label: t('common.description') },
+        { key: 'location', label: t('common.location') },
+        { key: 'recipient', label: t('personalExpenses.recipient') }
+      ]
+
+      if (hasAnyRowValue('splitItems')) {
+        detailHeaders.push({
+          key: 'splitItems',
+          label: t('personalExpenses.lineItems')
+        })
+      }
+
+      detailHeaders.push(
+        { key: 'whoAdded', label: t('table.addedBy') },
+        { key: 'whenAdded', label: t('table.whenAdded') }
+      )
+
+      if (hasAnyRowValue('receiptUrls')) {
+        detailHeaders.push({
+          key: 'receiptUrls',
+          label: t('table.receiptsTitle')
+        })
+      }
+
+      return detailHeaders
+    }
+
+    if (activeTab.value !== Tabs.PERSONAL_LOANS) return headers.value
+
+    const detailHeaders = [
+      { key: '_month', label: t('common.month') },
+      { key: 'amount', label: t('common.amount') },
+      { key: 'category', label: t('common.category') },
+      { key: 'date', label: t('common.date') },
+      { key: 'description', label: t('common.description') },
+      { key: 'giverName', label: t('sharedLoans.loanGiverName') },
+      { key: 'loanGiver', label: t('sharedLoans.loanGiverMobile') },
+      { key: 'receiverName', label: t('sharedLoans.loanReceiverName') },
+      { key: 'loanReceiver', label: t('sharedLoans.loanReceiverMobile') },
+      { key: 'whoAdded', label: t('table.addedBy') },
+      { key: 'whenAdded', label: t('table.whenAdded') }
+    ]
+
+    if (hasAnyRowValue('receiptUrls')) {
+      detailHeaders.push({
+        key: 'receiptUrls',
+        label: t('table.receiptsTitle')
+      })
+    }
+
+    return detailHeaders
+  }
+
   function _downloadPdf(
     rows,
     filenamePrefix,
@@ -823,7 +896,7 @@ export const Table = (props) => {
     subtitle,
     isSelectedOnly = false
   ) {
-    const printHeaders = headers.value
+    const printHeaders = getPrintHeaders()
 
     // 1. Hide filter toolbar and no-print elements.
     const noPrint = Array.from(
