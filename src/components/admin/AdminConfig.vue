@@ -118,10 +118,7 @@
         <!-- Email -->
         <el-card shadow="never">
           <template #header>
-            <ConfigCardHeader
-              :title="t('common.email')"
-              path="configs/email"
-            />
+            <ConfigCardHeader :title="t('common.email')" path="configs/email" />
           </template>
           <div class="space-y-3">
             <ToggleRow
@@ -187,9 +184,10 @@
 </template>
 
 <script setup>
-import { defineComponent, h, resolveComponent } from 'vue'
+import { defineComponent, h } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { ElSwitch, ElInputNumber } from 'element-plus'
 import { AdminConfig } from '@/scripts/admin/admin-config'
 import AdminUsers from './AdminUsers.vue'
 
@@ -231,7 +229,7 @@ const ToggleRow = defineComponent({
           { class: 'text-sm text-gray-700 dark:text-gray-300' },
           props.label
         ),
-        h(resolveComponent('el-switch'), {
+        h(ElSwitch, {
           modelValue: props.value,
           disabled: false,
           'onUpdate:modelValue': (v) => emit('change', v)
@@ -251,7 +249,7 @@ const LimitRow = defineComponent({
           { class: 'text-xs text-gray-500 dark:text-gray-400' },
           props.label
         ),
-        h(resolveComponent('el-input-number'), {
+        h(ElInputNumber, {
           modelValue: props.value,
           min: 1,
           placeholder: t('admin.config.unlimitedPlaceholder'),

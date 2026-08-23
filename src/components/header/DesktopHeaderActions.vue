@@ -51,19 +51,6 @@
     </button>
 
     <button
-      class="theme-btn"
-      :title="
-        isDarkTheme
-          ? t('headerActions.switchToLightMode')
-          : t('headerActions.switchToDarkMode')
-      "
-      @click="emit('toggle-theme')"
-    >
-      <MoonIcon v-if="!isDarkTheme" class="w-5 h-5" />
-      <SunIcon v-else class="w-5 h-5" />
-    </button>
-
-    <button
       v-if="loggedIn"
       class="theme-btn"
       :title="t('common.profileAlt')"
@@ -98,10 +85,9 @@
     </button>
 
     <button
-      v-if="canShowManageTabs"
       class="theme-btn"
-      :title="t('headerActions.manageTabs')"
-      @click="emit('open-manage-tabs')"
+      :title="t('headerActions.settings')"
+      @click="emit('navigate', '/settings')"
     >
       <el-icon :size="18"><Setting /></el-icon>
     </button>
@@ -128,10 +114,8 @@ import {
 import { UserAvatar } from '@/components/generic-components'
 import {
   AlertTriangleIcon,
-  MoonIcon,
   QuestionCircleIcon,
-  ShareIcon,
-  SunIcon
+  ShareIcon
 } from '@/components/icons'
 
 const { t } = useI18n()
@@ -140,9 +124,7 @@ defineProps({
   loggedIn: { type: Boolean, default: false },
   isPublicPage: { type: Boolean, default: false },
   isStuckState: { type: Boolean, default: false },
-  isDarkTheme: { type: Boolean, default: false },
   canShowBugReport: { type: Boolean, default: false },
-  canShowManageTabs: { type: Boolean, default: false },
   canShowAdmin: { type: Boolean, default: false },
   activeUserPhotoUrl: { type: String, default: '' }
 })
@@ -152,10 +134,8 @@ const emit = defineEmits([
   'open-help',
   'navigate',
   'share',
-  'toggle-theme',
   'open-profile',
   'show-net-position',
-  'open-manage-tabs',
   'logout'
 ])
 </script>

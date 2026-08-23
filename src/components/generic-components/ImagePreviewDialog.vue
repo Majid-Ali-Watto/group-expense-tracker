@@ -185,7 +185,7 @@ watch(
   transition: transform 0.18s ease;
 }
 
-:global(:root.dark-theme) .ipd-stage {
+:global(:root.dark-theme .ipd-stage) {
   background: rgba(15, 23, 42, 0.8);
 }
 </style>

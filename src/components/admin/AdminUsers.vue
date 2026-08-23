@@ -126,8 +126,9 @@
 </template>
 
 <script setup>
-import { ref, computed, defineComponent, h, resolveComponent } from 'vue'
+import { ref, computed, defineComponent, h } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { ElSwitch } from 'element-plus'
 import { AdminUsers } from '@/scripts/admin/admin-users'
 import AdminUserTabConfigDialog from './AdminUserTabConfigDialog.vue'
 
@@ -186,7 +187,7 @@ const FlagToggle = defineComponent({
         { class: 'flex flex-col items-center gap-0.5 sm:justify-self-center' },
         [
           h('span', { class: 'text-xs text-gray-400 sm:hidden' }, props.label),
-          h(resolveComponent('el-switch'), {
+          h(ElSwitch, {
             modelValue: props.value,
             activeColor: props.danger ? '#ef4444' : undefined,
             'onUpdate:modelValue': (v) => emit('change', v)

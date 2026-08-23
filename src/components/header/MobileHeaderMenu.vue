@@ -1,201 +1,205 @@
 <template>
-  <el-dropdown trigger="click" class="min-[768px]:hidden mobile-menu-dropdown">
-    <button class="hamburger-btn">
-      <MenuIcon class="w-6 h-6" />
-    </button>
-    <template #dropdown>
-      <el-dropdown-menu class="mobile-dropdown-menu">
-        <template v-if="loggedIn && tabs.length">
-          <div class="mobile-menu-section-label">
-            {{ t('headerActions.navigation') }}
-          </div>
-          <el-dropdown-item
-            v-for="tab in tabs"
-            :key="tab"
-            @click="emit('tab-change', tab)"
-          >
-            <div
-              class="flex items-center gap-3"
-              :class="{ 'is-active-tab': tab === activeTab }"
+  <!-- The responsive show/hide class lives on this plain wrapper, not on
+       <el-dropdown> itself: el-dropdown's own theme-chalk CSS sets an
+       unconditional `display: inline-flex` (same 0-1-0-0 specificity as a
+       single Tailwind class) in a chunk that loads lazily with Header.vue
+       — after the page's main stylesheet. Loaded-later wins a specificity
+       tie, so that rule silently overrode min-[768px]:hidden and left the
+       hamburger visible on desktop. A bare div has no competing framework
+       CSS, so it can't lose that fight — same pattern DesktopHeaderActions
+       already uses for its own div. -->
+  <div class="min-[768px]:hidden mobile-menu-dropdown">
+    <el-dropdown
+      ref="dropdownRef"
+      trigger="click"
+      popper-class="mobile-menu-popper"
+    >
+      <button class="hamburger-btn">
+        <MenuIcon class="w-6 h-6" />
+      </button>
+      <template #dropdown>
+        <el-dropdown-menu class="mobile-dropdown-menu">
+          <template v-if="loggedIn && tabs.length">
+            <div class="mobile-menu-section-label">
+              {{ t('headerActions.navigation') }}
+            </div>
+            <el-dropdown-item
+              v-for="tab in tabs"
+              :key="tab"
+              @click="emit('tab-change', tab)"
             >
-              <el-icon class="menu-icon" :size="20"
-                ><component :is="TAB_ICONS[tab] || ChevronRightIcon"
-              /></el-icon>
-              <span>{{ tabLabel(tab) }}</span>
-            </div>
-          </el-dropdown-item>
-          <div class="mobile-menu-divider" />
-        </template>
+              <div
+                class="flex items-center gap-3"
+                :class="{ 'is-active-tab': tab === activeTab }"
+              >
+                <el-icon class="menu-icon" :size="20"
+                  ><component :is="TAB_ICONS[tab] || ChevronRightIcon"
+                /></el-icon>
+                <span>{{ tabLabel(tab) }}</span>
+              </div>
+            </el-dropdown-item>
+            <div class="mobile-menu-divider" />
+          </template>
 
-        <template v-if="isPublicPage">
-          <div class="mobile-menu-section-label">
-            {{ t('headerActions.explore') }}
-          </div>
-          <el-dropdown-item
-            v-for="link in publicNavLinks"
-            :key="link.to"
-            @click="emit('navigate', link.to)"
-          >
-            <div
-              class="flex items-center gap-3"
-              :class="{ 'is-active-tab': routePath === link.to }"
+          <template v-if="isPublicPage">
+            <div class="mobile-menu-section-label">
+              {{ t('headerActions.explore') }}
+            </div>
+            <el-dropdown-item
+              v-for="link in publicNavLinks"
+              :key="link.to"
+              @click="emit('navigate', link.to)"
             >
-              <el-icon class="menu-icon" :size="20"
-                ><component :is="navIconFor(link.to)"
-              /></el-icon>
-              <span>{{ link.label }}</span>
+              <div
+                class="flex items-center gap-3"
+                :class="{ 'is-active-tab': routePath === link.to }"
+              >
+                <el-icon class="menu-icon" :size="20"
+                  ><component :is="navIconFor(link.to)"
+                /></el-icon>
+                <span>{{ link.label }}</span>
+              </div>
+            </el-dropdown-item>
+            <el-dropdown-item @click="emit('navigate', '/login')">
+              <div class="flex items-center gap-3">
+                <el-icon class="menu-icon" :size="20"><SwitchButton /></el-icon>
+                <span>{{ t('nav.login') }}</span>
+              </div>
+            </el-dropdown-item>
+            <el-dropdown-item @click="emit('navigate', '/register')">
+              <div class="flex items-center gap-3">
+                <el-icon class="menu-icon" :size="20"><UserFilled /></el-icon>
+                <span>{{ t('nav.createAccount') }}</span>
+              </div>
+            </el-dropdown-item>
+            <el-dropdown-item
+              v-if="hasLocaleVariant"
+              @click="emit('navigate', alternateLocalePath)"
+            >
+              <div class="flex items-center gap-3">
+                <span class="menu-icon lang-badge">{{
+                  alternateLocaleCode
+                }}</span>
+                <span>{{ alternateLocaleLabel }}</span>
+              </div>
+            </el-dropdown-item>
+            <div class="mobile-menu-divider" />
+          </template>
+
+          <template v-if="isStuckState">
+            <div class="mobile-menu-section-label">
+              {{ t('headerActions.account') }}
             </div>
-          </el-dropdown-item>
-          <el-dropdown-item @click="emit('navigate', '/login')">
+            <el-dropdown-item @click="emit('navigate', '/login')">
+              <div class="flex items-center gap-3">
+                <el-icon class="menu-icon" :size="20"><SwitchButton /></el-icon>
+                <span>{{ t('headerActions.signIn') }}</span>
+              </div>
+            </el-dropdown-item>
+            <div class="mobile-menu-divider" />
+          </template>
+
+          <div class="mobile-menu-section-label">
+            {{ t('common.actions') }}
+          </div>
+          <el-dropdown-item v-if="!isPublicPage" @click="emit('open-help')">
             <div class="flex items-center gap-3">
-              <el-icon class="menu-icon" :size="20"><SwitchButton /></el-icon>
-              <span>{{ t('nav.login') }}</span>
+              <QuestionCircleIcon class="w-5 h-5 menu-icon" />
+              <span>{{ t('headerActions.help') }}</span>
             </div>
           </el-dropdown-item>
-          <el-dropdown-item @click="emit('navigate', '/register')">
-            <div class="flex items-center gap-3">
-              <el-icon class="menu-icon" :size="20"><UserFilled /></el-icon>
-              <span>{{ t('nav.createAccount') }}</span>
-            </div>
-          </el-dropdown-item>
+
           <el-dropdown-item
-            v-if="hasLocaleVariant"
-            @click="emit('navigate', alternateLocalePath)"
+            v-if="canShowBugReport"
+            @click="emit('open-bug-report')"
           >
             <div class="flex items-center gap-3">
-              <span class="menu-icon lang-badge">{{
-                alternateLocaleCode
-              }}</span>
-              <span>{{ alternateLocaleLabel }}</span>
+              <AlertTriangleIcon class="w-5 h-5 menu-icon" />
+              <span>{{ t('headerActions.reportBug') }}</span>
+            </div>
+          </el-dropdown-item>
+
+          <el-dropdown-item @click="emit('share')">
+            <div class="flex items-center gap-3">
+              <ShareIcon class="w-5 h-5 menu-icon" />
+              <span>{{ t('headerActions.shareThisPage') }}</span>
             </div>
           </el-dropdown-item>
           <div class="mobile-menu-divider" />
-        </template>
 
-        <template v-if="isStuckState">
+          <template v-if="loggedIn || canShowAdmin">
+            <div class="mobile-menu-section-label">
+              {{ t('headerActions.workspace') }}
+            </div>
+            <el-dropdown-item v-if="loggedIn" @click="emit('open-profile')">
+              <div class="flex items-center gap-3">
+                <UserAvatar
+                  :image-url="activeUserPhotoUrl"
+                  :alt="t('common.profileAlt')"
+                  size="xs"
+                  variant="profile"
+                  icon-size="md"
+                  icon-tone="current"
+                />
+                <span>{{ t('common.profileAlt') }}</span>
+              </div>
+            </el-dropdown-item>
+
+            <el-dropdown-item
+              v-if="loggedIn"
+              @click="emit('show-net-position')"
+            >
+              <div class="flex items-center gap-3">
+                <el-icon class="menu-icon" :size="20"><DataAnalysis /></el-icon>
+                <span>{{ t('headerActions.expensesSummary') }}</span>
+              </div>
+            </el-dropdown-item>
+
+            <el-dropdown-item
+              v-if="canShowAdmin"
+              @click="emit('navigate', '/admin')"
+            >
+              <div class="flex items-center gap-3">
+                <el-icon class="menu-icon" :size="20"><Tools /></el-icon>
+                <span>{{ t('headerActions.adminConfig') }}</span>
+              </div>
+            </el-dropdown-item>
+
+            <div class="mobile-menu-divider" />
+          </template>
+
           <div class="mobile-menu-section-label">
-            {{ t('headerActions.account') }}
+            {{ t('headerActions.preferences') }}
           </div>
-          <el-dropdown-item @click="emit('navigate', '/login')">
-            <div class="flex items-center gap-3">
-              <el-icon class="menu-icon" :size="20"><SwitchButton /></el-icon>
-              <span>{{ t('headerActions.signIn') }}</span>
-            </div>
-          </el-dropdown-item>
-          <div class="mobile-menu-divider" />
-        </template>
-
-        <div class="mobile-menu-section-label">
-          {{ t('common.actions') }}
-        </div>
-        <el-dropdown-item v-if="!isPublicPage" @click="emit('open-help')">
-          <div class="flex items-center gap-3">
-            <QuestionCircleIcon class="w-5 h-5 menu-icon" />
-            <span>{{ t('headerActions.help') }}</span>
-          </div>
-        </el-dropdown-item>
-
-        <el-dropdown-item
-          v-if="canShowBugReport"
-          @click="emit('open-bug-report')"
-        >
-          <div class="flex items-center gap-3">
-            <AlertTriangleIcon class="w-5 h-5 menu-icon" />
-            <span>{{ t('headerActions.reportBug') }}</span>
-          </div>
-        </el-dropdown-item>
-
-        <el-dropdown-item @click="emit('share')">
-          <div class="flex items-center gap-3">
-            <ShareIcon class="w-5 h-5 menu-icon" />
-            <span>{{ t('headerActions.shareThisPage') }}</span>
-          </div>
-        </el-dropdown-item>
-        <div class="mobile-menu-divider" />
-
-        <template v-if="loggedIn || canShowManageTabs || canShowAdmin">
-          <div class="mobile-menu-section-label">
-            {{ t('headerActions.workspace') }}
-          </div>
-          <el-dropdown-item v-if="loggedIn" @click="emit('open-profile')">
-            <div class="flex items-center gap-3">
-              <UserAvatar
-                :image-url="activeUserPhotoUrl"
-                :alt="t('common.profileAlt')"
-                size="xs"
-                variant="profile"
-                icon-size="md"
-                icon-tone="current"
-              />
-              <span>{{ t('common.profileAlt') }}</span>
-            </div>
-          </el-dropdown-item>
-
-          <el-dropdown-item v-if="loggedIn" @click="emit('show-net-position')">
-            <div class="flex items-center gap-3">
-              <el-icon class="menu-icon" :size="20"><DataAnalysis /></el-icon>
-              <span>{{ t('headerActions.expensesSummary') }}</span>
-            </div>
-          </el-dropdown-item>
-
-          <el-dropdown-item
-            v-if="canShowAdmin"
-            @click="emit('navigate', '/admin')"
-          >
-            <div class="flex items-center gap-3">
-              <el-icon class="menu-icon" :size="20"><Tools /></el-icon>
-              <span>{{ t('headerActions.adminConfig') }}</span>
-            </div>
-          </el-dropdown-item>
-
-          <el-dropdown-item
-            v-if="canShowManageTabs"
-            @click="emit('open-manage-tabs')"
-          >
+          <el-dropdown-item @click="emit('navigate', '/settings')">
             <div class="flex items-center gap-3">
               <el-icon class="menu-icon" :size="20"><Setting /></el-icon>
-              <span>{{ t('headerActions.manageTabs') }}</span>
+              <span>{{ t('headerActions.settings') }}</span>
             </div>
           </el-dropdown-item>
 
-          <div class="mobile-menu-divider" />
-        </template>
+          <el-dropdown-item v-if="loggedIn" @click="toggleLocale">
+            <div class="flex items-center gap-3">
+              <span class="menu-icon lang-badge">{{ toggleLocaleCode }}</span>
+              <span>{{ toggleLocaleLabel }}</span>
+            </div>
+          </el-dropdown-item>
 
-        <div class="mobile-menu-section-label">
-          {{ t('headerActions.preferences') }}
-        </div>
-        <el-dropdown-item @click="emit('toggle-theme')">
-          <div class="flex items-center gap-3">
-            <MoonIcon v-if="!isDarkTheme" class="w-5 h-5" />
-            <SunIcon v-else class="w-5 h-5" />
-            <span>{{
-              isDarkTheme
-                ? t('headerActions.lightMode')
-                : t('headerActions.darkMode')
-            }}</span>
-          </div>
-        </el-dropdown-item>
-
-        <el-dropdown-item v-if="loggedIn" @click="toggleLocale">
-          <div class="flex items-center gap-3">
-            <span class="menu-icon lang-badge">{{ toggleLocaleCode }}</span>
-            <span>{{ toggleLocaleLabel }}</span>
-          </div>
-        </el-dropdown-item>
-
-        <el-dropdown-item v-if="loggedIn" @click="emit('logout')">
-          <div class="flex items-center gap-3">
-            <el-icon class="menu-icon" :size="20"><SwitchButton /></el-icon>
-            <span>{{ t('headerActions.logout') }}</span>
-          </div>
-        </el-dropdown-item>
-      </el-dropdown-menu>
-    </template>
-  </el-dropdown>
+          <el-dropdown-item v-if="loggedIn" @click="emit('logout')">
+            <div class="flex items-center gap-3">
+              <el-icon class="menu-icon" :size="20"><SwitchButton /></el-icon>
+              <span>{{ t('headerActions.logout') }}</span>
+            </div>
+          </el-dropdown-item>
+        </el-dropdown-menu>
+      </template>
+    </el-dropdown>
+  </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
+import { useMobileScreen } from '@/composables'
 import {
   DataAnalysis,
   Setting,
@@ -213,10 +217,8 @@ import {
   AlertTriangleIcon,
   ChevronRightIcon,
   MenuIcon,
-  MoonIcon,
   QuestionCircleIcon,
   ShareIcon,
-  SunIcon,
   UsersIcon
 } from '@/components/icons'
 import { UserAvatar } from '@/components/generic-components'
@@ -271,9 +273,7 @@ const props = defineProps({
   routePath: { type: String, default: '' },
   isStuckState: { type: Boolean, default: false },
   canShowBugReport: { type: Boolean, default: false },
-  canShowManageTabs: { type: Boolean, default: false },
   canShowAdmin: { type: Boolean, default: false },
-  isDarkTheme: { type: Boolean, default: false },
   activeUserPhotoUrl: { type: String, default: '' }
 })
 
@@ -319,10 +319,24 @@ const emit = defineEmits([
   'share',
   'open-profile',
   'show-net-position',
-  'open-manage-tabs',
-  'toggle-theme',
   'logout'
 ])
+
+// This trigger is hidden by CSS (min-[768px]:hidden, same 768 breakpoint
+// passed below) once the viewport reaches desktop width, but Element
+// Plus's dropdown panel is teleported to <body> — outside that hidden
+// wrapper — so if it's already open when the window crosses 768px (e.g.
+// resizing/rotating without closing it first), the panel itself has
+// nothing forcing it shut and stays floating over the now-visible desktop
+// header. popper-class="mobile-menu-popper" above adds a matching CSS
+// safety net; this closes the dropdown's own state to match, so it
+// doesn't reopen looking stale and isn't left aria-expanded for
+// screen readers while invisible.
+const dropdownRef = ref(null)
+const { isMobileScreen } = useMobileScreen(768)
+watch(isMobileScreen, (isMobile) => {
+  if (!isMobile) dropdownRef.value?.handleClose()
+})
 </script>
 
 <style scoped>
@@ -352,6 +366,18 @@ const emit = defineEmits([
 </style>
 
 <style>
+/* Element Plus teleports the dropdown panel to <body>, outside the
+   min-[768px]:hidden wrapper on the hamburger trigger in the template —
+   so that class alone can't hide an already-open panel once the viewport
+   crosses into desktop width. This is the CSS-only backstop (the
+   script-side watch(isMobileScreen) above closes the dropdown's own state
+   to match, once JS has had a chance to run). Same 768px breakpoint. */
+@media (min-width: 768px) {
+  .mobile-menu-popper {
+    display: none !important;
+  }
+}
+
 .mobile-dropdown-menu {
   min-width: 200px;
   padding: 8px 0;

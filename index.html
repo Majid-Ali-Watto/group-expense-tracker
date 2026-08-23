@@ -30,6 +30,11 @@
       content="black-translucent"
     />
     <meta name="apple-mobile-web-app-title" content="Kharchafy" />
+    <!-- Warm up the Google Fonts connection ahead of the font <link> the
+         inline script below injects for whichever 2 fonts (base + Urdu)
+         are actually selected — see src/composables/useFontFamily.js. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <style>
       #private-route-reloader {
         display: none;
@@ -49,14 +54,7 @@
         justify-content: center;
         background: #f9fafb;
         color: #111827;
-        font-family:
-          Inter,
-          ui-sans-serif,
-          system-ui,
-          -apple-system,
-          BlinkMacSystemFont,
-          'Segoe UI',
-          sans-serif;
+        font-family: var(--font-family-base, 'Poppins', sans-serif);
       }
 
       html.private-route-reloading.dark-theme #private-route-reloader {
@@ -98,9 +96,73 @@
         }
       }
     </style>
-    <!-- Apply theme immediately to prevent flash -->
+    <!-- Apply theme + font-family immediately to prevent flash -->
     <script>
       ;(function () {
+        // Keep in sync with FONT_OPTIONS in src/composables/useFontFamily.js.
+        var GOOGLE_FONTS_CSS2 = 'https://fonts.googleapis.com/css2?family='
+        var FONT_STACKS = {
+          poppins: {
+            stack: "'Poppins', sans-serif",
+            href: GOOGLE_FONTS_CSS2 + 'Poppins:wght@300;400;500;600;700&display=swap'
+          },
+          inter: {
+            stack: "'Inter', sans-serif",
+            href: GOOGLE_FONTS_CSS2 + 'Inter:wght@300;400;500;600;700&display=swap'
+          },
+          roboto: {
+            stack: "'Roboto', sans-serif",
+            href: GOOGLE_FONTS_CSS2 + 'Roboto:wght@300;400;500;600;700&display=swap'
+          },
+          'open-sans': {
+            stack: "'Open Sans', sans-serif",
+            href: GOOGLE_FONTS_CSS2 + 'Open+Sans:wght@300;400;500;600;700&display=swap'
+          },
+          lato: {
+            stack: "'Lato', sans-serif",
+            href: GOOGLE_FONTS_CSS2 + 'Lato:wght@300;400;700&display=swap'
+          },
+          montserrat: {
+            stack: "'Montserrat', sans-serif",
+            href: GOOGLE_FONTS_CSS2 + 'Montserrat:wght@300;400;500;600;700&display=swap'
+          }
+        }
+        // Keep in sync with URDU_FONT_OPTIONS in src/composables/useFontFamily.js.
+        var URDU_FONTS = {
+          'noto-nastaliq-urdu': {
+            stack: "'Noto Nastaliq Urdu', sans-serif",
+            lineHeight: '2',
+            href:
+              GOOGLE_FONTS_CSS2 +
+              'Noto+Nastaliq+Urdu:wght@400;500;600;700&display=swap'
+          },
+          gulzar: {
+            stack: "'Gulzar', sans-serif",
+            lineHeight: '1.8',
+            href: GOOGLE_FONTS_CSS2 + 'Gulzar&display=swap'
+          },
+          'noto-naskh-arabic': {
+            stack: "'Noto Naskh Arabic', sans-serif",
+            lineHeight: '1.6',
+            href:
+              GOOGLE_FONTS_CSS2 +
+              'Noto+Naskh+Arabic:wght@400;500;600;700&display=swap'
+          }
+        }
+
+        // Mirrors ensureFontLinkLoaded() in useFontFamily.js — same
+        // data-font-id dedup so this pre-mount injection and that module's
+        // own eager apply() never both add the same <link>.
+        function loadFont(id, font) {
+          if (document.head.querySelector('link[data-font-id="' + id + '"]'))
+            return
+          var link = document.createElement('link')
+          link.rel = 'stylesheet'
+          link.href = font.href
+          link.setAttribute('data-font-id', id)
+          document.head.appendChild(link)
+        }
+
         const applyTheme = () => {
           const savedTheme = localStorage.getItem('theme') || 'light'
           const htmlElement = document.documentElement
@@ -120,6 +182,33 @@
           }
         }
 
+        const applyFontFamily = () => {
+          var savedFontId = localStorage.getItem('fontFamily')
+          var fontId = FONT_STACKS[savedFontId] ? savedFontId : 'poppins'
+          var font = FONT_STACKS[fontId]
+          document.documentElement.style.setProperty(
+            '--font-family-base',
+            font.stack
+          )
+          loadFont(fontId, font)
+
+          var savedUrduFontId = localStorage.getItem('urduFontFamily')
+          var urduFontId = URDU_FONTS[savedUrduFontId]
+            ? savedUrduFontId
+            : 'noto-nastaliq-urdu'
+          var urduFont = URDU_FONTS[urduFontId]
+          document.documentElement.style.setProperty(
+            '--font-family-urdu',
+            urduFont.stack
+          )
+          document.documentElement.style.setProperty(
+            '--font-line-height-urdu',
+            urduFont.lineHeight
+          )
+          loadFont(urduFontId, urduFont)
+        }
+
+        applyFontFamily()
         document.addEventListener('DOMContentLoaded', applyTheme)
       })()
     </script>

@@ -128,7 +128,9 @@ export function useSharedActivityEmail() {
       })
       .filter((user, index, list) => {
         if (!user?.uid) return false
-        return index === list.findIndex((candidate) => candidate?.uid === user.uid)
+        return (
+          index === list.findIndex((candidate) => candidate?.uid === user.uid)
+        )
       })
       .map((user) => ({
         uid: user.uid || '',

@@ -1,6 +1,8 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { VitePWA } from 'vite-plugin-pwa'
+import Components from 'unplugin-vue-components/vite'
+import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
 import generateSitemap from 'vite-ssg-sitemap'
 import { fileURLToPath, URL } from 'node:url'
 import { PUBLIC_BASE_PATHS } from './src/constants/publicPaths'
@@ -26,6 +28,15 @@ export default defineConfig({
       'Cross-Origin-Opener-Policy': 'same-origin-allow-popups'
     }
   },
+  ssr: {
+    // Element Plus's per-component style imports (see the Components
+    // plugin below) resolve through to raw .css files. Left external (the
+    // default for node_modules during vite-ssg's SSR/prerender pass), Node
+    // tries to `import()` those .css files itself at render time and
+    // fails — bundling element-plus into the SSR build instead lets Vite's
+    // own CSS handling neutralize them like it does everywhere else.
+    noExternal: ['element-plus']
+  },
   build: {
     chunkSizeWarningLimit: 1600, // Increase chunk size warning limit
     rollupOptions: {
@@ -33,15 +44,25 @@ export default defineConfig({
         manualChunks(id) {
           if (!id.includes('node_modules')) return
 
-          if (id.includes('element-plus')) return 'element-plus'
-          if (id.includes('firebase')) return 'firebase'
-          if (
-            id.includes('vue') ||
-            id.includes('pinia') ||
-            id.includes('vue-router')
-          ) {
+          // element-plus is deliberately NOT force-grouped here — with
+          // on-demand imports (see the Components plugin above), forcing
+          // everything matching this id into one shared chunk would undo
+          // the whole point: every route would go back to loading every
+          // Element Plus component used ANYWHERE in the app, even the
+          // public marketing pages that use none of them. Rollup's default
+          // chunking already hoists genuinely-shared pieces (e.g. whatever
+          // Header.vue uses, since it's on every route) while keeping
+          // page-specific components (Table, forms, admin panels) in that
+          // page's own chunk.
+          // Match actual package directory boundaries, not a loose
+          // substring — `id.includes('vue')` also matches unrelated
+          // packages' internal `*.vue.mjs`-suffixed compiled output (e.g.
+          // element-plus's own components), which used to silently pull
+          // all of Element Plus back into this "shared everywhere" bucket.
+          if (/\/node_modules\/(firebase|@firebase)\//.test(id))
+            return 'firebase'
+          if (/\/node_modules\/(vue|@vue|vue-router|pinia)\//.test(id))
             return 'vue-vendor'
-          }
         }
       },
       external: (id) => {
@@ -55,6 +76,12 @@ export default defineConfig({
   },
   plugins: [
     vue(),
+    // Resolves every <el-xxx> template tag to its own component + CSS
+    // import at build time — no more `app.use(ElementPlus)` bundling the
+    // entire ~80-component library into every route. See src/main.js for
+    // the small handful of Element Plus usages this can't reach (JS APIs
+    // like ElMessage, and the 3 files using resolveComponent()).
+    Components({ resolvers: [ElementPlusResolver()] }),
     VitePWA({
       registerType: 'prompt', // We control when the SW activates so we can show a notification first
       injectRegister: 'auto', // Automatically inject the service worker registration

@@ -116,6 +116,7 @@
 </template>
 
 <script setup>
+import { provide } from 'vue'
 import { App } from '@/scripts/layout'
 
 const {
@@ -125,6 +126,7 @@ const {
   NetPositionDialog,
   locale,
   loggedIn,
+  logout,
   tabs,
   displayName,
   activeTab,
@@ -153,6 +155,14 @@ const {
   dismissNotification,
   isAdminActive
 } = App()
+
+// The Settings page (a route, so a descendant of this component's own
+// subtree) needs to trigger a full logout for the "Reset app" action.
+// logout() closes over sync-listener teardown created inside App() —
+// App() itself can only run once (from here), so provide/inject is the
+// smallest way to reach it rather than re-extracting it into a singleton
+// composable the way useTheme.js already was.
+provide('appLogout', logout)
 </script>
 
 <style scoped>

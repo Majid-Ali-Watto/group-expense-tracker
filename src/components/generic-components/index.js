@@ -27,6 +27,7 @@ import ReceiptOcrField from './ReceiptOcrField.vue'
 import ReceiptUploadField from './ReceiptUploadField.vue'
 import ShowPaymentDetails from './ShowPaymentDetails.vue'
 import UserTabConfigDialog from './UserTabConfigDialog.vue'
+import UserTabConfigForm from './UserTabConfigForm.vue'
 import UserAvatar from './UserAvatar.vue'
 import WelcomeBanner from './WelcomeBanner.vue'
 import YourPositionInGroup from './YourPositionInGroup.vue'
@@ -64,6 +65,7 @@ export {
   ReceiptUploadField,
   ShowPaymentDetails,
   UserTabConfigDialog,
+  UserTabConfigForm,
   UserAvatar,
   WelcomeBanner,
   YourPositionInGroup

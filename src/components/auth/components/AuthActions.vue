@@ -33,11 +33,7 @@
         :loading="isSubmitting"
         :disabled="isSubmitting"
       >
-        {{
-          mode === 'register'
-            ? t('nav.register')
-            : t('nav.login')
-        }}
+        {{ mode === 'register' ? t('nav.register') : t('nav.login') }}
       </GenericButton>
     </div>
 

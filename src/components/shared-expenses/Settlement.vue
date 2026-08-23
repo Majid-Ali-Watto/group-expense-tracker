@@ -61,7 +61,10 @@
         </el-tag>
         <el-tag
           v-for="member in getAllSettlementMembers.filter(
-            (m) => !getSettlementApprovals.some((a) => getIdentity(a) === getIdentity(m))
+            (m) =>
+              !getSettlementApprovals.some(
+                (a) => getIdentity(a) === getIdentity(m)
+              )
           )"
           :key="member.uid"
           size="small"

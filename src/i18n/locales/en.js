@@ -34,7 +34,7 @@ export default {
     darkMode: 'Dark Mode',
     expensesSummary: 'Expenses Summary',
     adminConfig: 'Admin Config',
-    manageTabs: 'Manage Tabs',
+    settings: 'Settings',
     logout: 'Logout',
     pendingActions: '{count} pending actions',
     notifications: 'Notifications',
@@ -48,6 +48,45 @@ export default {
   },
   header: {
     tagline: 'Track · Split · Settle'
+  },
+  settings: {
+    title: 'Settings',
+    subtitle: 'Appearance and features, saved to this device.',
+    back: 'Back',
+    appearance: 'Appearance',
+    appearanceHint: 'Theme and fonts apply everywhere, right away.',
+    theme: 'Theme',
+    font: 'Font',
+    urduFont: 'Urdu Font',
+    urduFontNote: 'Used only when the interface language is Urdu.',
+    manageTabs: 'Manage Tabs',
+    loginForMore: 'Log in to choose which tabs are visible in your account.',
+    storage: 'Storage & Data',
+    storageHint: 'Cached files and preferences saved by your browser on this device.',
+    clearCache: 'Clear site cache',
+    clearCacheHint:
+      'Removes offline app files and images your browser cached for faster loading. Your account data on the server is not touched — everything re-downloads fresh. The page will reload.',
+    clearCacheConfirmTitle: 'Clear site cache?',
+    clearCacheConfirmMessage:
+      'This removes offline app files and cached images saved by your browser on this device. It does not affect your account or any data stored online. The page will reload.',
+    clearCacheSuccess: 'Site cache cleared.',
+    clearCacheError: 'Could not clear the site cache. Please try again.',
+    noCacheToClear: 'There is no cache to clear on this device.',
+    clearLocalStorage: 'Clear local storage',
+    clearLocalStorageHint:
+      'Erases preferences saved only on this device — theme, fonts, language, remembered login email, and pinned groups. You stay signed in. The page will reload.',
+    clearLocalStorageConfirmTitle: 'Clear local storage?',
+    clearLocalStorageConfirmMessage:
+      'This resets theme, fonts, language, remembered login email, and pinned groups back to default on this device. You will stay signed in. The page will reload.',
+    clearLocalStorageSuccess: 'Local storage cleared.',
+    clearLocalStorageError: 'Could not clear local storage. Please try again.',
+    resetApp: 'Reset app',
+    resetAppHint:
+      'Clears the site cache and local storage, then signs you out of this device. Use this if the app is misbehaving.',
+    resetAppConfirmTitle: 'Reset app?',
+    resetAppConfirmMessage:
+      'This clears the site cache and local storage, and signs you out of this device. You will need to log in again.',
+    resetAppError: 'Could not fully reset the app. Please try again.'
   },
   months: {
     january: 'January',

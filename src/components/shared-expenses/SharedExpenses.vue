@@ -82,22 +82,32 @@
                 </div>
 
                 <!-- Single Payer -->
-                <div v-if="formData.payerMode === 'single'" class="relative">
-                  <el-checkbox
-                    v-model="isMePayer"
-                    size="small"
-                    class="absolute top-0 right-0 z-10 text-xs"
-                    >{{ t('common.me') }}</el-checkbox
-                  >
+                <div
+                  v-if="formData.payerMode === 'single'"
+                  class="field-with-me-toggle"
+                >
                   <GenericDropDown
-                    :label="t('sharedExpenses.payer')"
                     prop="payer"
                     v-model="formData.payer"
                     :placeholder="t('sharedExpenses.selectPayer')"
                     :options="usersOptions"
                     :disabled="isMePayer"
                     required
-                  />
+                  >
+                    <template #label>
+                      <span
+                        class="inline-flex items-center justify-between w-full"
+                      >
+                        <span>{{ t('sharedExpenses.payer') }}</span>
+                        <el-checkbox
+                          v-model="isMePayer"
+                          size="small"
+                          class="text-xs"
+                          >{{ t('common.me') }}</el-checkbox
+                        >
+                      </span>
+                    </template>
+                  </GenericDropDown>
                 </div>
 
                 <!-- Multiple Payers -->
@@ -473,3 +483,13 @@ defineExpose({
   requestClose
 })
 </script>
+
+<style scoped>
+/* Element Plus's label-position="top" gives .el-form-item__label a
+   width:fit-content (only as wide as the label text) — override it here so
+   the "Me" checkbox, rendered via the #label slot, can sit flush at the
+   field's far right edge instead of immediately after the label text. */
+.field-with-me-toggle :deep(.el-form-item__label) {
+  width: 100%;
+}
+</style>

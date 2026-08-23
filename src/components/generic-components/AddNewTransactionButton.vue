@@ -165,16 +165,16 @@ defineEmits(['click', 'close'])
 }
 
 /* Dark theme: soften the bright pastel borders */
-:global(.dark-theme) .ant-card {
+:global(.dark-theme .ant-card) {
   border-color: rgba(34, 197, 94, 0.35);
 }
-:global(.dark-theme) .ant-card:hover {
+:global(.dark-theme .ant-card:hover) {
   border-color: var(--success-400);
 }
-:global(.dark-theme) .ant-card--close {
+:global(.dark-theme .ant-card--close) {
   border-color: rgba(239, 68, 68, 0.35);
 }
-:global(.dark-theme) .ant-card--close:hover {
+:global(.dark-theme .ant-card--close:hover) {
   border-color: #ef4444;
 }
 </style>

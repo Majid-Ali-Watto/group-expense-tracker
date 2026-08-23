@@ -66,9 +66,7 @@
             startReply(
               reportId,
               note,
-              note.authorType === 'admin'
-                ? t('common.admin')
-                : note.authorName
+              note.authorType === 'admin' ? t('common.admin') : note.authorName
             )
         "
         @cancel-reply="cancelReply"

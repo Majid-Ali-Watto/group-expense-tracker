@@ -1,5 +1,17 @@
-import ElementPlus from 'element-plus'
-import 'element-plus/dist/index.css'
+// Individual <el-xxx> components are resolved on demand at build time (see
+// the Components/ElementPlusResolver plugin in vite.config.js) instead of
+// registering the whole library here — that used to bundle all ~80
+// components + their CSS into every route, including pages that render no
+// Element Plus component at all. These 5 imports cover the only Element
+// Plus pieces the template-based resolver can't reach: the programmatic
+// JS APIs (ElMessage/ElMessageBox/ElNotification/ElLoading/ElButton, used
+// directly in JS across the app, e.g. src/utils/showAlerts.js) still need
+// their CSS loaded explicitly since they're never written as a <template> tag.
+import 'element-plus/es/components/message/style/css'
+import 'element-plus/es/components/message-box/style/css'
+import 'element-plus/es/components/notification/style/css'
+import 'element-plus/es/components/loading/style/css'
+import 'element-plus/es/components/button/style/css'
 import { createPinia } from 'pinia'
 import { ViteSSG } from 'vite-ssg'
 import App from './App.vue'
@@ -43,7 +55,6 @@ export const createApp = ViteSSG(
 
     app.provide('formatAmount', formatAmount)
     app.directive('overflow-popup', overflowPopup)
-    app.use(ElementPlus)
     app.use(createPinia())
     app.use(i18n)
 

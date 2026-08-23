@@ -28,9 +28,7 @@
         </div>
       </div>
       <div class="flex items-center justify-between gap-2">
-        <span class="position-text shrink-0">{{
-          t('tabs.sharedLoans')
-        }}</span>
+        <span class="position-text shrink-0">{{ t('tabs.sharedLoans') }}</span>
         <div class="flex items-center gap-1.5 flex-wrap justify-end">
           <el-tag
             :type="loanState.type"

@@ -2,11 +2,7 @@ import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { database, doc, deleteDoc, updateDoc, deleteField } from '@/firebase'
-import {
-  getManageTabsConfig,
-  getBugReportConfig,
-  useShare
-} from '@/composables'
+import { getBugReportConfig, useShare } from '@/composables'
 import { DB_NODES } from '@/constants'
 import { PUBLIC_NAV_LINKS } from '@/constants'
 import { confirmAction } from '@/utils/confirmAction'
@@ -24,12 +20,6 @@ export const Header = (props, emit, options = {}) => {
     authStore.getActiveUserUid
       ? userStore.getUserByUid(authStore.getActiveUserUid)
       : null
-  )
-  const canShowManageTabs = computed(
-    () =>
-      props.loggedIn &&
-      getManageTabsConfig().showManageTab &&
-      userStore.canActiveUserManageTabs
   )
   const canShowBugReport = computed(
     () => props.loggedIn && getBugReportConfig().report
@@ -141,7 +131,6 @@ export const Header = (props, emit, options = {}) => {
     notifVisible,
     activeUserProfile,
     canShowBugReport,
-    canShowManageTabs,
     canShowAdmin,
     isPublicPage,
     hasLocaleVariant,

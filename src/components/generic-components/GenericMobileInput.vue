@@ -1,5 +1,5 @@
 <template>
-  <component :is="wrapFormItem ? 'el-form-item' : 'div'" v-bind="wrapperProps">
+  <component :is="wrapFormItem ? ElFormItem : 'div'" v-bind="wrapperProps">
     <VueTelInput
       :model-value="modelValue"
       :auto-default-country="true"
@@ -28,6 +28,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { ElFormItem } from 'element-plus'
 import { VueTelInput } from 'vue-tel-input'
 import 'vue-tel-input/vue-tel-input.css'
 import { showError } from '@/utils/showAlerts'

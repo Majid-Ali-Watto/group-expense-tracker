@@ -585,7 +585,7 @@ onBeforeUnmount(() => {
   gap: 0.5rem;
 }
 
-:global(:root.dark-theme) .image-crop-editor__canvas {
+:global(:root.dark-theme .image-crop-editor__canvas) {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0)),
     repeating-conic-gradient(

@@ -1,5 +1,10 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;500;600;700&display=swap');
+/* Font stylesheets are NOT statically imported here on purpose — there are
+   6 base + 3 Urdu options (see FONT_OPTIONS/URDU_FONT_OPTIONS in
+   src/composables/useFontFamily.js) and a visitor only ever uses 2 of them.
+   Each is instead injected as a <link> on demand: once pre-mount, for
+   whichever 2 are currently selected, by the inline script in index.html;
+   and again by useFontFamily.js whenever the user picks a different one in
+   Settings. Both sites dedupe via a `data-font-id` attribute. */
 
 @tailwind base;
 @tailwind components;
@@ -7,7 +12,7 @@
 
 @layer base {
   * {
-    font-family: 'Poppins', sans-serif;
+    font-family: var(--font-family-base);
   }
 
   legend {
@@ -25,23 +30,24 @@
 
 body {
   min-width: 320px !important;
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-family-base);
 }
 
-/* Urdu public pages use a proper Nastaliq stack instead of the Latin-only
-   Poppins font — must be at least as specific as the `body` rule above.
-   Nastaliq's diagonal, stacked strokes need far more vertical room than
-   Latin text; 1.6 (fine for Poppins) is too tight and wrapped lines
-   overlap, so Urdu pages get a much larger line-height. `!important` is
-   required to win over component-scoped line-heights (e.g. h1 { line-
-   height: 1.08 }) tuned for Poppins. */
+/* Urdu pages use whichever Urdu font the user picked in Settings instead of
+   the Latin-only base font — must be at least as specific as the `body`
+   rule above. `--font-line-height-urdu` is set alongside `--font-family-urdu`
+   by useFontFamily.js: Nastaliq-style fonts' diagonal, stacked strokes need
+   far more vertical room than Latin text (1.6, fine for Poppins, is too
+   tight and wrapped lines overlap), while Naskh-style fonts need less.
+   `!important` is required to win over component-scoped line-heights (e.g.
+   h1 { line-height: 1.08 }) tuned for the base font. */
 html[lang='ur'] * {
-  font-family: 'Noto Nastaliq Urdu', 'Poppins', sans-serif;
-  line-height: 2 !important;
+  font-family: var(--font-family-urdu), var(--font-family-base), sans-serif;
+  line-height: var(--font-line-height-urdu, 2) !important;
 }
 
 html[lang='ur'] body {
-  font-family: 'Noto Nastaliq Urdu', 'Poppins', sans-serif;
+  font-family: var(--font-family-urdu), var(--font-family-base), sans-serif;
 }
 
 /* The brand/tagline stays short and single-line. The Nastaliq line-height
@@ -118,6 +124,9 @@ header > span {
 /* Theme CSS Variables */
 :root.light-theme,
 :root {
+  --font-family-base: 'Poppins', sans-serif;
+  --font-family-urdu: 'Noto Nastaliq Urdu', sans-serif;
+  --font-line-height-urdu: 2;
   --bg-primary: #ffffff;
   --bg-secondary: #f9fafb;
   --text-primary: #1f2937;

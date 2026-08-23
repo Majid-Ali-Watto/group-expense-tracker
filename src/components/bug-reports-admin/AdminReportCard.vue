@@ -160,9 +160,7 @@
           "
           :author-label-fn="
             (note) =>
-              note.authorType === 'admin'
-                ? t('common.admin')
-                : note.authorName
+              note.authorType === 'admin' ? t('common.admin') : note.authorName
           "
           :can-edit="(note) => note.authorType === 'admin'"
           :can-delete="(note) => note.authorType === 'admin'"

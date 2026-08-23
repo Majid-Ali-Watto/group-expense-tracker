@@ -177,7 +177,11 @@
         </el-descriptions-item>
         <el-descriptions-item :label="t('profile.accountStatusLabel')">
           <el-tag :type="isBlocked ? 'danger' : 'success'" effect="light">
-            {{ isBlocked ? t('admin.users.blockedColumn') : t('profile.activeTag') }}
+            {{
+              isBlocked
+                ? t('admin.users.blockedColumn')
+                : t('profile.activeTag')
+            }}
           </el-tag>
         </el-descriptions-item>
       </el-descriptions>
@@ -334,11 +338,7 @@
         />
       </el-form-item>
 
-      <el-form-item
-        v-else
-        :label="t('common.mobileNumber')"
-        prop="mobile"
-      >
+      <el-form-item v-else :label="t('common.mobileNumber')" prop="mobile">
         <GenericMobileInput
           ref="mobileInputRef"
           :model-value="form.mobile"
@@ -532,7 +532,9 @@ const ocrExtractionsLimit = computed(() => {
   return raw != null ? Number(raw) : null
 })
 const emailsSentLimitLabel = computed(() =>
-  emailsSentLimit.value == null ? t('admin.config.unlimitedPlaceholder') : emailsSentLimit.value
+  emailsSentLimit.value == null
+    ? t('admin.config.unlimitedPlaceholder')
+    : emailsSentLimit.value
 )
 const ocrExtractionsLimitLabel = computed(() =>
   ocrExtractionsLimit.value == null
@@ -541,7 +543,9 @@ const ocrExtractionsLimitLabel = computed(() =>
 )
 
 const accountTierLabel = computed(() =>
-  isBilledUser.value ? t('admin.users.paidTierColumn') : t('profile.freeTierTag')
+  isBilledUser.value
+    ? t('admin.users.paidTierColumn')
+    : t('profile.freeTierTag')
 )
 const accountTierTagType = computed(() =>
   isBilledUser.value ? 'success' : 'info'
@@ -1239,7 +1243,7 @@ watch(
   width: 100%;
 }
 
-:global(:root.dark-theme) .profile-hero {
+:global(:root.dark-theme .profile-hero) {
   background:
     radial-gradient(
       circle at top right,
@@ -1250,11 +1254,11 @@ watch(
   border-color: rgba(74, 222, 128, 0.2);
 }
 
-:global(:root.dark-theme) .profile-hero h3 {
+:global(:root.dark-theme .profile-hero h3) {
   color: #f9fafb;
 }
 
-:global(:root.dark-theme) .profile-hero p {
+:global(:root.dark-theme .profile-hero p) {
   color: #d1d5db;
 }
 </style>

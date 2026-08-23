@@ -45,9 +45,8 @@ export const Settlement = (props) => {
     if (!hasSettlementRequest.value) return false
     const uid = authStore.getActiveUserUid
     return (
-      settlementRequest.value.approvals?.some(
-        (a) => getIdentity(a) === uid
-      ) || false
+      settlementRequest.value.approvals?.some((a) => getIdentity(a) === uid) ||
+      false
     )
   })
 
@@ -68,7 +67,9 @@ export const Settlement = (props) => {
     const approvals = getSettlementApprovals.value
     const allMembers = getAllSettlementMembers.value
     return allMembers.every((member) =>
-      approvals.some((approval) => getIdentity(approval) === getIdentity(member))
+      approvals.some(
+        (approval) => getIdentity(approval) === getIdentity(member)
+      )
     )
   })
 

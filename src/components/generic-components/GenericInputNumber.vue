@@ -1,5 +1,5 @@
 <template>
-  <component :is="wrapFormItem ? 'el-form-item' : 'div'" v-bind="wrapperProps">
+  <component :is="wrapFormItem ? ElFormItem : 'div'" v-bind="wrapperProps">
     <el-input-number
       v-model="internalValue"
       :min="min"
@@ -18,6 +18,7 @@
 <script setup>
 import { ref, watch, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { ElFormItem } from 'element-plus'
 
 const { t } = useI18n()
 

@@ -118,3 +118,27 @@ export function clearAllCache() {
     // best-effort — nothing the user can act on
   })
 }
+
+/**
+ * Wipe EVERY Cache Storage bucket for this origin, not just the named
+ * image bucket above — including Workbox's own precache of the app shell
+ * (JS/CSS/HTML). This is heavier than clearAllCache() and is meant for the
+ * explicit "Clear site cache" action in Settings, not the silent call on
+ * every logout: deleting the precache there is harmless (the next
+ * navigation re-fetches over the network and the service worker
+ * re-precaches), but doing it on every logout would be wasteful.
+ *
+ * @returns {Promise<boolean>} true if Cache Storage was available and the
+ *   clear was attempted, false if this browser/context has no Cache
+ *   Storage at all (e.g. private browsing in some browsers) — lets the
+ *   caller decide whether to tell the user there was nothing to clear.
+ */
+export async function clearAllSiteCaches() {
+  _cache.clear()
+
+  if (typeof caches === 'undefined') return false
+
+  const names = await caches.keys()
+  await Promise.all(names.map((name) => caches.delete(name).catch(() => {})))
+  return true
+}

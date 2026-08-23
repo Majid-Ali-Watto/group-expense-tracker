@@ -1,5 +1,8 @@
 <template>
-  <component :is="wrapFormItem ? 'el-form-item' : 'div'" v-bind="wrapperProps">
+  <component :is="wrapFormItem ? ElFormItem : 'div'" v-bind="wrapperProps">
+    <template v-if="$slots.label" #label>
+      <slot name="label" />
+    </template>
     <el-select
       v-model="internalValue"
       :filterable="filterable"
@@ -26,6 +29,7 @@
 <script setup>
 import { computed, onErrorCaptured } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { ElFormItem } from 'element-plus'
 
 onErrorCaptured((err) => {
   if (err instanceof TypeError && err.message.includes('scrollTop'))

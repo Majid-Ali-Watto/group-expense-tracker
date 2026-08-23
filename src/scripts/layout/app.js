@@ -10,6 +10,7 @@ import {
 } from '@/stores'
 import { loadAppConfig, stopAppConfigSync } from '@/composables/useAppConfig'
 import { checkForAppUpdate } from '@/composables/useAppUpdate'
+import { useTheme } from '@/composables/useTheme'
 import useFireBase from '@/composables/useFirebase'
 import { useGlobalNotifications } from '@/composables/useGlobalNotifications'
 import { useInactivityLogout } from '@/composables/useInactivityLogout'
@@ -288,6 +289,13 @@ export const App = () => {
       return userStore.getActiveUserAdminFlags?.isAdmin === true
     }
 
+    // Settings isn't a tab — Appearance is available to every logged-in
+    // user, and the Manage Tabs section inside the page hides itself when
+    // the user isn't permitted (see canManageTabs in scripts/settings.js).
+    if (basePath === '/settings') {
+      return true
+    }
+
     if (!tab) return false
 
     return canAccessTab(tab, userTabConfig, {
@@ -315,77 +323,11 @@ export const App = () => {
       : getDefaultAccessiblePath(userTabConfig, groupId)
   }
 
-  // Theme management - Initialize immediately
-  // Guarded for SSG prerendering, where there is no localStorage (Node).
-  const savedTheme =
-    typeof localStorage !== 'undefined' ? localStorage.getItem('theme') : null
-  const isDarkTheme = ref(savedTheme === 'dark')
-  const THEME_PAGE_TURN_MS = 760
-  let themeAnimationTimeout = null
-  const applyClasses = (docAddCls, docRemoveCls, bodyAddCls, bodyRemoveCls) => {
-    if (typeof document === 'undefined') return
-    document.documentElement.classList.add(docAddCls)
-    document.documentElement.classList.remove(docRemoveCls)
-    document.body.classList.add(bodyAddCls)
-    document.body.classList.remove(bodyRemoveCls)
-  }
-  // Apply theme immediately on load
-  const applyTheme = () => {
-    if (isDarkTheme.value) {
-      applyClasses('dark-theme', 'light-theme', 'dark-theme', 'light-theme')
-    } else {
-      applyClasses('light-theme', 'dark-theme', 'light-theme', 'dark-theme')
-    }
-  }
-
-  const clearThemeAnimation = () => {
-    if (themeAnimationTimeout) {
-      clearTimeout(themeAnimationTimeout)
-      themeAnimationTimeout = null
-    }
-
-    document.body?.classList.remove(
-      'theme-page-turning',
-      'theme-page-turning-to-dark',
-      'theme-page-turning-to-light'
-    )
-  }
-
-  const animateThemeTurn = (nextTheme) => {
-    if (
-      typeof window !== 'undefined' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    ) {
-      return
-    }
-
-    const body = document.body
-    if (!body) return
-
-    clearThemeAnimation()
-    void body.offsetWidth
-
-    body.classList.add(
-      'theme-page-turning',
-      nextTheme === 'dark'
-        ? 'theme-page-turning-to-dark'
-        : 'theme-page-turning-to-light'
-    )
-
-    themeAnimationTimeout = window.setTimeout(() => {
-      clearThemeAnimation()
-    }, THEME_PAGE_TURN_MS)
-  }
-
-  // Apply theme immediately (before mount)
-  applyTheme()
-
-  const toggleTheme = () => {
-    isDarkTheme.value = !isDarkTheme.value
-    localStorage.setItem('theme', isDarkTheme.value ? 'dark' : 'light')
-    applyTheme()
-    animateThemeTurn(isDarkTheme.value ? 'dark' : 'light')
-  }
+  // Theme management — extracted to a module-scope singleton (see
+  // src/composables/useTheme.js) so the header's quick-toggle and the
+  // Settings page share the exact same reactive state.
+  const { isDarkTheme, toggleTheme, applyTheme, clearThemeAnimation } =
+    useTheme()
 
   // Apply theme on mount and restore session if Firebase Auth is still active
   let authUnsubscribe = null
@@ -1042,6 +984,7 @@ export const App = () => {
     NetPositionDialog,
     locale,
     loggedIn,
+    logout,
     authStore,
     tabStore,
     groupStore,

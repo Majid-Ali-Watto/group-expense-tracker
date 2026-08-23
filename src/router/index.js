@@ -41,6 +41,7 @@ const BugReportsAdmin = () =>
   import('@/components/bug-reports-admin/BugReportsAdmin.vue')
 const AdminConfig = () => import('@/components/admin/AdminConfig.vue')
 const SharedGroups = () => import('@/components/groups/SharedGroups.vue')
+const Settings = () => import('@/components/settings/Settings.vue')
 
 // Tab name → URL path mapping (base paths, without :groupId)
 export const TAB_ROUTES = {
@@ -70,7 +71,7 @@ export const GROUP_TABS = new Set([Tabs.SHARED_EXPENSES, Tabs.SHARED_LOANS])
 // Pure browser API — no Pinia / Vue reactive dependencies.
 // Safe to call anywhere including router guards without risk of circular reactivity.
 // Guarded for SSG prerendering, where there is no sessionStorage (Node).
-function hasSession() {
+export function hasSession() {
   return (
     typeof sessionStorage !== 'undefined' &&
     !!sessionStorage.getItem('_session')
@@ -256,6 +257,14 @@ export const routes = [
     path: '/admin',
     component: AdminConfig,
     meta: { requiresAuth: true, requiresAdmin: true, seo: SEO_PAGES.app }
+  },
+  {
+    // Reachable whether logged in or not — Appearance (theme/font) is
+    // useful before login too; the Manage Tabs section hides itself when
+    // there's no active session (see canManageTabs in scripts/settings.js).
+    path: '/settings',
+    component: Settings,
+    meta: { seo: SEO_PAGES.app }
   },
   // Catch-all → redirect based on session
   {

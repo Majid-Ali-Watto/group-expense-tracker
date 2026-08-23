@@ -32,9 +32,7 @@
           :logged-in="loggedIn"
           :is-public-page="isPublicPage"
           :is-stuck-state="isStuckState"
-          :is-dark-theme="isDarkTheme"
           :can-show-bug-report="canShowBugReport"
-          :can-show-manage-tabs="canShowManageTabs"
           :can-show-admin="canShowAdmin"
           :active-user-photo-url="activeUserProfile?.photoUrl || ''"
           @open-profile="showProfile = true"
@@ -42,9 +40,7 @@
           @open-help="showHelp = true"
           @navigate="navigateTo"
           @share="shareCurrentUrl"
-          @toggle-theme="toggleTheme"
           @show-net-position="handleNetPosition"
-          @open-manage-tabs="openManageTabs"
           @logout="confirmLogout"
         />
 
@@ -58,9 +54,7 @@
           :route-path="route.path"
           :is-stuck-state="isStuckState"
           :can-show-bug-report="canShowBugReport"
-          :can-show-manage-tabs="canShowManageTabs"
           :can-show-admin="canShowAdmin"
-          :is-dark-theme="isDarkTheme"
           :active-user-photo-url="activeUserProfile?.photoUrl || ''"
           @tab-change="emit('tab-change', $event)"
           @open-profile="showProfile = true"
@@ -69,8 +63,6 @@
           @open-bug-report="showBugReport = true"
           @share="shareCurrentUrl"
           @show-net-position="handleNetPosition"
-          @open-manage-tabs="openManageTabs"
-          @toggle-theme="toggleTheme"
           @logout="confirmLogout"
         />
       </div>
@@ -101,12 +93,6 @@
     <BugReportPage :view="bugReportView" :open-bug-id="bugReportOpenId" />
   </el-dialog>
 
-  <HeaderManageTabsDialog
-    v-if="showManageTabs"
-    :visible="showManageTabs"
-    @update:visible="showManageTabs = $event"
-  />
-
   <ProfileDialog
     v-if="showProfile"
     :visible="showProfile"
@@ -132,9 +118,6 @@ defineOptions({ inheritAttrs: false })
 const HelpDialog = loadAsyncComponent(
   () => import('../generic-components/HelpDialog.vue')
 )
-const HeaderManageTabsDialog = loadAsyncComponent(
-  () => import('../header/HeaderManageTabsDialog.vue')
-)
 const BugReportPage = loadAsyncComponent(
   () => import('../bug-report/BugReport.vue')
 )
@@ -159,7 +142,6 @@ const emit = defineEmits([
 
 const showHelp = ref(false)
 const showBugReport = ref(false)
-const showManageTabs = ref(false)
 const showProfile = ref(false)
 const bugReportView = ref('form')
 const bugReportOpenId = ref(null)
@@ -170,7 +152,6 @@ const {
   notifVisible,
   activeUserProfile,
   canShowBugReport,
-  canShowManageTabs,
   canShowAdmin,
   isPublicPage,
   hasLocaleVariant,
@@ -200,17 +181,6 @@ watch(canShowBugReport, (allowed) => {
     showBugReport.value = false
   }
 })
-
-watch(canShowManageTabs, (allowed) => {
-  if (!allowed && showManageTabs.value) {
-    showManageTabs.value = false
-  }
-})
-
-function openManageTabs() {
-  if (!canShowManageTabs.value) return
-  showManageTabs.value = true
-}
 </script>
 
 <style scoped>

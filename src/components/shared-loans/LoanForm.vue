@@ -105,32 +105,41 @@
 
           <el-row :gutter="12">
             <el-col :xs="24" :sm="12" :md="12" :lg="12">
-              <div v-if="!isPersonal" class="relative">
-                <el-checkbox
-                  v-model="isMeGiver"
-                  :disabled="isMeReceiver"
-                  size="small"
-                  class="absolute top-0 right-0 z-10 text-xs"
-                  >{{ t('common.me') }}</el-checkbox
-                >
+              <div v-if="!isPersonal" class="field-with-me-toggle">
                 <GenericDropDown
                   v-model="formData.loanGiver"
-                  :label="t('sharedLoans.loanGiver')"
                   prop="loanGiver"
                   :options="options"
                   :placeholder="t('sharedLoans.selectLoanGiver')"
                   :disabled="isMeGiver"
                   required
-                />
-              </div>
-              <div v-if="isPersonal" class="relative">
-                <el-checkbox
-                  v-model="isMeGiver"
-                  :disabled="isMeReceiver"
-                  size="small"
-                  class="absolute top-0 right-0 z-10 text-xs"
-                  >{{ t('common.me') }}</el-checkbox
                 >
+                  <template #label>
+                    <span
+                      class="inline-flex items-center justify-between w-full"
+                    >
+                      <span>{{ t('sharedLoans.loanGiver') }}</span>
+                      <el-checkbox
+                        v-model="isMeGiver"
+                        :disabled="isMeReceiver"
+                        size="small"
+                        class="text-xs"
+                        >{{ t('common.me') }}</el-checkbox
+                      >
+                    </span>
+                  </template>
+                </GenericDropDown>
+              </div>
+              <div v-if="isPersonal">
+                <div class="flex justify-end mb-1">
+                  <el-checkbox
+                    v-model="isMeGiver"
+                    :disabled="isMeReceiver"
+                    size="small"
+                    class="text-xs"
+                    >{{ t('common.me') }}</el-checkbox
+                  >
+                </div>
                 <div v-if="!isMeGiver" class="mb-1">
                   <button
                     type="button"
@@ -197,32 +206,41 @@
               </div>
             </el-col>
             <el-col :xs="24" :sm="12" :md="12" :lg="12">
-              <div v-if="!isPersonal" class="relative">
-                <el-checkbox
-                  v-model="isMeReceiver"
-                  :disabled="isMeGiver"
-                  size="small"
-                  class="absolute top-0 right-0 z-10 text-xs"
-                  >{{ t('common.me') }}</el-checkbox
-                >
+              <div v-if="!isPersonal" class="field-with-me-toggle">
                 <GenericDropDown
                   v-model="formData.loanReceiver"
-                  :label="t('sharedLoans.loanReceiver')"
                   prop="loanReceiver"
                   :options="options"
                   :placeholder="t('sharedLoans.selectLoanReceiver')"
                   :disabled="isMeReceiver"
                   required
-                />
-              </div>
-              <div v-if="isPersonal" class="relative">
-                <el-checkbox
-                  v-model="isMeReceiver"
-                  :disabled="isMeGiver"
-                  size="small"
-                  class="absolute top-0 right-0 z-10 text-xs"
-                  >{{ t('common.me') }}</el-checkbox
                 >
+                  <template #label>
+                    <span
+                      class="inline-flex items-center justify-between w-full"
+                    >
+                      <span>{{ t('sharedLoans.loanReceiver') }}</span>
+                      <el-checkbox
+                        v-model="isMeReceiver"
+                        :disabled="isMeGiver"
+                        size="small"
+                        class="text-xs"
+                        >{{ t('common.me') }}</el-checkbox
+                      >
+                    </span>
+                  </template>
+                </GenericDropDown>
+              </div>
+              <div v-if="isPersonal">
+                <div class="flex justify-end mb-1">
+                  <el-checkbox
+                    v-model="isMeReceiver"
+                    :disabled="isMeGiver"
+                    size="small"
+                    class="text-xs"
+                    >{{ t('common.me') }}</el-checkbox
+                  >
+                </div>
                 <div v-if="!isMeReceiver" class="mb-1">
                   <button
                     type="button"
@@ -404,3 +422,13 @@ defineExpose({
   requestClose
 })
 </script>
+
+<style scoped>
+/* Element Plus's label-position="top" gives .el-form-item__label a
+   width:fit-content (only as wide as the label text) — override it here so
+   the "Me" checkbox, rendered via the #label slot, can sit flush at the
+   field's far right edge instead of immediately after the label text. */
+.field-with-me-toggle :deep(.el-form-item__label) {
+  width: 100%;
+}
+</style>

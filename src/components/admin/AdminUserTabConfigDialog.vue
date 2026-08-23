@@ -234,8 +234,9 @@
 </template>
 
 <script setup>
-import { defineComponent, h, ref, resolveComponent, watch } from 'vue'
+import { defineComponent, h, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { ElSwitch } from 'element-plus'
 import {
   USER_TAB_KEYS,
   buildUserTabConfig,
@@ -439,7 +440,7 @@ const ToggleRow = defineComponent({
             { class: 'text-sm text-gray-700 dark:text-gray-300' },
             props.label
           ),
-          h(resolveComponent('el-switch'), {
+          h(ElSwitch, {
             modelValue: props.value,
             'onUpdate:modelValue': (value) => emit('change', value)
           })
