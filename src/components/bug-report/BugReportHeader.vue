@@ -8,7 +8,7 @@
         {{
           activeView === 'my-reports'
             ? t('bugReports.myReports')
-            : t('bugReports.reportBug')
+            : t('headerActions.reportBug')
         }}
       </h1>
       <p class="bug-subtitle">

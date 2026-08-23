@@ -62,7 +62,7 @@
             custom-class="!w-fit !px-3"
             @click="navigateToSharedExpense()"
           >
-            {{ t('groups.addExpense') }}
+            {{ t('personalExpenses.addExpense') }}
           </GenericButton>
           <GenericButton
             type="success"
@@ -70,7 +70,7 @@
             custom-class="!w-fit !px-3"
             @click="navigateToSharedLoan()"
           >
-            {{ t('groups.addLoan') }}
+            {{ t('sharedLoans.addLoan') }}
           </GenericButton>
         </div>
       </div>

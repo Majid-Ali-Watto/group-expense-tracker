@@ -22,7 +22,7 @@ defineEmits(['update:mode'])
 
 const { t } = useI18n()
 const options = computed(() => [
-  { label: t('auth.modeToggle.login'), value: 'login' },
-  { label: t('auth.modeToggle.register'), value: 'register' }
+  { label: t('nav.login'), value: 'login' },
+  { label: t('nav.register'), value: 'register' }
 ])
 </script>

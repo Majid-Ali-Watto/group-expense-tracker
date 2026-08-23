@@ -153,7 +153,7 @@ export function getRules(locale = 'en') {
         validator: (_rule, value, callback) => {
           if (!value) return callback()
           if (!isValidPhoneNumber(value)) {
-            callback(new Error(m.loanMobilePattern))
+            callback(new Error(m.mobilePattern))
           } else {
             callback()
           }
@@ -167,7 +167,7 @@ export function getRules(locale = 'en') {
         validator: (_rule, value, callback) => {
           if (!value) return callback()
           if (!isValidPhoneNumber(value)) {
-            callback(new Error(m.loanMobilePattern))
+            callback(new Error(m.mobilePattern))
           } else {
             callback()
           }

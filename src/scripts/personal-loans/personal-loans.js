@@ -103,7 +103,7 @@ export const PersonalLoans = () => {
       monthsRef: months,
       loadedRef: monthsLoaded,
       errorHandler: (error) => {
-        showError(t('personalLoans.failedLoadMonths'))
+        showError(t('common.failedLoadMonths'))
         console.error(error)
       },
       onResolved: (resolvedMonths) => {
@@ -229,7 +229,7 @@ export const PersonalLoans = () => {
       // Ignore permission errors that fire after logout — Firebase revokes the
       // auth token before reads complete (on component unmount).
       if (authStore.getActiveUserUid) {
-        showError(t('personalLoans.failedLoadLoans'))
+        showError(t('sharedLoans.failedLoadLoans'))
         console.error(error)
       }
     } finally {

@@ -1,7 +1,7 @@
 <template>
   <div>
     <fieldset class="border border-gray-300 rounded-lg p-4">
-      <legend class="font-medium">{{ t('groups.createGroupLegend') }}</legend>
+      <legend class="font-medium">{{ t('users.createGroup') }}</legend>
       <el-form :model="groupForm" :rules="groupRules" ref="groupFormRef">
         <GenericInputField
           v-model="groupForm.name"

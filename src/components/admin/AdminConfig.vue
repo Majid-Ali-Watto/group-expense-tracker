@@ -6,7 +6,7 @@
           t('admin.config.back')
         }}</el-button>
         <h1 class="text-xl font-bold text-gray-800 dark:text-gray-100">
-          {{ t('admin.config.title') }}
+          {{ t('headerActions.adminConfig') }}
         </h1>
       </div>
 
@@ -85,7 +85,7 @@
         <el-card shadow="never">
           <template #header>
             <ConfigCardHeader
-              :title="t('admin.config.manageTabsTitle')"
+              :title="t('headerActions.manageTabs')"
               path="configs/manage-tabs"
             />
           </template>
@@ -102,7 +102,7 @@
         <el-card shadow="never">
           <template #header>
             <ConfigCardHeader
-              :title="t('admin.config.bugReportsTitle')"
+              :title="t('tabs.bugReports')"
               path="configs/bugs"
             />
           </template>
@@ -119,7 +119,7 @@
         <el-card shadow="never">
           <template #header>
             <ConfigCardHeader
-              :title="t('admin.config.emailTitle')"
+              :title="t('common.email')"
               path="configs/email"
             />
           </template>

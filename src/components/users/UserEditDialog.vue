@@ -13,15 +13,15 @@
       ref="formRef"
       label-position="top"
     >
-      <el-form-item :label="t('users.mobileNumber')" prop="mobile">
+      <el-form-item :label="t('common.mobileNumber')" prop="mobile">
         <GenericMobileInput
           :model-value="localForm.mobile"
           :wrap-form-item="false"
-          :placeholder="t('users.mobilePlaceholder')"
+          :placeholder="t('sharedLoans.mobilePlaceholder')"
           @update:modelValue="localForm.mobile = $event"
         />
       </el-form-item>
-      <el-form-item :label="t('users.fullName')" prop="name">
+      <el-form-item :label="t('common.fullName')" prop="name">
         <GenericInputField
           :model-value="localForm.name"
           :wrap-form-item="false"
@@ -40,7 +40,7 @@
           {{ t('common.cancel') }}
         </el-button>
         <el-button type="primary" size="default" @click="handleSave">
-          {{ t('users.save') }}
+          {{ t('common.save') }}
         </el-button>
       </div>
     </template>

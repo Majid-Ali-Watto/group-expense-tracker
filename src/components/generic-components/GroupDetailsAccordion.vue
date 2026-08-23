@@ -51,7 +51,7 @@
               @click="showMembersDialog = true"
             >
               {{
-                t('groups.moreCount', {
+                t('table.more', {
                   count: memberCount - initialMemberLoadCount
                 })
               }}
@@ -68,7 +68,7 @@
         <!-- Members Dialog -->
         <el-dialog
           v-model="showMembersDialog"
-          :title="t('groups.membersDialogTitle', { count: memberCount })"
+          :title="t('groups.membersCount', { count: memberCount })"
           width="340px"
           append-to-body
           align-center

@@ -46,7 +46,7 @@
           style="min-width: 100px"
           @click="$emit('submit')"
         >
-          {{ t('groups.sendRequest') }}
+          {{ t('common.sendRequest') }}
         </el-button>
       </div>
     </template>

@@ -86,7 +86,7 @@
         </template>
 
         <div class="mobile-menu-section-label">
-          {{ t('headerActions.actions') }}
+          {{ t('common.actions') }}
         </div>
         <el-dropdown-item v-if="!isPublicPage" @click="emit('open-help')">
           <div class="flex items-center gap-3">
@@ -121,13 +121,13 @@
             <div class="flex items-center gap-3">
               <UserAvatar
                 :image-url="activeUserPhotoUrl"
-                :alt="t('headerActions.profile')"
+                :alt="t('common.profileAlt')"
                 size="xs"
                 variant="profile"
                 icon-size="md"
                 icon-tone="current"
               />
-              <span>{{ t('headerActions.profile') }}</span>
+              <span>{{ t('common.profileAlt') }}</span>
             </div>
           </el-dropdown-item>
 

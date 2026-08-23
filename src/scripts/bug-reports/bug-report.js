@@ -36,17 +36,17 @@ const BUG_NUMBER_PAD = 6
 
 export const ALL_CATEGORIES = [
   {
-    labelKey: 'bugReports.categories.sharedExpenses',
+    labelKey: 'tabs.sharedExpenses',
     value: 'shared-expenses'
   },
-  { labelKey: 'bugReports.categories.sharedLoans', value: 'shared-loans' },
-  { labelKey: 'bugReports.categories.personalLoans', value: 'personal-loans' },
+  { labelKey: 'tabs.sharedLoans', value: 'shared-loans' },
+  { labelKey: 'tabs.personalLoans', value: 'personal-loans' },
   {
-    labelKey: 'bugReports.categories.personalExpenses',
+    labelKey: 'tabs.personalExpenses',
     value: 'personal-expenses'
   },
-  { labelKey: 'bugReports.categories.groups', value: 'groups' },
-  { labelKey: 'bugReports.categories.notifications', value: 'notifications' },
+  { labelKey: 'tabs.groups', value: 'groups' },
+  { labelKey: 'headerActions.notifications', value: 'notifications' },
   { labelKey: 'bugReports.categories.auth', value: 'auth' },
   { labelKey: 'bugReports.categories.settlement', value: 'settlement' },
   { labelKey: 'bugReports.categories.export', value: 'export' },
@@ -62,10 +62,10 @@ export const SEVERITIES = [
 ]
 
 const STATUS_LABEL_KEYS = {
-  open: 'bugReports.statuses.open',
+  open: 'common.open',
   'in-progress': 'bugReports.statuses.inProgress',
   'needs-info': 'bugReports.statuses.needsInfo',
-  duplicate: 'bugReports.statuses.duplicate',
+  duplicate: 'common.duplicate',
   'wont-fix': 'bugReports.statuses.wontFix',
   resolved: 'bugReports.statuses.resolved',
   closed: 'bugReports.statuses.closed'

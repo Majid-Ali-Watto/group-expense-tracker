@@ -71,7 +71,7 @@
         :loading="isSubmitting"
         @click="handleChangePassword"
       >
-        {{ t('auth.changePassword.submit') }}
+        {{ t('auth.changePassword.title') }}
       </el-button>
     </template>
   </el-dialog>

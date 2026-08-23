@@ -31,14 +31,14 @@
             :model-value="selection[USER_TAB_KEYS.GROUPS]"
             disabled
           >
-            {{ t('auth.tabConfig.groups') }}
+            {{ t('tabs.groups') }}
           </el-checkbox>
           <el-checkbox
             class="!whitespace-normal"
             :model-value="selection[USER_TAB_KEYS.USERS]"
             @update:model-value="updateSelection(USER_TAB_KEYS.USERS, $event)"
           >
-            {{ t('auth.tabConfig.users') }}
+            {{ t('tabs.users') }}
           </el-checkbox>
           <el-checkbox
             class="!whitespace-normal"
@@ -47,7 +47,7 @@
               updateSelection(USER_TAB_KEYS.SHARED_EXPENSES, $event)
             "
           >
-            {{ t('auth.tabConfig.sharedExpenses') }}
+            {{ t('tabs.sharedExpenses') }}
           </el-checkbox>
           <el-checkbox
             class="!whitespace-normal"
@@ -56,7 +56,7 @@
               updateSelection(USER_TAB_KEYS.SHARED_LOANS, $event)
             "
           >
-            {{ t('auth.tabConfig.sharedLoans') }}
+            {{ t('tabs.sharedLoans') }}
           </el-checkbox>
         </div>
 
@@ -112,7 +112,7 @@
               updateSelection(USER_TAB_KEYS.PERSONAL_EXPENSES, $event)
             "
           >
-            {{ t('auth.tabConfig.personalExpenses') }}
+            {{ t('tabs.personalExpenses') }}
           </el-checkbox>
           <el-checkbox
             class="!whitespace-normal"
@@ -121,7 +121,7 @@
               updateSelection(USER_TAB_KEYS.PERSONAL_LOANS, $event)
             "
           >
-            {{ t('auth.tabConfig.personalLoans') }}
+            {{ t('tabs.personalLoans') }}
           </el-checkbox>
         </div>
       </section>
@@ -171,7 +171,7 @@ const emit = defineEmits([
 
 const resolvedTitle = computed(() => props.title || t('auth.tabConfig.title'))
 const resolvedConfirmText = computed(
-  () => props.confirmText || t('auth.tabConfig.confirm')
+  () => props.confirmText || t('auth.googleMobileDialog.continue')
 )
 const resolvedCancelText = computed(
   () => props.cancelText || t('common.cancel')

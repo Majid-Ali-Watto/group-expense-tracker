@@ -871,9 +871,9 @@ export const Table = (props) => {
       { key: 'category', label: t('common.category') },
       { key: 'date', label: t('common.date') },
       { key: 'description', label: t('common.description') },
-      { key: 'giverName', label: t('sharedLoans.loanGiverName') },
+      { key: 'giverName', label: t('sharedLoans.loanGiver') },
       { key: 'loanGiver', label: t('sharedLoans.loanGiverMobile') },
-      { key: 'receiverName', label: t('sharedLoans.loanReceiverName') },
+      { key: 'receiverName', label: t('sharedLoans.loanReceiver') },
       { key: 'loanReceiver', label: t('sharedLoans.loanReceiverMobile') },
       { key: 'whoAdded', label: t('table.addedBy') },
       { key: 'whenAdded', label: t('table.whenAdded') }
@@ -1150,7 +1150,7 @@ export const Table = (props) => {
         `${actionLabel} ${eligible.length} item(s)?${skippedNote}`,
         t('table.bulkDeleteTitle'),
         {
-          confirmButtonText: t('table.confirm'),
+          confirmButtonText: t('common.confirm'),
           cancelButtonText: t('common.cancel'),
           type: 'error'
         }
@@ -1416,7 +1416,7 @@ export const Table = (props) => {
       {
         key: '__actions__',
         dataKey: '__actions__',
-        title: t('table.actions'),
+        title: t('common.actions'),
         width: ACTIONS_COL_WIDTH,
         align: 'center'
       }

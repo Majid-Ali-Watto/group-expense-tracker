@@ -37,8 +37,8 @@
         class="hidden sm:flex sm:items-center gap-3 px-3 mt-3 text-xs font-semibold text-gray-500 uppercase tracking-wide"
       >
         <div class="flex-1 min-w-0">{{ t('users.nameMobile') }}</div>
-        <div class="flex-1">{{ t('users.groups') }}</div>
-        <div class="flex-shrink-0 w-48">{{ t('users.actions') }}</div>
+        <div class="flex-1">{{ t('tabs.groups') }}</div>
+        <div class="flex-shrink-0 w-48">{{ t('common.actions') }}</div>
       </div>
 
       <div v-if="filteredUsers.length > 0" class="space-y-3 mt-1">

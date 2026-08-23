@@ -86,7 +86,7 @@ export const PersonalExpenseList = () => {
       monthsRef: months,
       loadedRef: monthsLoaded,
       errorHandler: (error) => {
-        showError(t('personalExpenses.failedLoadMonths'))
+        showError(t('common.failedLoadMonths'))
         console.error(error)
       },
       onResolved: (resolvedMonths) => {
@@ -189,7 +189,7 @@ export const PersonalExpenseList = () => {
       (error) => {
         expensesLoaded.value = true
         if (activeUserUid.value) {
-          showError(t('personalExpenses.failedLoadExpenses'))
+          showError(t('sharedExpenses.failedLoadExpenses'))
           console.error(error)
         }
       }

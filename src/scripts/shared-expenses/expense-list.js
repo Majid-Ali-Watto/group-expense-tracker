@@ -135,7 +135,7 @@ export const ExpenseList = (props) => {
       monthsRef: months,
       loadedRef: monthsLoaded,
       errorHandler: () => {
-        showError(t('sharedExpenses.failedLoadMonths'))
+        showError(t('common.failedLoadMonths'))
       },
       onResolved: (resolvedMonths) => {
         if (resolvedMonths.length) selectedMonth.value = getCurrentMonth()
@@ -329,7 +329,7 @@ export const ExpenseList = (props) => {
     {
       key: 'payer',
       label: t('sharedExpenses.payer'),
-      placeholder: t('sharedExpenses.selectPayer_filter'),
+      placeholder: t('sharedExpenses.selectPayer'),
       modelValue: selectedFriend.value,
       options: [
         { label: t('common.all'), value: 'All' },
@@ -341,7 +341,7 @@ export const ExpenseList = (props) => {
     },
     {
       key: 'payerMode',
-      label: t('sharedExpenses.payerModeFilter'),
+      label: t('sharedExpenses.payerMode'),
       filterable: false,
       modelValue: selectedPayerMode.value,
       options: [
@@ -355,7 +355,7 @@ export const ExpenseList = (props) => {
     },
     {
       key: 'splitMode',
-      label: t('sharedExpenses.splitModeFilter'),
+      label: t('sharedExpenses.splitMode'),
       filterable: false,
       modelValue: selectedSplitMode.value,
       options: [

@@ -31,7 +31,7 @@
             v-model="form.category"
             :label="t('common.category')"
             prop="category"
-            :placeholder="t('personalExpenses.addOrSelectCategory')"
+            :placeholder="t('sharedLoans.addOrSelectCategory')"
             :options="categoryOptions"
             :allow-create="true"
             required
@@ -93,7 +93,7 @@
             >
           </span>
           <el-button size="default" type="primary" plain @click="addSplitItem">
-            {{ t('personalExpenses.addItem') }}
+            {{ t('sharedExpenses.addItem') }}
           </el-button>
         </div>
 
@@ -174,8 +174,8 @@
             <span class="text-gray-600">
               {{
                 receiptTax != null && receiptTax > 0
-                  ? t('personalExpenses.itemsTotalPlusTax')
-                  : t('personalExpenses.itemsTotal')
+                  ? t('sharedExpenses.itemsTotalPlusTax')
+                  : t('sharedExpenses.itemsTotal')
               }}:
             </span>
             <span

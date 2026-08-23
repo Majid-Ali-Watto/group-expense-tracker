@@ -12,7 +12,7 @@
     <div v-else class="space-y-2 text-sm">
       <div class="flex justify-between gap-2">
         <span class="position-text shrink-0">{{
-          t('groups.sharedExpensesLabel')
+          t('tabs.sharedExpenses')
         }}</span>
         <div class="flex items-center gap-1.5 flex-wrap justify-end">
           <el-tag
@@ -29,7 +29,7 @@
       </div>
       <div class="flex items-center justify-between gap-2">
         <span class="position-text shrink-0">{{
-          t('groups.sharedLoansLabel')
+          t('tabs.sharedLoans')
         }}</span>
         <div class="flex items-center gap-1.5 flex-wrap justify-end">
           <el-tag
@@ -98,9 +98,9 @@ const balance = computed(() => props.getGroupBalances(props.group.id) || {})
 const makeState = (
   val,
   {
-    pos = t('groups.willReceive'),
-    neg = t('groups.willPay'),
-    zero = t('groups.settled')
+    pos = t('sharedLoans.willReceive'),
+    neg = t('sharedLoans.willPay'),
+    zero = t('sharedLoans.settled')
   } = {}
 ) => {
   const num = Number(val || 0)
@@ -124,7 +124,7 @@ const netState = computed(() =>
   makeState((balance.value.expenses || 0) + (balance.value.loans || 0), {
     pos: t('groups.youGet'),
     neg: t('groups.youPay'),
-    zero: t('groups.settled')
+    zero: t('sharedLoans.settled')
   })
 )
 </script>

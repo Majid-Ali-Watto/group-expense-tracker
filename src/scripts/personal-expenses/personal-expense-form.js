@@ -199,7 +199,7 @@ export const PersonalExpenseForm = (props, emit) => {
       const total = parseFloat(form.value.amount || 0)
       if (total > 0 && Math.abs(splitItemsTotal.value - total) > 0.01) {
         showError(
-          t('personalExpenses.splitItemsTotalMismatch', {
+          t('sharedExpenses.splitItemsTotalMismatch', {
             splitTotal: splitItemsTotal.value.toFixed(2),
             amount: total.toFixed(2)
           })

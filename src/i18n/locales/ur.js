@@ -21,7 +21,6 @@ export default {
     navigation: 'نیویگیشن',
     explore: 'دیکھیں',
     account: 'اکاؤنٹ',
-    actions: 'اقدامات',
     workspace: 'ورک اسپیس',
     preferences: 'ترجیحات',
     reportBug: 'بگ رپورٹ کریں',
@@ -33,7 +32,6 @@ export default {
     switchToDarkMode: 'ڈارک موڈ پر جائیں',
     lightMode: 'لائٹ موڈ',
     darkMode: 'ڈارک موڈ',
-    profile: 'پروفائل',
     expensesSummary: 'اخراجات کا خلاصہ',
     adminConfig: 'ایڈمن کنفگ',
     manageTabs: 'ٹیبز منظم کریں',
@@ -75,7 +73,6 @@ export default {
     heroTitle: 'دوستوں، گھر والوں، اور ٹرپ کا خرچ آسانی سے سنبھالیں',
     heroText:
       'خرچے فائی سے بل تقسیم کریں، مشترکہ قرضے ٹریک کریں، ذاتی خرچ لکھیں، رسیدیں لگائیں، اہم تبدیلیوں کی منظوری لیں، اور ضرورت پڑنے پر صاف رپورٹ نکالیں۔',
-    createAccount: 'اکاؤنٹ بنائیں',
     openApp: 'ایپ کھولیں',
     useCasesEyebrow: 'روزمرہ کے خرچ کے لیے',
     exploreEyebrow: 'اپنی ضرورت منتخب کریں',
@@ -110,7 +107,6 @@ export default {
       'خرچے فائی گروپ خرچ، مشترکہ قرضے، ذاتی خرچ، ذاتی قرضے، رسیدیں، منظوری، نوٹیفکیشن، اور ڈاؤن لوڈ ہونے والی رپورٹس کو ایک آسان جگہ پر لے آتا ہے۔'
   },
   groupExpenseTracker: {
-    eyebrow: 'گروپ خرچ ٹریکر',
     title: 'بل تقسیم کریں اور گروپ کا حساب بغیر الجھن کے برابر کریں',
     intro:
       'خرچے فائی کو روم میٹس، ٹرپس، کھانے کے آرڈرز، گھر کے بل، تقریبات، مشترکہ قرض، رسید کے ثبوت، منظوریوں، اور سیٹلمنٹ کے لیے استعمال کریں، بغیر چیٹس میں پرانا حساب ڈھونڈے۔',
@@ -124,7 +120,6 @@ export default {
     ]
   },
   personalBudgetTracker: {
-    eyebrow: 'ذاتی بجٹ ٹریکر',
     title: 'تنخواہ، روزمرہ خرچ، ذاتی قرضے، اور رپورٹس صاف رکھیں',
     intro:
       'خرچے فائی صرف بل تقسیم کرنے والی ایپ نہیں ہے۔ اس میں آپ ماہانہ تنخواہ، روزمرہ خرچ، نجی قرضے، کیٹیگریز، کس کو پیسے دیے، اور ڈاؤن لوڈ ہونے والے ریکارڈز بھی سنبھال سکتے ہیں۔',
@@ -146,10 +141,7 @@ export default {
     emailSupportTitle: 'ای میل سپورٹ'
   },
   auth: {
-    modeToggle: {
-      login: 'لاگ ان',
-      register: 'رجسٹر'
-    },
+    modeToggle: {},
     infoAlert: {
       registerText:
         'اپنے نام، موبائل، ای میل، اور لاگ ان کوڈ کے ساتھ نیا اکاؤنٹ بنائیں۔',
@@ -158,11 +150,8 @@ export default {
       loginText: 'اپنی ای میل اور پاس ورڈ سے لاگ ان کریں۔'
     },
     formFields: {
-      nameLabel: 'پورا نام',
       namePlaceholder: 'اپنا پورا نام درج کریں',
-      mobileLabel: 'موبائل نمبر',
       mobilePlaceholder: 'اپنا موبائل نمبر درج کریں',
-      emailLabel: 'ای میل',
       emailPlaceholder: 'اپنا ای میل ایڈریس درج کریں',
       passwordLabel: 'پاس ورڈ',
       passwordPlaceholder: 'اپنا پاس ورڈ درج کریں (6-15 حروف)'
@@ -171,8 +160,6 @@ export default {
       resendVerification: 'تصدیقی ای میل دوبارہ بھیجیں',
       forgotPassword: 'پاس ورڈ بھول گئے؟',
       rememberMe: 'مجھے یاد رکھیں',
-      submitRegister: 'رجسٹر',
-      submitLogin: 'لاگ ان',
       or: 'یا',
       continueWithGoogle: 'Google کے ساتھ جاری رکھیں',
       newToApp: 'خرچے فائی میں نئے ہیں؟',
@@ -183,8 +170,7 @@ export default {
       info: 'ہم آپ کی ای میل پر پاس ورڈ ری سیٹ لنک بھیجیں گے۔ نیا پاس ورڈ سیٹ کرنے کے لیے لنک پر کلک کریں۔',
       label: 'رجسٹرڈ ای میل ایڈریس',
       placeholder: 'اپنی رجسٹرڈ ای میل درج کریں',
-      send: 'ری سیٹ لنک بھیجیں',
-      cancel: 'منسوخ کریں'
+      send: 'ری سیٹ لنک بھیجیں'
     },
     googleMobileDialog: {
       title: 'ایک اور مرحلہ',
@@ -192,26 +178,18 @@ export default {
         'رجسٹریشن مکمل کرنے کے لیے براہ کرم اپنا موبائل نمبر درج کریں۔',
       prioritize: 'ترجیحاً (ایزی پیسہ/جاز کیش)، ضروری نہیں',
       placeholder: 'موبائل نمبر',
-      cancel: 'منسوخ کریں',
       continue: 'جاری رکھیں'
     },
     tabConfig: {
       title: 'اپنے ٹیبز منتخب کریں',
-      confirm: 'جاری رکھیں',
       cancelSignOut: 'سائن آؤٹ',
       intro:
         'وہ خصوصیات منتخب کریں جو آپ استعمال کرنا چاہتے ہیں۔ آپ صرف وہی ٹیبز رکھ سکتے ہیں جن کی آپ کو واقعی ضرورت ہے۔',
       sharedFeatures: 'مشترکہ خصوصیات',
-      groups: 'گروپس',
-      users: 'صارفین',
-      sharedExpenses: 'مشترکہ اخراجات',
-      sharedLoans: 'مشترکہ قرضے',
       emailNotifications: 'ای میل اطلاعات',
       notifySharedExpense: 'جب میں مشترکہ خرچ شامل کروں تو گروپ کو مطلع کریں',
       notifySharedLoan: 'جب میں مشترکہ قرض شامل کروں تو گروپ کو مطلع کریں',
-      personalFeatures: 'ذاتی خصوصیات',
-      personalExpenses: 'ذاتی اخراجات',
-      personalLoans: 'ذاتی قرضے'
+      personalFeatures: 'ذاتی خصوصیات'
     },
     changePassword: {
       title: 'پاس ورڈ تبدیل کریں',
@@ -220,8 +198,7 @@ export default {
       newPasswordLabel: 'نیا پاس ورڈ',
       newPasswordPlaceholder: 'نیا پاس ورڈ درج کریں (6-15 حروف)',
       confirmPasswordLabel: 'نئے پاس ورڈ کی تصدیق کریں',
-      confirmPasswordPlaceholder: 'نیا پاس ورڈ دوبارہ درج کریں',
-      submit: 'پاس ورڈ تبدیل کریں'
+      confirmPasswordPlaceholder: 'نیا پاس ورڈ دوبارہ درج کریں'
     }
   },
   authMessages: {
@@ -235,7 +212,6 @@ export default {
     registrationSuccessTitle: 'رجسٹریشن کامیاب - اپنے ای میل کی تصدیق کریں',
     registrationSuccessBody:
       'اکاؤنٹ کامیابی سے بن گیا!<br><br><strong>{email}</strong> پر تصدیقی ای میل بھیج دی گئی ہے۔<br><br><strong>اہم:</strong> آپ کو ای میل میں موجود لنک پر کلک کر کے 48 گھنٹوں کے اندر اپنے ای میل کی تصدیق کرنی ہوگی۔ تصدیق کے بعد آپ لاگ ان کر سکتے ہیں۔<br><br>اگر آپ کو ای میل موصول نہ ہو تو براہ کرم اپنا <strong>اسپیم یا جنک فولڈر</strong> چیک کریں۔<br><br>اگر آپ 48 گھنٹوں کے اندر تصدیق نہیں کرتے تو ممکن ہے آپ کو رجسٹریشن مکمل کرنے کے لیے سپورٹ سے رابطہ کرنا پڑے۔',
-    ok: 'ٹھیک ہے',
     emailAlreadyRegistered:
       'یہ ای میل پہلے سے رجسٹرڈ ہے۔ اگر آپ نے حال ہی میں رجسٹر کیا ہے لیکن تصدیق نہیں کی تو اپنی ای میل میں تصدیقی لنک چیک کریں۔ اگر یہ ای میل آپ کی نہیں ہے یا مدد درکار ہے تو براہ کرم سپورٹ سے رابطہ کریں۔',
     weakPassword:
@@ -282,7 +258,6 @@ export default {
     googleSignInFailed:
       'Google سائن ان ناکام ہو گیا۔ براہ کرم دوبارہ کوشش کریں۔',
     enterMobileNumber: 'براہ کرم اپنا موبائل نمبر درج کریں۔',
-    invalidMobileNumber: 'براہ کرم درست موبائل نمبر درج کریں۔',
     saveDetailsFailed:
       'آپ کی تفصیلات محفوظ کرنے میں ناکامی۔ براہ کرم دوبارہ کوشش کریں۔',
     selectFeatureGroup:
@@ -336,7 +311,6 @@ export default {
     loanReceiverMinLength: 'قرض لینے والے کا نام کم از کم 2 حروف کا ہونا چاہیے',
     giverMobileRequired: 'دینے والے کا موبائل نمبر درکار ہے',
     receiverMobileRequired: 'لینے والے کا موبائل نمبر درکار ہے',
-    loanMobilePattern: 'براہ کرم درست موبائل نمبر درج کریں',
     salaryRequired: 'تنخواہ درکار ہے',
     salaryMin: 'تنخواہ صفر سے زیادہ ہونی چاہیے',
     locationRequired: 'مقام درکار ہے',
@@ -399,10 +373,7 @@ export default {
     edit: 'ترمیم کریں',
     open: 'کھولیں',
     download: 'ڈاؤن لوڈ',
-    copy: 'کاپی کریں',
-    copied: 'کاپی ہو گیا',
     close: 'بند کریں',
-    submit: 'جمع کریں',
     optional: 'اختیاری',
     allMonths: 'تمام مہینے',
     year: 'سال',
@@ -420,7 +391,16 @@ export default {
     profilePhotoTitle: 'پروفائل تصویر',
     duplicate: 'نقل کریں',
     guest: 'مہمان',
-    confirm: 'تصدیق کریں'
+    confirm: 'تصدیق کریں',
+    copied: 'کاپی ہو گیا!',
+    copyFailed: 'کاپی کرنے میں ناکامی۔',
+    actions: 'اقدامات',
+    fullName: 'پورا نام',
+    mobileNumber: 'موبائل نمبر',
+    email: 'ای میل',
+    sendRequest: 'درخواست بھیجیں',
+    failedLoadMonths: 'مہینے لوڈ کرنے میں ناکامی۔ براہ کرم دوبارہ کوشش کریں۔',
+    admin: 'ایڈمن'
   },
   approval: {
     pendingTitle: '⚠️ زیر التوا منظوری کی درخواستیں',
@@ -445,7 +425,6 @@ export default {
     itemDeleted: '{label} حذف کر دیا گیا (تمام اراکین نے منظور کیا)۔',
     itemUpdated: '{label} اپ ڈیٹ کر دیا گیا (تمام اراکین نے منظور کیا)۔',
     cancelConfirm: 'کیا آپ واقعی اس {type} درخواست کو منسوخ کرنا چاہتے ہیں؟',
-    cancelTitle: 'درخواست منسوخ کریں',
     yesCancelBtn: 'ہاں، منسوخ کریں',
     noBtn: 'نہیں',
     requestCancelled: '{type} درخواست منسوخ کر دی گئی۔',
@@ -463,18 +442,13 @@ export default {
     payerMode: 'ادائیگی کا طریقہ',
     payer: 'ادا کنندہ',
     selectPayer: 'ادا کنندہ منتخب کریں',
-    payers: 'ادا کنندگان',
     addPayer: '+ ادا کنندہ شامل کریں',
     payersTotal: 'ادا کنندگان کا کل:',
     participants: 'شرکاء',
     selectParticipants: 'شرکاء منتخب کریں',
     splitMode: 'تقسیم کا طریقہ',
-    splitItems: 'تقسیم کی اشیاء',
     addItem: '+ آئٹم شامل کریں',
     item: 'آئٹم {index}',
-    itemDescription: 'تفصیل',
-    itemAmount: 'رقم',
-    itemParticipants: 'شرکاء',
     whoSharedThisItem: 'یہ آئٹم کس نے شیئر کیا؟',
     itemPlaceholder: 'مثلاً برگر، کیک...',
     itemsTotal: 'اشیاء کا کل',
@@ -489,9 +463,6 @@ export default {
     whoPaid: 'کس نے ادا کیا',
     amountPaidPerPerson: 'فی فرد ادا شدہ رقم',
     eachPersonPays: 'ہر فرد ادا کرتا ہے',
-    selectPayer_filter: 'ادا کنندہ منتخب کریں',
-    payerModeFilter: 'ادائیگی کا طریقہ',
-    splitModeFilter: 'تقسیم کا طریقہ',
     transactionDuplicated: 'لین دین کامیابی سے نقل ہو گیا۔',
     transactionSaved: 'لین دین کامیابی سے محفوظ ہو گیا۔',
     addPayerError:
@@ -502,9 +473,7 @@ export default {
       'کسٹم تقسیم طریقہ استعمال کرتے وقت کم از کم ایک تقسیمی آئٹم شامل کریں۔',
     splitItemsTotalMismatch:
       'تقسیمی آئٹمز کا کل ({splitTotal}) لین دین کی رقم ({amount}) کے برابر ہونا چاہیے۔',
-    pairwiseSettlements: 'حساب (کون کسے ادا کرتا ہے)',
     allSettled: '✅ سب کا حساب برابر ہو گیا!',
-    allSettledText: 'کوئی ادائیگی باقی نہیں۔ سب کا حساب صفر ہے۔',
     settlementRequest: '📋 حساب برابر کرنے کی درخواست',
     settlementRequestedBy: 'درخواست کنندہ: {user}، مہینہ: {month}',
     settlementAllMustApprove:
@@ -522,26 +491,20 @@ export default {
     receives: 'وصول کرتا ہے',
     requestSettlementConfirm:
       'یہ تمام گروپ ممبران کو حساب برابر کرنے کی درخواست بھیجے گا۔ حساب برابر کرنے سے پہلے تمام اراکین کی منظوری ضروری ہے۔',
-    requestSettlementTitle: 'حساب برابر کرنے کی درخواست',
-    sendRequest: 'درخواست بھیجیں',
     noActiveGroup: 'کوئی فعال گروپ منتخب نہیں',
     settlementRequestSent: 'حساب برابر کرنے کی درخواست کامیابی سے بھیج دی گئی',
     youApprovedSettlementMsg: 'آپ نے حساب برابر کرنے کی درخواست منظور کر لی',
     rejectSettlementConfirm: 'یہ حساب برابر کرنے کی درخواست منسوخ کر دے گا۔',
     rejectSettlementTitle: 'حساب برابر کرنے کی درخواست مسترد کریں',
-    rejectBtn: 'مسترد کریں',
     settlementRejected: 'حساب برابر کرنے کی درخواست مسترد کر دی گئی',
     allMustApproveFirst:
       'حساب برابر کرنے سے پہلے تمام گروپ ممبران کی منظوری ضروری ہے',
     finalizeConfirm:
       'کیا آپ واقعی اخراجات کو بیک اپ میں منتقل کرکے حساب برابر کرنا چاہتے ہیں؟',
     finalizeTitle: 'حساب برابر کریں',
-    ok: 'ٹھیک ہے',
     finalizeSuccess:
       'اخراجات کامیابی سے بیک اپ میں محفوظ ہو گئے! {month} کا ڈیٹا صاف ہو گیا۔',
-    failedLoadMonths: 'مہینے لوڈ کرنے میں ناکامی۔ دوبارہ کوشش کریں۔',
     failedLoadExpenses: 'اخراجات لوڈ کرنے میں ناکامی۔ دوبارہ کوشش کریں۔',
-    sharedExpensesDownload: 'مشترکہ اخراجات',
     proposedAmountLabel: 'رقم:',
     proposedPayerLabel: 'ادا کنندہ:',
     proposedDescriptionLabel: 'تفصیل:',
@@ -559,8 +522,6 @@ export default {
     loanGiverMobile: 'قرضہ دینے والے کا موبائل',
     loanReceiverMobile: 'قرضہ لینے والے کا موبائل',
     mobilePlaceholder: 'موبائل نمبر درج کریں',
-    loanGiverName: 'قرضہ دینے والا',
-    loanReceiverName: 'قرضہ لینے والا',
     giverNamePlaceholder: 'قرضہ دینے والے کا نام',
     receiverNamePlaceholder: 'قرضہ لینے والے کا نام',
     loanDescription: 'قرضے کی تفصیل',
@@ -599,14 +560,9 @@ export default {
       'اگر آپ لینے والے ہیں تو آپ دینے والے بھی نہیں ہو سکتے۔',
     ifGiverCantBeReceiver:
       'اگر آپ دینے والے ہیں تو آپ لینے والے بھی نہیں ہو سکتے۔',
-    failedLoadMonths: 'مہینے لوڈ کرنے میں ناکامی۔ دوبارہ کوشش کریں۔',
     failedLoadLoans: 'قرضے لوڈ کرنے میں ناکامی۔ دوبارہ کوشش کریں۔',
-    sharedLoansDownload: 'مشترکہ قرضے',
-    proposedAmount: 'رقم:',
     proposedGiver: 'دینے والا:',
     proposedReceiver: 'لینے والا:',
-    proposedDescription: 'تفصیل:',
-    proposedCategory: 'زمرہ:',
     loanToBeDeleted: 'حذف ہونے والا قرضہ:'
   },
   users: {
@@ -619,16 +575,11 @@ export default {
     sharedGroupsOnly: 'صرف مشترکہ گروپ',
     hideBlockedUsers: 'بلاک صارفین چھپائیں',
     nameMobile: 'نام / موبائل',
-    groups: 'گروپس',
-    actions: 'اقدامات',
     noUsersMatch: 'موجودہ چھانٹی سے کوئی صارف نہیں ملا',
     clearSearchHint: 'تلاش صاف کریں یا مشترکہ گروپ کی چھانٹی ہٹائیں۔',
     createGroup: 'گروپ بنائیں',
-    edit: 'ترمیم کریں',
-    delete: 'حذف کریں',
     deletePending: 'حذف زیر التواء ({approved}/{required})',
     noGroups: 'کوئی گروپ نہیں',
-    morGroups: '+{count} مزید',
     youAreMember: 'آپ رکن ہیں',
     requestSent: 'درخواست بھیجی گئی',
     member: 'رکن',
@@ -639,34 +590,17 @@ export default {
     pendingApprovals: 'زیر التواء منظوریاں',
     deleteRequestBy: 'حذف کی درخواست از',
     approvals: 'منظوریاں: {approved} / {required}',
-    approve: 'منظور کریں',
-    reject: 'مسترد کریں',
     editUser: 'صارف میں ترمیم کریں',
-    mobileNumber: 'موبائل نمبر',
-    mobilePlaceholder: 'موبائل نمبر درج کریں',
-    fullName: 'پورا نام',
     fullNamePlaceholder: 'پورا نام',
-    save: 'محفوظ کریں',
-    createGroupDialog: 'گروپ بنائیں',
     usersGroupsTitle: '{name} کے گروپس ({count})',
     alreadyPendingJoin:
       'اس گروپ کے لیے آپ کی پہلے سے ایک درخواست زیر التواء ہے۔',
     joinGroupConfirm:
       'کیا آپ "{name}" میں شامل ہونے کی درخواست بھیجنا چاہتے ہیں؟',
-    joinGroupTitle: 'گروپ میں شامل ہوں',
-    sendRequest: 'درخواست بھیجیں',
-    joinRequestSent:
-      'شامل ہونے کی درخواست بھیج دی گئی! رکن کی منظوری کا انتظار ہے۔',
-    failedJoinRequest: 'درخواست بھیجنے میں ناکامی۔ دوبارہ کوشش کریں۔',
     nameRequired: 'نام ضروری ہے',
-    nameMinLength: 'نام کم از کم 3 حروف کا ہونا چاہیے',
-    nameInvalid: 'نام میں صرف حروف اور ایک خالی جگہ استعمال ہو سکتی ہے',
-    mobileRequired: 'موبائل نمبر ضروری ہے',
-    mobileInvalid: 'براہ کرم درست موبائل نمبر درج کریں',
     userNotFound: 'صارف نہیں ملا',
     deleteRequestPending: 'اس صارف کی حذف کی درخواست زیر التواء ہے',
     updateRequestPending: 'اس صارف کی تبدیلی کی درخواست زیر التواء ہے',
-    mobileTaken: 'اس موبائل نمبر سے پہلے سے ایک اکاؤنٹ موجود ہے',
     userUpdated: 'صارف کامیابی سے اپ ڈیٹ کر دیا گیا',
     deleteUserConfirm:
       'کیا آپ واقعی <strong>{name}</strong> کو حذف کرنا چاہتے ہیں؟',
@@ -687,8 +621,6 @@ export default {
     deleteRejected: 'حذف کی درخواست مسترد کر دی گئی',
     updateRejected: 'تبدیلی کی درخواست مسترد کر دی گئی',
     failedReject: 'درخواست مسترد کرنے میں ناکامی',
-    validationFullNameRequired: 'پورا نام ضروری ہے',
-    validationMobileRequired: 'موبائل نمبر ضروری ہے',
     profilePhotoAlt: 'صارف کی پروفائل',
     profilePhotoTitle: '{name} کی پروفائل تصویر',
     failedProcessDeleteRequest: 'حذف کی درخواست پر کارروائی میں ناکامی',
@@ -704,17 +636,12 @@ export default {
   personalExpenses: {
     addNewExpensePrompt: 'نیا خرچ شامل کرنا چاہتے ہیں؟',
     expenseDetails: 'خرچ کی تفصیلات',
-    addOrSelectCategory: 'زمرہ شامل کریں یا منتخب کریں',
     recipient: 'وصول کنندہ',
     recipientPlaceholder: 'صارف منتخب کریں یا وصول کنندہ درج کریں',
     lineItems: 'لائن آئٹمز',
-    addItem: '+ آئٹم شامل کریں',
     itemPlaceholder: 'مثلاً برگر، کافی...',
-    itemsTotal: 'اشیاء کا کل',
-    itemsTotalPlusTax: 'اشیاء کا کل + ٹیکس',
     addExpense: 'خرچ شامل کریں',
     personalExpensesDownload: 'ذاتی_اخراجات',
-    totalSpent: 'کل خرچ',
     remaining: 'باقی',
     addUpdateMonthlySalary: 'ماہانہ تنخواہ شامل/اپ ڈیٹ کریں',
     salaryFor: '{month} کی تنخواہ:',
@@ -730,15 +657,10 @@ export default {
     unexpectedError: 'ایک غیر متوقع خرابی پیش آگئی۔',
     failedLoadSalaryData:
       'تنخواہ کا ڈیٹا لوڈ کرنے میں ناکامی۔ براہ کرم دوبارہ کوشش کریں۔',
-    failedLoadMonths: 'مہینے لوڈ کرنے میں ناکامی۔ براہ کرم دوبارہ کوشش کریں۔',
     failedLoadSalary: 'تنخواہ لوڈ کرنے میں ناکامی۔ براہ کرم دوبارہ کوشش کریں۔',
-    failedLoadExpenses:
-      'اخراجات لوڈ کرنے میں ناکامی۔ براہ کرم دوبارہ کوشش کریں۔',
     expenseAdded: 'خرچ کامیابی سے شامل ہو گیا!',
     expenseUpdated: 'خرچ کامیابی سے اپ ڈیٹ ہو گیا',
-    expenseDeleted: 'خرچ کامیابی سے حذف ہو گیا',
-    splitItemsTotalMismatch:
-      'تقسیمی آئٹمز کا کل ({splitTotal}) لین دین کی رقم ({amount}) کے برابر ہونا چاہیے۔'
+    expenseDeleted: 'خرچ کامیابی سے حذف ہو گیا'
   },
   personalLoans: {
     loanSummary: 'قرضوں کا خلاصہ',
@@ -749,17 +671,11 @@ export default {
     lentVsBorrowed: 'دیا گیا بمقابلہ لیا گیا',
     settlementPerPerson: 'فی فرد ادائیگی',
     whoPaysWhom: 'کون کس کو ادا کرے گا',
-    loanRecords: 'قرضوں کے ریکارڈ',
     personalLoansDownload: 'ذاتی_قرضے',
     youLent: 'آپ نے قرض دیا',
-    youBorrowed: 'آپ نے قرض لیا',
-    pays: 'ادا کرے گا',
-    receives: 'وصول کرے گا',
-    failedLoadMonths: 'مہینے لوڈ کرنے میں ناکامی۔ براہ کرم دوبارہ کوشش کریں۔',
-    failedLoadLoans: 'قرضے لوڈ کرنے میں ناکامی۔ براہ کرم دوبارہ کوشش کریں۔'
+    youBorrowed: 'آپ نے قرض لیا'
   },
   bugReports: {
-    reportBug: 'بگ رپورٹ کریں',
     myReports: 'میری رپورٹس',
     statusUpdates: 'آپ کی جمع کردہ رپورٹس کی اسٹیٹس اپ ڈیٹس',
     improveApp:
@@ -796,10 +712,8 @@ export default {
     editBugReport: 'بگ رپورٹ میں ترمیم کریں',
     currentScreenshots: 'موجودہ اسکرین شاٹس',
     addScreenshots: 'اسکرین شاٹس شامل کریں',
-    saveChanges: 'تبدیلیاں محفوظ کریں',
     reOpen: 'دوبارہ کھولیں',
     collapse: 'سکیڑیں',
-    viewDetails: 'تفصیلات دیکھیں',
     copyTitle: 'عنوان کاپی کریں',
     copyDescription: 'تفصیل کاپی کریں',
     copyNote: 'نوٹ کاپی کریں',
@@ -814,12 +728,10 @@ export default {
     removeReaction: 'ری ایکشن ہٹائیں',
     replyingTo: 'جواب دے رہے ہیں',
     cancelReply: 'جواب منسوخ کریں',
-    admin: 'ایڈمن',
     you: 'آپ',
     replyToAdmin: 'ایڈمن کو جواب دیں... Ctrl+Enter سے بھیجیں',
     addCommentForAdmin: 'ایڈمن کے لیے تبصرہ شامل کریں...',
     submitted: 'جمع ہوا {date}',
-    allStatuses: 'تمام اسٹیٹس',
     allSeverities: 'تمام شدتیں',
     searchPlaceholder: 'بگ نمبر (khata-bug-...) یا عنوان سے تلاش کریں...',
     totalOpen: '{total} کل · {open} کھلے',
@@ -828,7 +740,6 @@ export default {
     showLess: 'کم دکھائیں',
     showMore: 'مزید دکھائیں',
     anonymous: 'نامعلوم',
-    guest: 'مہمان',
     newReply: 'نیا جواب',
     writeNote: 'نوٹ لکھیں... Ctrl+Enter سے بھیجیں',
     statusUpdated: 'اسٹیٹس "{status}" پر اپ ڈیٹ ہو گیا',
@@ -841,12 +752,6 @@ export default {
     noteSent: 'نوٹ بھیج دیا گیا۔',
     noteSendFailed: 'نوٹ بھیجنے میں ناکامی: {message}',
     categories: {
-      sharedExpenses: 'مشترکہ اخراجات',
-      sharedLoans: 'مشترکہ قرضے',
-      personalLoans: 'ذاتی قرضے',
-      personalExpenses: 'ذاتی اخراجات',
-      groups: 'گروپس',
-      notifications: 'اطلاعات',
       auth: 'تصدیق / لاگ ان',
       settlement: 'حساب برابر',
       export: 'ایکسپورٹ (PDF / Excel)',
@@ -860,10 +765,8 @@ export default {
       critical: 'انتہائی اہم'
     },
     statuses: {
-      open: 'کھلا',
       inProgress: 'جاری',
       needsInfo: 'مزید معلومات درکار',
-      duplicate: 'ڈپلیکیٹ',
       wontFix: 'درست نہیں کیا جائے گا',
       resolved: 'حل شدہ',
       closed: 'بند'
@@ -914,23 +817,15 @@ export default {
     blockedNotice:
       'آپ کا اکاؤنٹ منتظم نے بلاک کر دیا ہے۔ گروپس صرف حوالہ کے لیے دکھائے جا رہے ہیں۔',
     createPrompt: 'نیا گروپ بنانا چاہتے ہیں؟',
-    addExpense: 'خرچ شامل کریں',
-    addLoan: 'قرض شامل کریں',
     searchPlaceholder: 'گروپ نام، کوڈ، مالک، یا رکن سے تلاش کریں...',
-    sortPlaceholder: 'ترتیب',
-    sortDefault: 'ڈیفالٹ',
     sortAsc: 'A→Z',
     sortDesc: 'Z→A',
-    categoryPlaceholder: 'زمرہ',
-    memberPlaceholder: 'رکن',
     hideBlockedGroups: 'بلاک گروپس چھپائیں',
     joinedGroupsHeading: 'شامل شدہ گروپس',
     sharePinned: 'پن شدہ شیئر کریں',
     shareJoined: 'شامل شدہ شیئر کریں',
     availableGroupsHeading: 'دستیاب گروپس',
     loadMoreGroups: 'مزید گروپس لوڈ کریں',
-
-    createGroupLegend: 'گروپ بنائیں',
     nameLabel: 'نام',
     namePlaceholder: 'گروپ کا نام درج کریں',
     descriptionPlaceholder: 'گروپ کی تفصیل درج کریں (اختیاری)',
@@ -940,7 +835,6 @@ export default {
     selectedCount: 'منتخب: {count}/{max}',
     categoryOptionalPlaceholder: 'زمرہ منتخب کریں (اختیاری)',
     create: 'بنائیں',
-
     groupBlockedByAdmin:
       'یہ گروپ منتظم نے بلاک کیا ہوا ہے۔ اس کے ساتھ تعامل نہ کریں۔',
     accountBlockedActionsDisabled:
@@ -952,33 +846,25 @@ export default {
     pinnedTag: '⭐ پن شدہ',
     pinTag: '☆ پن کریں',
     unpinTag: '⭐ ان پن کریں',
-    actionsLabel: 'اقدامات',
-
     pendingInvitations: 'زیر التوا دعوتیں',
     invitedBy: 'دعوت دینے والا',
     accountBlockedInviteDisabled:
       'آپ کا اکاؤنٹ منتظم نے بلاک کر دیا ہے۔ دعوتی اقدامات غیر فعال ہیں۔',
     accept: 'قبول کریں',
     decline: 'رد کریں',
-
     editGroupTitle: 'گروپ میں ترمیم کریں',
     groupNameLabel: 'گروپ کا نام',
-    save: 'محفوظ کریں',
-
     requestAddMemberTitle: 'رکن شامل کرنے کی درخواست',
     selectMemberToAdd: 'شامل کرنے کے لیے رکن منتخب کریں',
     selectMemberPlaceholder: 'رکن منتخب کریں',
     allMembersApproveNotice:
       'اس رکن کو شامل کرنے سے پہلے تمام موجودہ اراکین کی منظوری ضروری ہے',
-    sendRequest: 'درخواست بھیجیں',
-
     transferOwnershipTitle: 'ملکیت منتقل کریں',
     selectNewOwner: 'نیا مالک منتخب کریں',
     selectNewOwnerPlaceholder: 'نیا مالک منتخب کریں',
     transferAcceptNotice:
       'منتخب رکن کو یہ منتقلی مؤثر ہونے سے پہلے قبول کرنی ہوگی۔',
     requestTransfer: 'منتقلی کی درخواست کریں',
-
     sharedGroupsTitle: 'شیئر کیے گئے گروپس',
     sharedGroupsSubtitle:
       'شیئر کیے گئے گروپ میں شامل ہوں یا وہ گروپ منتخب کریں جس کے آپ پہلے سے رکن ہیں۔',
@@ -991,16 +877,10 @@ export default {
     joinRequestPending: 'شمولیت کی درخواست زیر التوا',
     sharedGroupsBlockedNotice:
       'آپ کا اکاؤنٹ منتظم نے بلاک کر دیا ہے۔ شیئر کیے گئے گروپس صرف حوالہ کے لیے دکھائے جا رہے ہیں۔',
-
     viewDetails: 'تفصیلات دیکھیں',
     membersCount: 'اراکین ({count})',
-    moreCount: '+{count} مزید',
-    membersDialogTitle: 'اراکین ({count})',
-
     joinRequestsCount: 'شمولیت کی درخواستیں ({count}):',
     approvalsCount: 'منظوریاں: {approved} / {total}',
-    approvedThisRequest: '✓ آپ نے اس درخواست کو منظور کر لیا ہے',
-    waitingForAllApprove: '- تمام اراکین کی منظوری کا انتظار ہے',
     groupDeletionRequestTitle: '⚠️ گروپ حذف کرنے کی درخواست',
     deletionRequestNotice:
       'مالک نے اس گروپ کو حذف کرنے کی درخواست کی ہے۔ حذف سے پہلے تمام اراکین کی منظوری ضروری ہے۔',
@@ -1015,34 +895,23 @@ export default {
     approvedThisEdit: '✓ آپ نے اس ترمیم کو منظور کر لیا ہے',
     addMemberRequestTitle: '➕ رکن شامل کرنے کی درخواست',
     newMemberLabel: 'نیا رکن:',
-    approvedThisAddRequest: '✓ آپ نے اس درخواست کو منظور کر لیا ہے',
     addMemberNow: 'اب رکن شامل کریں',
     ownershipTransferRequestTitle: '👑 ملکیت منتقلی کی درخواست',
     currentOwnershipLabel: 'موجودہ ملکیت:',
     transferOwnershipToLabel: 'ملکیت منتقل کریں:',
     awaitingNewOwnerAcceptance: 'نامزد نئے مالک کی قبولیت کا انتظار ہے۔',
     acceptOwnership: 'ملکیت قبول کریں',
-    declineOwnership: 'رد کریں',
-
     byActor: '({actor} کی طرف سے)',
-
     pendingInvitationsCount: '⏳ زیر التوا دعوتیں ({count})',
     pendingInvitationsDialogTitle: 'زیر التوا دعوتیں ({count})',
     pendingTag: 'زیر التوا',
-
     yourPosition: 'آپ کی پوزیشن',
     calculating: 'حساب ہو رہا ہے...',
-    sharedExpensesLabel: 'مشترکہ اخراجات',
-    sharedLoansLabel: 'مشترکہ قرضے',
     netAmountLabel: 'نیٹ رقم',
-    willReceive: 'وصول کریں گے',
-    willPay: 'ادا کریں گے',
-    settled: 'برابر',
     youGet: 'آپ کو ملے گا',
     youPay: 'آپ ادا کریں گے',
     visibleOnlyToYouHint:
       'صرف آپ کو دکھائی دیتا ہے۔ یہ اس گروپ میں آپ کے حصے، ادائیگیوں، اور قرضوں سے حساب کیا گیا ہے۔',
-
     noGroupsMatchSearch: 'آپ کی تلاش سے کوئی گروپ نہیں ملا',
     notJoinedAnyGroups: 'آپ ابھی تک کسی گروپ میں شامل نہیں ہوئے',
     noMoreGroupsAvailable: 'اس وقت مزید کوئی گروپ دستیاب نہیں',
@@ -1059,7 +928,6 @@ export default {
     invitationDeclined: 'دعوت رد کر دی گئی۔',
     joinedGroupsShareLabel: 'شامل شدہ گروپس',
     pinnedGroupsShareLabel: 'پن شدہ گروپس',
-    groupShareLabel: 'گروپ',
     noGroupsToShare: 'شیئر کرنے کے لیے کوئی {label} دستیاب نہیں',
     sharedGroupTitle: 'شیئر کیا گیا گروپ: {name}',
     sharedGroupsTitleShare: 'شیئر کیے گئے {label}',
@@ -1069,7 +937,6 @@ export default {
     copyShareLinkLabel: 'یہ شیئر لنک کاپی کریں:',
     shareLinkFailed: 'گروپ لنک شیئر کرنے میں ناکامی۔',
     selectMemberToAddError: 'براہ کرم شامل کرنے کے لیے رکن منتخب کریں',
-    userNotFound: 'صارف نہیں ملا',
     noPendingJoinRequestToCancel:
       'منسوخ کرنے کے لیے کوئی زیر التوا شمولیت درخواست نہیں ملی',
     joinRequestAlreadyPending: 'شمولیت کی درخواست پہلے سے زیر التوا ہے',
@@ -1077,7 +944,6 @@ export default {
     joinRequestSentToOwner: 'شمولیت کی درخواست گروپ مالک کو بھیج دی گئی',
     requestCancelled: 'درخواست منسوخ کر دی گئی',
     memberAddedToGroup: '{name} کو گروپ میں شامل کر دیا گیا ہے',
-    approvalRecorded: 'منظوری ریکارڈ کر لی گئی',
     approvedJoinRequest: 'آپ نے شمولیت کی اس درخواست کو منظور کر لیا ہے',
     allMustApproveBeforeAdding:
       'گروپ میں شامل کرنے سے پہلے تمام اراکین کی منظوری ضروری ہے',
@@ -1095,12 +961,10 @@ export default {
     soleMemberDeleteConfirm:
       'آپ اس گروپ کے واحد رکن ہیں۔ یہ کسی منظوری کے بغیر فوراً حذف ہو جائے گا۔',
     deleteGroupTitle: 'گروپ حذف کریں',
-    deleteGroupButton: 'گروپ حذف کریں',
     groupDeletedSuccess: 'گروپ کامیابی سے حذف ہو گیا',
     deletionRequestConfirmBody:
       'یہ تمام گروپ اراکین کو حذف کی درخواست بھیجے گا۔ گروپ صرف تمام اراکین کی منظوری کے بعد حذف ہو سکتا ہے۔',
     requestGroupDeletionTitle: 'گروپ حذف کرنے کی درخواست',
-    sendRequestButton: 'درخواست بھیجیں',
     deletionRequestSent: 'حذف کی درخواست بھیج دی گئی',
     deletionRequestSentToAll: 'حذف کی درخواست تمام اراکین کو بھیج دی گئی',
     allApprovedGroupDeleted:
@@ -1109,7 +973,6 @@ export default {
     rejectDeletionConfirmBody:
       'یہ حذف کی درخواست منسوخ کر دے گا۔ اگر مالک گروپ حذف کرنا چاہے تو اسے نئی درخواست بنانی ہوگی۔',
     rejectDeletionRequestTitle: 'حذف کی درخواست مسترد کریں',
-    rejectButton: 'مسترد کریں',
     deletionCancelledBy:
       'گروپ حذف کرنے کی درخواست {name} ({mobile}) نے منسوخ کر دی',
     deletionRejectedAndCancelled: 'حذف کی درخواست مسترد اور منسوخ کر دی گئی ہے',
@@ -1120,7 +983,6 @@ export default {
     confirmFinalDeletionTitle: 'حتمی حذف کی تصدیق کریں',
     deletePermanentlyButton: 'مستقل طور پر حذف کریں',
     onlyOwnerCanEdit: 'صرف گروپ مالک اس گروپ میں ترمیم کر سکتا ہے',
-    groupNameRequired: 'گروپ کا نام ضروری ہے',
     atLeastTwoMembersRequired: 'کم از کم دو اراکین ضروری ہیں',
     nameChangedNotif: 'نام: "{oldName}" → "{newName}"',
     descriptionChangedNotif: 'تفصیل: "{oldDescription}" → "{newDescription}"',
@@ -1142,7 +1004,6 @@ export default {
     alreadyApprovedRequest: 'آپ اس درخواست کو پہلے ہی منظور کر چکے ہیں',
     editAppliedToast: 'ترمیم لاگو ہو گئی',
     editChangesApplied: 'ترمیمی تبدیلیاں کامیابی سے لاگو ہو گئیں',
-    approvalHasBeenRecorded: 'آپ کی منظوری ریکارڈ کر لی گئی ہے',
     rejectEditConfirmBody:
       'کیا آپ واقعی اس ترمیمی درخواست کو مسترد کرنا چاہتے ہیں؟ درخواست منسوخ ہو جائے گی۔',
     rejectEditRequestTitle: 'ترمیمی درخواست مسترد کریں',
@@ -1189,7 +1050,6 @@ export default {
     ownerMustTransferBeforeLeaving:
       'آپ گروپ مالک ہیں۔ گروپ چھوڑنے سے پہلے آپ کو ملکیت کسی دوسرے رکن کو منتقل کرنی ہوگی۔',
     transferOwnershipRequiredTitle: 'ملکیت منتقلی ضروری ہے',
-    transferOwnershipButton: 'ملکیت منتقل کریں',
     couldNotFindMembershipRecord: 'اس گروپ میں آپ کا رکنیت ریکارڈ نہیں ملا۔',
     ownershipWillTransferTo:
       'آپ مالک ہیں۔ گروپ چھوڑنے پر ملکیت {name} کو منتقل ہو جائے گی۔',
@@ -1219,11 +1079,7 @@ export default {
     ownershipTransferRequestLabel: 'ملکیت منتقلی کی درخواست',
     shareButton: 'شیئر کریں',
     addMemberButton: 'رکن شامل کریں',
-    editButton: 'ترمیم کریں',
-    cancelRequestButton: 'درخواست منسوخ کریں',
-    requestToJoinButton: 'شامل ہونے کی درخواست',
     deletePendingButton: 'حذف زیر التوا ({approved}/{total})',
-    requestDeleteButton: 'حذف کی درخواست',
     maxMembersError: 'ایک گروپ میں زیادہ سے زیادہ {max} اراکین ہو سکتے ہیں',
     atLeastTwoMembersToCreate: 'گروپ بنانے کے لیے کم از کم دو اراکین ضروری ہیں',
     ownerDuplicateNameError: 'آپ کے پاس اس نام کا گروپ پہلے سے موجود ہے',
@@ -1234,10 +1090,6 @@ export default {
     failedLoadSharedGroups: 'شیئر کیے گئے گروپس لوڈ کرنے میں ناکامی۔',
     wantsToJoinNotif:
       '{name} ({mobile}) "{groupName}" میں شامل ہونا چاہتا/چاہتی ہے',
-    joinRequestSentWaiting:
-      'شمولیت کی درخواست بھیج دی گئی! رکن کی منظوری کا انتظار ہے۔',
-    failedSendJoinRequest:
-      'شمولیت کی درخواست بھیجنے میں ناکامی۔ براہ کرم دوبارہ کوشش کریں۔',
     acceptedInvitationNotif:
       '{name} ({mobile}) نے "{groupName}" میں شامل ہونے کی آپ کی دعوت قبول کر لی',
     declinedInvitationNotif:
@@ -1255,8 +1107,7 @@ export default {
     inactivityMinutes: '{count} منٹ',
     inactivityLogoutMessage:
       'آپ {label} تک غیر سرگرم رہے، اس لیے لاگ آؤٹ کر دیا گیا۔',
-    sessionExpired: 'سیشن ختم ہو گیا۔ براہ کرم دوبارہ لاگ ان کریں۔',
-    guestName: 'مہمان'
+    sessionExpired: 'سیشن ختم ہو گیا۔ براہ کرم دوبارہ لاگ ان کریں۔'
   },
   shared: {
     confirmUpdateMessage: 'کیا آپ واقعی اس آئٹم کو اپ ڈیٹ کرنا چاہتے ہیں؟',
@@ -1293,7 +1144,6 @@ export default {
     excel: 'Excel',
     pdf: 'PDF',
     selectedCount: '{count} منتخب',
-    actions: 'اقدامات',
     columnNameTooltip: 'کالم کا نام',
     splitDetailsTitle: 'تقسیم کی تفصیلات',
     more: '+{count} مزید',
@@ -1334,7 +1184,6 @@ export default {
     sendDeleteRequestsFor: 'حذف کی درخواستیں بھیجیں برائے',
     skippedPendingNote: '({count} چھوڑ دیے گئے — زیر التوا درخواستیں)',
     bulkDeleteTitle: 'اجتماعی حذف',
-    confirm: 'تصدیق کریں',
     bulkDeleteRequestSent:
       '{count} آئٹم کے لیے حذف کی درخواست بھیج دی گئی۔ گروپ کی منظوری کا انتظار ہے۔',
     bulkDeleteSuccess: '{count} آئٹم کامیابی سے حذف ہو گئے۔',
@@ -1378,7 +1227,6 @@ export default {
     numberedList: 'نمبر شدہ لسٹ',
     insertTemplate: 'بگ رپورٹ ٹیمپلیٹ شامل کریں',
     attachImage: 'تصویر منسلک کریں',
-    imageLabel: 'تصویر',
     hint: 'مارک ڈاؤن سپورٹ موجود ہے'
   },
   netPosition: {
@@ -1393,8 +1241,7 @@ export default {
     netForSharedLoans: 'مشترکہ قرضوں کے لیے نیٹ:',
     netForPersonalLoans: 'ذاتی قرضوں کے لیے نیٹ:',
     categoryBreakdown: 'زمرہ جاتی تفصیل',
-    categoryChartTitle: 'زمرے کے مطابق وصولی (↑) اور ادائیگی (↓)',
-    downloadPdf: 'PDF ڈاؤن لوڈ کریں'
+    categoryChartTitle: 'زمرے کے مطابق وصولی (↑) اور ادائیگی (↓)'
   },
   receiptOcr: {
     extracting: 'نکالا جا رہا ہے...',
@@ -1404,7 +1251,6 @@ export default {
     comingSoon: 'رسید سے متن نکالنے کی سہولت جلد آ رہی ہے۔'
   },
   receiptUpload: {
-    label: 'رسید',
     currentReceiptsCount: 'موجودہ رسیدیں ({count})',
     currentReceipt: 'موجودہ رسید',
     currentReceiptAlt: 'موجودہ رسید {index}',
@@ -1414,8 +1260,7 @@ export default {
     editorAlt: 'رسید ایڈیٹر',
     editorHint:
       'رسید کی جگہ بدلنے کے لیے گھسیٹیں، پھر ضرورت کے مطابق زوم یا گھمائیں۔',
-    previewFallbackName: 'رسید کا پیش نظارہ',
-    receiptIndexName: 'رسید {index}'
+    previewFallbackName: 'رسید کا پیش نظارہ'
   },
   welcomeBanner: {
     welcomeBack: 'واپس خوش آمدید',
@@ -1426,14 +1271,10 @@ export default {
   admin: {
     config: {
       back: '← واپس',
-      title: 'ایڈمن کنفگ',
       loading: 'کنفیگریشن لوڈ ہو رہی ہے…',
       storageTitle: 'اسٹوریج',
       cacheTitle: 'کیش',
       downloadsTitle: 'ڈاؤن لوڈز',
-      manageTabsTitle: 'ٹیبز منظم کریں',
-      bugReportsTitle: 'بگ رپورٹس',
-      emailTitle: 'ای میل',
       ocrTitle: 'OCR / رسید ڈیٹا نکالنا',
       allowReceiptUploads: 'رسید اپ لوڈ کی اجازت دیں',
       enableCloudinary: 'Cloudinary پرووائیڈر فعال کریں',
@@ -1459,17 +1300,9 @@ export default {
       existingConfigDoc: 'موجودہ کنفگ دستاویز',
       noSavedConfigYet: 'ابھی تک کوئی محفوظ شدہ کنفگ نہیں',
       tabsAndFeatureAccess: 'ٹیبز اور فیچر تک رسائی',
-      sharedFeatures: 'مشترکہ خصوصیات',
-      groups: 'گروپس',
-      users: 'صارفین',
-      sharedExpenses: 'مشترکہ اخراجات',
-      sharedLoans: 'مشترکہ قرضے',
       emailPreferences: 'ای میل ترجیحات',
       notifySharedExpense: 'جب صارف مشترکہ خرچ شامل کرے تو گروپ کو مطلع کریں',
       notifySharedLoan: 'جب صارف مشترکہ قرض شامل کرے تو گروپ کو مطلع کریں',
-      personalFeatures: 'ذاتی خصوصیات',
-      personalExpenses: 'ذاتی اخراجات',
-      personalLoans: 'ذاتی قرضے',
       adminOnlyControls: 'صرف ایڈمن کے لیے ٹیب کنفگ کنٹرولز',
       allowManageTabs: 'اس صارف کے لیے ٹیبز منظم کریں کی اجازت دیں',
       hideBlockedUsersDefault: 'ڈیفالٹ طور پر بلاک صارفین چھپائیں',
@@ -1480,7 +1313,6 @@ export default {
       emailsSentMap: 'بھیجی گئی ای میلز کا نقشہ',
       jsonHint:
         '`YYYY-MM` جیسی مہینے کی کیز اور عددی گنتی کے ساتھ JSON آبجیکٹس استعمال کریں۔',
-      cancel: 'منسوخ کریں',
       saveConfig: 'کنفگ محفوظ کریں',
       validJsonError: '{label} درست JSON ہونا چاہیے جس میں غیر منفی نمبرز ہوں۔',
       selectFeatureGroupError:
@@ -1489,23 +1321,15 @@ export default {
         'مشترکہ خصوصیات کے لیے کم از کم ایک مشترکہ ٹیب (مشترکہ اخراجات، مشترکہ قرضے، یا صارفین) درکار ہے۔',
       personalRequiresTabError:
         'ذاتی خصوصیات کے لیے کم از کم ایک ذاتی ٹیب (ذاتی اخراجات یا ذاتی قرضے) درکار ہے۔',
-      selectAtLeastOneTabError:
-        'جاری رکھنے کے لیے کم از کم ایک اصل ٹیب منتخب کریں۔',
       validateFailed: 'صارف کی ٹیب کنفگ کی تصدیق میں ناکامی۔'
     },
     users: {
-      title: 'صارفین',
       loadingUsers: 'صارفین لوڈ ہو رہے ہیں…',
       searchPlaceholder: 'نام یا ای میل سے تلاش کریں…',
-      nameColumn: 'نام',
-      emailColumn: 'ای میل',
       blockedColumn: 'بلاک',
       bugResolverColumn: 'بگ ریزالور',
-      adminColumn: 'ایڈمن',
       paidTierColumn: 'پیڈ ٹیئر',
       tabConfigColumn: 'ٹیب کنفگ',
-      editAction: 'ترمیم کریں',
-      createAction: 'بنائیں',
       noUsersMatch: 'آپ کی تلاش سے کوئی صارف مماثل نہیں۔',
       userUpdated: 'صارف اپ ڈیٹ ہو گیا۔',
       userUpdateFailed: 'صارف اپ ڈیٹ کرنے میں ناکامی۔',
@@ -1518,18 +1342,12 @@ export default {
     updateVerifiedEmailTitle: 'تصدیق شدہ ای میل اپ ڈیٹ کریں',
     adjustPhotoTitle: 'پروفائل تصویر ایڈجسٹ کریں',
     emailAddressLabel: 'ای میل ایڈریس',
-    fullNameLabel: 'پورا نام',
-    mobileNumberLabel: 'موبائل نمبر',
     emailVerificationLabel: 'ای میل تصدیق',
     accountTierLabel: 'اکاؤنٹ ٹیئر',
     rolesLabel: 'کردار',
     accountStatusLabel: 'اکاؤنٹ کی حیثیت',
     verifiedTag: 'تصدیق شدہ',
-    pendingTag: 'زیر التوا',
-    adminTag: 'ایڈمن',
-    bugResolverTag: 'بگ ریزالور',
     standardUserTag: 'عام صارف',
-    blockedTag: 'بلاک',
     activeTag: 'فعال',
     updatePhoto: 'تصویر اپ ڈیٹ کریں',
     addPhoto: 'تصویر شامل کریں',
@@ -1540,8 +1358,6 @@ export default {
     currentPasswordPlaceholder: 'موجودہ پاس ورڈ',
     accountUserFallback: 'اکاؤنٹ صارف',
     notAvailable: 'دستیاب نہیں',
-    unlimited: 'لامحدود',
-    paidTierTag: 'پیڈ ٹیئر',
     freeTierTag: 'فری ٹیئر',
     blockedBannerText:
       'آپ کا اکاؤنٹ فی الحال بلاک ہے۔ صارفین اور گروپس صرف حوالہ کے لیے دکھائی دیتے رہیں گے۔',

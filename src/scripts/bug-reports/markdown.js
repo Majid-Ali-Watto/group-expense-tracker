@@ -120,8 +120,8 @@ export function formatDate(iso) {
  */
 export function copyText(text) {
   return copyTextWithFeedback(text, {
-    successMessage: 'Copied!',
-    errorMessage: 'Failed to copy.'
+    successMessage: i18n.global.t('common.copied'),
+    errorMessage: i18n.global.t('common.copyFailed')
   })
 }
 

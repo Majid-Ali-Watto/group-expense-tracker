@@ -67,7 +67,7 @@
               reportId,
               note,
               note.authorType === 'admin'
-                ? t('bugReports.admin')
+                ? t('common.admin')
                 : note.authorName
             )
         "

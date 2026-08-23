@@ -166,7 +166,7 @@
         type="primary"
         :loading="editSaving"
         @click="$emit('save')"
-        >{{ t('bugReports.saveChanges') }}</GenericButton
+        >{{ t('profile.saveChanges') }}</GenericButton
       >
     </template>
   </el-dialog>

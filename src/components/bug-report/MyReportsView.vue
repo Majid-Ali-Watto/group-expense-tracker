@@ -63,7 +63,7 @@
               :title="
                 expandedIds.has(r.id)
                   ? t('bugReports.collapse')
-                  : t('bugReports.viewDetails')
+                  : t('groups.viewDetails')
               "
               @click="$emit('toggle-expand', r.id)"
             >
@@ -155,7 +155,7 @@
                 :avatar-char-fn="
                   (note) =>
                     (note.authorType === 'admin'
-                      ? t('bugReports.admin')
+                      ? t('common.admin')
                       : note.authorName || '?'
                     )
                       .charAt(0)
@@ -164,7 +164,7 @@
                 :author-label-fn="
                   (note) =>
                     note.authorType === 'admin'
-                      ? t('bugReports.admin')
+                      ? t('common.admin')
                       : t('bugReports.you')
                 "
                 :can-edit="(note) => note.authorType === 'reporter'"
@@ -239,12 +239,12 @@ import {
 const { t } = useI18n()
 
 const CATEGORY_LABEL_KEYS = {
-  'shared-expenses': 'bugReports.categories.sharedExpenses',
-  'shared-loans': 'bugReports.categories.sharedLoans',
-  'personal-loans': 'bugReports.categories.personalLoans',
-  'personal-expenses': 'bugReports.categories.personalExpenses',
-  groups: 'bugReports.categories.groups',
-  notifications: 'bugReports.categories.notifications',
+  'shared-expenses': 'tabs.sharedExpenses',
+  'shared-loans': 'tabs.sharedLoans',
+  'personal-loans': 'tabs.personalLoans',
+  'personal-expenses': 'tabs.personalExpenses',
+  groups: 'tabs.groups',
+  notifications: 'headerActions.notifications',
   auth: 'bugReports.categories.auth',
   settlement: 'bugReports.categories.settlement',
   export: 'bugReports.categories.export',

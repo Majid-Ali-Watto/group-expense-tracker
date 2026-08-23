@@ -2,7 +2,7 @@
 <template>
   <div class="my-4">
     <div>
-      <h3 class="mb-2">{{ t('sharedExpenses.pairwiseSettlements') }}</h3>
+      <h3 class="mb-2">{{ t('table.pairwiseSettlementsPdfTitle') }}</h3>
 
       <!-- Show message when no settlements -->
       <div
@@ -13,7 +13,7 @@
           {{ t('sharedExpenses.allSettled') }}
         </p>
         <p class="settled-text text-sm">
-          {{ t('sharedExpenses.allSettledText') }}
+          {{ t('table.noSettlementsPdf') }}
         </p>
       </div>
 

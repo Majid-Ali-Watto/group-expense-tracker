@@ -54,7 +54,7 @@
         :selection="featureSelection"
         :loading="isSavingFeatureSelection"
         :title="t('auth.tabConfig.title')"
-        :confirm-text="t('auth.tabConfig.confirm')"
+        :confirm-text="t('auth.googleMobileDialog.continue')"
         :cancel-text="t('auth.tabConfig.cancelSignOut')"
         @update:visible="
           (value) => {
@@ -92,7 +92,7 @@
             :disabled="isGoogleMobileSubmitting"
             @click="cancelGoogleMobileDialog"
           >
-            {{ t('auth.googleMobileDialog.cancel') }}
+            {{ t('common.cancel') }}
           </GenericButton>
           <GenericButton
             type="success"

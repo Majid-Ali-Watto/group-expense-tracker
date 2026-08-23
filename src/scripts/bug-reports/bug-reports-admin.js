@@ -21,7 +21,7 @@ import { showError, showSuccess } from '@/utils'
 import { NoteThread } from './note-thread'
 
 export const STATUS_OPTIONS = [
-  { icon: '🔴', labelKey: 'bugReports.statuses.open', value: 'open' },
+  { icon: '🔴', labelKey: 'common.open', value: 'open' },
   {
     icon: '🟡',
     labelKey: 'bugReports.statuses.inProgress',
@@ -32,7 +32,7 @@ export const STATUS_OPTIONS = [
     labelKey: 'bugReports.statuses.needsInfo',
     value: 'needs-info'
   },
-  { icon: '🟣', labelKey: 'bugReports.statuses.duplicate', value: 'duplicate' },
+  { icon: '🟣', labelKey: 'common.duplicate', value: 'duplicate' },
   { icon: '⚪', labelKey: 'bugReports.statuses.wontFix', value: 'wont-fix' },
   { icon: '🟢', labelKey: 'bugReports.statuses.resolved', value: 'resolved' },
   { icon: '⬛', labelKey: 'bugReports.statuses.closed', value: 'closed' }
@@ -92,10 +92,10 @@ export const BugReportsAdmin = () => {
       selectLabel: `${t('common.all')} (${reports.value.length})`
     },
     {
-      label: t('bugReports.statuses.open'),
+      label: t('common.open'),
       value: 'open',
       count: reports.value.filter((r) => r.status === 'open').length,
-      selectLabel: `${t('bugReports.statuses.open')} (${reports.value.filter((r) => r.status === 'open').length})`
+      selectLabel: `${t('common.open')} (${reports.value.filter((r) => r.status === 'open').length})`
     },
     {
       label: t('bugReports.statuses.inProgress'),
@@ -110,10 +110,10 @@ export const BugReportsAdmin = () => {
       selectLabel: `${t('bugReports.statuses.needsInfo')} (${reports.value.filter((r) => r.status === 'needs-info').length})`
     },
     {
-      label: t('bugReports.statuses.duplicate'),
+      label: t('common.duplicate'),
       value: 'duplicate',
       count: reports.value.filter((r) => r.status === 'duplicate').length,
-      selectLabel: `${t('bugReports.statuses.duplicate')} (${reports.value.filter((r) => r.status === 'duplicate').length})`
+      selectLabel: `${t('common.duplicate')} (${reports.value.filter((r) => r.status === 'duplicate').length})`
     },
     {
       label: t('bugReports.statuses.wontFix'),
@@ -350,7 +350,7 @@ export const BugReportsAdmin = () => {
       await noteThread.pushNote(report, {
         text,
         authorType: 'admin',
-        authorName: t('bugReports.admin'),
+        authorName: t('common.admin'),
         createdAt: new Date().toISOString(),
         ...(uploadedImages.length ? { images: uploadedImages } : {}),
         ...noteThread.buildReplyTo(report.id)

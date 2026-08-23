@@ -97,7 +97,7 @@
                     <strong>{{ t('approval.proposedChanges') }}</strong
                     ><br />
                     <template v-if="request.changes.amount !== undefined">
-                      {{ t('sharedLoans.proposedAmount') }}
+                      {{ t('sharedExpenses.proposedAmountLabel') }}
                       <span
                         v-if="
                           request.current?.amount !== undefined &&
@@ -152,7 +152,7 @@
                       ><br />
                     </template>
                     <template v-if="request.changes.description !== undefined">
-                      {{ t('sharedLoans.proposedDescription') }}
+                      {{ t('sharedExpenses.proposedDescriptionLabel') }}
                       <span
                         v-if="
                           request.current?.description !== undefined &&
@@ -171,7 +171,7 @@
                       <br />
                     </template>
                     <template v-if="request.changes.category !== undefined">
-                      {{ t('sharedLoans.proposedCategory') }}
+                      {{ t('sharedExpenses.proposedCategoryLabel') }}
                       <span
                         v-if="
                           request.current?.category !== undefined &&
@@ -191,13 +191,13 @@
                   <p v-else>
                     <strong>{{ t('sharedLoans.loanToBeDeleted') }}</strong
                     ><br />
-                    {{ t('sharedLoans.proposedAmount') }}
+                    {{ t('sharedExpenses.proposedAmountLabel') }}
                     {{ formatAmount(request.loan.amount) }}<br />
                     {{ t('sharedLoans.proposedGiver') }}
                     {{ getUserName(request.loan.giver) }}<br />
                     {{ t('sharedLoans.proposedReceiver') }}
                     {{ getUserName(request.loan.receiver) }}<br />
-                    {{ t('sharedLoans.proposedCategory') }}
+                    {{ t('sharedExpenses.proposedCategoryLabel') }}
                     {{ request.loan.category || t('common.none') }}
                   </p>
                 </div>
@@ -272,7 +272,7 @@
 
           <h2>{{ t('sharedLoans.loanRecords') }}</h2>
           <Table
-            :downloadTitle="t('sharedLoans.sharedLoansDownload')"
+            :downloadTitle="t('tabs.sharedLoans')"
             :rows="filteredLoans"
             :keys="loanKeys"
             :dataRef="loanContent"

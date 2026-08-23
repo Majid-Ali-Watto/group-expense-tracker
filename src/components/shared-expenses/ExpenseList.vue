@@ -141,7 +141,7 @@
         <!-- Table -->
         <Table
           :rows="filteredPayments"
-          :downloadTitle="t('sharedExpenses.sharedExpensesDownload')"
+          :downloadTitle="t('tabs.sharedExpenses')"
           :keys="paymentKeys"
           :dataRef="pdfContent"
           :showPopup="true"

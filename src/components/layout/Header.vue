@@ -91,7 +91,7 @@
   <el-dialog
     v-if="showBugReport"
     v-model="showBugReport"
-    :title="t('bugReports.reportBug')"
+    :title="t('headerActions.reportBug')"
     :width="'min(95vw, 740px)'"
     append-to-body
     :close-on-click-modal="true"

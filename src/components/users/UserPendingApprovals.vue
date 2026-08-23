@@ -35,14 +35,14 @@
             type="success"
             @click="$emit('approve', item.user.uid, item.type)"
           >
-            {{ t('users.approve') }}
+            {{ t('common.approve') }}
           </el-button>
           <el-button
             size="default"
             type="danger"
             @click="$emit('reject', item.user.uid, item.type, item.user.name)"
           >
-            {{ t('users.reject') }}
+            {{ t('common.reject') }}
           </el-button>
         </div>
       </div>

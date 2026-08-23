@@ -7,7 +7,7 @@
         <p class="hero-text">{{ t('landing.heroText') }}</p>
         <div class="hero-actions">
           <RouterLink class="cta-primary" :to="withLocale('/register')">{{
-            t('landing.createAccount')
+            t('nav.createAccount')
           }}</RouterLink>
           <RouterLink class="cta-secondary" :to="withLocale('/login')">{{
             t('landing.openApp')

@@ -2,7 +2,7 @@
   <GenericInputField
     v-if="mode === 'register'"
     :model-value="modelValue.name"
-    :label="t('auth.formFields.nameLabel')"
+    :label="t('common.fullName')"
     prop="name"
     required
     :placeholder="t('auth.formFields.namePlaceholder')"
@@ -13,7 +13,7 @@
   <GenericMobileInput
     v-if="mode === 'register'"
     :model-value="modelValue.mobile"
-    :label="t('auth.formFields.mobileLabel')"
+    :label="t('common.mobileNumber')"
     prop="mobile"
     required
     :placeholder="t('auth.formFields.mobilePlaceholder')"
@@ -22,7 +22,7 @@
 
   <GenericInputField
     :model-value="modelValue.email"
-    :label="t('auth.formFields.emailLabel')"
+    :label="t('common.email')"
     prop="email"
     required
     type="email"

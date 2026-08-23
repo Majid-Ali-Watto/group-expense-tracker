@@ -56,7 +56,7 @@
           style="min-width: 80px"
           @click="handleSave"
         >
-          {{ t('groups.save') }}
+          {{ t('common.save') }}
         </el-button>
       </div>
     </template>

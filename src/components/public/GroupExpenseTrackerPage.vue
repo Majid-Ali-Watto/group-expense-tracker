@@ -1,7 +1,7 @@
 <template>
   <main class="public-page inner-page">
     <section class="title-section">
-      <p class="eyebrow">{{ t('groupExpenseTracker.eyebrow') }}</p>
+      <p class="eyebrow">{{ t('landing.explore.groupExpenseTracker.title') }}</p>
       <h1>{{ t('groupExpenseTracker.title') }}</h1>
       <p>{{ t('groupExpenseTracker.intro') }}</p>
     </section>

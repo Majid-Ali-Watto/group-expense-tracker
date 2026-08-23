@@ -43,7 +43,7 @@
           size="default"
           @click="dialogVisible = false"
         >
-          {{ t('auth.passwordReset.cancel') }}
+          {{ t('common.cancel') }}
         </GenericButton>
       </div>
     </div>

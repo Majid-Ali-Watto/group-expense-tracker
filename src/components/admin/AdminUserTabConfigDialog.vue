@@ -48,7 +48,7 @@
           :model-value="tabSelection.shared"
           @update:model-value="updateSelection('shared', $event)"
         >
-          {{ t('admin.userTabConfig.sharedFeatures') }}
+          {{ t('auth.tabConfig.sharedFeatures') }}
         </el-checkbox>
 
         <div v-if="tabSelection.shared" class="mt-3 space-y-2 pl-6 text-sm">
@@ -57,14 +57,14 @@
             :model-value="tabSelection[USER_TAB_KEYS.GROUPS]"
             disabled
           >
-            {{ t('admin.userTabConfig.groups') }}
+            {{ t('tabs.groups') }}
           </el-checkbox>
           <el-checkbox
             class="!whitespace-normal"
             :model-value="tabSelection[USER_TAB_KEYS.USERS]"
             @update:model-value="updateSelection(USER_TAB_KEYS.USERS, $event)"
           >
-            {{ t('admin.userTabConfig.users') }}
+            {{ t('tabs.users') }}
           </el-checkbox>
           <el-checkbox
             class="!whitespace-normal"
@@ -73,7 +73,7 @@
               updateSelection(USER_TAB_KEYS.SHARED_EXPENSES, $event)
             "
           >
-            {{ t('admin.userTabConfig.sharedExpenses') }}
+            {{ t('tabs.sharedExpenses') }}
           </el-checkbox>
           <el-checkbox
             class="!whitespace-normal"
@@ -82,7 +82,7 @@
               updateSelection(USER_TAB_KEYS.SHARED_LOANS, $event)
             "
           >
-            {{ t('admin.userTabConfig.sharedLoans') }}
+            {{ t('tabs.sharedLoans') }}
           </el-checkbox>
         </div>
 
@@ -125,7 +125,7 @@
             :model-value="tabSelection.personal"
             @update:model-value="updateSelection('personal', $event)"
           >
-            {{ t('admin.userTabConfig.personalFeatures') }}
+            {{ t('auth.tabConfig.personalFeatures') }}
           </el-checkbox>
           <div v-if="tabSelection.personal" class="mt-3 space-y-2 pl-6 text-sm">
             <el-checkbox
@@ -135,7 +135,7 @@
                 updateSelection(USER_TAB_KEYS.PERSONAL_EXPENSES, $event)
               "
             >
-              {{ t('admin.userTabConfig.personalExpenses') }}
+              {{ t('tabs.personalExpenses') }}
             </el-checkbox>
             <el-checkbox
               class="!whitespace-normal"
@@ -144,7 +144,7 @@
                 updateSelection(USER_TAB_KEYS.PERSONAL_LOANS, $event)
               "
             >
-              {{ t('admin.userTabConfig.personalLoans') }}
+              {{ t('tabs.personalLoans') }}
             </el-checkbox>
           </div>
         </div>
@@ -223,7 +223,7 @@
     <template #footer>
       <div class="flex justify-end gap-2">
         <el-button @click="$emit('update:visible', false)">{{
-          t('admin.userTabConfig.cancel')
+          t('common.cancel')
         }}</el-button>
         <el-button type="primary" :loading="loading" @click="handleSave">
           {{ t('admin.userTabConfig.saveConfig') }}
@@ -391,7 +391,7 @@ function handleSave() {
 
   const userTabConfig = buildUserTabConfig(selection)
   if (!hasEnabledUserTabs(userTabConfig)) {
-    return showError(t('admin.userTabConfig.selectAtLeastOneTabError'))
+    return showError(t('authMessages.selectAtLeastOneTab'))
   }
 
   try {

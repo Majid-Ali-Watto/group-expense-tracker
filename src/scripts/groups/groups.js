@@ -238,7 +238,7 @@ export const Groups = () => {
     ...GROUP_CATEGORIES
   ])
   const sortOptions = computed(() => [
-    { label: t('groups.sortDefault'), value: '' },
+    { label: t('users.default'), value: '' },
     { label: t('groups.sortAsc'), value: 'asc' },
     { label: t('groups.sortDesc'), value: 'desc' }
   ])
@@ -246,7 +246,7 @@ export const Groups = () => {
     {
       key: 'sort',
       modelValue: sortOrder.value,
-      placeholder: t('groups.sortPlaceholder'),
+      placeholder: t('users.sortPlaceholder'),
       options: sortOptions.value,
       filterable: false,
       onChange: (value) => {
@@ -256,7 +256,7 @@ export const Groups = () => {
     {
       key: 'category',
       modelValue: filterByCategory.value,
-      placeholder: t('groups.categoryPlaceholder'),
+      placeholder: t('common.category'),
       options: allCategoryOptions.value,
       onChange: (value) => {
         filterByCategory.value = value || ''
@@ -265,7 +265,7 @@ export const Groups = () => {
     {
       key: 'member',
       modelValue: filterByUser.value,
-      placeholder: t('groups.memberPlaceholder'),
+      placeholder: t('sharedLoans.member'),
       options: allGroupMemberOptions.value,
       onChange: (value) => {
         filterByUser.value = value || ''
@@ -716,7 +716,7 @@ export const Groups = () => {
   }
 
   function shareSingleGroup(group) {
-    return shareGroups([group], t('groupsMessages.groupShareLabel'))
+    return shareGroups([group], t('common.entityGroup'))
   }
 
   // Get join requests for a group
@@ -1110,7 +1110,7 @@ export const Groups = () => {
 
     const user = userStore.getUserByUid(selectedMemberToAdd.value)
     if (!user) {
-      return showError(t('groupsMessages.userNotFound'))
+      return showError(t('users.userNotFound'))
     }
     if (isUserBlocked(user)) {
       return showError(getBlockedEntityMessage('user'))
@@ -1263,7 +1263,7 @@ export const Groups = () => {
       await updateData(
         `${DB_NODES.GROUPS}/${groupId}`,
         () => group,
-        t('groupsMessages.approvalRecorded')
+        t('users.approvalRecorded')
       )
 
       groupStore.updateGroup(group)
@@ -1451,7 +1451,7 @@ export const Groups = () => {
           t('groupsMessages.soleMemberDeleteConfirm'),
           t('groupsMessages.deleteGroupTitle'),
           {
-            confirmButtonText: t('groupsMessages.deleteGroupButton'),
+            confirmButtonText: t('groupsMessages.deleteGroupTitle'),
             cancelButtonText: t('common.cancel'),
             type: 'error'
           }
@@ -1467,7 +1467,7 @@ export const Groups = () => {
         t('groupsMessages.deletionRequestConfirmBody'),
         t('groupsMessages.requestGroupDeletionTitle'),
         {
-          confirmButtonText: t('groupsMessages.sendRequestButton'),
+          confirmButtonText: t('common.sendRequest'),
           cancelButtonText: t('common.cancel'),
           type: 'error'
         }
@@ -1550,7 +1550,7 @@ export const Groups = () => {
         t('groupsMessages.rejectDeletionConfirmBody'),
         t('groupsMessages.rejectDeletionRequestTitle'),
         {
-          confirmButtonText: t('groupsMessages.rejectButton'),
+          confirmButtonText: t('common.reject'),
           cancelButtonText: t('common.cancel'),
           type: 'warning'
         }
@@ -1658,7 +1658,7 @@ export const Groups = () => {
   async function updateGroup() {
     try {
       if (!editForm.value.name) {
-        return showError(t('groupsMessages.groupNameRequired'))
+        return showError(t('validation.groupNameRequired'))
       }
 
       if (editForm.value.members.length < 2) {
@@ -1755,7 +1755,7 @@ export const Groups = () => {
           t('groupsMessages.editRequestConfirmBody'),
           t('groupsMessages.confirmEditRequestTitle'),
           {
-            confirmButtonText: t('groupsMessages.sendRequestButton'),
+            confirmButtonText: t('common.sendRequest'),
             cancelButtonText: t('common.cancel'),
             type: 'warning'
           }
@@ -1881,7 +1881,7 @@ export const Groups = () => {
           () => ({ editRequest: updatedEditRequest }),
           ''
         )
-        showSuccess(t('groupsMessages.approvalHasBeenRecorded'))
+        showSuccess(t('approval.yourApprovalRecorded'))
       }
     } catch (err) {
       showError(err.message || err)
@@ -1898,7 +1898,7 @@ export const Groups = () => {
         t('groupsMessages.rejectEditConfirmBody'),
         t('groupsMessages.rejectEditRequestTitle'),
         {
-          confirmButtonText: t('groupsMessages.rejectButton'),
+          confirmButtonText: t('common.reject'),
           cancelButtonText: t('common.cancel'),
           type: 'warning'
         }
@@ -2021,7 +2021,7 @@ export const Groups = () => {
         ''
       )
 
-      showSuccess(t('groupsMessages.approvalHasBeenRecorded'))
+      showSuccess(t('approval.yourApprovalRecorded'))
     } catch (err) {
       showError(err.message || err)
     }
@@ -2067,7 +2067,7 @@ export const Groups = () => {
         t('groupsMessages.rejectAddMemberConfirmBody'),
         t('groupsMessages.rejectAddMemberRequestTitle'),
         {
-          confirmButtonText: t('groupsMessages.rejectButton'),
+          confirmButtonText: t('common.reject'),
           cancelButtonText: t('common.cancel'),
           type: 'warning'
         }
@@ -2279,7 +2279,7 @@ export const Groups = () => {
           t('groupsMessages.ownerMustTransferBeforeLeaving'),
           t('groupsMessages.transferOwnershipRequiredTitle'),
           {
-            confirmButtonText: t('groupsMessages.transferOwnershipButton'),
+            confirmButtonText: t('groups.transferOwnershipTitle'),
             cancelButtonText: t('common.cancel'),
             type: 'info'
           }
@@ -2388,7 +2388,7 @@ export const Groups = () => {
         t('groupsMessages.transferRequestConfirmBody'),
         t('groupsMessages.requestOwnershipTransferTitle'),
         {
-          confirmButtonText: t('groupsMessages.sendRequestButton'),
+          confirmButtonText: t('common.sendRequest'),
           cancelButtonText: t('common.cancel'),
           type: 'warning'
         }
@@ -2459,7 +2459,7 @@ export const Groups = () => {
         t('groupsMessages.cancelTransferConfirmBody'),
         t('groupsMessages.rejectTransferRequestTitle'),
         {
-          confirmButtonText: t('groupsMessages.rejectButton'),
+          confirmButtonText: t('common.reject'),
           cancelButtonText: t('common.cancel'),
           type: 'warning'
         }
@@ -2779,14 +2779,14 @@ export const Groups = () => {
         onClick: () => showAddMemberDialog(group.id)
       },
       {
-        label: t('groupsMessages.editButton'),
+        label: t('common.edit'),
         show: isMember,
         disabled: interactionsBlocked || !isOwner,
         type: '',
         onClick: () => editGroup(group.id)
       },
       {
-        label: t('groupsMessages.transferOwnershipButton'),
+        label: t('groups.transferOwnershipTitle'),
         show: isMember && isOwner && group.members.length > 1,
         disabled: interactionsBlocked,
         type: '',
@@ -2794,14 +2794,14 @@ export const Groups = () => {
       },
       // REQUEST ACTIONS
       {
-        label: t('groupsMessages.cancelRequestButton'),
+        label: t('approval.cancelRequest'),
         show: !isMember && hasJoinReq,
         type: 'warning',
         disabled: interactionsBlocked,
         onClick: () => cancelJoinRequest(group.id)
       },
       {
-        label: t('groupsMessages.requestToJoinButton'),
+        label: t('shared.requestToJoin'),
         show: !isMember && !hasJoinReq,
         type: 'success',
         disabled: interactionsBlocked,
@@ -2820,8 +2820,8 @@ export const Groups = () => {
       {
         label:
           group.members.length === 1
-            ? t('groupsMessages.deleteGroupButton')
-            : t('groupsMessages.requestDeleteButton'),
+            ? t('groupsMessages.deleteGroupTitle')
+            : t('table.requestDelete'),
         show: isOwner && !hasDeleteRequest(group),
         type: 'danger',
         disabled: interactionsBlocked,

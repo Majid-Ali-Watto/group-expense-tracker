@@ -57,7 +57,7 @@
           <div
             class="w-full text-xs font-semibold text-gray-400 uppercase tracking-wide sm:hidden mb-1"
           >
-            {{ t('users.groups') }}
+            {{ t('tabs.groups') }}
           </div>
           <template v-if="groups.length > 0">
             <button
@@ -83,7 +83,7 @@
               @click="$emit('open-groups')"
             >
               <span class="group-chip__name">{{
-                t('users.morGroups', { count: groups.length - 2 })
+                t('table.more', { count: groups.length - 2 })
               }}</span>
             </button>
           </template>
@@ -97,7 +97,7 @@
           <div
             class="w-full text-xs font-semibold text-gray-400 uppercase tracking-wide sm:hidden mb-1"
           >
-            {{ t('users.actions') }}
+            {{ t('common.actions') }}
           </div>
 
           <el-button
@@ -118,7 +118,7 @@
                 :disabled="isInteractionBlocked"
                 @click="$emit('edit')"
               >
-                {{ t('users.edit') }}
+                {{ t('common.edit') }}
               </el-button>
               <el-button
                 size="default"
@@ -126,7 +126,7 @@
                 :disabled="isInteractionBlocked"
                 @click="$emit('delete', user.uid, user.name)"
               >
-                {{ t('users.delete') }}
+                {{ t('common.delete') }}
               </el-button>
             </template>
             <el-button v-else size="default" disabled>

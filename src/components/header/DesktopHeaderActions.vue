@@ -66,12 +66,12 @@
     <button
       v-if="loggedIn"
       class="theme-btn"
-      :title="t('headerActions.profile')"
+      :title="t('common.profileAlt')"
       @click="emit('open-profile')"
     >
       <UserAvatar
         :image-url="activeUserPhotoUrl"
-        :alt="t('headerActions.profile')"
+        :alt="t('common.profileAlt')"
         size="fill"
         variant="profile"
         icon-size="md"

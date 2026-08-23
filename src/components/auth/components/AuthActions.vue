@@ -35,8 +35,8 @@
       >
         {{
           mode === 'register'
-            ? t('auth.actions.submitRegister')
-            : t('auth.actions.submitLogin')
+            ? t('nav.register')
+            : t('nav.login')
         }}
       </GenericButton>
     </div>
@@ -89,7 +89,7 @@
         custom-class="font-medium"
         @click="$emit('update:mode', 'register')"
       >
-        {{ t('auth.actions.submitRegister') }}
+        {{ t('nav.register') }}
       </GenericButton>
     </p>
 
@@ -104,7 +104,7 @@
         custom-class="font-medium"
         @click="$emit('update:mode', 'login')"
       >
-        {{ t('auth.actions.submitLogin') }}
+        {{ t('nav.login') }}
       </GenericButton>
     </p>
   </div>

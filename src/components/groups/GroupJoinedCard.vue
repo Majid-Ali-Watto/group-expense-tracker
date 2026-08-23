@@ -44,7 +44,7 @@
               </el-dropdown-item>
               <el-dropdown-item divided disabled>
                 <span class="text-xs text-gray-400">{{
-                  t('groups.actionsLabel')
+                  t('common.actions')
                 }}</span>
               </el-dropdown-item>
               <el-dropdown-item
@@ -131,7 +131,7 @@
           class="!m-0 !w-full"
           @click="$emit('add-expense')"
         >
-          {{ t('groups.addExpense') }}
+          {{ t('personalExpenses.addExpense') }}
         </el-button>
         <el-button
           type="success"
@@ -140,7 +140,7 @@
           class="!m-0 !w-full"
           @click="$emit('add-loan')"
         >
-          {{ t('groups.addLoan') }}
+          {{ t('sharedLoans.addLoan') }}
         </el-button>
       </div>
     </div>

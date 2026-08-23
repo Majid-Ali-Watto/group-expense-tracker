@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     :model-value="modelValue"
-    :title="t('users.createGroupDialog')"
+    :title="t('users.createGroup')"
     width="90%"
     append-to-body
     style="max-width: 500px"

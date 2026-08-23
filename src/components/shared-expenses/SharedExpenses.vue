@@ -104,7 +104,7 @@
                 <div v-else class="space-y-2 mb-4">
                   <div class="flex items-center justify-between">
                     <span class="text-sm font-medium text-gray-700">{{
-                      t('sharedExpenses.payers')
+                      t('table.payersTitle')
                     }}</span>
                     <el-button size="default" type="primary" @click="addPayer">
                       {{ t('sharedExpenses.addPayer') }}
@@ -265,7 +265,7 @@
 
                 <div class="flex gap-2 items-end mb-1">
                   <el-form-item
-                    :label="t('sharedExpenses.itemDescription')"
+                    :label="t('common.description')"
                     class="mb-0 flex-1 min-w-0"
                   >
                     <GenericInputField
@@ -276,7 +276,7 @@
                     />
                   </el-form-item>
                   <el-form-item
-                    :label="t('sharedExpenses.itemAmount')"
+                    :label="t('common.amount')"
                     class="mb-0"
                     style="width: 120px; flex-shrink: 0"
                   >
@@ -291,7 +291,7 @@
                 </div>
 
                 <el-form-item
-                  :label="t('sharedExpenses.itemParticipants')"
+                  :label="t('sharedExpenses.participants')"
                   class="mb-0"
                 >
                   <GenericDropDown
@@ -368,7 +368,7 @@
               </div>
               <div class="flex items-center justify-between">
                 <span class="text-sm font-semibold text-gray-700">{{
-                  t('sharedExpenses.splitItems')
+                  t('table.splitItemsTitle')
                 }}</span>
                 <el-button size="default" type="primary" @click="addSplitItem">
                   {{ t('sharedExpenses.addItem') }}

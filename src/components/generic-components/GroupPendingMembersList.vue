@@ -28,7 +28,7 @@
         @click="showDialog = true"
       >
         {{
-          t('groups.moreCount', {
+          t('table.more', {
             count: pendingMemberCount - initialMemberLoadCount
           })
         }}

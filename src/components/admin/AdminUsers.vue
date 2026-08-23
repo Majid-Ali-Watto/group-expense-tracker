@@ -3,7 +3,7 @@
     <template #header>
       <div class="flex items-baseline gap-2">
         <span class="font-semibold text-gray-800 dark:text-gray-100">{{
-          t('admin.users.title')
+          t('tabs.users')
         }}</span>
         <span class="text-xs text-gray-400">users/{uid}</span>
       </div>
@@ -26,13 +26,13 @@
       <div
         class="hidden sm:grid sm:grid-cols-[1fr_1fr_repeat(4,6rem)_8.5rem] gap-x-3 px-2 mb-1 text-xs font-semibold text-gray-400 uppercase tracking-wide"
       >
-        <span>{{ t('admin.users.nameColumn') }}</span>
-        <span>{{ t('admin.users.emailColumn') }}</span>
+        <span>{{ t('groups.nameLabel') }}</span>
+        <span>{{ t('common.email') }}</span>
         <span class="text-center">{{ t('admin.users.blockedColumn') }}</span>
         <span class="text-center">{{
           t('admin.users.bugResolverColumn')
         }}</span>
-        <span class="text-center">{{ t('admin.users.adminColumn') }}</span>
+        <span class="text-center">{{ t('common.admin') }}</span>
         <span class="text-center">{{ t('admin.users.paidTierColumn') }}</span>
         <span class="text-center">{{ t('admin.users.tabConfigColumn') }}</span>
       </div>
@@ -71,7 +71,7 @@
               @change="updateUserFlag(user.uid, 'bugResolver', $event)"
             />
             <FlagToggle
-              :label="t('admin.users.adminColumn')"
+              :label="t('common.admin')"
               :value="user.isAdmin === true"
               @change="updateUserFlag(user.uid, 'isAdmin', $event)"
             />
@@ -98,8 +98,8 @@
               >
                 {{
                   getUserTabConfig(user.uid)
-                    ? t('admin.users.editAction')
-                    : t('admin.users.createAction')
+                    ? t('common.edit')
+                    : t('groups.create')
                 }}
               </el-button>
             </div>

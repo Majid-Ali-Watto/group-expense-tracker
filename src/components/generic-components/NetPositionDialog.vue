@@ -54,7 +54,7 @@
         v-if="summary.includedSections?.sharedExpenses !== false"
         class="section-card"
       >
-        <div class="section-header">{{ t('groups.sharedExpensesLabel') }}</div>
+        <div class="section-header">{{ t('tabs.sharedExpenses') }}</div>
         <div class="summary-row">
           <span class="label">{{ t('netPosition.receiveColon') }}</span>
           <span class="amount positive">{{
@@ -105,7 +105,7 @@
         v-if="summary.includedSections?.sharedLoans !== false"
         class="section-card"
       >
-        <div class="section-header">{{ t('groups.sharedLoansLabel') }}</div>
+        <div class="section-header">{{ t('tabs.sharedLoans') }}</div>
         <div class="summary-row">
           <span class="label">{{ t('personalLoans.youLent') }}:</span>
           <span class="amount positive">{{
@@ -227,7 +227,7 @@
         :disabled="!summary"
         @click="downloadPdf"
       >
-        {{ t('netPosition.downloadPdf') }}
+        {{ t('table.downloadPdf') }}
       </GenericButton>
     </template>
   </el-dialog>

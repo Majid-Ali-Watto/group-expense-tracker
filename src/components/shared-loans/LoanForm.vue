@@ -167,7 +167,7 @@
                   v-if="!selectedGiverUser"
                   :rows="1"
                   :model-value="formData.loanGiver"
-                  :label="t('sharedLoans.loanGiverName')"
+                  :label="t('sharedLoans.loanGiver')"
                   prop="loanGiver"
                   required
                   type="textarea"
@@ -259,7 +259,7 @@
                   v-if="!selectedReceiverUser"
                   :rows="1"
                   :model-value="formData.loanReceiver"
-                  :label="t('sharedLoans.loanReceiverName')"
+                  :label="t('sharedLoans.loanReceiver')"
                   prop="loanReceiver"
                   required
                   type="textarea"

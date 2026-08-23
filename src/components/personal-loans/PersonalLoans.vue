@@ -148,8 +148,8 @@
                 <th colspan="3">{{ t('personalLoans.whoPaysWhom') }}</th>
               </tr>
               <tr>
-                <th>{{ t('personalLoans.pays') }}</th>
-                <th>{{ t('personalLoans.receives') }}</th>
+                <th>{{ t('sharedExpenses.pays') }}</th>
+                <th>{{ t('sharedExpenses.receives') }}</th>
                 <th>{{ t('common.amount') }}</th>
               </tr>
             </thead>
@@ -172,7 +172,7 @@
         </div>
 
         <!-- ===== LOANS ===== -->
-        <h2 class="mt-6">{{ t('personalLoans.loanRecords') }}</h2>
+        <h2 class="mt-6">{{ t('sharedLoans.loanRecords') }}</h2>
 
         <Table
           :downloadTitle="t('personalLoans.personalLoansDownload')"
@@ -266,12 +266,12 @@ const settlementBarItems = computed(() =>
 const settlementColumns = computed(() => [
   {
     key: 'from',
-    label: t('personalLoans.pays'),
+    label: t('sharedExpenses.pays'),
     class: 'text-red-500 font-medium'
   },
   {
     key: 'to',
-    label: t('personalLoans.receives'),
+    label: t('sharedExpenses.receives'),
     class: 'text-green-600 font-medium'
   },
   {

@@ -207,12 +207,12 @@ export const SharedGroups = () => {
       await updateData(
         `${DB_NODES.GROUPS}/${group.id}`,
         () => payload,
-        t('groupsMessages.joinRequestSentWaiting')
+        t('shared.joinRequestSent')
       )
 
       groupStore.updateGroup(updatedGroup)
     } catch {
-      showError(t('groupsMessages.failedSendJoinRequest'))
+      showError(t('shared.joinRequestFailed'))
     } finally {
       actioningGroupId.value = null
     }

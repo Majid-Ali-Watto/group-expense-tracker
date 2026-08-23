@@ -161,7 +161,7 @@ export const Login = () => {
         t('authMessages.passwordResetCompleteBody'),
         t('authMessages.passwordResetCompleteTitle'),
         {
-          confirmButtonText: t('authMessages.ok'),
+          confirmButtonText: t('common.ok'),
           type: 'success'
         }
       )
@@ -397,7 +397,7 @@ export const Login = () => {
     }
 
     if (!isValidPhoneNumber(mobileValue)) {
-      return showError(t('authMessages.invalidMobileNumber'))
+      return showError(t('validation.mobilePattern'))
     }
 
     if (password.length < 6 || password.length > 15) {
@@ -483,7 +483,7 @@ export const Login = () => {
         t('authMessages.registrationSuccessBody', { email: emailValue }),
         t('authMessages.registrationSuccessTitle'),
         {
-          confirmButtonText: t('authMessages.ok'),
+          confirmButtonText: t('common.ok'),
           type: 'success',
           dangerouslyUseHTMLString: true
         }
@@ -708,7 +708,7 @@ export const Login = () => {
         t('authMessages.resetEmailSentBody', { email }),
         t('authMessages.resetEmailSentTitle'),
         {
-          confirmButtonText: t('authMessages.ok'),
+          confirmButtonText: t('common.ok'),
           type: 'success',
           dangerouslyUseHTMLString: true
         }
@@ -791,7 +791,7 @@ export const Login = () => {
     const mobile = normalizePhoneNumber(googleMobileInput.value)
     if (!mobile) return showError(t('authMessages.enterMobileNumber'))
     if (!isValidPhoneNumber(mobile)) {
-      return showError(t('authMessages.invalidMobileNumber'))
+      return showError(t('validation.mobilePattern'))
     }
 
     isGoogleMobileSubmitting.value = true

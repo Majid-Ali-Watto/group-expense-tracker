@@ -100,7 +100,7 @@
             />
           </div>
         </el-descriptions-item>
-        <el-descriptions-item :label="t('profile.fullNameLabel')">
+        <el-descriptions-item :label="t('common.fullName')">
           <div class="profile-field-value">
             <span>{{ profileName }}</span>
             <el-button
@@ -113,7 +113,7 @@
             />
           </div>
         </el-descriptions-item>
-        <el-descriptions-item :label="t('profile.mobileNumberLabel')">
+        <el-descriptions-item :label="t('common.mobileNumber')">
           <div class="profile-field-value">
             <span>{{ profileMobile }}</span>
             <el-button
@@ -129,7 +129,7 @@
         <el-descriptions-item :label="t('profile.emailVerificationLabel')">
           <el-tag :type="emailVerified ? 'success' : 'info'" effect="light">
             {{
-              emailVerified ? t('profile.verifiedTag') : t('profile.pendingTag')
+              emailVerified ? t('profile.verifiedTag') : t('groups.pendingTag')
             }}
           </el-tag>
         </el-descriptions-item>
@@ -157,7 +157,7 @@
               type="danger"
               effect="light"
             >
-              {{ t('profile.adminTag') }}
+              {{ t('common.admin') }}
             </el-tag>
             <el-tag
               v-if="isBugResolver"
@@ -165,7 +165,7 @@
               type="warning"
               effect="light"
             >
-              {{ t('profile.bugResolverTag') }}
+              {{ t('admin.users.bugResolverColumn') }}
             </el-tag>
             <span
               v-if="!isAdminUser && !isBugResolver"
@@ -177,7 +177,7 @@
         </el-descriptions-item>
         <el-descriptions-item :label="t('profile.accountStatusLabel')">
           <el-tag :type="isBlocked ? 'danger' : 'success'" effect="light">
-            {{ isBlocked ? t('profile.blockedTag') : t('profile.activeTag') }}
+            {{ isBlocked ? t('admin.users.blockedColumn') : t('profile.activeTag') }}
           </el-tag>
         </el-descriptions-item>
       </el-descriptions>
@@ -321,7 +321,7 @@
     >
       <el-form-item
         v-if="editField === 'name'"
-        :label="t('profile.fullNameLabel')"
+        :label="t('common.fullName')"
         prop="name"
       >
         <GenericInputField
@@ -336,14 +336,14 @@
 
       <el-form-item
         v-else
-        :label="t('profile.mobileNumberLabel')"
+        :label="t('common.mobileNumber')"
         prop="mobile"
       >
         <GenericMobileInput
           ref="mobileInputRef"
           :model-value="form.mobile"
           :wrap-form-item="false"
-          :placeholder="t('users.mobilePlaceholder')"
+          :placeholder="t('sharedLoans.mobilePlaceholder')"
           @update:modelValue="form.mobile = $event"
         />
       </el-form-item>
@@ -532,16 +532,16 @@ const ocrExtractionsLimit = computed(() => {
   return raw != null ? Number(raw) : null
 })
 const emailsSentLimitLabel = computed(() =>
-  emailsSentLimit.value == null ? t('profile.unlimited') : emailsSentLimit.value
+  emailsSentLimit.value == null ? t('admin.config.unlimitedPlaceholder') : emailsSentLimit.value
 )
 const ocrExtractionsLimitLabel = computed(() =>
   ocrExtractionsLimit.value == null
-    ? t('profile.unlimited')
+    ? t('admin.config.unlimitedPlaceholder')
     : ocrExtractionsLimit.value
 )
 
 const accountTierLabel = computed(() =>
-  isBilledUser.value ? t('profile.paidTierTag') : t('profile.freeTierTag')
+  isBilledUser.value ? t('admin.users.paidTierColumn') : t('profile.freeTierTag')
 )
 const accountTierTagType = computed(() =>
   isBilledUser.value ? 'success' : 'info'
@@ -559,10 +559,10 @@ const rules = {
         const normalized = normalizeName(value)
         if (!normalized) return callback(new Error(t('users.nameRequired')))
         if (normalized.length < 3) {
-          return callback(new Error(t('users.nameMinLength')))
+          return callback(new Error(t('validation.nameMinLength')))
         }
         if (!isValidName(normalized)) {
-          return callback(new Error(t('users.nameInvalid')))
+          return callback(new Error(t('validation.nameAlphaOnly')))
         }
         callback()
       },
@@ -574,10 +574,10 @@ const rules = {
       validator: (_, value, callback) => {
         const normalized = normalizeMobile(value)
         if (!normalized) {
-          return callback(new Error(t('users.mobileRequired')))
+          return callback(new Error(t('validation.mobileRequired')))
         }
         if (!isValidMobile(normalized)) {
-          return callback(new Error(t('users.mobileInvalid')))
+          return callback(new Error(t('validation.mobilePattern')))
         }
         callback()
       },
@@ -1071,7 +1071,7 @@ async function submitProfileUpdate() {
       otherUid !== uid && phoneNumbersMatch(otherUser?.mobile || '', newMobile)
   )
   if (mobileTaken) {
-    showError(t('users.mobileTaken'))
+    showError(t('authMessages.mobileExists'))
     return
   }
 

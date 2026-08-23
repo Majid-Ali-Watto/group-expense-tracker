@@ -33,7 +33,7 @@
               <td>{{ formatAmount(salary) }}</td>
             </tr>
             <tr>
-              <td>{{ t('personalExpenses.totalSpent') }}</td>
+              <td>{{ t('sharedExpenses.totalSpent') }}</td>
               <td class="amount-negative">{{ formatAmount(totalSpent) }}</td>
             </tr>
             <tr>

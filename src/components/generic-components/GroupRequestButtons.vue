@@ -70,14 +70,14 @@
           </el-button>
         </div>
         <div v-else class="text-xs text-green-700">
-          {{ t('groups.approvedThisRequest') }}
+          {{ t('approval.youApprovedRequest') }}
           <span
             v-if="
               group.ownerUid === authStore.getActiveUserUid &&
               !allMembersApprovedJoinRequest(group, request.uid)
             "
           >
-            {{ t('groups.waitingForAllApprove') }}
+            {{ t('sharedExpenses.waitingForMembers') }}
           </span>
         </div>
       </div>
@@ -285,7 +285,7 @@
       </el-button>
     </div>
     <div v-else class="text-xs text-green-700 mb-2">
-      {{ t('groups.approvedThisAddRequest') }}
+      {{ t('approval.youApprovedRequest') }}
     </div>
 
     <!-- Admin finalize button when all approved -->
@@ -338,7 +338,7 @@
         type="danger"
         @click="rejectOwnershipTransfer(group.id)"
       >
-        {{ t('groups.declineOwnership') }}
+        {{ t('groups.decline') }}
       </el-button>
     </div>
   </div>

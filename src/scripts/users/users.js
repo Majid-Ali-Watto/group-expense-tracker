@@ -183,7 +183,7 @@ export const Users = () => {
     name: [
       {
         required: true,
-        message: t('users.validationFullNameRequired'),
+        message: t('validation.nameRequired'),
         trigger: 'blur'
       },
       {
@@ -194,11 +194,11 @@ export const Users = () => {
             return
           }
           if (normalizedName.length < 3) {
-            callback(new Error(t('users.nameMinLength')))
+            callback(new Error(t('validation.nameMinLength')))
             return
           }
           if (!isValidName(normalizedName)) {
-            callback(new Error(t('users.nameInvalid')))
+            callback(new Error(t('validation.nameAlphaOnly')))
             return
           }
           callback()
@@ -209,18 +209,18 @@ export const Users = () => {
     mobile: [
       {
         required: true,
-        message: t('users.validationMobileRequired'),
+        message: t('validation.mobileRequired'),
         trigger: 'blur'
       },
       {
         validator: (_rule, value, callback) => {
           const normalizedMobile = normalizeMobile(value || '')
           if (!normalizedMobile) {
-            callback(new Error(t('users.mobileRequired')))
+            callback(new Error(t('validation.mobileRequired')))
             return
           }
           if (!isValidMobile(normalizedMobile)) {
-            callback(new Error(t('users.mobileInvalid')))
+            callback(new Error(t('validation.mobilePattern')))
             return
           }
           callback()
@@ -267,8 +267,8 @@ export const Users = () => {
 
     const confirmed = await confirmAction({
       message: t('users.joinGroupConfirm', { name: group.name }),
-      title: t('users.joinGroupTitle'),
-      confirmButtonText: t('users.sendRequest'),
+      title: t('users.joinGroup'),
+      confirmButtonText: t('common.sendRequest'),
       cancelButtonText: t('common.cancel'),
       type: 'info'
     })
@@ -312,12 +312,12 @@ export const Users = () => {
       await updateData(
         `${DB_NODES.GROUPS}/${group.id}`,
         () => payload,
-        t('users.joinRequestSent')
+        t('shared.joinRequestSent')
       )
 
       groupStore.updateGroup(updatedGroup)
     } catch {
-      showError(t('users.failedJoinRequest'))
+      showError(t('shared.joinRequestFailed'))
     }
   }
 
@@ -509,14 +509,14 @@ export const Users = () => {
 
     if (!newName) return showError(t('users.nameRequired'))
     if (newName.length < 3) {
-      return showError(t('users.nameMinLength'))
+      return showError(t('validation.nameMinLength'))
     }
     if (!isValidName(newName)) {
-      return showError(t('users.nameInvalid'))
+      return showError(t('validation.nameAlphaOnly'))
     }
-    if (!newMobile) return showError(t('users.mobileRequired'))
+    if (!newMobile) return showError(t('validation.mobileRequired'))
     if (!isValidMobile(newMobile)) {
-      return showError(t('users.mobileInvalid'))
+      return showError(t('validation.mobilePattern'))
     }
 
     const user = await read(`${DB_NODES.USERS}/${uid}`)
@@ -532,7 +532,7 @@ export const Users = () => {
         phoneNumbersMatch(otherUser?.mobile || '', newMobile)
     )
     if (mobileTaken) {
-      return showError(t('users.mobileTaken'))
+      return showError(t('authMessages.mobileExists'))
     }
 
     const oldName = user.name
@@ -708,7 +708,7 @@ export const Users = () => {
         t('users.rejectUserConfirm', { name: userName, type }),
         t('users.rejectUserTitle'),
         {
-          confirmButtonText: t('users.reject'),
+          confirmButtonText: t('common.reject'),
           cancelButtonText: t('common.cancel'),
           type: 'warning',
           dangerouslyUseHTMLString: true

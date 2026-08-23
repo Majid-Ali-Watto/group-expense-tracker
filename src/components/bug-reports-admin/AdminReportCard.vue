@@ -125,7 +125,7 @@
           >
         </template>
         <span v-if="report.reporter?.isGuest" class="bra-guest-badge">{{
-          t('bugReports.guest')
+          t('common.guest')
         }}</span>
       </span>
       <span class="bra-date">{{ formatDate(report.submittedAt) }}</span>
@@ -161,7 +161,7 @@
           :author-label-fn="
             (note) =>
               note.authorType === 'admin'
-                ? t('bugReports.admin')
+                ? t('common.admin')
                 : note.authorName
           "
           :can-edit="(note) => note.authorType === 'admin'"
@@ -222,12 +222,12 @@ import {
 const { t } = useI18n()
 
 const CATEGORY_LABEL_KEYS = {
-  'shared-expenses': 'bugReports.categories.sharedExpenses',
-  'shared-loans': 'bugReports.categories.sharedLoans',
-  'personal-loans': 'bugReports.categories.personalLoans',
-  'personal-expenses': 'bugReports.categories.personalExpenses',
-  groups: 'bugReports.categories.groups',
-  notifications: 'bugReports.categories.notifications',
+  'shared-expenses': 'tabs.sharedExpenses',
+  'shared-loans': 'tabs.sharedLoans',
+  'personal-loans': 'tabs.personalLoans',
+  'personal-expenses': 'tabs.personalExpenses',
+  groups: 'tabs.groups',
+  notifications: 'headerActions.notifications',
   auth: 'bugReports.categories.auth',
   settlement: 'bugReports.categories.settlement',
   export: 'bugReports.categories.export',

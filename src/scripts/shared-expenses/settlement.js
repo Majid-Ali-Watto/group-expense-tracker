@@ -79,9 +79,9 @@ export const Settlement = (props) => {
     try {
       await ElMessageBox.confirm(
         t('sharedExpenses.requestSettlementConfirm'),
-        t('sharedExpenses.requestSettlementTitle'),
+        t('sharedExpenses.requestSettlement'),
         {
-          confirmButtonText: t('sharedExpenses.sendRequest'),
+          confirmButtonText: t('common.sendRequest'),
           cancelButtonText: t('common.cancel'),
           type: 'info'
         }
@@ -147,7 +147,7 @@ export const Settlement = (props) => {
         t('sharedExpenses.rejectSettlementConfirm'),
         t('sharedExpenses.rejectSettlementTitle'),
         {
-          confirmButtonText: t('sharedExpenses.rejectBtn'),
+          confirmButtonText: t('common.reject'),
           cancelButtonText: t('common.cancel'),
           type: 'warning'
         }
@@ -179,7 +179,7 @@ export const Settlement = (props) => {
         t('sharedExpenses.finalizeConfirm'),
         t('sharedExpenses.finalizeTitle'),
         {
-          confirmButtonText: t('sharedExpenses.ok'),
+          confirmButtonText: t('common.ok'),
           cancelButtonText: t('common.cancel'),
           type: 'warning'
         }

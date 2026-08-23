@@ -121,7 +121,7 @@ export const Loans = () => {
       monthsRef: months,
       loadedRef: monthsLoaded,
       errorHandler: () => {
-        showError(t('sharedLoans.failedLoadMonths'))
+        showError(t('common.failedLoadMonths'))
       },
       onResolved: (resolvedMonths) => {
         if (resolvedMonths.length) selectedMonth.value = getCurrentMonth()

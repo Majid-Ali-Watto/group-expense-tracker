@@ -121,7 +121,7 @@
             <span
               class="text-sm font-semibold uppercase tracking-wide"
               style="color: #ffffff !important"
-              >{{ t('table.actions') }}</span
+              >{{ t('common.actions') }}</span
             >
           </div>
           <!-- Regular sortable + draggable header -->
@@ -457,8 +457,8 @@
             >
               <button
                 class="et-actions-btn"
-                :aria-label="t('table.actions')"
-                :title="t('table.actions')"
+                :aria-label="t('common.actions')"
+                :title="t('common.actions')"
                 @click.stop
               >
                 &#8942;

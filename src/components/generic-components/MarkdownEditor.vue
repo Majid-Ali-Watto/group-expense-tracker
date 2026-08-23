@@ -72,7 +72,7 @@
           :title="t('markdownEditor.attachImage')"
         >
           <PhotoIcon class="w-3.5 h-3.5" />
-          {{ t('markdownEditor.imageLabel') }}
+          {{ t('common.imageAlt') }}
           <input
             type="file"
             accept="image/*"

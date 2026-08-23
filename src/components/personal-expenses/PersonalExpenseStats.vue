@@ -1,9 +1,9 @@
 <template>
   <div class="sel-stats">
     <div class="sel-stat">
-      <span class="sel-stat-label">{{ t('personalExpenses.totalSpent') }}</span>
+      <span class="sel-stat-label">{{ t('sharedExpenses.totalSpent') }}</span>
       <span
-        v-overflow-popup="{ title: t('personalExpenses.totalSpent') }"
+        v-overflow-popup="{ title: t('sharedExpenses.totalSpent') }"
         class="sel-stat-value sel-danger"
       >
         {{ formattedTotalSpent }}

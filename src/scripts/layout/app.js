@@ -601,7 +601,7 @@ export const App = () => {
   const displayName = computed(
     () =>
       userStore.getUserByUid(authStore.getActiveUserUid)?.name ||
-      t('layout.guestName')
+      t('common.guest')
   )
   const activeUserTabConfig = computed(() => userStore.getActiveUserTabConfig)
   const activeGroup = computed(() => {

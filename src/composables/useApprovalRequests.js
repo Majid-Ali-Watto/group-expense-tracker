@@ -263,7 +263,7 @@ export function useApprovalRequests({
   const cancelRequest = async (request) => {
     await ElMessageBox.confirm(
       t('approval.cancelConfirm', { type: request.type }),
-      t('approval.cancelTitle'),
+      t('approval.cancelRequest'),
       {
         confirmButtonText: t('approval.yesCancelBtn'),
         cancelButtonText: t('approval.noBtn'),

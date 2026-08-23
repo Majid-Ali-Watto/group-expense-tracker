@@ -21,7 +21,6 @@ export default {
     navigation: 'Navigation',
     explore: 'Explore',
     account: 'Account',
-    actions: 'Actions',
     workspace: 'Workspace',
     preferences: 'Preferences',
     reportBug: 'Report a Bug',
@@ -33,7 +32,6 @@ export default {
     switchToDarkMode: 'Switch to Dark Mode',
     lightMode: 'Light Mode',
     darkMode: 'Dark Mode',
-    profile: 'Profile',
     expensesSummary: 'Expenses Summary',
     adminConfig: 'Admin Config',
     manageTabs: 'Manage Tabs',
@@ -76,7 +74,6 @@ export default {
     heroTitle: 'A clearer way to manage shared and personal money',
     heroText:
       'Kharchafy helps friends, roommates, families, and travelers split bills, track shared loans, manage personal expenses, save receipts, approve important changes, and download detailed reports.',
-    createAccount: 'Create account',
     openApp: 'Open app',
     useCasesEyebrow: 'Built for real spending',
     exploreEyebrow: 'Choose what you need',
@@ -110,7 +107,6 @@ export default {
       'Kharchafy brings group expense tracking, shared loans, personal expenses, personal loans, receipts, approvals, notifications, and downloadable reports into one simple finance workspace.'
   },
   groupExpenseTracker: {
-    eyebrow: 'Group expense tracker',
     title: 'Split bills and settle shared costs with less confusion',
     intro:
       'Use Kharchafy to manage roommate costs, trip spending, food orders, household bills, events, shared lending, receipt proof, approvals, and settlements without depending on scattered messages.',
@@ -124,7 +120,6 @@ export default {
     ]
   },
   personalBudgetTracker: {
-    eyebrow: 'Personal budget tracker',
     title: 'Keep salary, daily expenses, personal loans, and reports visible',
     intro:
       'Kharchafy is not only a shared bill app. It also gives you a practical personal budget tracker for monthly salary, day-to-day spending, private loans, categories, recipients, and downloadable records.',
@@ -146,10 +141,7 @@ export default {
     emailSupportTitle: 'Email support'
   },
   auth: {
-    modeToggle: {
-      login: 'Login',
-      register: 'Register'
-    },
+    modeToggle: {},
     infoAlert: {
       registerText:
         'Create a new account with your name, mobile, email, and Password.',
@@ -158,11 +150,8 @@ export default {
       loginText: 'Login with your email and password.'
     },
     formFields: {
-      nameLabel: 'Full Name',
       namePlaceholder: 'Enter your full name',
-      mobileLabel: 'Mobile Number',
       mobilePlaceholder: 'Enter your mobile number',
-      emailLabel: 'Email',
       emailPlaceholder: 'Enter your email address',
       passwordLabel: 'Password',
       passwordPlaceholder: 'Enter your password (6-15 characters)'
@@ -171,8 +160,6 @@ export default {
       resendVerification: 'Resend Verification Email',
       forgotPassword: 'Forgot Password?',
       rememberMe: 'Remember Me',
-      submitRegister: 'Register',
-      submitLogin: 'Login',
       or: 'or',
       continueWithGoogle: 'Continue with Google',
       newToApp: 'New to Kharchafy?',
@@ -183,34 +170,25 @@ export default {
       info: "We'll send a password reset link to your email. Click the link to set a new password.",
       label: 'Registered Email Address',
       placeholder: 'Enter your registered email',
-      send: 'Send Reset Link',
-      cancel: 'Cancel'
+      send: 'Send Reset Link'
     },
     googleMobileDialog: {
       title: 'One more step',
       instructions: 'Please enter your mobile number to complete registration.',
       prioritize: 'Prioritize (Easypaisa/Jazzcash), not mandatory',
       placeholder: 'Mobile number',
-      cancel: 'Cancel',
       continue: 'Continue'
     },
     tabConfig: {
       title: 'Choose Your Tabs',
-      confirm: 'Continue',
       cancelSignOut: 'Sign out',
       intro:
         'Select the features you want to use. You can keep only the tabs you actually need.',
       sharedFeatures: 'Shared features',
-      groups: 'Groups',
-      users: 'Users',
-      sharedExpenses: 'Shared Expenses',
-      sharedLoans: 'Shared Loans',
       emailNotifications: 'Email notifications',
       notifySharedExpense: 'Notify group when I add a shared expense',
       notifySharedLoan: 'Notify group when I add a shared loan',
-      personalFeatures: 'Personal features',
-      personalExpenses: 'Personal Expenses',
-      personalLoans: 'Personal Loans'
+      personalFeatures: 'Personal features'
     },
     changePassword: {
       title: 'Change Password',
@@ -219,8 +197,7 @@ export default {
       newPasswordLabel: 'New Password',
       newPasswordPlaceholder: 'Enter new password (6-15 characters)',
       confirmPasswordLabel: 'Confirm New Password',
-      confirmPasswordPlaceholder: 'Re-enter new password',
-      submit: 'Change Password'
+      confirmPasswordPlaceholder: 'Re-enter new password'
     }
   },
   authMessages: {
@@ -234,7 +211,6 @@ export default {
     registrationSuccessTitle: 'Registration Successful - Verify Your Email',
     registrationSuccessBody:
       "Account created successfully!<br><br>A verification email has been sent to <strong>{email}</strong>.<br><br><strong>Important:</strong> You must verify your email within 48 hours by clicking the link in the email. After verification, you can login.<br><br>If you don't receive the email, please check your <strong>spam or junk folder</strong>.<br><br>If you don't verify within 48 hours, you may need to contact support to complete registration.",
-    ok: 'OK',
     emailAlreadyRegistered:
       "This email is already registered. If you registered recently but haven't verified, check your email for the verification link. If the email doesn't belong to you or you need help, please contact support.",
     weakPassword: 'Password is too weak. Please use at least 6 characters.',
@@ -278,7 +254,6 @@ export default {
       'This email is already registered with email and password. Please login using your email and password instead.',
     googleSignInFailed: 'Google sign-in failed. Please try again.',
     enterMobileNumber: 'Please enter your mobile number.',
-    invalidMobileNumber: 'Please enter a valid mobile number.',
     saveDetailsFailed: 'Failed to save your details. Please try again.',
     selectFeatureGroup:
       'Please select at least one feature group — Shared or Personal — to continue.',
@@ -328,7 +303,6 @@ export default {
     loanReceiverMinLength: 'Loan receiver should be at least 2 characters',
     giverMobileRequired: 'Giver mobile is required',
     receiverMobileRequired: 'Receiver mobile is required',
-    loanMobilePattern: 'Please enter a valid mobile number',
     salaryRequired: 'Salary is required',
     salaryMin: 'Salary should be greater than zero',
     locationRequired: 'Location is required',
@@ -391,10 +365,7 @@ export default {
     edit: 'Edit',
     open: 'Open',
     download: 'Download',
-    copy: 'Copy',
-    copied: 'Copied',
     close: 'Close',
-    submit: 'Submit',
     optional: 'optional',
     allMonths: 'All Months',
     year: 'Year',
@@ -412,7 +383,16 @@ export default {
     profilePhotoTitle: 'Profile Photo',
     duplicate: 'Duplicate',
     guest: 'Guest',
-    confirm: 'Confirm'
+    confirm: 'Confirm',
+    copied: 'Copied!',
+    copyFailed: 'Failed to copy.',
+    actions: 'Actions',
+    fullName: 'Full Name',
+    mobileNumber: 'Mobile Number',
+    email: 'Email',
+    sendRequest: 'Send Request',
+    failedLoadMonths: 'Failed to load months. Please try again.',
+    admin: 'Admin'
   },
   approval: {
     pendingTitle: '⚠️ Pending Approval Requests',
@@ -437,7 +417,6 @@ export default {
     itemDeleted: '{label} has been deleted (approved by all members).',
     itemUpdated: '{label} has been updated (approved by all members).',
     cancelConfirm: 'Are you sure you want to cancel this {type} request?',
-    cancelTitle: 'Cancel Request',
     yesCancelBtn: 'Yes, Cancel',
     noBtn: 'No',
     requestCancelled: '{type} request has been cancelled.',
@@ -455,18 +434,13 @@ export default {
     payerMode: 'Payer Mode',
     payer: 'Payer',
     selectPayer: 'Select payer',
-    payers: 'Payers',
     addPayer: '+ Add Payer',
     payersTotal: 'Payers total:',
     participants: 'Participants',
     selectParticipants: 'Select participants',
     splitMode: 'Split Mode',
-    splitItems: 'Split Items',
     addItem: '+ Add Item',
     item: 'Item {index}',
-    itemDescription: 'Description',
-    itemAmount: 'Amount',
-    itemParticipants: 'Participants',
     whoSharedThisItem: 'Who shared this item?',
     itemPlaceholder: 'e.g. Burger, Cake...',
     itemsTotal: 'Items total',
@@ -481,9 +455,6 @@ export default {
     whoPaid: 'Who Paid',
     amountPaidPerPerson: 'Amount Paid per Person',
     eachPersonPays: 'Each Person Pays',
-    selectPayer_filter: 'Select Payer',
-    payerModeFilter: 'Payer Mode',
-    splitModeFilter: 'Split Mode',
     transactionDuplicated: 'Transaction duplicated successfully.',
     transactionSaved: 'Transaction successfully saved.',
     addPayerError:
@@ -494,9 +465,7 @@ export default {
       'Please add at least one split item when using Custom split mode.',
     splitItemsTotalMismatch:
       'Split items total ({splitTotal}) must equal the transaction amount ({amount}).',
-    pairwiseSettlements: 'Pairwise Settlements (Who pays whom)',
     allSettled: '✅ All Settled!',
-    allSettledText: "No pending settlements. Everyone's balance is zero.",
     settlementRequest: '📋 Settlement Request',
     settlementRequestedBy: 'Requested by: {user} for {month}',
     settlementAllMustApprove:
@@ -514,26 +483,20 @@ export default {
     receives: 'Receives',
     requestSettlementConfirm:
       'This will send a settlement request to all group members. All members must approve before settlement can be finalized.',
-    requestSettlementTitle: 'Request Settlement',
-    sendRequest: 'Send Request',
     noActiveGroup: 'No active group selected',
     settlementRequestSent: 'Settlement request sent successfully',
     youApprovedSettlementMsg: 'You have approved the settlement request',
     rejectSettlementConfirm: 'This will cancel the settlement request.',
     rejectSettlementTitle: 'Reject Settlement Request',
-    rejectBtn: 'Reject',
     settlementRejected: 'Settlement request rejected',
     allMustApproveFirst:
       'All group members must approve before settlement can be finalized',
     finalizeConfirm:
       'Are you sure you want to move expenses to backup and finalize settlement?',
     finalizeTitle: 'Finalize Settlement',
-    ok: 'OK',
     finalizeSuccess:
       'Expenses added to Backup successfully! {month} data cleared.',
-    failedLoadMonths: 'Failed to load months. Please try again.',
     failedLoadExpenses: 'Failed to load expenses. Please try again.',
-    sharedExpensesDownload: 'Shared Expenses',
     proposedAmountLabel: 'Amount:',
     proposedPayerLabel: 'Payer:',
     proposedDescriptionLabel: 'Description:',
@@ -551,8 +514,6 @@ export default {
     loanGiverMobile: 'Loan Giver Mobile',
     loanReceiverMobile: 'Loan Receiver Mobile',
     mobilePlaceholder: 'Enter mobile number',
-    loanGiverName: 'Loan Giver',
-    loanReceiverName: 'Loan Receiver',
     giverNamePlaceholder: 'Loan Giver Name',
     receiverNamePlaceholder: 'Loan Receiver Name',
     loanDescription: 'Loan details',
@@ -591,14 +552,9 @@ export default {
       'If you are the receiver, you cannot also be the giver.',
     ifGiverCantBeReceiver:
       'If you are the giver, you cannot also be the receiver.',
-    failedLoadMonths: 'Failed to load months. Please try again.',
     failedLoadLoans: 'Failed to load loans. Please try again.',
-    sharedLoansDownload: 'Shared Loans',
-    proposedAmount: 'Amount:',
     proposedGiver: 'Giver:',
     proposedReceiver: 'Receiver:',
-    proposedDescription: 'Description:',
-    proposedCategory: 'Category:',
     loanToBeDeleted: 'Loan to be deleted:'
   },
   users: {
@@ -611,17 +567,12 @@ export default {
     sharedGroupsOnly: 'Shared groups only',
     hideBlockedUsers: 'Hide blocked users',
     nameMobile: 'Name / Mobile',
-    groups: 'Groups',
-    actions: 'Actions',
     noUsersMatch: 'No users match the current filters',
     clearSearchHint:
       'Try clearing the search or removing the shared-group filter.',
     createGroup: 'Create Group',
-    edit: 'Edit',
-    delete: 'Delete',
     deletePending: 'Delete Pending ({approved}/{required})',
     noGroups: 'No groups',
-    morGroups: '+{count} more',
     youAreMember: "You're Member",
     requestSent: 'Request Sent',
     member: 'member',
@@ -632,32 +583,16 @@ export default {
     pendingApprovals: 'Pending Approvals',
     deleteRequestBy: 'Delete request by',
     approvals: 'Approvals: {approved} / {required}',
-    approve: 'Approve',
-    reject: 'Reject',
     editUser: 'Edit User',
-    mobileNumber: 'Mobile Number',
-    mobilePlaceholder: 'Enter mobile number',
-    fullName: 'Full Name',
     fullNamePlaceholder: 'Full name',
-    save: 'Save',
-    createGroupDialog: 'Create Group',
     usersGroupsTitle: "{name}'s Groups ({count})",
     alreadyPendingJoin:
       'You already have a pending join request for this group.',
     joinGroupConfirm: 'Do you want to send a join request for "{name}"?',
-    joinGroupTitle: 'Join Group',
-    sendRequest: 'Send Request',
-    joinRequestSent: 'Join request sent! Waiting for member approval.',
-    failedJoinRequest: 'Failed to send join request. Please try again.',
     nameRequired: 'Name is required',
-    nameMinLength: 'Name should be at least 3 characters',
-    nameInvalid: 'Name can only contain alphabets and single spaces',
-    mobileRequired: 'Mobile number is required',
-    mobileInvalid: 'Please enter a valid mobile number',
     userNotFound: 'User not found',
     deleteRequestPending: 'A delete request is pending for this user',
     updateRequestPending: 'An update request is pending for this user',
-    mobileTaken: 'An account with this mobile number already exists',
     userUpdated: 'User updated successfully',
     deleteUserConfirm:
       'Are you sure you want to delete <strong>{name}</strong>?',
@@ -677,8 +612,6 @@ export default {
     deleteRejected: 'Delete request rejected',
     updateRejected: 'Update request rejected',
     failedReject: 'Failed to reject request',
-    validationFullNameRequired: 'Full name is required',
-    validationMobileRequired: 'Mobile number is required',
     profilePhotoAlt: 'User profile',
     profilePhotoTitle: "{name}'s Profile Photo",
     failedProcessDeleteRequest: 'Failed to process delete request',
@@ -694,17 +627,12 @@ export default {
   personalExpenses: {
     addNewExpensePrompt: 'Want to add a new expense?',
     expenseDetails: 'Expense Details',
-    addOrSelectCategory: 'Add or select category',
     recipient: 'Recipient',
     recipientPlaceholder: 'Select a user or enter recipient',
     lineItems: 'Line Items',
-    addItem: '+ Add Item',
     itemPlaceholder: 'e.g. Burger, Coffee...',
-    itemsTotal: 'Items total',
-    itemsTotalPlusTax: 'Items total + tax',
     addExpense: 'Add Expense',
     personalExpensesDownload: 'Personal_Expenses',
-    totalSpent: 'Total Spent',
     remaining: 'Remaining',
     addUpdateMonthlySalary: 'Add/Update Monthly Salary',
     salaryFor: 'Salary for {month}:',
@@ -720,14 +648,10 @@ export default {
     noSalaryToUpdate: 'No existing salary to update for this month.',
     unexpectedError: 'An unexpected error occurred.',
     failedLoadSalaryData: 'Failed to load salary data. Please try again.',
-    failedLoadMonths: 'Failed to load months. Please try again.',
     failedLoadSalary: 'Failed to load salary. Please try again.',
-    failedLoadExpenses: 'Failed to load expenses. Please try again.',
     expenseAdded: 'Expense added successfully!',
     expenseUpdated: 'Expense updated successfully',
-    expenseDeleted: 'Expense deleted successfully',
-    splitItemsTotalMismatch:
-      'Split items total ({splitTotal}) must equal the transaction amount ({amount}).'
+    expenseDeleted: 'Expense deleted successfully'
   },
   personalLoans: {
     loanSummary: 'Loan Summary',
@@ -738,17 +662,11 @@ export default {
     lentVsBorrowed: 'Lent vs Borrowed',
     settlementPerPerson: 'Settlement per Person',
     whoPaysWhom: 'Who Pays Whom',
-    loanRecords: 'Loan Records',
     personalLoansDownload: 'Personal_Loans',
     youLent: 'You Lent',
-    youBorrowed: 'You Borrowed',
-    pays: 'Pays',
-    receives: 'Receives',
-    failedLoadMonths: 'Failed to load months. Please try again.',
-    failedLoadLoans: 'Failed to load loans. Please try again.'
+    youBorrowed: 'You Borrowed'
   },
   bugReports: {
-    reportBug: 'Report a Bug',
     myReports: 'My Reports',
     statusUpdates: 'Status updates for your submitted reports',
     improveApp: 'Help us improve Kharchafy by describing what went wrong',
@@ -784,10 +702,8 @@ export default {
     editBugReport: 'Edit Bug Report',
     currentScreenshots: 'Current screenshots',
     addScreenshots: 'Add screenshots',
-    saveChanges: 'Save changes',
     reOpen: 'Re-open',
     collapse: 'Collapse',
-    viewDetails: 'View details',
     copyTitle: 'Copy title',
     copyDescription: 'Copy description',
     copyNote: 'Copy note',
@@ -802,12 +718,10 @@ export default {
     removeReaction: 'Remove reaction',
     replyingTo: 'Replying to',
     cancelReply: 'Cancel reply',
-    admin: 'Admin',
     you: 'You',
     replyToAdmin: 'Reply to admin... Ctrl+Enter to send',
     addCommentForAdmin: 'Add a comment for admin...',
     submitted: 'Submitted {date}',
-    allStatuses: 'All statuses',
     allSeverities: 'All severities',
     searchPlaceholder: 'Search by bug number (khata-bug-...) or title...',
     totalOpen: '{total} total · {open} open',
@@ -816,7 +730,6 @@ export default {
     showLess: 'Show less',
     showMore: 'Show more',
     anonymous: 'Anonymous',
-    guest: 'guest',
     newReply: 'New reply',
     writeNote: 'Write a note... Ctrl+Enter to send',
     statusUpdated: 'Status updated to "{status}"',
@@ -829,12 +742,6 @@ export default {
     noteSent: 'Note sent.',
     noteSendFailed: 'Failed to send note: {message}',
     categories: {
-      sharedExpenses: 'Shared Expenses',
-      sharedLoans: 'Shared Loans',
-      personalLoans: 'Personal Loans',
-      personalExpenses: 'Personal Expenses',
-      groups: 'Groups',
-      notifications: 'Notifications',
       auth: 'Authentication / Login',
       settlement: 'Settlement',
       export: 'Export (PDF / Excel)',
@@ -848,10 +755,8 @@ export default {
       critical: 'Critical'
     },
     statuses: {
-      open: 'Open',
       inProgress: 'In Progress',
       needsInfo: 'Needs Info',
-      duplicate: 'Duplicate',
       wontFix: "Won't Fix",
       resolved: 'Resolved',
       closed: 'Closed'
@@ -901,23 +806,15 @@ export default {
     blockedNotice:
       'Your account is blocked by admin. Groups are visible for reference only.',
     createPrompt: 'Want to create a new group?',
-    addExpense: 'Add Expense',
-    addLoan: 'Add Loan',
     searchPlaceholder: 'Search by group name, code, owner, or member...',
-    sortPlaceholder: 'Sort',
-    sortDefault: 'Default',
     sortAsc: 'A→Z',
     sortDesc: 'Z→A',
-    categoryPlaceholder: 'Category',
-    memberPlaceholder: 'Member',
     hideBlockedGroups: 'Hide blocked groups',
     joinedGroupsHeading: 'Joined Groups',
     sharePinned: 'Share Pinned',
     shareJoined: 'Share Joined',
     availableGroupsHeading: 'Available Groups',
     loadMoreGroups: 'Load More Groups',
-
-    createGroupLegend: 'Create Group',
     nameLabel: 'Name',
     namePlaceholder: 'Enter group name',
     descriptionPlaceholder: 'Enter group description (optional)',
@@ -927,7 +824,6 @@ export default {
     selectedCount: 'Selected: {count}/{max}',
     categoryOptionalPlaceholder: 'Select a category (optional)',
     create: 'Create',
-
     groupBlockedByAdmin:
       'This group is blocked by admin. Do not interact with it.',
     accountBlockedActionsDisabled:
@@ -939,33 +835,25 @@ export default {
     pinnedTag: '⭐ Pinned',
     pinTag: '☆ Pin',
     unpinTag: '⭐ Unpin',
-    actionsLabel: 'Actions',
-
     pendingInvitations: 'Pending Invitations',
     invitedBy: 'Invited by',
     accountBlockedInviteDisabled:
       'Your account is blocked by admin. Invitation actions are disabled.',
     accept: 'Accept',
     decline: 'Decline',
-
     editGroupTitle: 'Edit Group',
     groupNameLabel: 'Group Name',
-    save: 'Save',
-
     requestAddMemberTitle: 'Request to Add Member',
     selectMemberToAdd: 'Select Member to Add',
     selectMemberPlaceholder: 'Select member',
     allMembersApproveNotice:
       'All current members must approve before this member can be added',
-    sendRequest: 'Send Request',
-
     transferOwnershipTitle: 'Transfer Ownership',
     selectNewOwner: 'Select New Owner',
     selectNewOwnerPlaceholder: 'Select new owner',
     transferAcceptNotice:
       'The selected member must accept this transfer before it takes effect.',
     requestTransfer: 'Request Transfer',
-
     sharedGroupsTitle: 'Shared Groups',
     sharedGroupsSubtitle:
       'Join a shared group or select one you already belong to.',
@@ -978,16 +866,10 @@ export default {
     joinRequestPending: 'Join Request Pending',
     sharedGroupsBlockedNotice:
       'Your account is blocked by admin. Shared groups are visible for reference only.',
-
     viewDetails: 'View Details',
     membersCount: 'Members ({count})',
-    moreCount: '+{count} more',
-    membersDialogTitle: 'Members ({count})',
-
     joinRequestsCount: 'Join Requests ({count}):',
     approvalsCount: 'Approvals: {approved} / {total}',
-    approvedThisRequest: '✓ You have approved this request',
-    waitingForAllApprove: '- Waiting for all members to approve',
     groupDeletionRequestTitle: '⚠️ Group Deletion Request',
     deletionRequestNotice:
       'Owner has requested to delete this group. All members must approve before deletion.',
@@ -1002,7 +884,6 @@ export default {
     approvedThisEdit: '✓ You have approved this edit',
     addMemberRequestTitle: '➕ Add Member Request',
     newMemberLabel: 'New Member:',
-    approvedThisAddRequest: '✓ You have approved this request',
     addMemberNow: 'Add Member Now',
     ownershipTransferRequestTitle: '👑 Ownership Transfer Request',
     currentOwnershipLabel: 'Current ownership:',
@@ -1010,27 +891,17 @@ export default {
     awaitingNewOwnerAcceptance:
       'Awaiting acceptance from the designated new owner.',
     acceptOwnership: 'Accept Ownership',
-    declineOwnership: 'Decline',
-
     byActor: '(by {actor})',
-
     pendingInvitationsCount: '⏳ Pending Invitations ({count})',
     pendingInvitationsDialogTitle: 'Pending Invitations ({count})',
     pendingTag: 'Pending',
-
     yourPosition: 'Your Position',
     calculating: 'Calculating...',
-    sharedExpensesLabel: 'Shared Expenses',
-    sharedLoansLabel: 'Shared Loans',
     netAmountLabel: 'Net Amount',
-    willReceive: 'Will Receive',
-    willPay: 'Will Pay',
-    settled: 'Settled',
     youGet: 'You Get',
     youPay: 'You Pay',
     visibleOnlyToYouHint:
       'Only visible to you. Calculated from your share, payments, and loans in this group.',
-
     noGroupsMatchSearch: 'No groups match your search',
     notJoinedAnyGroups: "You haven't joined any groups yet",
     noMoreGroupsAvailable: 'No more groups are available right now',
@@ -1048,7 +919,6 @@ export default {
     invitationDeclined: 'Invitation declined.',
     joinedGroupsShareLabel: 'joined groups',
     pinnedGroupsShareLabel: 'pinned groups',
-    groupShareLabel: 'group',
     noGroupsToShare: 'No {label} available to share',
     sharedGroupTitle: 'Shared group: {name}',
     sharedGroupsTitleShare: 'Shared {label}',
@@ -1058,14 +928,12 @@ export default {
     copyShareLinkLabel: 'Copy this share link:',
     shareLinkFailed: 'Failed to share group link.',
     selectMemberToAddError: 'Please select a member to add',
-    userNotFound: 'User not found',
     noPendingJoinRequestToCancel: 'No pending join request found to cancel',
     joinRequestAlreadyPending: 'Join request already pending',
     joinRequestSent: 'Join request sent',
     joinRequestSentToOwner: 'Join request sent to group owner',
     requestCancelled: 'Request cancelled',
     memberAddedToGroup: '{name} has been added to the group',
-    approvalRecorded: 'Approval recorded',
     approvedJoinRequest: 'You have approved this join request',
     allMustApproveBeforeAdding:
       'All members must approve before adding to group',
@@ -1080,12 +948,10 @@ export default {
     soleMemberDeleteConfirm:
       'You are the only member in this group. It will be deleted immediately without any approval step.',
     deleteGroupTitle: 'Delete Group',
-    deleteGroupButton: 'Delete Group',
     groupDeletedSuccess: 'Group deleted successfully',
     deletionRequestConfirmBody:
       'This will send a deletion request to all group members. The group can only be deleted after all members approve.',
     requestGroupDeletionTitle: 'Request Group Deletion',
-    sendRequestButton: 'Send Request',
     deletionRequestSent: 'Deletion request sent',
     deletionRequestSentToAll: 'Deletion request sent to all members',
     allApprovedGroupDeleted: 'All members approved. Group has been deleted.',
@@ -1093,7 +959,6 @@ export default {
     rejectDeletionConfirmBody:
       'This will cancel the deletion request. The owner will need to create a new request if they want to delete the group.',
     rejectDeletionRequestTitle: 'Reject Deletion Request',
-    rejectButton: 'Reject',
     deletionCancelledBy:
       'Group deletion request cancelled by {name} ({mobile})',
     deletionRejectedAndCancelled:
@@ -1105,7 +970,6 @@ export default {
     confirmFinalDeletionTitle: 'Confirm Final Deletion',
     deletePermanentlyButton: 'Delete Permanently',
     onlyOwnerCanEdit: 'Only group owner can edit this group',
-    groupNameRequired: 'Group name is required',
     atLeastTwoMembersRequired: 'At least two members are required',
     nameChangedNotif: 'Name: "{oldName}" → "{newName}"',
     descriptionChangedNotif:
@@ -1127,7 +991,6 @@ export default {
     alreadyApprovedRequest: 'You have already approved this request',
     editAppliedToast: 'Edit applied',
     editChangesApplied: 'Edit changes applied successfully',
-    approvalHasBeenRecorded: 'Your approval has been recorded',
     rejectEditConfirmBody:
       'Are you sure you want to reject this edit request? The request will be cancelled.',
     rejectEditRequestTitle: 'Reject Edit Request',
@@ -1172,7 +1035,6 @@ export default {
     ownerMustTransferBeforeLeaving:
       'You are the group owner. You must transfer ownership to another member before leaving the group.',
     transferOwnershipRequiredTitle: 'Transfer Ownership Required',
-    transferOwnershipButton: 'Transfer Ownership',
     couldNotFindMembershipRecord:
       'Could not find your membership record in this group.',
     ownershipWillTransferTo:
@@ -1204,11 +1066,7 @@ export default {
     ownershipTransferRequestLabel: 'Ownership transfer request',
     shareButton: 'Share',
     addMemberButton: 'Add Member',
-    editButton: 'Edit',
-    cancelRequestButton: 'Cancel Request',
-    requestToJoinButton: 'Request to Join',
     deletePendingButton: 'Delete Pending ({approved}/{total})',
-    requestDeleteButton: 'Request Delete',
     maxMembersError: 'A group can have a maximum of {max} members',
     atLeastTwoMembersToCreate:
       'At least two members are required to create a group',
@@ -1219,8 +1077,6 @@ export default {
     maxMembersAllowedError: 'Maximum {max} members are allowed in a group',
     failedLoadSharedGroups: 'Failed to load shared groups.',
     wantsToJoinNotif: '{name} ({mobile}) wants to join "{groupName}"',
-    joinRequestSentWaiting: 'Join request sent! Waiting for member approval.',
-    failedSendJoinRequest: 'Failed to send join request. Please try again.',
     acceptedInvitationNotif:
       '{name} ({mobile}) accepted your invitation to join "{groupName}"',
     declinedInvitationNotif:
@@ -1236,8 +1092,7 @@ export default {
     inactivityMinute: '1 minute',
     inactivityMinutes: '{count} minutes',
     inactivityLogoutMessage: 'You were logged out after {label} of inactivity.',
-    sessionExpired: 'Session expired. Please login again.',
-    guestName: 'Guest'
+    sessionExpired: 'Session expired. Please login again.'
   },
   shared: {
     confirmUpdateMessage: 'Are you sure you want to update this item?',
@@ -1269,7 +1124,6 @@ export default {
     excel: 'Excel',
     pdf: 'PDF',
     selectedCount: '{count} selected',
-    actions: 'Actions',
     columnNameTooltip: 'Column Name',
     splitDetailsTitle: 'Split Details',
     more: '+{count} more',
@@ -1310,7 +1164,6 @@ export default {
     sendDeleteRequestsFor: 'Send delete requests for',
     skippedPendingNote: '({count} skipped — pending requests)',
     bulkDeleteTitle: 'Bulk Delete',
-    confirm: 'Confirm',
     bulkDeleteRequestSent:
       'Delete request sent for {count} item(s). Waiting for group approval.',
     bulkDeleteSuccess: '{count} item(s) deleted successfully.',
@@ -1354,7 +1207,6 @@ export default {
     numberedList: 'Numbered list',
     insertTemplate: 'Insert bug report template',
     attachImage: 'Attach image',
-    imageLabel: 'Image',
     hint: 'Markdown supported'
   },
   netPosition: {
@@ -1369,8 +1221,7 @@ export default {
     netForSharedLoans: 'Net for Shared Loans:',
     netForPersonalLoans: 'Net for Personal Loans:',
     categoryBreakdown: 'Category Breakdown',
-    categoryChartTitle: 'To Receive (↑) vs To Pay (↓) per Category',
-    downloadPdf: 'Download PDF'
+    categoryChartTitle: 'To Receive (↑) vs To Pay (↓) per Category'
   },
   receiptOcr: {
     extracting: 'Extracting...',
@@ -1380,7 +1231,6 @@ export default {
     comingSoon: 'Receipt text extraction coming soon.'
   },
   receiptUpload: {
-    label: 'Receipt',
     currentReceiptsCount: 'Current receipts ({count})',
     currentReceipt: 'Current receipt',
     currentReceiptAlt: 'Current receipt {index}',
@@ -1390,8 +1240,7 @@ export default {
     editorAlt: 'Receipt editor',
     editorHint:
       'Drag the receipt to reposition, then zoom or rotate as needed.',
-    previewFallbackName: 'Receipt preview',
-    receiptIndexName: 'Receipt {index}'
+    previewFallbackName: 'Receipt preview'
   },
   welcomeBanner: {
     welcomeBack: 'Welcome back',
@@ -1402,14 +1251,10 @@ export default {
   admin: {
     config: {
       back: '← Back',
-      title: 'Admin Config',
       loading: 'Loading configuration…',
       storageTitle: 'Storage',
       cacheTitle: 'Cache',
       downloadsTitle: 'Downloads',
-      manageTabsTitle: 'Manage Tabs',
-      bugReportsTitle: 'Bug Reports',
-      emailTitle: 'Email',
       ocrTitle: 'OCR / Receipt Extraction',
       allowReceiptUploads: 'Allow receipt uploads',
       enableCloudinary: 'Enable Cloudinary provider',
@@ -1435,17 +1280,9 @@ export default {
       existingConfigDoc: 'Existing config document',
       noSavedConfigYet: 'No saved config yet',
       tabsAndFeatureAccess: 'Tabs and feature access',
-      sharedFeatures: 'Shared features',
-      groups: 'Groups',
-      users: 'Users',
-      sharedExpenses: 'Shared Expenses',
-      sharedLoans: 'Shared Loans',
       emailPreferences: 'Email preferences',
       notifySharedExpense: 'Notify group when user adds a shared expense',
       notifySharedLoan: 'Notify group when user adds a shared loan',
-      personalFeatures: 'Personal features',
-      personalExpenses: 'Personal Expenses',
-      personalLoans: 'Personal Loans',
       adminOnlyControls: 'Admin-only tab config controls',
       allowManageTabs: 'Allow Manage Tabs for this user',
       hideBlockedUsersDefault: 'Hide blocked users by default',
@@ -1456,7 +1293,6 @@ export default {
       emailsSentMap: 'Emails sent map',
       jsonHint:
         'Use JSON objects with month keys like `YYYY-MM` and numeric counts.',
-      cancel: 'Cancel',
       saveConfig: 'Save Config',
       validJsonError: '{label} must be valid JSON with non-negative numbers.',
       selectFeatureGroupError:
@@ -1465,22 +1301,15 @@ export default {
         'Shared features require at least one shared tab (Shared Expenses, Shared Loans, or Users).',
       personalRequiresTabError:
         'Personal features require at least one personal tab (Personal Expenses or Personal Loans).',
-      selectAtLeastOneTabError: 'Select at least one actual tab to continue.',
       validateFailed: 'Failed to validate user tab config.'
     },
     users: {
-      title: 'Users',
       loadingUsers: 'Loading users…',
       searchPlaceholder: 'Search by name or email…',
-      nameColumn: 'Name',
-      emailColumn: 'Email',
       blockedColumn: 'Blocked',
       bugResolverColumn: 'Bug Resolver',
-      adminColumn: 'Admin',
       paidTierColumn: 'Paid Tier',
       tabConfigColumn: 'Tab Config',
-      editAction: 'Edit',
-      createAction: 'Create',
       noUsersMatch: 'No users match your search.',
       userUpdated: 'User updated.',
       userUpdateFailed: 'Failed to update user.',
@@ -1493,18 +1322,12 @@ export default {
     updateVerifiedEmailTitle: 'Update Verified Email',
     adjustPhotoTitle: 'Adjust Profile Photo',
     emailAddressLabel: 'Email Address',
-    fullNameLabel: 'Full Name',
-    mobileNumberLabel: 'Mobile Number',
     emailVerificationLabel: 'Email Verification',
     accountTierLabel: 'Account Tier',
     rolesLabel: 'Roles',
     accountStatusLabel: 'Account Status',
     verifiedTag: 'Verified',
-    pendingTag: 'Pending',
-    adminTag: 'Admin',
-    bugResolverTag: 'Bug Resolver',
     standardUserTag: 'Standard user',
-    blockedTag: 'Blocked',
     activeTag: 'Active',
     updatePhoto: 'Update Photo',
     addPhoto: 'Add Photo',
@@ -1515,8 +1338,6 @@ export default {
     currentPasswordPlaceholder: 'Current password',
     accountUserFallback: 'Account User',
     notAvailable: 'Not available',
-    unlimited: 'Unlimited',
-    paidTierTag: 'Paid Tier',
     freeTierTag: 'Free Tier',
     blockedBannerText:
       'Your account is currently blocked. Users and groups remain visible for reference only.',

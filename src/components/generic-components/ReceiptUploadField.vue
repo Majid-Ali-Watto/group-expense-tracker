@@ -1,7 +1,7 @@
 <template>
   <div class="mb-4">
     <p class="mb-1 text-sm font-medium text-slate-900 dark:text-slate-300">
-      {{ t('receiptUpload.label') }}
+      {{ t('table.receipt') }}
       <span class="text-gray-400 dark:text-gray-500 font-normal text-xs">
         ({{ t('common.optional') }})
       </span>
@@ -313,7 +313,7 @@ function handlePictureCardPreview(file) {
 function openExistingPreview(index = 0) {
   previewImages.value = props.existingUrls.map((url, imageIndex) => ({
     url,
-    name: t('receiptUpload.receiptIndexName', { index: imageIndex + 1 })
+    name: t('table.receiptNumbered', { index: imageIndex + 1 })
   }))
   dialogInitialIndex.value = index
   dialogVisible.value = previewImages.value.length > 0
