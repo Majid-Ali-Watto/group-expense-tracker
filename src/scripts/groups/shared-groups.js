@@ -243,7 +243,7 @@ export const SharedGroups = () => {
 
       let payload = {
         members: newMembers,
-        pendingMembers: newPending.length ? newPending : null,
+        pendingMembers: newPending,
         memberUids: [
           ...new Set([
             ...newMembers.map((member) => member.uid),
@@ -255,7 +255,7 @@ export const SharedGroups = () => {
       let updatedGroup = {
         ...group,
         members: newMembers,
-        pendingMembers: newPending.length ? newPending : null
+        pendingMembers: newPending
       }
 
       if (group.ownerUid && group.ownerUid !== activeUserUid.value) {
