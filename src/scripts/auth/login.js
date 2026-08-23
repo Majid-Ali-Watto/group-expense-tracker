@@ -26,6 +26,8 @@ import {
   encryptForSession,
   encryptForStore,
   generateUUID,
+  isValidPhoneNumber,
+  normalizePhoneNumber,
   trackAnalyticsEvent
 } from '@/utils'
 import { withTrace } from '@/utils/performance'
@@ -384,7 +386,7 @@ export const Login = () => {
 
     const normalizedName = name.trim().replace(/\s+/g, ' ')
     const emailValue = email.trim().toLowerCase()
-    const mobileValue = mobile.trim()
+    const mobileValue = normalizePhoneNumber(mobile)
 
     if (!normalizedName || !mobileValue || !emailValue || !password) {
       return showError(t('authMessages.allFieldsRequired'))
@@ -392,6 +394,10 @@ export const Login = () => {
 
     if (!validateEmail(emailValue)) {
       return showError(t('authMessages.invalidEmail'))
+    }
+
+    if (!isValidPhoneNumber(mobileValue)) {
+      return showError(t('authMessages.invalidMobileNumber'))
     }
 
     if (password.length < 6 || password.length > 15) {
@@ -782,9 +788,9 @@ export const Login = () => {
     if (!googlePendingFirebaseUser.value || isGoogleMobileSubmitting.value)
       return
 
-    const mobile = googleMobileInput.value.replace(/\D/g, '').trim()
+    const mobile = normalizePhoneNumber(googleMobileInput.value)
     if (!mobile) return showError(t('authMessages.enterMobileNumber'))
-    if (mobile.length < 10 || mobile.length > 11) {
+    if (!isValidPhoneNumber(mobile)) {
       return showError(t('authMessages.invalidMobileNumber'))
     }
 

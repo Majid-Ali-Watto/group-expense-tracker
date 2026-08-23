@@ -10,15 +10,14 @@
     @update:modelValue="updateField('name', $event.toCapitalize())"
   />
 
-  <GenericInputField
+  <GenericMobileInput
     v-if="mode === 'register'"
     :model-value="modelValue.mobile"
     :label="t('auth.formFields.mobileLabel')"
     prop="mobile"
     required
     :placeholder="t('auth.formFields.mobilePlaceholder')"
-    :maxlength="11"
-    @update:modelValue="updateField('mobile', sanitizeMobile($event))"
+    @update:modelValue="updateField('mobile', $event)"
   />
 
   <GenericInputField
@@ -46,7 +45,10 @@
 
 <script setup>
 import { useI18n } from 'vue-i18n'
-import { GenericInputField } from '@/components/generic-components'
+import {
+  GenericInputField,
+  GenericMobileInput
+} from '@/components/generic-components'
 
 const { t } = useI18n()
 
@@ -65,9 +67,5 @@ function updateField(field, value) {
     ...props.modelValue,
     [field]: value
   })
-}
-
-function sanitizeMobile(value) {
-  return value.replace(/\D/g, '')
 }
 </script>

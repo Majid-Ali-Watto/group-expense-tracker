@@ -79,12 +79,11 @@
           {{ t('auth.googleMobileDialog.instructions') }}<br />
           <span>{{ t('auth.googleMobileDialog.prioritize') }}</span>
         </p>
-        <el-input
+        <GenericMobileInput
           v-model="googleMobileInput"
           :placeholder="t('auth.googleMobileDialog.placeholder')"
-          maxlength="11"
-          @input="googleMobileInput = googleMobileInput.replace(/\D/g, '')"
-          @keyup.enter="submitGoogleMobile"
+          :wrap-form-item="false"
+          @enter="submitGoogleMobile"
         />
         <template #footer>
           <GenericButton
@@ -116,7 +115,10 @@ import { useI18n } from 'vue-i18n'
 import { getLoginRules } from '@/assets'
 import { Login } from '@/scripts/auth'
 import { loadAsyncComponent } from '@/utils/async-component'
-import { GenericButton } from '@/components/generic-components'
+import {
+  GenericButton,
+  GenericMobileInput
+} from '@/components/generic-components'
 import {
   AuthActions,
   AuthFormFields,

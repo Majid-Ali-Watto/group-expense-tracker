@@ -191,7 +191,7 @@ export default {
       instructions:
         'رجسٹریشن مکمل کرنے کے لیے براہ کرم اپنا موبائل نمبر درج کریں۔',
       prioritize: 'ترجیحاً (ایزی پیسہ/جاز کیش)، ضروری نہیں',
-      placeholder: 'موبائل نمبر (11 ہندسے)',
+      placeholder: 'موبائل نمبر',
       cancel: 'منسوخ کریں',
       continue: 'جاری رکھیں'
     },
@@ -282,8 +282,7 @@ export default {
     googleSignInFailed:
       'Google سائن ان ناکام ہو گیا۔ براہ کرم دوبارہ کوشش کریں۔',
     enterMobileNumber: 'براہ کرم اپنا موبائل نمبر درج کریں۔',
-    invalidMobileNumber:
-      'براہ کرم ایک درست موبائل نمبر درج کریں (10-11 ہندسے)۔',
+    invalidMobileNumber: 'براہ کرم درست موبائل نمبر درج کریں۔',
     saveDetailsFailed:
       'آپ کی تفصیلات محفوظ کرنے میں ناکامی۔ براہ کرم دوبارہ کوشش کریں۔',
     selectFeatureGroup:
@@ -316,8 +315,7 @@ export default {
     nameMinLength: 'نام کم از کم 3 حروف کا ہونا چاہیے',
     nameAlphaOnly: 'نام میں صرف حروف اور واحد اسپیس ہو سکتے ہیں',
     mobileRequired: 'موبائل نمبر درکار ہے',
-    mobilePattern:
-      'موبائل نمبر 03 سے شروع ہونے والے 11 ہندسوں پر مشتمل ہونا چاہیے',
+    mobilePattern: 'براہ کرم درست موبائل نمبر درج کریں',
     emailRequired: 'ای میل درکار ہے',
     emailPattern:
       'براہ کرم ایک درست ای میل ایڈریس درج کریں (مثلاً user@example.com)',
@@ -338,8 +336,7 @@ export default {
     loanReceiverMinLength: 'قرض لینے والے کا نام کم از کم 2 حروف کا ہونا چاہیے',
     giverMobileRequired: 'دینے والے کا موبائل نمبر درکار ہے',
     receiverMobileRequired: 'لینے والے کا موبائل نمبر درکار ہے',
-    loanMobilePattern:
-      'موبائل نمبر 03 سے شروع ہونے والے 11 ہندسوں پر مشتمل ہونا چاہیے',
+    loanMobilePattern: 'براہ کرم درست موبائل نمبر درج کریں',
     salaryRequired: 'تنخواہ درکار ہے',
     salaryMin: 'تنخواہ صفر سے زیادہ ہونی چاہیے',
     locationRequired: 'مقام درکار ہے',
@@ -561,7 +558,7 @@ export default {
     selectLoanReceiver: 'قرضہ لینے والا منتخب کریں',
     loanGiverMobile: 'قرضہ دینے والے کا موبائل',
     loanReceiverMobile: 'قرضہ لینے والے کا موبائل',
-    mobilePlaceholder: 'مثلاً 03001234567',
+    mobilePlaceholder: 'موبائل نمبر درج کریں',
     loanGiverName: 'قرضہ دینے والا',
     loanReceiverName: 'قرضہ لینے والا',
     giverNamePlaceholder: 'قرضہ دینے والے کا نام',
@@ -646,7 +643,7 @@ export default {
     reject: 'مسترد کریں',
     editUser: 'صارف میں ترمیم کریں',
     mobileNumber: 'موبائل نمبر',
-    mobilePlaceholder: '03XXXXXXXXX',
+    mobilePlaceholder: 'موبائل نمبر درج کریں',
     fullName: 'پورا نام',
     fullNamePlaceholder: 'پورا نام',
     save: 'محفوظ کریں',
@@ -665,8 +662,7 @@ export default {
     nameMinLength: 'نام کم از کم 3 حروف کا ہونا چاہیے',
     nameInvalid: 'نام میں صرف حروف اور ایک خالی جگہ استعمال ہو سکتی ہے',
     mobileRequired: 'موبائل نمبر ضروری ہے',
-    mobileInvalid:
-      'موبائل نمبر 03 سے شروع ہونا چاہیے اور 11 ہندسوں کا ہونا چاہیے',
+    mobileInvalid: 'براہ کرم درست موبائل نمبر درج کریں',
     userNotFound: 'صارف نہیں ملا',
     deleteRequestPending: 'اس صارف کی حذف کی درخواست زیر التواء ہے',
     updateRequestPending: 'اس صارف کی تبدیلی کی درخواست زیر التواء ہے',

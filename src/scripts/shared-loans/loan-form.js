@@ -18,7 +18,9 @@ import {
   getCurrentDateInputValue,
   normalizeDateInputValue,
   formatDateForStorage,
-  mergeCategoryOptions
+  mergeCategoryOptions,
+  normalizePhoneNumber,
+  phoneNumbersMatch
 } from '@/utils'
 import { useAuthStore, useGroupStore, useUserStore } from '@/stores'
 import { DB_NODES } from '@/constants'
@@ -158,7 +160,7 @@ export const LoanForm = (props, emit) => {
 
   const isCurrentUserIdentity = (value) =>
     value === activeUserUid.value ||
-    (activeUserMobile.value && value === activeUserMobile.value)
+    (activeUserMobile.value && phoneNumbersMatch(value, activeUserMobile.value))
 
   const getCurrentGiverIdentity = () =>
     giverRealMobile.value ||
@@ -248,8 +250,10 @@ export const LoanForm = (props, emit) => {
       await nextTick()
     }
     // Store real (unmasked) mobile so validation passes
-    giverRealMobile.value = user.mobile || uid
-    formData.value.loanGiverMobile = user.mobile || uid
+    giverRealMobile.value = user.mobile
+      ? normalizePhoneNumber(user.mobile)
+      : uid
+    formData.value.loanGiverMobile = giverRealMobile.value
     formData.value.loanGiver = user.name || ''
   })
 
@@ -279,8 +283,10 @@ export const LoanForm = (props, emit) => {
       await nextTick()
     }
     // Store real (unmasked) mobile so validation passes
-    receiverRealMobile.value = user.mobile || uid
-    formData.value.loanReceiverMobile = user.mobile || uid
+    receiverRealMobile.value = user.mobile
+      ? normalizePhoneNumber(user.mobile)
+      : uid
+    formData.value.loanReceiverMobile = receiverRealMobile.value
     formData.value.loanReceiver = user.name || ''
   })
 
@@ -352,10 +358,12 @@ export const LoanForm = (props, emit) => {
           : formData.value.loanReceiver
         isMeGiver.value =
           giverMobile === activeUserUid.value ||
-          (activeUserMobile.value && giverMobile === activeUserMobile.value)
+          (activeUserMobile.value &&
+            phoneNumbersMatch(giverMobile, activeUserMobile.value))
         isMeReceiver.value =
           receiverMobile === activeUserUid.value ||
-          (activeUserMobile.value && receiverMobile === activeUserMobile.value)
+          (activeUserMobile.value &&
+            phoneNumbersMatch(receiverMobile, activeUserMobile.value))
       } else {
         isMeGiver.value = false
         isMeReceiver.value = false
@@ -390,7 +398,10 @@ export const LoanForm = (props, emit) => {
 
   const onGiverMobileBlur = () => {
     if (
-      formData.value.loanGiverMobile == activeUserMobile.value ||
+      phoneNumbersMatch(
+        formData.value.loanGiverMobile,
+        activeUserMobile.value
+      ) ||
       formData.value.loanGiverMobile == activeUserUid.value
     ) {
       formData.value.loanGiver =
@@ -400,7 +411,10 @@ export const LoanForm = (props, emit) => {
 
   const onReceiverMobileBlur = () => {
     if (
-      formData.value.loanReceiverMobile == activeUserMobile.value ||
+      phoneNumbersMatch(
+        formData.value.loanReceiverMobile,
+        activeUserMobile.value
+      ) ||
       formData.value.loanReceiverMobile == activeUserUid.value
     ) {
       formData.value.loanReceiver =
@@ -455,13 +469,17 @@ export const LoanForm = (props, emit) => {
             receiverRealMobile.value ||
             formData.value.loanReceiverMobile ||
             formData.value.loanReceiver
-          if (giverMobile === receiverMobile) {
+          if (
+            giverMobile === receiverMobile ||
+            phoneNumbersMatch(giverMobile, receiverMobile)
+          ) {
             showError(t('sharedLoans.giverReceiverSame'))
             return
           }
           const isMe = (val) =>
             val === activeUserUid.value ||
-            (activeUserMobile.value && val === activeUserMobile.value)
+            (activeUserMobile.value &&
+              phoneNumbersMatch(val, activeUserMobile.value))
 
           if (!isMe(giverMobile) && !isMe(receiverMobile)) {
             showError(t('sharedLoans.personalMustBeYou'))
@@ -643,13 +661,13 @@ export const LoanForm = (props, emit) => {
   function getLoanData(receiptUrls = [], receiptMeta = []) {
     const giverMobile = props.isPersonal
       ? giverRealMobile.value ||
-        formData.value.loanGiverMobile ||
+        normalizePhoneNumber(formData.value.loanGiverMobile) ||
         formData.value.loanGiver
       : formData.value.loanGiver
 
     const receiverMobile = props.isPersonal
       ? receiverRealMobile.value ||
-        formData.value.loanReceiverMobile ||
+        normalizePhoneNumber(formData.value.loanReceiverMobile) ||
         formData.value.loanReceiver
       : formData.value.loanReceiver
 

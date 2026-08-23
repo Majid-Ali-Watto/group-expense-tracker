@@ -5,7 +5,14 @@ import { ElMessageBox } from 'element-plus'
 import { useFireBase, useDebouncedRef } from '@/composables'
 import { useAuthStore, useGroupStore, useUserStore } from '@/stores'
 import { DB_NODES } from '@/constants'
-import { showError, maskMobile, appendNotificationForUser } from '@/utils'
+import {
+  showError,
+  maskMobile,
+  appendNotificationForUser,
+  isValidPhoneNumber,
+  normalizePhoneNumber,
+  phoneNumbersMatch
+} from '@/utils'
 import { confirmAction } from '@/utils/confirmAction'
 import { getDisplayMobile } from '@/utils/user-display'
 import { createUserDisplayStoreProxy } from '@/composables'
@@ -161,7 +168,7 @@ export const Users = () => {
   }
 
   function normalizeMobile(value = '') {
-    return value.trim().replace(/\s+/g, '')
+    return normalizePhoneNumber(value)
   }
 
   function isValidName(name) {
@@ -169,7 +176,7 @@ export const Users = () => {
   }
 
   function isValidMobile(mobile) {
-    return /^03\d{9}$/.test(mobile)
+    return isValidPhoneNumber(mobile)
   }
 
   const editUserRules = {
@@ -522,7 +529,7 @@ export const Users = () => {
     const mobileTaken = Object.entries(existingUsers).some(
       ([otherUid, otherUser]) =>
         otherUid !== uid &&
-        normalizeMobile(otherUser?.mobile || '') === newMobile
+        phoneNumbersMatch(otherUser?.mobile || '', newMobile)
     )
     if (mobileTaken) {
       return showError(t('users.mobileTaken'))

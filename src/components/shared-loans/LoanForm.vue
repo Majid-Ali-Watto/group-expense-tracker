@@ -152,18 +152,16 @@
                     :wrap-form-item="false"
                   />
                 </div>
-                <GenericInput
+                <GenericMobileInput
                   v-if="!selectedGiverUser"
-                  :rows="1"
-                  v-model="formData.loanGiverMobile"
+                  :model-value="formData.loanGiverMobile"
                   :label="t('sharedLoans.loanGiverMobile')"
                   prop="loanGiverMobile"
                   required
-                  type="textarea"
                   :placeholder="t('sharedLoans.mobilePlaceholder')"
-                  :maxlength="15"
                   :disabled="isMeGiver"
                   @blur="onGiverMobileBlur"
+                  @update:modelValue="formData.loanGiverMobile = $event"
                 />
                 <GenericInput
                   v-if="!selectedGiverUser"
@@ -246,18 +244,16 @@
                     :wrap-form-item="false"
                   />
                 </div>
-                <GenericInput
+                <GenericMobileInput
                   v-if="!selectedReceiverUser"
-                  :rows="1"
-                  v-model="formData.loanReceiverMobile"
+                  :model-value="formData.loanReceiverMobile"
                   :label="t('sharedLoans.loanReceiverMobile')"
                   prop="loanReceiverMobile"
                   required
-                  type="textarea"
                   :placeholder="t('sharedLoans.mobilePlaceholder')"
-                  :maxlength="15"
                   :disabled="isMeReceiver"
                   @blur="onReceiverMobileBlur"
+                  @update:modelValue="formData.loanReceiverMobile = $event"
                 />
                 <GenericInput
                   v-if="!selectedReceiverUser"
@@ -337,6 +333,7 @@ import {
   DataTimePicker,
   GenericDropDown,
   GenericInput,
+  GenericMobileInput,
   ReceiptOcrField
 } from '@/components/generic-components'
 import { LoanForm } from '@/scripts/shared-loans'

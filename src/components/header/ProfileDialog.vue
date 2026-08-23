@@ -339,13 +339,11 @@
         :label="t('profile.mobileNumberLabel')"
         prop="mobile"
       >
-        <GenericInputField
+        <GenericMobileInput
           ref="mobileInputRef"
           :model-value="form.mobile"
           :wrap-form-item="false"
           :placeholder="t('users.mobilePlaceholder')"
-          :maxlength="11"
-          type="tel"
           @update:modelValue="form.mobile = $event"
         />
       </el-form-item>
@@ -400,6 +398,7 @@ import {
 } from '@/firebase'
 import {
   GenericInputField,
+  GenericMobileInput,
   ImageCropEditorDialog,
   UserAvatar
 } from '@/components/generic-components'
@@ -411,6 +410,9 @@ import {
   appendNotificationForUser,
   deleteReceipt,
   maskMobile,
+  isValidPhoneNumber,
+  normalizePhoneNumber,
+  phoneNumbersMatch,
   showError,
   showSuccess,
   uploadReceipt
@@ -634,9 +636,7 @@ function normalizeName(value = '') {
 }
 
 function normalizeMobile(value = '') {
-  return String(value || '')
-    .trim()
-    .replace(/\s+/g, '')
+  return normalizePhoneNumber(value)
 }
 
 function normalizeEmail(value = '') {
@@ -650,7 +650,7 @@ function isValidName(name) {
 }
 
 function isValidMobile(mobile) {
-  return /^03\d{9}$/.test(mobile)
+  return isValidPhoneNumber(mobile)
 }
 
 function userMatchesMember(member, userUid) {
@@ -1068,7 +1068,7 @@ async function submitProfileUpdate() {
   const existingUsers = (await read(DB_NODES.USERS, false)) || {}
   const mobileTaken = Object.entries(existingUsers).some(
     ([otherUid, otherUser]) =>
-      otherUid !== uid && normalizeMobile(otherUser?.mobile || '') === newMobile
+      otherUid !== uid && phoneNumbersMatch(otherUser?.mobile || '', newMobile)
   )
   if (mobileTaken) {
     showError(t('users.mobileTaken'))

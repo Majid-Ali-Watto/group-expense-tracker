@@ -10,9 +10,12 @@ import {
   where
 } from '@/firebase'
 import { DB_NODES } from '@/constants'
-import { getIdentity, maskMobile } from '@/utils'
+import { getIdentity, getPhoneNumberVariants, maskMobile } from '@/utils'
 import { findUserAdminFlagsByUid } from './user-admin-flags'
-import { findUserPrivateByUid, syncUserPrivateEmailFromAuth } from './user-private'
+import {
+  findUserPrivateByUid,
+  syncUserPrivateEmailFromAuth
+} from './user-private'
 // Check if current user is a member of the group
 
 function hasApproval(approvals, identity) {
@@ -270,13 +273,13 @@ export async function resolveUserFromAuth(firebaseUser) {
 }
 
 export async function findUserByMobile(mobile) {
-  const normalizedMobile = mobile?.trim()
-  if (!normalizedMobile) return null
+  const variants = [...getPhoneNumberVariants(mobile)]
+  if (!variants.length) return null
 
   const snapshot = await getDocs(
     query(
       collection(database, DB_NODES.USERS),
-      where('mobile', '==', normalizedMobile)
+      where('mobile', variants.length === 1 ? '==' : 'in', variants)
     )
   )
   if (snapshot.empty) return null

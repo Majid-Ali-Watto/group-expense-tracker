@@ -9,6 +9,7 @@ import FloatingThemeButton from './FloatingThemeButton.vue'
 import GenericButton from './GenericButton.vue'
 import GenericDropDown from './GenericDropDown.vue'
 import GenericInputField from './GenericInputField.vue'
+import GenericMobileInput from './GenericMobileInput.vue'
 import GenericInputNumber from './GenericInputNumber.vue'
 import GroupActionButtons from './GroupActionButtons.vue'
 import GroupDetailsAccordion from './GroupDetailsAccordion.vue'
@@ -45,6 +46,7 @@ export {
   GenericDropDown,
   GenericInput,
   GenericInputField,
+  GenericMobileInput,
   GenericInputNumber,
   GroupActionButtons,
   GroupDetailsAccordion,

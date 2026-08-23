@@ -1,5 +1,6 @@
 import en from '@/i18n/locales/en'
 import ur from '@/i18n/locales/ur'
+import { isValidPhoneNumber } from '@/utils/phone'
 
 const VALIDATION_MESSAGES = { en: en.validation, ur: ur.validation }
 
@@ -31,9 +32,15 @@ export function getLoginRules(locale = 'en') {
     mobile: [
       { required: true, message: m.mobileRequired, trigger: 'blur' },
       {
-        pattern: /^03\d{9}$/,
-        message: m.mobilePattern,
-        trigger: 'blur'
+        validator: (_rule, value, callback) => {
+          if (!value) return callback()
+          if (!isValidPhoneNumber(value)) {
+            callback(new Error(m.mobilePattern))
+          } else {
+            callback()
+          }
+        },
+        trigger: ['blur', 'change']
       }
     ],
     email: [
@@ -143,17 +150,29 @@ export function getRules(locale = 'en') {
     loanGiverMobile: [
       { required: true, message: m.giverMobileRequired, trigger: 'blur' },
       {
-        pattern: /^03\d{9}$/,
-        message: m.loanMobilePattern,
-        trigger: 'blur'
+        validator: (_rule, value, callback) => {
+          if (!value) return callback()
+          if (!isValidPhoneNumber(value)) {
+            callback(new Error(m.loanMobilePattern))
+          } else {
+            callback()
+          }
+        },
+        trigger: ['blur', 'change']
       }
     ],
     loanReceiverMobile: [
       { required: true, message: m.receiverMobileRequired, trigger: 'blur' },
       {
-        pattern: /^03\d{9}$/,
-        message: m.loanMobilePattern,
-        trigger: 'blur'
+        validator: (_rule, value, callback) => {
+          if (!value) return callback()
+          if (!isValidPhoneNumber(value)) {
+            callback(new Error(m.loanMobilePattern))
+          } else {
+            callback()
+          }
+        },
+        trigger: ['blur', 'change']
       }
     ],
 

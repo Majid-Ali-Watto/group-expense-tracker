@@ -14,12 +14,10 @@
       label-position="top"
     >
       <el-form-item :label="t('users.mobileNumber')" prop="mobile">
-        <GenericInputField
+        <GenericMobileInput
           :model-value="localForm.mobile"
           :wrap-form-item="false"
           :placeholder="t('users.mobilePlaceholder')"
-          :maxlength="11"
-          type="tel"
           @update:modelValue="localForm.mobile = $event"
         />
       </el-form-item>
@@ -52,7 +50,10 @@
 <script setup>
 import { ref, reactive, watch, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { GenericInputField } from '@/components/generic-components'
+import {
+  GenericInputField,
+  GenericMobileInput
+} from '@/components/generic-components'
 
 const { t } = useI18n()
 
