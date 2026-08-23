@@ -518,7 +518,7 @@ export const Groups = () => {
     let updatedGroup = {
       ...group,
       members: newMembers,
-      pendingMembers: newPending.length ? newPending : null
+      pendingMembers: newPending
     }
     // Notify the group creator
     if (group.ownerUid && group.ownerUid !== me) {
@@ -582,7 +582,7 @@ export const Groups = () => {
     const newPending = (group.pendingMembers || []).filter((m) => m.uid !== me)
     let updatedGroup = {
       ...group,
-      pendingMembers: newPending.length ? newPending : null
+      pendingMembers: newPending
     }
     // Notify the group creator
     if (group.ownerUid && group.ownerUid !== me) {

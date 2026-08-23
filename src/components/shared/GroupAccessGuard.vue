@@ -213,7 +213,7 @@ async function accept() {
 
     let payload = {
       members: newMembers,
-      pendingMembers: newPending.length ? newPending : null,
+      pendingMembers: newPending,
       memberUids: [
         ...new Set([
           ...newMembers.map((member) => member.uid),
@@ -270,7 +270,7 @@ async function decline() {
       (m) => m.uid !== me.value
     )
     let payload = {
-      pendingMembers: newPending.length ? newPending : null,
+      pendingMembers: newPending,
       memberUids: newPending.map((member) => member.uid)
     }
 
