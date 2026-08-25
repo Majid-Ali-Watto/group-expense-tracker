@@ -27,5 +27,12 @@ Vue 3 (Composition API, `<script setup>`) · Pinia · Element Plus · Tailwind C
 - Public header/footer navigation is intentionally available on public marketing routes and guest auth routes (`/login`, `/register`).
 - Multi-member approval flows guard all destructive operations.
 
+## Git Workflow
+- Pull `master` and branch off it before any fix/feature.
+- Already on another branch? Pull and merge `master` into it first, then continue.
+
+## Response Style
+- Explanations: short, concise, meaningful — no filler.
+
 ## Never Read
 `node_modules/`, `dist/`, `dev-dist/`, `dist-ssr/`, `package-lock.json`
