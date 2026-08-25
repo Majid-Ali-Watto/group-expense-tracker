@@ -1,5 +1,7 @@
 <template>
   <el-config-provider>
+    <Analytics />
+    <SpeedInsights />
     <div
       class="flex flex-col min-h-screen"
       :dir="locale === 'ur' ? 'rtl' : 'ltr'"
@@ -117,6 +119,8 @@
 
 <script setup>
 import { provide } from 'vue'
+import { Analytics } from '@vercel/analytics/vue'
+import { SpeedInsights } from '@vercel/speed-insights/vue'
 import { App } from '@/scripts/layout'
 
 const {
