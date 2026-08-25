@@ -38,6 +38,13 @@ src/
 - Destructive changes (delete, edit) require multi-member approval flows stored in Firebase.
 - Security headers live in `vercel.json`, applied to every route. `X-Frame-Options`/`frame-ancestors 'none'`/`X-Content-Type-Options`/`Referrer-Policy` are enforced (zero functional risk). The full `Content-Security-Policy` is currently shipped as `Content-Security-Policy-Report-Only` only — tesseract.js's default worker/wasm/language-data CDN endpoints can't be pinned down precisely without a live browser trace, and an enforced-but-wrong policy would silently break receipt OCR or reCAPTCHA App Check instead of failing loudly. Watch the browser console for actual violations across real usage for a while, then promote it to a real (enforced) `Content-Security-Policy` header once it's been quiet. The `script-src` hashes in that policy cover `index.html`'s 3 inline theme/reload IIFEs exactly as currently written — if you edit those scripts, recompute their SHA-256 (base64) and update the hashes, or the CSP report will start flagging them (and blocking them outright once the policy is enforced).
 
+## Git Workflow
+- Before starting any fix or feature, pull latest `master` and branch off it.
+- Already on another branch? Pull `master` and merge it into the current branch first, then continue.
+
+## Response Style
+- Explanations should be short, concise, and meaningful — no filler, no restating the obvious.
+
 ## Ignored (never read these)
 - `node_modules/`, `dist/`, `dev-dist/`, `dist-ssr/`
 - `package-lock.json`
