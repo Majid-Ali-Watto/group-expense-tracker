@@ -10,31 +10,31 @@
     <div v-else class="bug-mr-list">
       <div
         v-for="r in myReports"
-        :key="r.id"
+        :key="r.key"
         class="bug-mr-card"
-        :class="`mr-sev-${r.severity}`"
+        :class="`mr-pri-${(r.priority || '').toLowerCase()}`"
       >
         <!-- Top row: badges + actions -->
         <div class="bug-mr-top">
           <div class="bug-mr-badges">
-            <span class="bug-mr-badge" :class="`mr-badge-${r.status}`">
-              {{ statusLabel[r.status] ?? r.status }}
+            <span class="bug-mr-badge" :class="`mr-badge-${statusSlug(r.status)}`">
+              {{ r.status }}
             </span>
             <span
               class="bug-mr-sev-badge"
-              :class="`mr-sev-badge-${r.severity}`"
+              :class="`mr-sev-badge-${(r.priority || '').toLowerCase()}`"
             >
-              {{ severityLabel(r.severity) }}
+              {{ r.priority }}
             </span>
             <span class="bug-mr-cat">{{ categoryLabel(r.category) }}</span>
           </div>
           <div class="bug-mr-actions">
-            <!-- Re-open — only for resolved -->
+            <!-- Re-open — anything not already Todo -->
             <button
-              v-if="r.status === 'resolved'"
+              v-if="r.status !== 'To Do'"
               class="bug-mr-action-btn reopen"
               :title="t('bugReports.reOpen')"
-              :disabled="actionLoading === r.id"
+              :disabled="actionLoading === r.key"
               @click="$emit('reopen', r)"
             >
               <RefreshIcon class="w-4 h-4" />
@@ -43,7 +43,7 @@
             <button
               class="bug-mr-action-btn edit"
               :title="t('common.edit')"
-              :disabled="actionLoading === r.id"
+              :disabled="actionLoading === r.key"
               @click="$emit('edit', r)"
             >
               <EditIcon class="w-4 h-4" />
@@ -52,7 +52,7 @@
             <button
               class="bug-mr-action-btn delete"
               :title="t('common.delete')"
-              :disabled="actionLoading === r.id"
+              :disabled="actionLoading === r.key"
               @click="$emit('delete', r)"
             >
               <TrashIcon class="w-4 h-4" />
@@ -61,22 +61,24 @@
             <button
               class="bug-mr-action-btn expand"
               :title="
-                expandedIds.has(r.id)
+                expandedIds.has(r.key)
                   ? t('bugReports.collapse')
                   : t('groups.viewDetails')
               "
-              @click="$emit('toggle-expand', r.id)"
+              @click="$emit('toggle-expand', r.key)"
             >
               <ChevronDownIcon
                 class="w-4 h-4 expand-icon"
-                :class="{ 'is-open': expandedIds.has(r.id) }"
+                :class="{ 'is-open': expandedIds.has(r.key) }"
               />
             </button>
           </div>
         </div>
 
         <!-- Title -->
-        <p v-if="r.bugNumber" class="bug-mr-number">#{{ r.bugNumber }}</p>
+        <p class="bug-mr-number">
+          <a :href="r.url" target="_blank" rel="noopener">{{ r.key }}</a>
+        </p>
         <div class="bug-mr-title-row">
           <p class="bug-mr-title">{{ r.title }}</p>
           <button
@@ -89,7 +91,7 @@
         </div>
 
         <!-- Expanded details -->
-        <template v-if="expandedIds.has(r.id)">
+        <template v-if="expandedIds.has(r.key)">
           <div class="bug-mr-desc-row">
             <!-- eslint-disable-next-line vue/no-v-html -->
             <div
@@ -105,7 +107,7 @@
             </button>
           </div>
           <div v-if="r.screenshots?.length" class="bug-mr-screenshots">
-            <div v-for="(ss, i) in r.screenshots" :key="i" class="bug-mr-thumb">
+            <div v-for="(ss, i) in r.screenshots" :key="ss.id || i" class="bug-mr-thumb">
               <AppImage
                 :src="ss.url"
                 :alt="t('bugReports.screenshotAlt', { index: i + 1 })"
@@ -123,97 +125,18 @@
                 <button
                   class="bug-mr-img-action-btn"
                   :title="t('common.download')"
-                  @click.prevent="downloadImage(ss.url, `screenshot-${i + 1}`)"
+                  @click.prevent="downloadImage(ss.url, ss.filename || `screenshot-${i + 1}`)"
                 >
                   <DownloadIcon class="w-3.5 h-3.5" />
                 </button>
               </span>
             </div>
           </div>
-
-          <!-- Notes thread -->
-          <div class="bug-mr-notes">
-            <button
-              class="bug-mr-notes-toggle"
-              @click="$emit('toggle-notes', r.id)"
-            >
-              <span class="bug-mr-notes-toggle-left">
-                <ChatBubbleIcon class="w-3.5 h-3.5" />
-                {{ t('bugReports.notes')
-                }}{{ notesOf(r).length ? ` (${notesOf(r).length})` : '' }}
-              </span>
-              <ChevronDownIcon
-                class="bug-mr-notes-chevron"
-                :class="{ 'is-open': notesOpen.has(r.id) }"
-              />
-            </button>
-
-            <div v-if="notesOpen.has(r.id)" class="bug-mr-notes-body">
-              <NoteThread
-                :notes="notesOf(r)"
-                id-prefix="bug-mr-note"
-                :avatar-char-fn="
-                  (note) =>
-                    (note.authorType === 'admin'
-                      ? t('common.admin')
-                      : note.authorName || '?'
-                    )
-                      .charAt(0)
-                      .toUpperCase()
-                "
-                :author-label-fn="
-                  (note) =>
-                    note.authorType === 'admin'
-                      ? t('common.admin')
-                      : t('bugReports.you')
-                "
-                :can-edit="(note) => note.authorType === 'reporter'"
-                :can-delete="(note) => note.authorType === 'reporter'"
-                :is-reacted-by-me="
-                  (note, emoji) => !!note.reactions?.[emoji]?.[currentUserId]
-                "
-                :reactions-of="reactionsOf"
-                :open-reaction-picker="openReactionPicker"
-                :reaction-picker-align="reactionPickerAlign"
-                :replying-to="replyingTo?.reportId === r.id ? replyingTo : null"
-                :note-editing-id="noteEditingId"
-                :note-edit-text="noteEditText"
-                :note-edit-error="noteEditError"
-                :note-edit-saving-id="noteEditSavingId"
-                :compose-text="replyInputs[r.id] || ''"
-                :compose-error="replyErrors[r.id] || ''"
-                :compose-placeholder="
-                  notesOf(r).length
-                    ? t('bugReports.replyToAdmin')
-                    : t('bugReports.addCommentForAdmin')
-                "
-                :sending="replySavingId === r.id"
-                @toggle-picker="
-                  (noteId, event) => $emit('toggle-picker', noteId, event)
-                "
-                @toggle-reaction="
-                  (note, emoji) => $emit('toggle-reaction', r, note, emoji)
-                "
-                @reply="(note) => $emit('reply', r.id, note)"
-                @cancel-reply="$emit('cancel-reply')"
-                @scroll-to="$emit('scroll-to', $event)"
-                @start-edit="$emit('start-edit', $event)"
-                @cancel-edit="$emit('cancel-edit')"
-                @save-edit="(note, text) => $emit('save-edit', r, note, text)"
-                @delete="(note) => $emit('delete-note', r, note)"
-                @update:compose-text="
-                  (val) => $emit('update:compose-text', r.id, val)
-                "
-                @send="$emit('send', r)"
-                @editor-mounted="(el) => $emit('editor-mounted', r.id, el)"
-              />
-            </div>
-          </div>
         </template>
 
         <!-- Footer -->
         <p class="bug-mr-date">
-          {{ t('bugReports.submitted', { date: formatDate(r.submittedAt) }) }}
+          {{ t('bugReports.submitted', { date: formatDate(r.createdAt) }) }}
         </p>
       </div>
     </div>
@@ -221,11 +144,9 @@
 </template>
 
 <script setup>
-import { NoteThread } from '@/components/bug-reports'
 import { AppImage } from '@/components/generic-components'
 import { useI18n } from 'vue-i18n'
 import {
-  ChatBubbleIcon,
   ChevronDownIcon,
   ClipboardDocumentIcon,
   CopyIcon,
@@ -256,8 +177,10 @@ function categoryLabel(value) {
   return CATEGORY_LABEL_KEYS[value] ? t(CATEGORY_LABEL_KEYS[value]) : value
 }
 
-function severityLabel(value) {
-  return value ? t(`bugReports.severities.${value}`) : value
+// Jira's literal status names ("To Do", "In Progress", ...) become CSS
+// class suffixes — see bugReports.statuses.* i18n keys for the same slugs.
+function statusSlug(status) {
+  return (status || '').toLowerCase().replace(/\s+/g, '-')
 }
 
 defineProps({
@@ -265,23 +188,6 @@ defineProps({
   myReportsLoading: { type: Boolean, default: false },
   expandedIds: { type: Object, required: true }, // Set
   actionLoading: { type: [String, null], default: null },
-  statusLabel: { type: Object, default: () => ({}) },
-  notesOpen: { type: Object, required: true }, // Set
-  currentUserId: { type: String, default: '' },
-  // NoteThread state
-  replyInputs: { type: Object, default: () => ({}) },
-  replyErrors: { type: Object, default: () => ({}) },
-  replySavingId: { type: [String, null], default: null },
-  replyEditorRefs: { type: Object, default: () => ({}) },
-  openReactionPicker: { type: [String, null], default: null },
-  reactionPickerAlign: { type: String, default: 'left' },
-  replyingTo: { type: Object, default: null },
-  noteEditingId: { type: [String, null], default: null },
-  noteEditText: { type: String, default: '' },
-  noteEditError: { type: String, default: '' },
-  noteEditSavingId: { type: [String, null], default: null },
-  reactionsOf: { type: Function, required: true },
-  notesOf: { type: Function, required: true },
   // Utility functions
   markdownToHtml: { type: Function, required: true },
   formatDate: { type: Function, required: true },
@@ -289,25 +195,7 @@ defineProps({
   downloadImage: { type: Function, required: true }
 })
 
-defineEmits([
-  'reopen',
-  'edit',
-  'delete',
-  'toggle-expand',
-  'toggle-notes',
-  'toggle-picker',
-  'toggle-reaction',
-  'reply',
-  'cancel-reply',
-  'scroll-to',
-  'start-edit',
-  'cancel-edit',
-  'save-edit',
-  'delete-note',
-  'update:compose-text',
-  'send',
-  'editor-mounted'
-])
+defineEmits(['reopen', 'edit', 'delete', 'toggle-expand'])
 </script>
 
 <style scoped>
@@ -353,16 +241,16 @@ defineEmits([
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
 }
 
-.mr-sev-critical {
+.mr-pri-highest {
   border-left-color: #ef4444;
 }
-.mr-sev-high {
+.mr-pri-high {
   border-left-color: #f97316;
 }
-.mr-sev-medium {
+.mr-pri-low {
   border-left-color: #f59e0b;
 }
-.mr-sev-low {
+.mr-pri-lowest {
   border-left-color: #22c55e;
 }
 
@@ -388,9 +276,8 @@ defineEmits([
   font-size: 11px;
   font-weight: 600;
   white-space: nowrap;
-  text-transform: capitalize;
 }
-.mr-badge-open {
+.mr-badge-to-do {
   background: #fee2e2;
   color: #b91c1c;
 }
@@ -406,17 +293,17 @@ defineEmits([
   background: #f3e8ff;
   color: #6b21a8;
 }
-.mr-badge-wont-fix {
+.mr-badge-invalid {
   background: #f1f5f9;
   color: #475569;
 }
-.mr-badge-resolved {
+.mr-badge-qa {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+.mr-badge-done {
   background: #dcfce7;
   color: #166534;
-}
-.mr-badge-closed {
-  background: #e2e8f0;
-  color: #334155;
 }
 
 .bug-mr-sev-badge {
@@ -425,11 +312,10 @@ defineEmits([
   border-radius: 10px;
   font-size: 11px;
   font-weight: 600;
-  text-transform: capitalize;
   background: var(--el-fill-color);
   color: var(--el-text-color-regular);
 }
-.mr-sev-badge-critical {
+.mr-sev-badge-highest {
   background: #fee2e2;
   color: #b91c1c;
 }
@@ -437,11 +323,11 @@ defineEmits([
   background: #ffedd5;
   color: #c2410c;
 }
-.mr-sev-badge-medium {
+.mr-sev-badge-low {
   background: #fef9c3;
   color: #92400e;
 }
-.mr-sev-badge-low {
+.mr-sev-badge-lowest {
   background: #dcfce7;
   color: #166534;
 }
@@ -576,8 +462,14 @@ defineEmits([
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: #2563eb;
   margin: 0;
+}
+.bug-mr-number a {
+  color: #2563eb;
+  text-decoration: none;
+}
+.bug-mr-number a:hover {
+  text-decoration: underline;
 }
 
 .bug-mr-desc {
@@ -685,54 +577,6 @@ defineEmits([
   margin: 0;
 }
 
-/* Notes thread */
-.bug-mr-notes {
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px dashed var(--el-border-color);
-}
-
-.bug-mr-notes-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  gap: 6px;
-}
-
-.bug-mr-notes-toggle-left {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--el-text-color-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.bug-mr-notes-chevron {
-  width: 14px;
-  height: 14px;
-  color: var(--el-text-color-placeholder);
-  transition: transform 0.2s;
-  flex-shrink: 0;
-}
-.bug-mr-notes-chevron.is-open {
-  transform: rotate(180deg);
-}
-
-.bug-mr-notes-body {
-  margin-top: 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
 /* Dark theme */
 :root.dark-theme .bug-mr-card {
   background: #1f2937;
@@ -740,9 +584,6 @@ defineEmits([
 }
 :root.dark-theme .bug-mr-card:hover {
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-}
-:root.dark-theme .bug-mr-number {
-  color: #93c5fd;
 }
 :root.dark-theme .bug-mr-title {
   color: #f3f4f6;
@@ -769,7 +610,7 @@ defineEmits([
   background: rgba(239, 68, 68, 0.15);
 }
 
-:root.dark-theme .bug-mr-badge.mr-badge-open {
+:root.dark-theme .bug-mr-badge.mr-badge-to-do {
   background: rgba(239, 68, 68, 0.2);
   color: #fca5a5;
 }
@@ -785,24 +626,24 @@ defineEmits([
   background: rgba(168, 85, 247, 0.2);
   color: #d8b4fe;
 }
-:root.dark-theme .bug-mr-badge.mr-badge-wont-fix {
+:root.dark-theme .bug-mr-badge.mr-badge-invalid {
   background: rgba(148, 163, 184, 0.15);
   color: #94a3b8;
 }
-:root.dark-theme .bug-mr-badge.mr-badge-resolved {
+:root.dark-theme .bug-mr-badge.mr-badge-qa {
+  background: rgba(99, 102, 241, 0.2);
+  color: #a5b4fc;
+}
+:root.dark-theme .bug-mr-badge.mr-badge-done {
   background: rgba(34, 197, 94, 0.2);
   color: #86efac;
-}
-:root.dark-theme .bug-mr-badge.mr-badge-closed {
-  background: rgba(100, 116, 139, 0.2);
-  color: #94a3b8;
 }
 
 :root.dark-theme .bug-mr-sev-badge {
   background: #374151;
   color: #9ca3af;
 }
-:root.dark-theme .bug-mr-sev-badge.mr-sev-badge-critical {
+:root.dark-theme .bug-mr-sev-badge.mr-sev-badge-highest {
   background: rgba(239, 68, 68, 0.2);
   color: #fca5a5;
 }
@@ -810,11 +651,11 @@ defineEmits([
   background: rgba(249, 115, 22, 0.2);
   color: #fdba74;
 }
-:root.dark-theme .bug-mr-sev-badge.mr-sev-badge-medium {
+:root.dark-theme .bug-mr-sev-badge.mr-sev-badge-low {
   background: rgba(245, 158, 11, 0.2);
   color: #fcd34d;
 }
-:root.dark-theme .bug-mr-sev-badge.mr-sev-badge-low {
+:root.dark-theme .bug-mr-sev-badge.mr-sev-badge-lowest {
   background: rgba(34, 197, 94, 0.2);
   color: #86efac;
 }

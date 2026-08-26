@@ -208,17 +208,29 @@
           <!-- amount -->
           <span
             v-else-if="column.key === 'amount'"
-            v-overflow-popup="{ title: column.title }"
-            class="et-cell-text px-2 text-sm"
-            :data-cell-title="column.title"
+            class="px-2 text-sm et-cell-overflow"
           >
-            {{
-              rowData[column.key] === undefined ||
-              rowData[column.key] === null ||
-              rowData[column.key] === ''
-                ? '-'
-                : formatAmount(rowData[column.key])
-            }}
+            <span
+              v-overflow-popup="{ title: column.title }"
+              class="et-cell-text"
+              :data-cell-title="column.title"
+            >
+              {{
+                rowData[column.key] === undefined ||
+                rowData[column.key] === null ||
+                rowData[column.key] === ''
+                  ? '-'
+                  : formatAmount(rowData[column.key])
+              }}
+            </span>
+            <el-icon
+              v-if="rowData.exchangeRate"
+              class="ml-1 flex-shrink-0 exchange-info-icon"
+              :title="t('table.exchangeInfoTooltip')"
+              @click.stop="showExchangeInfo(rowData)"
+            >
+              <InfoFilled />
+            </el-icon>
           </span>
 
           <!-- split -->
@@ -679,7 +691,7 @@
 <script setup>
 import { watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Search as SearchIcon } from '@element-plus/icons-vue'
+import { Search as SearchIcon, InfoFilled } from '@element-plus/icons-vue'
 import {
   GenericButton,
   GenericInputField
@@ -695,7 +707,11 @@ const props = defineProps({
   dataRef: { type: [Object, null], required: false },
   downloadTitle: { type: String, required: true },
   reportMonth: { type: String, default: '' },
-  showPopup: { type: Boolean, default: true }
+  showPopup: { type: Boolean, default: true },
+  // Currency for formatAmount — the group's shared currency, or the active
+  // user's personal currency, depending on which list embeds this table.
+  // Falls back to formatAmount's own PKR default when omitted.
+  currency: { type: String, default: '' }
 })
 const emit = defineEmits(['selection-change', 'table-write'])
 
@@ -749,6 +765,7 @@ const {
   formatSplitItem,
   formatReceipt,
   openShowMore,
+  showExchangeInfo,
   handleTableAction,
   selectedKeys,
   selectedRows,
@@ -859,6 +876,16 @@ watch(selectedRows, (rows) => emit('selection-change', rows))
 .et-cell-overflow .et-cell-text {
   flex: 1;
   min-width: 0;
+}
+
+/* Info icon shown on amount cells whose value was currency-converted */
+.exchange-info-icon {
+  color: var(--el-color-info);
+  cursor: pointer;
+}
+
+.exchange-info-icon:hover {
+  color: var(--el-color-primary);
 }
 
 /* ── Horizontal scroll wrapper ──────────────────────────── */

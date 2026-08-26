@@ -23,9 +23,6 @@ const Users = loadAsyncComponent(() => import('@/components/users/Users.vue'))
 const Groups = loadAsyncComponent(
   () => import('@/components/groups/Groups.vue')
 )
-const BugReportsAdmin = loadAsyncComponent(
-  () => import('@/components/bug-reports-admin/BugReportsAdmin.vue')
-)
 
 // Used for main tab content rendering
 export function getActiveTab(activeTab) {
@@ -42,8 +39,6 @@ export function getActiveTab(activeTab) {
       return Users
     case Tabs.GROUPS:
       return Groups
-    case Tabs.BUG_RESOLVER:
-      return BugReportsAdmin
     default:
       return null
   }

@@ -159,18 +159,7 @@
             >
               {{ t('common.admin') }}
             </el-tag>
-            <el-tag
-              v-if="isBugResolver"
-              size="small"
-              type="warning"
-              effect="light"
-            >
-              {{ t('admin.users.bugResolverColumn') }}
-            </el-tag>
-            <span
-              v-if="!isAdminUser && !isBugResolver"
-              class="text-sm text-gray-500"
-            >
+            <span v-if="!isAdminUser" class="text-sm text-gray-500">
               {{ t('profile.standardUserTag') }}
             </span>
           </div>
@@ -478,15 +467,12 @@ const canEditVerifiedEmail = computed(
     ) === true
 )
 const isBlocked = computed(() => props.user?.blocked === true)
-// isAdmin/billedUser/bugResolver live in user-admin-flags/{uid}, not on the
+// isAdmin/billedUser live in user-admin-flags/{uid}, not on the
 // users/{uid} doc — this dialog is always for the active/logged-in user
 // (see Header.vue's :user="activeUserProfile"), so the active-user store
 // slice is the correct source here.
 const isAdminUser = computed(
   () => userStore.getActiveUserAdminFlags?.isAdmin === true
-)
-const isBugResolver = computed(
-  () => userStore.getActiveUserAdminFlags?.bugResolver === true
 )
 const isBilledUser = computed(
   () => userStore.getActiveUserAdminFlags?.billedUser === true

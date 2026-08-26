@@ -277,6 +277,7 @@
             :keys="loanKeys"
             :dataRef="loanContent"
             :reportMonth="selectedMonth"
+            :currency="currency"
           />
         </div>
       </div>
@@ -296,6 +297,7 @@ const { t } = useI18n()
 
 const {
   formatAmount,
+  currency,
   showLoanForm,
   selectedMonth,
   isContentLoading,

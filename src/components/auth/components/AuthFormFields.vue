@@ -18,6 +18,7 @@
     required
     :placeholder="t('auth.formFields.mobilePlaceholder')"
     @update:modelValue="updateField('mobile', $event)"
+    @country-changed="updateField('country', $event?.iso2 || $event?.countryCode || '')"
   />
 
   <GenericInputField

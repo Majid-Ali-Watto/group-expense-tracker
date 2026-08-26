@@ -19,6 +19,16 @@
       popper-class="gdd-popper"
       :options="mappedOptions"
     >
+      <template v-if="multiple && mappedOptions.length" #header>
+        <el-checkbox
+          :model-value="isAllSelected"
+          :indeterminate="isIndeterminate"
+          :disabled="disabled"
+          @change="toggleSelectAll"
+        >
+          {{ t('common.selectAll') }}
+        </el-checkbox>
+      </template>
       <template #label="{ label, value }">
         <span>{{ resolveSelectedLabel(label, value) }}</span>
       </template>
@@ -152,6 +162,33 @@ const mappedOptions = computed(
 const resolveSelectedLabel = (label, value) =>
   resolveSelectedLabelFromOptions(label, value, mappedOptions.value)
 
+// "Select All" toggle shown in the multiple-mode dropdown header. Only
+// counts non-disabled options as selectable/select-all-able — a per-option
+// disabled entry should never end up toggled on by this.
+const selectableValues = computed(() =>
+  mappedOptions.value.filter((o) => !o.disabled).map((o) => o.value)
+)
+
+const selectedValues = computed(() =>
+  Array.isArray(internalValue.value) ? internalValue.value : []
+)
+
+const isAllSelected = computed(() => {
+  if (!selectableValues.value.length) return false
+  const selected = new Set(selectedValues.value)
+  return selectableValues.value.every((v) => selected.has(v))
+})
+
+const isIndeterminate = computed(() => {
+  if (!selectableValues.value.length || isAllSelected.value) return false
+  const selected = new Set(selectedValues.value)
+  return selectableValues.value.some((v) => selected.has(v))
+})
+
+function toggleSelectAll() {
+  internalValue.value = isAllSelected.value ? [] : [...selectableValues.value]
+}
+
 const resolvedLabel = computed(() =>
   props.label && !props.required
     ? `${props.label} (${t('common.optional')})`
@@ -159,8 +196,12 @@ const resolvedLabel = computed(() =>
 )
 
 const wrapperProps = computed(() => {
+  // See the matching comment in GenericInputField.vue — an unwrapped root
+  // div is a flex child of the ancestor el-form-item's __content box and
+  // needs flex-1 or it shrinks to content width instead of filling the
+  // space the caller allocated it.
   if (!props.wrapFormItem) {
-    return {}
+    return { class: 'flex-1 min-w-0' }
   }
 
   return {

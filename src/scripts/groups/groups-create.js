@@ -3,7 +3,7 @@ import { useI18n } from 'vue-i18n'
 import { useAuthStore, useGroupStore, useUserStore } from '@/stores'
 import { useFireBase, useUsersOptions } from '@/composables'
 import { showError } from '@/utils'
-import { DB_NODES } from '@/constants'
+import { DB_NODES, DEFAULT_CURRENCY } from '@/constants'
 import { getActiveUserBlockedMessage, isUserBlocked } from '@/helpers'
 
 export const GroupsCreate = (emit, props) => {
@@ -33,7 +33,8 @@ export const GroupsCreate = (emit, props) => {
     name: '',
     description: '',
     members: ensureCreatorSelected([]),
-    category: ''
+    category: '',
+    currency: DEFAULT_CURRENCY
   })
 
   const groupForm = ref(createEmptyGroupForm())
@@ -129,6 +130,10 @@ export const GroupsCreate = (emit, props) => {
       category: groupForm.value.category || '',
       blocked: false,
       ownerUid: authStore.getActiveUserUid,
+      // Group's shared currency — all members' entries convert into this
+      // for balances/settlement. Picked on the create form (defaults to
+      // PKR); the owner can still change it later (group edit dialog).
+      currency: groupForm.value.currency || DEFAULT_CURRENCY,
       // Only the creator joins immediately; all others receive an invitation
       members: [buildMemberSnapshot(creatorId)],
       pendingMembers,

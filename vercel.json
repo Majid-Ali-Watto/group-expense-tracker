@@ -65,6 +65,8 @@
     },
     { "source": "/help", "destination": "/help/index.html" },
     { "source": "/faq", "destination": "/faq/index.html" },
+    { "source": "/terms", "destination": "/terms/index.html" },
+    { "source": "/privacy", "destination": "/privacy/index.html" },
     { "source": "/ur", "destination": "/ur/index.html" },
     { "source": "/ur/features", "destination": "/ur/features/index.html" },
     {
@@ -77,6 +79,8 @@
     },
     { "source": "/ur/help", "destination": "/ur/help/index.html" },
     { "source": "/ur/faq", "destination": "/ur/faq/index.html" },
+    { "source": "/ur/terms", "destination": "/ur/terms/index.html" },
+    { "source": "/ur/privacy", "destination": "/ur/privacy/index.html" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

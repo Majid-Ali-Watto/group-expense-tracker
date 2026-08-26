@@ -42,7 +42,7 @@ import {
   getDocs,
   database
 } from '@/firebase'
-import { DB_NODES } from '@/constants'
+import { DB_NODES, DEFAULT_CURRENCY } from '@/constants'
 import {
   isMemberOfGroup,
   allMembersApproved,
@@ -614,6 +614,13 @@ export const Groups = () => {
 
   const editDialogVisible = ref(false)
   const editingGroupId = ref(null)
+  // Whether the group being edited already has any shared-expense/loan
+  // history — currency is locked once true (see updateGroup()'s guard):
+  // every past record's `amount` was frozen in the currency active at save
+  // time, and every balance/settlement calculation sums `amount` directly
+  // without re-converting, so changing the group's currency after entries
+  // exist would silently mix currencies in the same running total.
+  const editingGroupHasCurrencyHistory = ref(false)
   const originalMembers = ref([])
   const initialEditForm = ref({
     name: '',
@@ -736,7 +743,7 @@ export const Groups = () => {
 
       usersSnapshot.docs.forEach((docSnap) => {
         const user = docSnap.data()
-        // isAdmin/billedUser/bugResolver deliberately not picked here — they
+        // isAdmin/billedUser deliberately not picked here — they
         // live in user-admin-flags/{uid} and are never needed for anyone but
         // the active user (see userStore.getActiveUserAdminFlags). email is
         // the same story — it lives in user-private/{uid} (see
@@ -1629,7 +1636,21 @@ export const Groups = () => {
     }
   }
 
-  function editGroup(groupId) {
+  // Cheap "has any history" check — reads the two grandparent docs
+  // (shared-expenses/{groupId}, shared-loans/{groupId}) that saveData()
+  // denormalizes a `months` array onto on every save (see useMonthsLoader's
+  // same pattern), instead of scanning the payments/loans subcollections.
+  async function checkGroupHasCurrencyHistory(groupId) {
+    const [expenseDoc, loanDoc] = await Promise.all([
+      read(`${DB_NODES.SHARED_EXPENSES}/${groupId}`, false),
+      read(`${DB_NODES.SHARED_LOANS}/${groupId}`, false)
+    ])
+    return (
+      (expenseDoc?.months?.length || 0) > 0 || (loanDoc?.months?.length || 0) > 0
+    )
+  }
+
+  async function editGroup(groupId) {
     const group = groups.value.find((g) => g.id === groupId)
     if (!group) return
     if (!ensureGroupInteractionAllowed(group)) return
@@ -1641,11 +1662,14 @@ export const Groups = () => {
 
     editingGroupId.value = groupId
     originalMembers.value = [...group.members.map((m) => m.uid)]
+    editingGroupHasCurrencyHistory.value =
+      await checkGroupHasCurrencyHistory(groupId)
 
     initialEditForm.value = {
       name: group.name,
       description: group.description || '',
-      members: group.members.map((m) => m.uid)
+      members: group.members.map((m) => m.uid),
+      currency: group.currency || DEFAULT_CURRENCY
     }
     editForm.value = {
       ...initialEditForm.value,
@@ -1685,15 +1709,24 @@ export const Groups = () => {
       const nameChanged = group.name !== editForm.value.name
       const descriptionChanged =
         (group.description || '') !== (editForm.value.description || '')
+      const currencyChanged =
+        (group.currency || DEFAULT_CURRENCY) !==
+        (editForm.value.currency || DEFAULT_CURRENCY)
       const membersChanged =
         addedMembers.length > 0 || removedMembers.length > 0
 
-      // If only name or description changed, update directly and notify members
-      if ((nameChanged || descriptionChanged) && !membersChanged) {
+      if (currencyChanged && editingGroupHasCurrencyHistory.value) {
+        return showError(t('groupsMessages.currencyLockedHasHistory'))
+      }
+
+      // Name/description/currency changes don't need member approval
+      // (unlike membership changes) — update directly and notify members.
+      if ((nameChanged || descriptionChanged || currencyChanged) && !membersChanged) {
         const updatedGroup = {
           ...group,
           name: editForm.value.name,
-          description: editForm.value.description || ''
+          description: editForm.value.description || '',
+          currency: editForm.value.currency || DEFAULT_CURRENCY
         }
 
         // Create notification for members
@@ -1711,6 +1744,13 @@ export const Groups = () => {
             t('groupsMessages.descriptionChangedNotif', {
               oldDescription: group.description || emptyPlaceholder,
               newDescription: editForm.value.description || emptyPlaceholder
+            })
+          )
+        if (currencyChanged)
+          changeParts.push(
+            t('groupsMessages.currencyChangedNotif', {
+              oldCurrency: group.currency || DEFAULT_CURRENCY,
+              newCurrency: editForm.value.currency || DEFAULT_CURRENCY
             })
           )
         const notification = {
@@ -2657,6 +2697,7 @@ export const Groups = () => {
     rejectInvitation,
     editDialogVisible,
     editForm,
+    editingGroupHasCurrencyHistory,
     transferDialogVisible,
     newOwnerUid,
     transferOwnershipMembers,

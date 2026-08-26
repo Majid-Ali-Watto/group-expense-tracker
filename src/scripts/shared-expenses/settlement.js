@@ -11,7 +11,7 @@ import { database, writeBatch, doc, deleteField } from '@/firebase'
 export const Settlement = (props) => {
   const { t } = useI18n()
   const { updateData } = useFireBase()
-  const formatAmount = inject('formatAmount')
+  const rawFormatAmount = inject('formatAmount')
   const authStore = useAuthStore()
   const groupStore = useGroupStore()
   const userStore = useUserStore()
@@ -22,6 +22,7 @@ export const Settlement = (props) => {
   const group = computed(() =>
     activeGroup.value ? groupStore.getGroupById(activeGroup.value) : null
   )
+  const formatAmount = (amount) => rawFormatAmount(amount, group.value?.currency)
 
   const isAdmin = computed(() => {
     if (!group.value) return false

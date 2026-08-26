@@ -7,7 +7,6 @@ This file documents the current Firestore configuration flags, where they are us
 | Firestore Path | Field / Structure | Used In | Default If Missing | Who Can Edit |
 | --- | --- | --- | --- | --- |
 | `configs/storage` | `cloudinary: boolean` | Receipt/image upload provider selection | Enabled | Admin / DB maintainer |
-| `configs/storage` | `firebase: boolean` | Receipt/image upload provider selection | Enabled | Admin / DB maintainer |
 | `configs/storage` | `upload_allowed: boolean` | Show/hide receipt upload field in all expense/loan forms | Show upload field | Admin / DB maintainer |
 | `configs/cache` | `isCached: boolean` | Cache enable/disable behavior | Enabled | Admin / DB maintainer |
 | `configs/downloads` | `pdf: boolean` | Show/hide PDF download buttons in shared tables | Show PDF button | Admin / DB maintainer |
@@ -36,7 +35,6 @@ Document path: `users/{uid}`
 | `photoMeta` | Profile photo upload metadata | Profile photo replacement/removal | `null` | User for own profile, Admin |
 | `blocked` | Whether the account is blocked by admin | App-wide interaction guards | `false` | Admin / DB maintainer only |
 | `billedUser` | Whether the user is on a paid plan | OCR and email limit selection (free vs paid tier) | `false` (free tier) | Admin / DB maintainer only |
-| `bugResolver` | Whether the user can access bug resolver/admin bug flows | Bug resolver visibility and routing | `false` | Admin / DB maintainer only |
 | `isAdmin` | Whether the user can access admin config pages | Admin route/header visibility | `false` | Admin / DB maintainer only |
 | `addedBy` | Optional source/reference for how the user was created | User notifications / metadata | Missing | System / Admin |
 | `deleteRequest` | Pending delete approval flow data | Users tab notifications and approval flow | `null` | System / workflow |
@@ -76,6 +74,6 @@ Document path: `user-tab-configs/{uid}`
   - per-user `user-tab-configs/{uid}.accessManageTabs` is not `false`
 - OCR extract button is hidden when `configs/ocr.extract_allowed` is `false` (shows "coming soon" message) or when the user's monthly limit is reached (shows limit message).
 - Email notifications are suppressed when the global `configs/email.send` is `false`, when the user has opted out via `emailSharedExpenses`/`emailSharedLoans`, or when their monthly `emailsSent` count reaches their tier limit.
-- `billedUser`, `blocked`, `bugResolver`, and `isAdmin` should not be editable by users from the client UI.
+- `billedUser`, `blocked`, and `isAdmin` should not be editable by users from the client UI.
 - `accessManageTabs`, `ocrExtractions`, and `emailsSent` should not be editable by users from the client UI.
 - To upgrade a user to the paid tier, set `users/{uid}.billedUser = true`.

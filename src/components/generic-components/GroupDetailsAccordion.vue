@@ -3,13 +3,11 @@
     class="mb-3"
     @change="() => loadGroupBalances(group.id, groupType)"
   >
-    <el-collapse-item>
-      <template #title>
-        <span class="px-2 text-sm font-medium text-gray-600">
-          <InfoCircleIcon class="inline-block w-4 h-4 mr-1" />
-          {{ t('groups.viewDetails') }}
-        </span>
+    <AccordionItem name="details" variant="compact">
+      <template #badge>
+        <InfoCircleIcon class="w-3.5 h-3.5" />
       </template>
+      <template #title>{{ t('groups.viewDetails') }}</template>
 
       <div class="space-y-3 pt-2 px-2">
         <!-- Description -->
@@ -19,6 +17,16 @@
           </div>
           <div class="text-xs text-gray-500 dark:text-gray-400">
             {{ group.description }}
+          </div>
+        </div>
+
+        <!-- Currency -->
+        <div>
+          <div class="text-xs font-medium text-gray-500 mb-1">
+            {{ t('groups.currencyLabel') }}
+          </div>
+          <div class="text-xs text-gray-500 dark:text-gray-400">
+            {{ group.currency || DEFAULT_CURRENCY }}
           </div>
         </div>
 
@@ -98,14 +106,16 @@
           </div>
         </el-dialog>
       </div>
-    </el-collapse-item>
+    </AccordionItem>
   </el-collapse>
 </template>
 <script setup>
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { InfoCircleIcon } from '@/components/icons'
+import { DEFAULT_CURRENCY } from '@/constants'
 import { useUserStore } from '@/stores'
+import AccordionItem from './AccordionItem.vue'
 import GroupPendingMembersList from './GroupPendingMembersList.vue'
 
 const { t } = useI18n()

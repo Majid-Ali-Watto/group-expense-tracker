@@ -10,7 +10,8 @@ import {
   mergeCategoryOptions,
   formatUserDisplay,
   showSuccess,
-  showError
+  showError,
+  formatPlainNumber
 } from '@/utils'
 import {
   useFireBase,
@@ -19,16 +20,31 @@ import {
   useUnsavedChangesGuard,
   useStoreProxy
 } from '@/composables'
-import { DB_NODES } from '@/constants'
+import { DB_NODES, DEFAULT_CURRENCY } from '@/constants'
+import { useCurrency } from '@/composables/useCurrency'
 
 export const PersonalExpenseForm = (props, emit) => {
   const { saveData, updateData, deleteData, isSubmitting } = useFireBase()
+  const authStore = useAuthStore()
+  const userStore = useUserStore()
   const { t } = useI18n()
   const isVisible = ref(true)
   const isEditMode = computed(() => !!props.row?.amount)
+  const { currencyOptionsIncluding, getExchangeRate, convertCurrency } =
+    useCurrency()
+
+  // The active user's own currency — personal expenses convert into this
+  // so the user's totals stay in one currency even if an entry was made
+  // while picking a different one (see getExpenseData).
+  const personalCurrency = computed(
+    () =>
+      userStore.getUserByUid(authStore.getActiveUserUid)?.currency ||
+      DEFAULT_CURRENCY
+  )
 
   const createInitialForm = () => ({
     amount: null,
+    currency: personalCurrency.value,
     category: '',
     description: '',
     location: '',
@@ -37,6 +53,29 @@ export const PersonalExpenseForm = (props, emit) => {
     splitItems: []
   })
   const form = ref(createInitialForm())
+  // Narrowed to codes the current exchange-rate snapshot can actually
+  // convert (plus whatever's already on the form, even if editing a past
+  // entry whose currency later dropped out of the snapshot) — useCurrency.js.
+  const currencyOptions = computed(() =>
+    currencyOptionsIncluding(form.value.currency)
+  )
+  // Live preview for the "Will be converted to {amount} {currency}..." note
+  // — recalculates as the entrant edits the amount or currency. Null hides
+  // the note (matching currency, no amount yet, or no rate available).
+  const convertedAmountPreview = computed(() => {
+    const enteredCurrency = form.value.currency || personalCurrency.value
+    if (enteredCurrency === personalCurrency.value) return null
+
+    const enteredAmount = parseFloat(form.value.amount)
+    if (!enteredAmount || Number.isNaN(enteredAmount)) return null
+
+    const converted = convertCurrency(
+      enteredAmount,
+      enteredCurrency,
+      personalCurrency.value
+    )
+    return converted === null ? null : formatPlainNumber(converted)
+  })
   const initialFormSnapshot = ref(JSON.stringify(createInitialForm()))
   const existingMonth = ref(dateToMonthNode(form.value.date))
   const categoryOptions = computed(() =>
@@ -118,9 +157,7 @@ export const PersonalExpenseForm = (props, emit) => {
   }
 
   const expenseForm = ref(null)
-  const authStore = useAuthStore()
   const dataStore = useDataStore()
-  const userStore = useUserStore()
   const selectedMonth = ref(dataStore.selectedMonth)
   const storeProxy = useStoreProxy()
 
@@ -147,7 +184,13 @@ export const PersonalExpenseForm = (props, emit) => {
     (newRow) => {
       isVisible.value = !newRow?.amount
       form.value = {
-        amount: newRow?.amount ?? null,
+        // Edit mode shows/edits what was actually typed (original
+        // amount+currency), not the already-converted base amount.
+        amount: newRow?.originalAmount ?? newRow?.amount ?? null,
+        currency:
+          newRow?.originalCurrency ||
+          newRow?.currency ||
+          personalCurrency.value,
         category: newRow?.category ?? '',
         description: newRow?.description ?? '',
         location: newRow?.location ?? '',
@@ -236,11 +279,14 @@ export const PersonalExpenseForm = (props, emit) => {
 
         const receiptUrls = uploadedReceipts.receiptUrls
         const receiptMeta = uploadedReceipts.receiptMeta
+        const expenseData =
+          whatTask === 'Delete' ? null : getExpenseData(receiptUrls, receiptMeta)
+        if (whatTask !== 'Delete' && !expenseData) return
 
         if (whatTask == 'Save' || whatTask == 'Duplicate') {
           saveData(
             `${DB_NODES.PERSONAL_EXPENSES}/${activeUserUid.value}/months/${dateToMonthNode(form.value.date)}/expenses`,
-            () => getExpenseData(receiptUrls, receiptMeta),
+            () => expenseData,
             expenseForm,
             whatTask == 'Duplicate'
               ? t('personalExpenses.transactionDuplicated')
@@ -257,7 +303,7 @@ export const PersonalExpenseForm = (props, emit) => {
         } else if (whatTask == 'Update') {
           updateData(
             expenseDocumentPath,
-            () => getExpenseData(receiptUrls, receiptMeta),
+            () => expenseData,
             t('personalExpenses.expenseUpdated')
           )
           emit('closeModal')
@@ -270,9 +316,44 @@ export const PersonalExpenseForm = (props, emit) => {
     })
   }
 
-  function getExpenseData(receiptUrls = [], receiptMeta = []) {
+  // Converts the entered amount into the user's own currency if a
+  // different one was picked, freezing the rate used at this moment. Returns
+  // null when the rate table doesn't have a needed currency, so the caller
+  // can block submission rather than silently store a wrong number.
+  function convertToPersonalCurrency(enteredAmount) {
+    const ownCurrency = personalCurrency.value
+    const enteredCurrency = form.value.currency || ownCurrency
+
+    if (enteredCurrency === ownCurrency) {
+      return { amount: enteredAmount, extra: {} }
+    }
+
+    const rate = getExchangeRate(enteredCurrency, ownCurrency)
+    if (rate === null) return null
+
     return {
-      amount: form.value?.amount,
+      amount: Math.round(enteredAmount * rate * 100) / 100,
+      extra: {
+        originalAmount: enteredAmount,
+        originalCurrency: enteredCurrency,
+        exchangeRate: rate
+      }
+    }
+  }
+
+  function getExpenseData(receiptUrls = [], receiptMeta = []) {
+    const converted = convertToPersonalCurrency(
+      parseFloat(form.value?.amount)
+    )
+    if (!converted) {
+      showError(t('sharedExpenses.exchangeRateUnavailable'))
+      return null
+    }
+
+    return {
+      amount: converted.amount,
+      currency: personalCurrency.value,
+      ...converted.extra,
       category: form.value?.category,
       description: form.value?.description,
       location: form.value?.location,
@@ -298,6 +379,9 @@ export const PersonalExpenseForm = (props, emit) => {
     form,
     categoryOptions,
     recipientOptions,
+    personalCurrency,
+    currencyOptions,
+    convertedAmountPreview,
     expenseForm,
     validateForm,
     resetForm,

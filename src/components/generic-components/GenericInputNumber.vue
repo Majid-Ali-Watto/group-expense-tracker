@@ -10,6 +10,7 @@
       :placeholder="placeholder"
       :controls-position="controlsPosition"
       :class="inputClass"
+      :style="numberInputStyle"
       @change="emit('update:modelValue', internalValue)"
     />
   </component>
@@ -36,7 +37,17 @@ const props = defineProps({
   controlsPosition: { type: String, default: 'right' },
   wrapFormItem: { type: Boolean, default: true },
   inputClass: { type: String, default: 'w-full' },
-  formItemClass: { type: String, default: 'w-full' }
+  formItemClass: { type: String, default: 'w-full' },
+  // Explicit pixel (or any CSS length string) width applied directly to
+  // el-input-number via inline style. el-input-number's own stylesheet sets
+  // a fixed `width: 150px` — inputClass="w-full" only reliably beats that
+  // when Tailwind's utility CSS happens to be ordered after Element Plus's
+  // per-component styles in the bundle, which isn't guaranteed (this app
+  // auto-imports Element Plus component CSS via unplugin-vue-components).
+  // An inline style always wins regardless of bundle order, so callers that
+  // need a specific fixed width (e.g. a 120px column next to another field)
+  // should pass it here instead of relying on inputClass alone.
+  width: { type: [Number, String], default: null }
 })
 
 const emit = defineEmits(['update:modelValue'])
@@ -56,7 +67,21 @@ const resolvedLabel = computed(() =>
     : props.label
 )
 
+const numberInputStyle = computed(() =>
+  props.width == null
+    ? undefined
+    : { width: typeof props.width === 'number' ? `${props.width}px` : props.width }
+)
+
 const wrapperProps = computed(() => {
+  // Deliberately NOT defaulting the unwrapped root to flex-1 here (unlike
+  // GenericInputField/GenericDropDown) — several existing callers place
+  // this as a direct flex child of a plain row (not inside an el-form-item)
+  // and rely on it staying a fixed, non-growing width (e.g. a 120px Amount
+  // field next to a remove button). flex-1 would make those grow and eat
+  // the row's remaining space. Callers that DO need it to fill an ancestor
+  // el-form-item's allocated width should pass class="flex-1 min-w-0"
+  // themselves (it falls through to this root) alongside width="100%".
   if (!props.wrapFormItem) return {}
   return {
     label: resolvedLabel.value,

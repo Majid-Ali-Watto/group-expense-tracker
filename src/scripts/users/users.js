@@ -394,7 +394,7 @@ export const Users = () => {
           if (uid === activeUserUid.value) return list
 
           const u = docSnap.data()
-          // isAdmin/billedUser/bugResolver deliberately not picked here — they
+          // isAdmin/billedUser deliberately not picked here — they
           // live in user-admin-flags/{uid} and are never needed for anyone but
           // the active user (see userStore.getActiveUserAdminFlags). email is
           // the same story — it lives in user-private/{uid} and is likewise

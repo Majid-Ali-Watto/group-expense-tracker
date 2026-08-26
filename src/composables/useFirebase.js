@@ -15,7 +15,7 @@ import { useAuthStore, useUserStore } from '@/stores'
 import { formatUserDisplay, maskMobile } from '@/utils'
 import { startLoading, stopLoading, withLoading } from '@/utils/loading'
 import { withTrace } from '@/utils/performance'
-import getCurrentMonth, { dateToMonthNode } from '@/utils/getCurrentMonth'
+import getCurrentMonth from '@/utils/getCurrentMonth'
 import { resetForm } from '@/utils/reset-form'
 import { showError, showSuccess } from '@/utils/showAlerts'
 import { DB_NODES } from '@/constants'
@@ -220,7 +220,14 @@ export default function useFireBase() {
             // Cross-post a simplified record to each payer's personal-expenses.
             // For multiple-payer expenses each payer gets their own record with
             // their individual amount; single-payer uses the full expense amount.
-            const monthYear = dateToMonthNode(data.date)
+            // groupId/monthYear are read straight off collectionPath (the actual
+            // write location: shared-expenses/{groupId}/months/{monthYear}/payments)
+            // rather than recomputed from data.date, so the provenance pointer
+            // below always matches where the source item really lives.
+            const segs = collectionPath.split('/')
+            const groupId = segs[1]
+            const monthYear = segs[3]
+            const itemId = createdDoc.id
             const payerEntries =
               data.payerMode === 'multiple' && data.payers?.length
                 ? data.payers
@@ -232,10 +239,15 @@ export default function useFireBase() {
 
             for (const { key, amount } of payerEntries) {
               const personalPath = `${DB_NODES.PERSONAL_EXPENSES}/${key}/months/${monthYear}/expenses`
-              await addDoc(
-                collection(database, personalPath),
-                getNewData({ ...data, payer: key, amount })
-              )
+              await addDoc(collection(database, personalPath), {
+                ...getNewData({ ...data, payer: key, amount }),
+                // Lets the security rule verify this mirror against the real
+                // shared-expense item — required for a payer who isn't the
+                // person submitting the form (see firestore.rules).
+                sourceGroupId: groupId,
+                sourceItemId: itemId,
+                sourceMonthYear: monthYear
+              })
               await setDoc(
                 doc(
                   database,

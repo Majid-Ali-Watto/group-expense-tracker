@@ -34,6 +34,38 @@ export function useSharedActivityEmail() {
     })().catch(() => {})
   }
 
+  // bug-report submission is no longer a best-effort side channel — Jira is
+  // now the sole store for the report (no Firestore doc), so unlike
+  // postEmailNotification() above this is awaited and throws on failure so
+  // the caller (bug-report.js's submitReport) can surface it and read back
+  // the created Jira issue. Also bypasses the getEmailConfig().send toggle:
+  // that flag is a user preference for *notification* emails, not a gate on
+  // whether a bug report actually gets submitted.
+  async function postBugReportNotification(payload) {
+    if (!API_BASE_URL) {
+      throw new Error('Bug report backend is not configured.')
+    }
+
+    const headers = await getApiAuthHeaders({
+      'Content-Type': 'application/json',
+      'x-api-key': import.meta.env.VITE_X_API_KEY || ''
+    })
+
+    const response = await fetch(API_BASE_URL + '/send-email', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(payload)
+    })
+
+    const body = await response.json().catch(() => ({}))
+
+    if (!response.ok) {
+      throw new Error(body?.message || `Bug report submission failed (${response.status}).`)
+    }
+
+    return body
+  }
+
   function getUserIdentityRecord(identity) {
     const normalizedIdentity = getIdentity(identity)
     if (!normalizedIdentity) return null
@@ -165,8 +197,9 @@ export function useSharedActivityEmail() {
     incrementEmailCount()
   }
 
-  function sendBugReportEmail({
-    bugNumber = '',
+  // Returns the backend's response body (`{ jiraIssue, ... }`) — awaited and
+  // thrown on failure, unlike sendSharedActivityEmail's fire-and-forget.
+  async function sendBugReportEmail({
     title = '',
     category = '',
     severity = '',
@@ -175,7 +208,7 @@ export function useSharedActivityEmail() {
     screenshots = [],
     submittedAt = ''
   } = {}) {
-    postEmailNotification({
+    return postBugReportNotification({
       type: 'bug-report',
       recipients: [
         {
@@ -184,7 +217,6 @@ export function useSharedActivityEmail() {
         }
       ],
       report: {
-        bugNumber,
         title,
         category,
         severity,

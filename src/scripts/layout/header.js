@@ -1,14 +1,15 @@
 import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { database, doc, deleteDoc, updateDoc, deleteField } from '@/firebase'
+import { database, doc, updateDoc, deleteField } from '@/firebase'
 import { getBugReportConfig, useShare } from '@/composables'
 import { DB_NODES } from '@/constants'
 import { PUBLIC_NAV_LINKS } from '@/constants'
 import { confirmAction } from '@/utils/confirmAction'
+import { getStoredLocale } from '@/i18n'
 import { useAuthStore, useDataStore, useUserStore } from '@/stores'
 
-export const Header = (props, emit, options = {}) => {
+export const Header = (props, emit) => {
   const { t } = useI18n()
   const route = useRoute()
   const router = useRouter()
@@ -78,26 +79,6 @@ export const Header = (props, emit, options = {}) => {
 
   async function handleNavigate(notif) {
     notifVisible.value = false
-    if (notif.action === 'open-bug-report') {
-      options.openBugReport?.({
-        view: 'my-reports',
-        openId: notif.bugId || null
-      })
-      return
-    }
-
-    if (notif.action === 'open-admin-bug-report' && notif.bugId) {
-      props.dismissNotification(notif.id)
-      deleteDoc(
-        doc(
-          database,
-          DB_NODES.BUG_REPORT_NOTIFICATIONS,
-          'admin',
-          'items',
-          notif.bugId
-        )
-      ).catch(() => {})
-    }
 
     if (notif.action === 'dismiss-user-rejection' && notif.userUid) {
       props.dismissNotification(notif.id)
@@ -114,14 +95,23 @@ export const Header = (props, emit, options = {}) => {
     emit('navigate-to-tab', { tab: notif.tab, groupId: notif.groupId })
   }
 
-  // Login/register are emitted as bare paths by header buttons that don't
-  // know about locales — preserve the current /ur context when navigating
-  // to them so an Urdu marketing/guest page doesn't drop back to English.
+  // Login/register/help are emitted as bare paths by header buttons that
+  // don't know about locales — preserve Urdu when navigating to them.
+  // Login/register are themselves locale-variant routes, so the current
+  // route's own meta.locale says which variant to stay on. Help is opened
+  // from plain app routes (no meta.locale of their own — see router guard's
+  // comment on getCurrentUserProfile), so it falls back to the user's saved
+  // app-wide locale preference instead.
   function navigateTo(path) {
-    const target =
-      (path === '/login' || path === '/register') && route.meta?.locale === 'ur'
-        ? `/ur${path}`
-        : path
+    let target = path
+
+    if (path === '/login' || path === '/register') {
+      target = route.meta?.locale === 'ur' ? `/ur${path}` : path
+    } else if (path === '/help') {
+      const locale = route.meta?.locale || getStoredLocale()
+      target = locale === 'ur' ? `/ur${path}` : path
+    }
+
     if (route.path === target) return
     router.push(target)
   }

@@ -151,8 +151,6 @@ export function createUserTabSelectionFromConfig(config) {
 }
 
 export function canAccessTab(tab, config, options = {}) {
-  if (tab === Tabs.BUG_RESOLVER) return true
-
   const resolvedConfig = resolveUserTabConfig(config)
   const key = TAB_CONFIG_BY_TAB[tab]
   if (!key || resolvedConfig[key] !== true) return false

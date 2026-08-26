@@ -4,8 +4,7 @@ export const Tabs = {
   PERSONAL_EXPENSES: 'Personal Expenses',
   PERSONAL_LOANS: 'Personal Loans',
   USERS: 'Users',
-  GROUPS: 'Groups',
-  BUG_RESOLVER: 'Bug Reports'
+  GROUPS: 'Groups'
 }
 
 export const GROUP_CATEGORIES = [

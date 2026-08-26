@@ -21,7 +21,7 @@ import { formatUserDisplay } from '@/utils/user-display'
 import { createUserDisplayStoreProxy } from '@/composables'
 
 export const PersonalLoans = () => {
-  const formatAmount = inject('formatAmount')
+  const rawFormatAmount = inject('formatAmount')
   const { t } = useI18n()
   const { dbRef, read, readShallow } = useFireBase()
   const authStore = useAuthStore()
@@ -76,6 +76,10 @@ export const PersonalLoans = () => {
   const activeUserMobile = computed(
     () => userStore.getUserByUid(activeUserUid.value)?.mobile || ''
   )
+  const currency = computed(
+    () => userStore.getUserByUid(activeUserUid.value)?.currency
+  )
+  const formatAmount = (amount) => rawFormatAmount(amount, currency.value)
 
   function getLoanIdentity(loan, role) {
     if (!loan) return ''
@@ -428,6 +432,7 @@ export const PersonalLoans = () => {
 
   return {
     formatAmount,
+    currency,
     loans,
     loanKeys,
     loanContent,

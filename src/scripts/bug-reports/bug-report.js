@@ -1,38 +1,16 @@
-import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessageBox } from 'element-plus'
-import {
-  auth,
-  database,
-  collection,
-  query,
-  orderBy,
-  doc,
-  addDoc,
-  setDoc,
-  updateDoc,
-  deleteDoc,
-  onSnapshot,
-  runTransaction
-} from '@/firebase'
-import { DB_NODES } from '@/constants'
+import { auth } from '@/firebase'
 import { useSharedActivityEmail } from '@/composables'
-import {
-  uploadReceipt,
-  cleanupOldReceipts,
-  showError,
-  showSuccess,
-  generateUUID
-} from '@/utils'
+import { useBugReportsApi } from '@/composables/useBugReportsApi'
+import { uploadReceipt, showError, showSuccess } from '@/utils'
 import { useAuthStore, useUserStore } from '@/stores'
 import { resolveUserTabConfig, USER_TAB_KEYS } from '@/helpers'
-import { NoteThread } from './note-thread'
 
 const MAX_SCREENSHOTS = 3
 const MAX_SIZE_MB = 2
 const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024
-const BUG_NUMBER_PREFIX = 'khata-bug'
-const BUG_NUMBER_PAD = 6
 
 export const ALL_CATEGORIES = [
   {
@@ -54,29 +32,23 @@ export const ALL_CATEGORIES = [
   { labelKey: 'bugReports.categories.other', value: 'other' }
 ]
 
+// Jira's literal priority names, straight through end to end — the reporter
+// picks one of these on the submit form and the backend sets it as-is on
+// the Jira issue's priority field (no low/medium/high/critical → Highest/
+// High/Low/Lowest translation layer; see jira.service.ts's createBugIssue).
 export const SEVERITIES = [
-  { labelKey: 'bugReports.severities.low', value: 'low' },
-  { labelKey: 'bugReports.severities.medium', value: 'medium' },
-  { labelKey: 'bugReports.severities.high', value: 'high' },
-  { labelKey: 'bugReports.severities.critical', value: 'critical' }
+  { labelKey: 'bugReports.priorities.highest', value: 'Highest' },
+  { labelKey: 'bugReports.priorities.high', value: 'High' },
+  { labelKey: 'bugReports.priorities.low', value: 'Low' },
+  { labelKey: 'bugReports.priorities.lowest', value: 'Lowest' }
 ]
-
-const STATUS_LABEL_KEYS = {
-  open: 'common.open',
-  'in-progress': 'bugReports.statuses.inProgress',
-  'needs-info': 'bugReports.statuses.needsInfo',
-  duplicate: 'common.duplicate',
-  'wont-fix': 'bugReports.statuses.wontFix',
-  resolved: 'bugReports.statuses.resolved',
-  closed: 'bugReports.statuses.closed'
-}
 
 function emptyForm() {
   return {
     category: '',
     title: '',
     description: '',
-    severity: 'medium',
+    severity: 'Low',
     reporterName: '',
     reporterEmail: ''
   }
@@ -86,6 +58,12 @@ function emptyForm() {
  * Script module for the reporter-side Bug Report view.
  * Follows the project's factory-function pattern.
  *
+ * Bug reports are stored in Jira, not Firestore — submitting posts to the
+ * node backend (which creates the Jira issue and returns its key), and
+ * "My Reports" fetches the reporter's own issues from the same backend.
+ * There's no real-time push (Jira has none), so the list is fetched on
+ * mount / view switch / after a successful submit, plus a manual refresh.
+ *
  * @param {{ view: string, openBugId: string | null }} props
  */
 export const BugReport = (props) => {
@@ -93,6 +71,7 @@ export const BugReport = (props) => {
   const userStore = useUserStore()
   const { t } = useI18n()
   const { sendBugReportEmail } = useSharedActivityEmail()
+  const { fetchBugReports, updateBugReportStatus, updateBugReport, deleteBugReport } = useBugReportsApi()
 
   const activeView = ref(props.view)
   const isLoggedIn = computed(() => !!authStore.getActiveUserUid)
@@ -138,12 +117,6 @@ export const BugReport = (props) => {
     }))
   )
 
-  const statusLabel = computed(() =>
-    Object.fromEntries(
-      Object.entries(STATUS_LABEL_KEYS).map(([status, key]) => [status, t(key)])
-    )
-  )
-
   // ── Validation rules ─────────────────────────────────────────────────────
   const rules = computed(() => ({
     category: [
@@ -184,7 +157,7 @@ export const BugReport = (props) => {
   const submitting = ref(false)
   const uploadingScreenshots = ref(false)
   const submitted = ref(false)
-  const lastSubmittedBugNumber = ref('')
+  const lastSubmittedIssueKey = ref('')
   const screenshots = ref([])
   const uploadProgress = ref([])
   const form = ref(emptyForm())
@@ -194,7 +167,7 @@ export const BugReport = (props) => {
       !form.value.category &&
       !form.value.title &&
       !form.value.description &&
-      form.value.severity === 'medium' &&
+      form.value.severity === 'Low' &&
       !screenshots.value.length
   )
 
@@ -258,22 +231,8 @@ export const BugReport = (props) => {
     uploadProgress.value = []
     form.value = emptyForm()
     submitted.value = false
-    lastSubmittedBugNumber.value = ''
+    lastSubmittedIssueKey.value = ''
     formRef.value?.clearValidate()
-  }
-
-  async function reserveNextBugNumber() {
-    const counterRef = doc(database, DB_NODES.BUG_REPORT_COUNTERS, 'global')
-    const bugSequence = await runTransaction(database, async (transaction) => {
-      const snap = await transaction.get(counterRef)
-      const next = (snap.exists() ? (snap.data().count ?? 0) : 0) + 1
-      transaction.set(counterRef, { count: next }, { merge: true })
-      return next
-    })
-    return {
-      bugSequence,
-      bugNumber: `${BUG_NUMBER_PREFIX}-${String(bugSequence).padStart(BUG_NUMBER_PAD, '0')}`
-    }
   }
 
   async function submitReport() {
@@ -319,67 +278,26 @@ export const BugReport = (props) => {
 
       const reporter = {
         name: loggedInUser.value?.name || 'Unknown',
-        email: auth.currentUser?.email || '',
-        mobile: authStore.getActiveUserUid
+        email: auth.currentUser?.email || ''
       }
 
-      const { bugNumber, bugSequence } = await reserveNextBugNumber()
-      const report = {
-        bugNumber,
-        bugSequence,
-        category: form.value.category,
+      // The backend creates the Jira issue (and re-uploads screenshots as
+      // real Jira attachments) — this is now the only place the report is
+      // stored, so it's awaited: a Jira failure must surface as a failed
+      // submission, not a silently-lost report.
+      const { jiraIssue } = await sendBugReportEmail({
         title: form.value.title.trim(),
-        description: form.value.description.trim(),
+        category: form.value.category,
         severity: form.value.severity,
+        description: form.value.description.trim(),
         reporter,
         screenshots: screenshotMeta,
-        submittedAt: new Date().toISOString(),
-        status: 'open'
-      }
-
-      const mobileKey = reporter.mobile
-      const newDocRef = await addDoc(
-        collection(database, DB_NODES.BUG_REPORTS, mobileKey, 'reports'),
-        report
-      )
-
-      sendBugReportEmail({
-        bugNumber: report.bugNumber,
-        title: report.title,
-        category: report.category,
-        severity: report.severity,
-        description: report.description,
-        reporter,
-        screenshots: report.screenshots,
-        submittedAt: report.submittedAt
+        submittedAt: new Date().toISOString()
       })
 
-      try {
-        await setDoc(
-          doc(
-            database,
-            DB_NODES.BUG_REPORT_NOTIFICATIONS,
-            'admin',
-            'items',
-            newDocRef.id
-          ),
-          {
-            title: report.title,
-            bugNumber: report.bugNumber,
-            action: 'new',
-            reporterName: reporter.name || 'Anonymous',
-            updatedAt: report.submittedAt
-          }
-        )
-      } catch (notificationError) {
-        console.warn(
-          'Bug report submitted, but admin notification could not be created.',
-          notificationError
-        )
-      }
-
-      lastSubmittedBugNumber.value = report.bugNumber
+      lastSubmittedIssueKey.value = jiraIssue?.key || ''
       submitted.value = true
+      await fetchMyReports()
     } catch (err) {
       uploadingScreenshots.value = false
       showError(err.message || t('bugReports.submissionFailed'))
@@ -393,12 +311,23 @@ export const BugReport = (props) => {
   const myReportsLoading = ref(false)
   const expandedIds = ref(new Set())
   const actionLoading = ref(null)
-  let myReportsUnsubscribe = null
 
   function toggleExpand(id) {
     const next = new Set(expandedIds.value)
     next.has(id) ? next.delete(id) : next.add(id)
     expandedIds.value = next
+  }
+
+  async function fetchMyReports() {
+    if (!authStore.getActiveUserUid) return
+    myReportsLoading.value = true
+    try {
+      myReports.value = await fetchBugReports()
+    } catch (err) {
+      showError(err.message || t('bugReports.failedLoadReports', { message: '' }))
+    } finally {
+      myReportsLoading.value = false
+    }
   }
 
   async function deleteReport(r) {
@@ -413,17 +342,9 @@ export const BugReport = (props) => {
           dangerouslyUseHTMLString: true
         }
       )
-      actionLoading.value = r.id
-      const uid = authStore.getActiveUserUid
-      const reportPath = `${DB_NODES.BUG_REPORTS}/${uid}/reports/${r.id}`
-      if (r.screenshots?.length) {
-        cleanupOldReceipts(r.screenshots, [], { documentPath: reportPath })
-      }
-      await deleteDoc(doc(database, DB_NODES.BUG_REPORTS, uid, 'reports', r.id))
-      if (uid)
-        await deleteDoc(
-          doc(database, DB_NODES.BUG_REPORT_NOTIFICATIONS, uid, 'items', r.id)
-        ).catch(() => {})
+      actionLoading.value = r.key
+      await deleteBugReport(r.key)
+      myReports.value = myReports.value.filter((report) => report.key !== r.key)
       showSuccess(t('bugReports.reportDeleted'))
     } catch (e) {
       if (e !== 'cancel') showError(e?.message || t('bugReports.deleteFailed'))
@@ -433,28 +354,10 @@ export const BugReport = (props) => {
   }
 
   async function reopenReport(r) {
-    actionLoading.value = r.id
-    const uid = authStore.getActiveUserUid
+    actionLoading.value = r.key
     try {
-      await updateDoc(
-        doc(database, DB_NODES.BUG_REPORTS, uid, 'reports', r.id),
-        { status: 'open' }
-      )
-      await setDoc(
-        doc(
-          database,
-          DB_NODES.BUG_REPORT_NOTIFICATIONS,
-          'admin',
-          'items',
-          r.id
-        ),
-        {
-          title: r.title,
-          action: 'reopened',
-          reporterName: loggedInUser.value?.name || uid,
-          updatedAt: new Date().toISOString()
-        }
-      )
+      await updateBugReportStatus(r.key, 'To Do')
+      await fetchMyReports()
       showSuccess(t('bugReports.reportReopened'))
     } catch (e) {
       showError(e?.message || t('bugReports.reopenFailed'))
@@ -469,25 +372,31 @@ export const BugReport = (props) => {
   const editForm = ref(null)
   const initialEditForm = ref(null)
   const editNewScreenshots = ref([])
+  const removedAttachmentIds = ref([])
   const editSaving = ref(false)
 
   function openEdit(r) {
     initialEditForm.value = {
-      id: r.id,
-      category: r.category,
+      key: r.key,
       title: r.title,
+      category: r.category,
+      severity: r.priority,
       description: r.description,
-      severity: r.severity,
-      screenshots: r.screenshots ? [...r.screenshots] : []
+      existingScreenshots: r.screenshots ? [...r.screenshots] : []
     }
-    editForm.value = { ...initialEditForm.value }
+    editForm.value = {
+      ...initialEditForm.value,
+      existingScreenshots: [...initialEditForm.value.existingScreenshots]
+    }
     editNewScreenshots.value = []
+    removedAttachmentIds.value = []
     editDialogVisible.value = true
   }
 
   function closeEdit() {
     editNewScreenshots.value.forEach((s) => URL.revokeObjectURL(s.preview))
     editNewScreenshots.value = []
+    removedAttachmentIds.value = []
     editForm.value = null
     initialEditForm.value = null
     editDialogVisible.value = false
@@ -496,23 +405,24 @@ export const BugReport = (props) => {
   function resetEdit() {
     editNewScreenshots.value.forEach((s) => URL.revokeObjectURL(s.preview))
     editNewScreenshots.value = []
+    removedAttachmentIds.value = []
     editForm.value = initialEditForm.value
       ? {
           ...initialEditForm.value,
-          screenshots: [...(initialEditForm.value.screenshots || [])]
+          existingScreenshots: [...initialEditForm.value.existingScreenshots]
         }
       : null
     editFormRef.value?.clearValidate()
   }
 
   function removeExistingScreenshot(index) {
-    editForm.value.screenshots.splice(index, 1)
+    const [removed] = editForm.value.existingScreenshots.splice(index, 1)
+    if (removed?.id) removedAttachmentIds.value.push(removed.id)
   }
 
   function handleEditFileChange(e) {
-    const existing = editForm.value?.screenshots?.length ?? 0
-    const remaining =
-      MAX_SCREENSHOTS - existing - editNewScreenshots.value.length
+    const existing = editForm.value?.existingScreenshots?.length ?? 0
+    const remaining = MAX_SCREENSHOTS - existing - editNewScreenshots.value.length
     Array.from(e.target.files || [])
       .slice(0, remaining)
       .forEach((file) => {
@@ -547,52 +457,33 @@ export const BugReport = (props) => {
     if (!valid) return
     editSaving.value = true
     try {
-      const newMeta = []
+      const newScreenshotMeta = []
       for (const item of editNewScreenshots.value) {
         const result = await uploadReceipt(item.file, {
           maxSizeBytes: MAX_SIZE_BYTES
         })
-        newMeta.push({
+        newScreenshotMeta.push({
           url: result.url,
           provider: result.provider,
           publicId: result.publicId,
           path: result.path
         })
       }
-      const allScreenshots = [...(editForm.value.screenshots || []), ...newMeta]
-      const original = myReports.value.find((r) => r.id === editForm.value.id)
-      const uid = authStore.getActiveUserUid
-      const reportPath = `${DB_NODES.BUG_REPORTS}/${uid}/reports/${editForm.value.id}`
-      if (original?.screenshots?.length)
-        cleanupOldReceipts(original.screenshots, allScreenshots, {
-          documentPath: reportPath
-        })
 
-      await updateDoc(
-        doc(database, DB_NODES.BUG_REPORTS, uid, 'reports', editForm.value.id),
-        {
-          category: editForm.value.category,
-          title: editForm.value.title,
-          description: editForm.value.description,
-          severity: editForm.value.severity,
-          screenshots: allScreenshots
-        }
-      )
-      await setDoc(
-        doc(
-          database,
-          DB_NODES.BUG_REPORT_NOTIFICATIONS,
-          'admin',
-          'items',
-          editForm.value.id
-        ),
-        {
-          title: editForm.value.title,
-          action: 'edited',
-          reporterName: loggedInUser.value?.name || uid,
-          updatedAt: new Date().toISOString()
-        }
-      )
+      const updated = await updateBugReport(editForm.value.key, {
+        title: editForm.value.title.trim(),
+        category: editForm.value.category,
+        severity: editForm.value.severity,
+        description: editForm.value.description.trim(),
+        ...(removedAttachmentIds.value.length
+          ? { removeAttachmentIds: removedAttachmentIds.value }
+          : {}),
+        ...(newScreenshotMeta.length ? { screenshots: newScreenshotMeta } : {})
+      })
+
+      const index = myReports.value.findIndex((r) => r.key === updated.key)
+      if (index !== -1) myReports.value[index] = updated
+
       showSuccess(t('bugReports.reportUpdated'))
       closeEdit()
     } catch (e) {
@@ -602,139 +493,33 @@ export const BugReport = (props) => {
     }
   }
 
-  // ── Notes & replies ───────────────────────────────────────────────────────
-  const replyInputs = ref({})
-  const replyErrors = ref({})
-  const replySavingId = ref(null)
-  const notesOpen = ref(new Set())
-  const replyEditorRefs = {}
-
-  const noteThread = NoteThread({
-    actorKeyFn: () => authStore.getActiveUserUid,
-    idPrefix: 'bug-mr-note',
-    pickerWrapClass: 'nt-reaction-wrap'
-  })
-
-  function toggleNotes(id) {
-    const s = new Set(notesOpen.value)
-    if (s.has(id)) {
-      s.delete(id)
-    } else {
-      s.add(id)
-      const uid = authStore.getActiveUserUid
-      if (uid) {
-        deleteDoc(
-          doc(database, DB_NODES.BUG_REPORT_NOTIFICATIONS, uid, 'items', id)
-        ).catch(() => {})
-      }
-    }
-    notesOpen.value = s
-  }
-
-  async function addReporterReply(r) {
-    const text = (replyInputs.value[r.id] || '').trim()
-    const editorImages = replyEditorRefs[r.id]?.images || []
-    if (!text && !editorImages.length) {
-      replyErrors.value[r.id] = t('bugReports.messageEmpty')
-      return
-    }
-    replySavingId.value = r.id
-    const uid = authStore.getActiveUserUid
-    try {
-      const uploadedImages = await noteThread.uploadNoteImages(editorImages)
-
-      const noteId = generateUUID()
-      await updateDoc(
-        doc(database, DB_NODES.BUG_REPORTS, uid, 'reports', r.id),
-        {
-          [`notes.${noteId}`]: {
-            text,
-            authorType: 'reporter',
-            authorName: loggedInUser.value?.name || uid,
-            createdAt: new Date().toISOString(),
-            ...(uploadedImages.length ? { images: uploadedImages } : {}),
-            ...noteThread.buildReplyTo(r.id)
-          },
-          hasReporterReply: true,
-          reporterRepliedAt: new Date().toISOString()
-        }
-      )
-      await setDoc(
-        doc(
-          database,
-          DB_NODES.BUG_REPORT_NOTIFICATIONS,
-          'admin',
-          'items',
-          r.id
-        ),
-        {
-          title: r.title,
-          status: r.status,
-          hasReporterReply: true,
-          reporterName: loggedInUser.value?.name || uid,
-          updatedAt: new Date().toISOString()
-        }
-      )
-      replyInputs.value[r.id] = ''
-      replyEditorRefs[r.id]?.clearImages()
-      noteThread.cancelReply()
-      showSuccess(t('bugReports.replySent'))
-    } catch (e) {
-      showError(e?.message || t('bugReports.replyFailed'))
-    } finally {
-      replySavingId.value = null
-    }
-  }
-
   // ── Auto-expand bug from notification ─────────────────────────────────────
   watch(
     [() => props.openBugId, myReports],
-    ([id]) => {
-      if (!id || !myReports.value.find((r) => r.id === id)) return
+    ([key]) => {
+      if (!key || !myReports.value.find((r) => r.key === key)) return
       activeView.value = 'my-reports'
       nextTick(() => {
         const eSet = new Set(expandedIds.value)
-        const nSet = new Set(notesOpen.value)
-        eSet.add(id)
-        nSet.add(id)
+        eSet.add(key)
         expandedIds.value = eSet
-        notesOpen.value = nSet
-        const uid = authStore.getActiveUserUid
-        if (uid) {
-          deleteDoc(
-            doc(database, DB_NODES.BUG_REPORT_NOTIFICATIONS, uid, 'items', id)
-          ).catch(() => {})
-        }
       })
     },
     { immediate: true }
   )
 
-  // ── Lifecycle ─────────────────────────────────────────────────────────────
-  onMounted(() => {
-    const uid = authStore.getActiveUserUid
-    if (!uid) return
-    myReportsLoading.value = true
-    myReportsUnsubscribe = onSnapshot(
-      query(
-        collection(database, DB_NODES.BUG_REPORTS, uid, 'reports'),
-        orderBy('submittedAt', 'desc')
-      ),
-      (snap) => {
-        myReports.value = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
-        myReportsLoading.value = false
-      },
-      () => {
-        myReportsLoading.value = false
-      }
-    )
-    document.addEventListener('mousedown', noteThread.closeReactionPicker)
-  })
-
-  onUnmounted(() => {
-    if (myReportsUnsubscribe) myReportsUnsubscribe()
-    document.removeEventListener('mousedown', noteThread.closeReactionPicker)
-  })
+  // immediate: true covers both "already on My Reports at mount" (e.g.
+  // opened from a notification with view: 'my-reports') and switching into
+  // it later — a single fetch trigger, instead of a separate unconditional
+  // onMounted fetch that ran even while showing the plain submit form and
+  // then fired again here on switch.
+  watch(
+    activeView,
+    (view) => {
+      if (view === 'my-reports') fetchMyReports()
+    },
+    { immediate: true }
+  )
 
   return {
     // Auth
@@ -748,7 +533,7 @@ export const BugReport = (props) => {
     submitting,
     uploadingScreenshots,
     submitted,
-    lastSubmittedBugNumber,
+    lastSubmittedIssueKey,
     screenshots,
     uploadProgress,
     isClean,
@@ -765,10 +550,11 @@ export const BugReport = (props) => {
     myReportsLoading,
     expandedIds,
     actionLoading,
+    fetchMyReports,
     toggleExpand,
     deleteReport,
     reopenReport,
-    // Edit
+    // Edit dialog
     editDialogVisible,
     editFormRef,
     editForm,
@@ -781,19 +567,8 @@ export const BugReport = (props) => {
     handleEditFileChange,
     removeEditNewScreenshot,
     saveEdit,
-    // Notes thread
-    replyInputs,
-    replyErrors,
-    replySavingId,
-    notesOpen,
-    replyEditorRefs,
-    toggleNotes,
-    addReporterReply,
-    // NoteThread (spread shared state/functions)
-    ...noteThread,
     // Constants
     MAX_SCREENSHOTS,
-    SEVERITIES: severities,
-    STATUS_LABEL: statusLabel
+    SEVERITIES: severities
   }
 }

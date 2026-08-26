@@ -105,10 +105,12 @@
 <script setup>
 import { inject } from 'vue'
 import { useI18n } from 'vue-i18n'
-defineProps({
+const props = defineProps({
   request: Object,
-  getUserName: Function
+  getUserName: Function,
+  currency: { type: String, default: '' }
 })
-const formatAmount = inject('formatAmount')
+const rawFormatAmount = inject('formatAmount')
+const formatAmount = (amount) => rawFormatAmount(amount, props.currency)
 const { t } = useI18n()
 </script>

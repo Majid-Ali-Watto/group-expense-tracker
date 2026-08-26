@@ -33,7 +33,7 @@ export const ExpenseList = (props) => {
   const route = useRoute()
   const router = useRouter()
   const { dbRef, read, readShallow, updateData, deleteData } = useFireBase()
-  const formatAmount = inject('formatAmount')
+  const rawFormatAmount = inject('formatAmount')
 
   const { usersOptions } = useUsersOptions()
 
@@ -87,6 +87,9 @@ export const ExpenseList = (props) => {
   const groupObj = computed(() =>
     activeGroup.value ? groupStore.getGroupById(activeGroup.value) : null
   )
+  // Amounts on this list are all in the active group's shared currency.
+  const currency = computed(() => groupObj.value?.currency)
+  const formatAmount = (amount) => rawFormatAmount(amount, currency.value)
 
   let paymentsListener = null
   const isContentLoading = computed(
@@ -382,6 +385,7 @@ export const ExpenseList = (props) => {
   return {
     userStore,
     formatAmount,
+    currency,
     usersOptions,
     pdfContent,
     months,

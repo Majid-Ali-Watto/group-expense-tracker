@@ -83,8 +83,7 @@ const TAB_LABEL_KEYS = {
   [Tabs.SHARED_EXPENSES]: 'tabs.sharedExpenses',
   [Tabs.SHARED_LOANS]: 'tabs.sharedLoans',
   [Tabs.PERSONAL_EXPENSES]: 'tabs.personalExpenses',
-  [Tabs.PERSONAL_LOANS]: 'tabs.personalLoans',
-  [Tabs.BUG_RESOLVER]: 'tabs.bugReports'
+  [Tabs.PERSONAL_LOANS]: 'tabs.personalLoans'
 }
 
 let rtlScrollType = null
@@ -149,7 +148,13 @@ export const App = () => {
   const isBootingPrivateRoute = ref(
     typeof window !== 'undefined' && isPrivateAppPath(window.location.pathname)
   )
-  const isAdminActive = computed(() => route.path.startsWith('/admin'))
+  // True only on routes that are part of the tabs nav system (ROUTE_TABS,
+  // mirroring each route's `meta: { tab: Tabs.X }` in src/router/index.js).
+  // Gates the tab bar + WelcomeBanner's group dropdown — /admin, /settings,
+  // /report-bug, /help all render standalone, same as /admin always has.
+  const isTabRoute = computed(
+    () => !!ROUTE_TABS['/' + route.path.split('/')[1]]
+  )
 
   // Route-driven <head> — title, description, OG/Twitter, canonical,
   // hreflang alternates, JSON-LD. Reactive so it re-runs on every
@@ -296,6 +301,15 @@ export const App = () => {
       return true
     }
 
+    // Report Bug / Help aren't tabs either — reached via dedicated header
+    // buttons (see Header.vue's navigateTo), not the tabs nav, same as
+    // /settings above. Router-level access is just requiresAuth (see
+    // src/router/index.js) — this watcher must agree, or it bounces any
+    // logged-in user straight back to their fallback tab on arrival.
+    if (basePath === '/report-bug' || basePath === '/help') {
+      return true
+    }
+
     if (!tab) return false
 
     return canAccessTab(tab, userTabConfig, {
@@ -321,6 +335,13 @@ export const App = () => {
     return canAccessPath(path, userTabConfig, groupId)
       ? path
       : getDefaultAccessiblePath(userTabConfig, groupId)
+  }
+
+  // WelcomeBanner's "Main Menu" button (shown whenever the tab bar itself
+  // is hidden — /admin, /settings, /report-bug, /help) — routes to the same
+  // fallback tab everything else here falls back to.
+  function goToMainMenu() {
+    router.push(getDefaultAccessiblePath())
   }
 
   // Theme management — extracted to a module-scope singleton (see
@@ -402,8 +423,7 @@ export const App = () => {
         // takes over below.
         userStore.setActiveUserAdminFlags({
           isAdmin: userData.isAdmin === true,
-          billedUser: userData.billedUser === true,
-          bugResolver: userData.bugResolver === true
+          billedUser: userData.billedUser === true
         })
         userStore.setActiveUserPrivate({ email: userData.email || '' })
 
@@ -418,7 +438,6 @@ export const App = () => {
           emailVerified: userData.emailVerified !== false,
           maskedMobile: maskMobile(userData.mobile || ''),
           billedUser: userData.billedUser === true,
-          bugResolver: userData.bugResolver === true,
           blocked: userData.blocked === true,
           isAdmin: userData.isAdmin === true
         })
@@ -475,9 +494,17 @@ export const App = () => {
         }
 
         const savedRoute = sessionStorage.getItem('_lastRoute')
-        const keepCurrentProtectedRoute = route.meta?.requiresAuth
-          ? route.fullPath
-          : null
+        // /help has no requiresAuth (it's also the public marketing page),
+        // so it isn't covered by the requiresAuth check below — but a
+        // logged-in user refreshing on it should stay there too, same as
+        // any requiresAuth route, rather than bouncing to their last tab
+        // (see canAccessPath's matching /help special-case above).
+        const keepCurrentProtectedRoute =
+          route.meta?.requiresAuth ||
+          route.path === '/help' ||
+          route.path === '/ur/help'
+            ? route.fullPath
+            : null
         // Strip query params from the second path segment before checking validAppRoutes.
         // e.g. '/personal-loans?month=2026-02' → segment[1]='personal-loans?month=...' → strip '?' → '/personal-loans'
         const savedBasePath = savedRoute
@@ -522,21 +549,13 @@ export const App = () => {
       }
     })
 
-  // Computed tabs based on active group + bugResolver privilege
+  // Computed tabs based on active group
   const tabs = computed(() => {
     const activeGroup = groupStore.getActiveGroup
-    const isBugResolver =
-      userStore.getActiveUserAdminFlags?.bugResolver === true
 
-    let base = getAccessibleTabs(userStore.getActiveUserTabConfig, {
+    return getAccessibleTabs(userStore.getActiveUserTabConfig, {
       hasActiveGroup: !!activeGroup
     }).filter((tab) => allTabs.includes(tab))
-
-    if (isBugResolver && !base.includes(Tabs.BUG_RESOLVER)) {
-      base = [...base, Tabs.BUG_RESOLVER]
-    }
-
-    return base
   })
 
   const { read } = useFireBase()
@@ -1017,6 +1036,7 @@ export const App = () => {
     netPositionSummary,
     handleShowNetPosition,
     navigateToTab,
-    isAdminActive
+    isTabRoute,
+    goToMainMenu
   }
 }

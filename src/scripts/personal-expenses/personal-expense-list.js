@@ -2,7 +2,7 @@ import { computed, inject, ref, onMounted, watch, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { onSnapshot } from '@/firebase'
-import { useAuthStore, useDataStore } from '@/stores'
+import { useAuthStore, useDataStore, useUserStore } from '@/stores'
 import { useLoadingTimeout } from '@/composables/useLoadingTimeout'
 import { loadMonthsList } from '@/composables/useMonthsLoader'
 import { useRouteQuerySync } from '@/composables/useRouteQuerySync'
@@ -19,13 +19,19 @@ import { getCache, setCache } from '@/utils/queryCache'
 import { showError } from '@/utils/showAlerts'
 
 export const PersonalExpenseList = () => {
-  const formatAmount = inject('formatAmount')
+  const rawFormatAmount = inject('formatAmount')
   const { t } = useI18n()
   const { dbRef, read, readShallow } = useFireBase()
   const authStore = useAuthStore()
   const dataStore = useDataStore()
+  const userStore = useUserStore()
 
   const activeUserUid = computed(() => authStore.getActiveUserUid)
+  // Personal expenses are all in the active user's own currency.
+  const currency = computed(
+    () => userStore.getUserByUid(activeUserUid.value)?.currency
+  )
+  const formatAmount = (amount) => rawFormatAmount(amount, currency.value)
   const route = useRoute()
   const router = useRouter()
   const selectedMonth = ref(route.query.month || getCurrentMonth())
@@ -290,6 +296,7 @@ export const PersonalExpenseList = () => {
 
   return {
     formatAmount,
+    currency,
     selectedMonth,
     selectedCategory,
     expenses,

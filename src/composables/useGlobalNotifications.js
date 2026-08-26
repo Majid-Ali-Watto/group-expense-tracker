@@ -385,7 +385,6 @@ export function useGlobalNotifications() {
   const loanNotifs = ref({})
   const newTxnNotifs = ref([]) // persistent — accumulates new-transaction bell notifications
   const listeners = [] // expense/loan unsubscribers — cleared on group change
-  const bugListeners = [] // bug report unsubscribers — persistent, only cleared on cleanup
 
   function dismissPersistentNotif(id) {
     newTxnNotifs.value = newTxnNotifs.value.filter((n) => n.id !== id)
@@ -633,100 +632,8 @@ export function useGlobalNotifications() {
     { immediate: true }
   )
 
-  // ─── Bug report status notifications (for the reporter) ─────────────────
-  const bugReportNotifs = ref([])
-  const brRef = dbRef(
-    `${DB_NODES.BUG_REPORT_NOTIFICATIONS}/${activeUserUid.value}/items`
-  )
-  const brUnsub = onSnapshot(brRef, (snap) => {
-    if (snap.empty) {
-      bugReportNotifs.value = []
-      return
-    }
-    const statusLabel = {
-      open: 'Open',
-      'in-progress': 'In Progress',
-      'needs-info': 'Needs Info',
-      duplicate: 'Duplicate',
-      'wont-fix': "Won't Fix",
-      resolved: 'Resolved',
-      closed: 'Closed'
-    }
-    const statusIcon = {
-      open: '🔴',
-      'in-progress': '🟡',
-      'needs-info': '🔵',
-      duplicate: '🟣',
-      'wont-fix': '⚫',
-      resolved: '🟢',
-      closed: '⚫'
-    }
-    bugReportNotifs.value = snap.docs.map((d) => {
-      const n = d.data()
-      return {
-        id: `bugreport-notif-${d.id}`,
-        icon: n.hasNote ? '💬' : (statusIcon[n.status] ?? '🐛'),
-        title: 'Bug Report',
-        description: n.hasNote
-          ? `Admin added a note to your report "${n.title}"`
-          : `Your report "${n.title}" is now ${statusLabel[n.status] ?? n.status}`,
-        tab: null,
-        action: 'open-bug-report',
-        bugId: d.id,
-        category: 'Bug Reports'
-      }
-    })
-  })
-  bugListeners.push(brUnsub)
-
-  // ─── Admin bug report notifications ───────────────────────────────────────
-  const rawAdminBugReportNotifs = ref([])
-
-  // bugResolver lives in user-admin-flags/{uid} (see firestore.rules), kept
-  // live in the store by app.js's startActiveUserAdminFlagsSync — read it from
-  // there instead of a second dedicated listener on the same field.
-  const isBugResolver = computed(
-    () => userStore.getActiveUserAdminFlags?.bugResolver === true
-  )
-
-  const adminBrRef = dbRef(`${DB_NODES.BUG_REPORT_NOTIFICATIONS}/admin/items`)
-  const adminBrUnsub = onSnapshot(adminBrRef, (snap) => {
-    if (snap.empty) {
-      rawAdminBugReportNotifs.value = []
-      return
-    }
-    rawAdminBugReportNotifs.value = snap.docs.map((d) => {
-      const n = d.data()
-      const reporter = n.reporterName || 'Reporter'
-      let icon = '💬'
-      let description = `${reporter} replied to "${n.title}"`
-      if (n.action === 'new') {
-        icon = '🐛'
-        description = `${reporter} submitted a new bug report "${n.title}"`
-      } else if (n.action === 'edited') {
-        icon = '✏️'
-        description = `${reporter} edited their report "${n.title}"`
-      } else if (n.action === 'reopened') {
-        icon = '🔄'
-        description = `${reporter} re-opened their report "${n.title}"`
-      }
-      return {
-        id: `bugreport-admin-notif-${d.id}`,
-        icon,
-        title: 'Bug Reports',
-        description,
-        action: 'open-admin-bug-report',
-        bugId: d.id,
-        tab: Tabs.BUG_RESOLVER,
-        category: 'Bug Reports'
-      }
-    })
-  })
-  bugListeners.push(adminBrUnsub)
-
-  const adminBugReportNotifs = computed(() =>
-    isBugResolver.value ? rawAdminBugReportNotifs.value : []
-  )
+  // Bug reports live in Jira now, not Firestore — no in-app notification
+  // channel for them (see kharcafy-node-be / group-expense-tracker CLAUDE.md).
 
   // ─── Real-time groups listener ────────────────────────────────────────────
   // Keeps groupStore up-to-date from any tab so group notifications appear
@@ -757,7 +664,7 @@ export function useGlobalNotifications() {
           snap.docs.forEach((docSnap) => {
             const uid = docSnap.id
             const u = docSnap.data()
-            // isAdmin/billedUser/bugResolver deliberately not picked here —
+            // isAdmin/billedUser deliberately not picked here —
             // they live in user-admin-flags/{uid} and are never needed for
             // anyone but the active user (see userStore.getActiveUserAdminFlags).
             // email is the same story — it lives in user-private/{uid} (see
@@ -781,15 +688,11 @@ export function useGlobalNotifications() {
   const cleanup = () => {
     listeners.forEach((unsub) => unsub())
     listeners.length = 0
-    bugListeners.forEach((unsub) => unsub())
-    bugListeners.length = 0
     usersUnsubscribe()
     groupsUnsubscribe()
     expenseNotifs.value = {}
     loanNotifs.value = {}
     newTxnNotifs.value = []
-    bugReportNotifs.value = []
-    rawAdminBugReportNotifs.value = []
   }
 
   const allNotifications = computed(() => [
@@ -797,8 +700,6 @@ export function useGlobalNotifications() {
     ...userNotifications.value,
     ...Object.values(expenseNotifs.value).flat(),
     ...Object.values(loanNotifs.value).flat(),
-    ...bugReportNotifs.value,
-    ...adminBugReportNotifs.value,
     ...newTxnNotifs.value
   ])
 

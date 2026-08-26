@@ -35,9 +35,8 @@
     </el-form-item>
 
     <el-form-item :label="t('common.description')" prop="description">
-      <MarkdownEditor
+      <RichTextEditor
         :model-value="form.description"
-        :rows="8"
         :placeholder="t('bugReports.descriptionPlaceholder')"
         :maxlength="1000"
         :show-word-limit="true"
@@ -169,7 +168,7 @@ import {
   AppImage,
   GenericDropDown,
   GenericButton,
-  MarkdownEditor
+  RichTextEditor
 } from '@/components/generic-components'
 
 const localFormRef = ref(null)

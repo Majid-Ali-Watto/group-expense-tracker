@@ -1,4 +1,8 @@
 <template>
+  <el-button size="default" class="bug-back-btn" @click="router.back()">{{
+    t('common.back')
+  }}</el-button>
+
   <div class="bug-header">
     <div class="bug-header-icon">
       <AlertTriangleIcon class="w-8 h-8" />
@@ -41,10 +45,12 @@
 </template>
 
 <script setup>
+import { useRouter } from 'vue-router'
 import { AlertTriangleIcon } from '@/components/icons'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
+const router = useRouter()
 
 defineProps({
   activeView: { type: String, required: true },
@@ -55,6 +61,11 @@ defineEmits(['update:activeView'])
 </script>
 
 <style scoped>
+.bug-back-btn {
+  display: inline-flex;
+  margin-bottom: 12px;
+}
+
 .bug-header {
   display: flex;
   align-items: center;

@@ -1,6 +1,6 @@
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 sm:p-6">
-    <div class="max-w-4xl mx-auto">
+  <div class="min-h-screen p-4 sm:p-6">
+    <div>
       <div class="flex items-center gap-3 mb-6">
         <el-button size="default" @click="router.back()">{{
           t('admin.config.back')
@@ -33,11 +33,6 @@
               :label="t('admin.config.enableCloudinary')"
               :value="flag('storage', 'cloudinary')"
               @change="updateField('storage', 'cloudinary', $event)"
-            />
-            <ToggleRow
-              :label="t('admin.config.enableFirebaseStorage')"
-              :value="flag('storage', 'firebase')"
-              @change="updateField('storage', 'firebase', $event)"
             />
           </div>
         </el-card>
@@ -85,7 +80,7 @@
         <el-card shadow="never">
           <template #header>
             <ConfigCardHeader
-              :title="t('headerActions.manageTabs')"
+              :title="t('settings.manageTabs')"
               path="configs/manage-tabs"
             />
           </template>
@@ -102,7 +97,7 @@
         <el-card shadow="never">
           <template #header>
             <ConfigCardHeader
-              :title="t('tabs.bugReports')"
+              :title="t('admin.config.bugReportingTitle')"
               path="configs/bugs"
             />
           </template>

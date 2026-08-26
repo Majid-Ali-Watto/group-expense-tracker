@@ -234,8 +234,7 @@ const TAB_ICONS = {
   'Personal Expenses': Wallet,
   'Personal Loans': Coin,
   Users: UsersIcon,
-  Groups: UserFilled,
-  'Bug Reports': AlertTriangleIcon
+  Groups: UserFilled
 }
 
 const TAB_LABEL_KEYS = {
@@ -244,8 +243,7 @@ const TAB_LABEL_KEYS = {
   [Tabs.SHARED_EXPENSES]: 'tabs.sharedExpenses',
   [Tabs.SHARED_LOANS]: 'tabs.sharedLoans',
   [Tabs.PERSONAL_EXPENSES]: 'tabs.personalExpenses',
-  [Tabs.PERSONAL_LOANS]: 'tabs.personalLoans',
-  [Tabs.BUG_RESOLVER]: 'tabs.bugReports'
+  [Tabs.PERSONAL_LOANS]: 'tabs.personalLoans'
 }
 
 // Public nav path → icon component (keyed by the unprefixed English path;

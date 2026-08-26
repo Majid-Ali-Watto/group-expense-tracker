@@ -1,85 +1,100 @@
 <template>
-  <main class="public-page inner-page">
-    <section class="title-section">
-      <p class="eyebrow">{{ t('help.eyebrow') }}</p>
-      <h1>{{ t('help.title') }}</h1>
+  <main
+    class="public-page inner-page"
+    :style="{ paddingTop: isLoggedIn ? undefined : '108px' }"
+  >
+    <el-button
+      v-if="isLoggedIn"
+      size="default"
+      class="help-back-btn"
+      @click="router.back()"
+      >{{ t('common.back') }}</el-button
+    >
+
+    <PageTitleSection :eyebrow="t('help.eyebrow')" :title="t('help.title')">
+      <template #icon><el-icon :size="14"><QuestionFilled /></el-icon></template>
       <p>{{ t('help.intro') }}</p>
-    </section>
+    </PageTitleSection>
 
     <section class="help-shell">
-      <HelpContent :expand-all="true" :locale="route.meta?.locale || 'en'" />
+      <HelpContent :locale="route.meta?.locale || 'en'" />
     </section>
   </main>
 </template>
 
 <script setup>
-import { useRoute } from 'vue-router'
+import { computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import HelpContent from '@/components/generic-components/HelpContent.vue'
+import { useAuthStore } from '@/stores'
+import { hasSession } from '@/router'
+import { QuestionFilled } from '@element-plus/icons-vue'
+import PageTitleSection from './PageTitleSection.vue'
 
 const route = useRoute()
+const router = useRouter()
 const { t } = useI18n()
+const authStore = useAuthStore()
+
+// /help is reachable both as the public marketing page (guests — the fixed
+// Header has nothing below it, so this page needs its own top padding to
+// clear it) and as the in-app route logged-in users reach from the header's
+// Help button (App.vue already renders a WelcomeBanner block above the
+// RouterView there, which provides that clearance itself — the page's own
+// 108px on top of that is what created the oversized gap). Same three-part
+// check as Settings.vue's isLoggedIn, the other route reachable both ways.
+const isLoggedIn = computed(
+  () =>
+    !!(authStore.getActiveUserUid && authStore.getSessionToken && hasSession())
+)
 </script>
 
 <style scoped>
-.public-page {
-  padding: 108px 20px 32px;
-  width: 100%;
-  color: #173025;
+.help-back-btn {
+  display: inline-flex;
+  margin-bottom: 12px;
 }
 
-.title-section,
+.public-page {
+  position: relative;
+  padding: 32px 20px 32px;
+  width: 100%;
+  color: #173025;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.public-page::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: -120px;
+  right: -80px;
+  width: 380px;
+  height: 380px;
+  border-radius: 50%;
+  filter: blur(60px);
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(34, 197, 94, 0.22), transparent 70%);
+}
+
 .help-shell {
   border-radius: 24px;
   border: 1px solid rgba(22, 101, 52, 0.12);
   background: #ffffff;
   box-shadow: 0 18px 45px rgba(22, 101, 52, 0.08);
-}
-
-.title-section {
-  padding: 30px;
-  background: linear-gradient(135deg, #eefcf2 0%, #dff8e8 100%);
-}
-
-.help-shell {
   margin-top: 24px;
   padding: 16px;
-}
-
-.eyebrow {
-  margin: 0 0 10px;
-  font-size: 0.76rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: #15803d;
-}
-
-h1 {
-  margin: 0;
-  font-size: clamp(2rem, 4vw, 3.1rem);
-  line-height: 1.08;
-}
-
-.title-section p:last-child {
-  margin: 16px 0 0;
-  max-width: 66ch;
-  line-height: 1.75;
-  color: #446055;
 }
 
 :root.dark-theme .public-page {
   color: #eefbf2;
 }
 
-:root.dark-theme .title-section,
 :root.dark-theme .help-shell {
   background: #11281a;
   border-color: rgba(110, 231, 183, 0.16);
   box-shadow: none;
-}
-
-:root.dark-theme .title-section p:last-child {
-  color: #c5ddcf;
 }
 </style>

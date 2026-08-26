@@ -7,7 +7,7 @@ export const useUserStore = defineStore('user', {
     activeUserTabConfig: null,
     activeUserTabConfigLoaded: false,
     activeUserCanManageTabs: true,
-    // isAdmin/billedUser/bugResolver for the signed-in user, loaded from the
+    // isAdmin/billedUser for the signed-in user, loaded from the
     // owner/admin-only user-admin-flags/{uid} doc — see src/helpers/user-admin-flags.js
     // and firestore.rules. Never populated for any uid but the active user's own.
     activeUserAdminFlags: null,

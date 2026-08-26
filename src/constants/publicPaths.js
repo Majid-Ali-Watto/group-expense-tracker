@@ -11,5 +11,7 @@ export const PUBLIC_BASE_PATHS = {
   groupExpenseTracker: '/group-expense-tracker',
   personalBudgetTracker: '/personal-budget-tracker',
   help: '/help',
-  faq: '/faq'
+  faq: '/faq',
+  terms: '/terms',
+  privacy: '/privacy'
 }

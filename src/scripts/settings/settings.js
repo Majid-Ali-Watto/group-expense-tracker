@@ -9,15 +9,19 @@ import {
 } from '@/composables/useFontFamily'
 import { useManageTabsForm } from '@/composables/useManageTabsForm'
 import { getManageTabsConfig } from '@/composables/useAppConfig'
+import { useFireBase } from '@/composables'
+import { useCurrency } from '@/composables/useCurrency'
 import { useAuthStore, useUserStore } from '@/stores'
 import { hasSession } from '@/router'
 import { clearAllSiteCaches, showError, showSuccess } from '@/utils'
+import { DB_NODES } from '@/constants'
 
 export const Settings = () => {
   const { t } = useI18n()
   const router = useRouter()
   const authStore = useAuthStore()
   const userStore = useUserStore()
+  const { currencyOptionsIncluding, isAvailableCurrency } = useCurrency()
   // Provided by App.vue, the only place logout() actually exists (it closes
   // over sync-listener teardown created inside the App() composable, which
   // itself can only run once). Absent in isolated tests/stories — guarded
@@ -58,6 +62,28 @@ export const Settings = () => {
   )
 
   const { tabSelection, isSavingTabs, saveManageTabs } = useManageTabsForm()
+
+  const { updateData } = useFireBase()
+
+  // Personal default currency — used for personal expenses/loans, and as
+  // the default when creating a new group (see groups-create.js). Falls
+  // back to currencyOption's own default (PKR) until the active user's
+  // doc has loaded.
+  const currency = computed(
+    () => userStore.getUserByUid(authStore.getActiveUserUid)?.currency || ''
+  )
+  // Narrowed to codes the current exchange-rate snapshot can actually
+  // convert (plus whatever the user already has set, even if that code
+  // dropped out of the snapshot) — see useCurrency.js.
+  const currencyOptions = computed(() => currencyOptionsIncluding(currency.value))
+
+  async function setCurrency(code) {
+    const uid = authStore.getActiveUserUid
+    if (!uid || !isAvailableCurrency(code)) return
+
+    await updateData(`${DB_NODES.USERS}/${uid}`, () => ({ currency: code }), '')
+    userStore.addUser({ uid, currency: code })
+  }
 
   // Load every font option's stylesheet only once the user is actually on
   // this page, so the pickers can preview each font in itself — see
@@ -173,6 +199,9 @@ export const Settings = () => {
     urduFontFamily,
     URDU_FONT_OPTIONS,
     setUrduFontFamily,
+    currency,
+    currencyOptions,
+    setCurrency,
     canManageTabs,
     tabSelection,
     isSavingTabs,

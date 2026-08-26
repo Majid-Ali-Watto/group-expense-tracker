@@ -263,7 +263,7 @@ export async function resolveUserFromAuth(firebaseUser) {
   if (!user) return null
 
   const synced = await syncFirestoreUserFromAuth(user, firebaseUser)
-  // isAdmin/billedUser/bugResolver live in user-admin-flags/{uid}, and email
+  // isAdmin/billedUser live in user-admin-flags/{uid}, and email
   // lives in user-private/{uid} — neither is on the users/{uid} doc itself
   // (see firestore.rules) — merge them in here so every caller of
   // resolveUserFromAuth gets the real values with no further lookup.

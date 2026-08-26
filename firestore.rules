@@ -17,11 +17,11 @@ service cloud.firestore {
         || !userDoc(request.auth.uid).data.get('blocked', false);
     }
 
-    // isAdmin/billedUser/bugResolver live in user-admin-flags/{uid} — a
-    // separately-secured doc, readable only by its owner + admins — because
-    // users/{uid} itself is readable by any authenticated user (required for
-    // registration dedup and the invite/browse pickers) and Firestore has no
-    // field-level read ACL to keep those three fields private on that doc.
+    // isAdmin/billedUser live in user-admin-flags/{uid} — a separately-secured
+    // doc, readable only by its owner + admins — because users/{uid} itself
+    // is readable by any authenticated user (required for registration dedup
+    // and the invite/browse pickers) and Firestore has no field-level read
+    // ACL to keep those fields private on that doc.
     function adminFlagsDoc(uid) {
       return get(/databases/$(database)/documents/user-admin-flags/$(uid));
     }
@@ -46,7 +46,6 @@ service cloud.firestore {
     function adminManagedUserFlagsUnchanged() {
       return request.resource.data.get('blocked', false) == resource.data.get('blocked', false)
         && request.resource.data.get('billedUser', false) == resource.data.get('billedUser', false)
-        && request.resource.data.get('bugResolver', false) == resource.data.get('bugResolver', false)
         && request.resource.data.get('isAdmin', false) == resource.data.get('isAdmin', false);
     }
 
@@ -54,7 +53,6 @@ service cloud.firestore {
     function validUserCreateFlags() {
       return request.resource.data.get('blocked', false) == false
         && request.resource.data.get('billedUser', false) == false
-        && request.resource.data.get('bugResolver', false) == false
         && request.resource.data.get('isAdmin', false) == false;
     }
 
@@ -360,7 +358,12 @@ service cloud.firestore {
           || (
             (callerIsMemberOfThisGroup() || callerIsPendingMemberOfThisGroup())
             && (
-              callerModifiesOwnMembership(changedKeys)
+              // Mirrors sharedItemRequestMetaOnly()'s treatment of `notifications`
+              // on shared-expense/loan items: no sensitive data, so any member may
+              // create a notification for a co-member (e.g. "you were renamed") or
+              // clear their own (dismissing it) without full-member approval.
+              changedKeys.hasOnly(['notifications'])
+              || callerModifiesOwnMembership(changedKeys)
               || joinRequestApprovalAdded(changedKeys)
               || callerFinalizesJoinRequest(changedKeys)
               || callerFinalizesEditRequest(changedKeys)
@@ -395,6 +398,19 @@ service cloud.firestore {
         && callerIsNotBlocked()
         && groupIsNotBlocked(groupId)
         && (callerIsAdmin() || callerIsGroupMember(groupId));
+    }
+
+    // True when `data` is a verified mirror of a real shared-expense payment: it
+    // links back (sourceGroupId/sourceItemId/sourceMonthYear) to a payments doc
+    // in a group the caller can access, and `uid` is genuinely one of its payers.
+    // Lets a member cross-post an expense they added into another member's
+    // personal-expenses when that member is the one who actually paid — without
+    // opening personal-expenses to arbitrary writes from other group members.
+    function isValidSharedExpenseMirror(uid, monthYear, data) {
+      let sourceItem = get(/databases/$(database)/documents/shared-expenses/$(data.sourceGroupId)/months/$(data.sourceMonthYear)/payments/$(data.sourceItemId)).data;
+      return data.sourceMonthYear == monthYear
+        && callerCanAccessSharedGroup(data.sourceGroupId)
+        && sourceItem.get('payerUids', []).hasAny([uid]);
     }
 
     // ── Shared-expense/loan item approval enforcement ──────────────────────────
@@ -447,20 +463,6 @@ service cloud.firestore {
       return changedKeys.hasOnly(['deleteRequest', 'updateRequest', 'notifications'])
         && (!changedKeys.hasAny(['deleteRequest']) || sharedItemRequestValid('deleteRequest'))
         && (!changedKeys.hasAny(['updateRequest']) || sharedItemRequestValid('updateRequest'));
-    }
-
-    // Same migration-tolerant shape as callerIsAdmin(): bugResolver is checked
-    // on user-admin-flags first, falling back to the legacy users/{uid} field.
-    function callerIsBugStaff() {
-      return callerIsAdmin()
-        || (
-          exists(/databases/$(database)/documents/user-admin-flags/$(request.auth.uid))
-          && adminFlagsDoc(request.auth.uid).data.get('bugResolver', false) == true
-        )
-        || (
-          exists(/databases/$(database)/documents/users/$(request.auth.uid))
-          && userDoc(request.auth.uid).data.get('bugResolver', false) == true
-        );
     }
 
     // Users — any authenticated user can read.
@@ -636,6 +638,36 @@ service cloud.firestore {
                    && callerIsNotBlocked();
     }
 
+    // Non-owner create allowed only for a verified shared-expense mirror (see
+    // isValidSharedExpenseMirror) — covers "I added a shared expense that
+    // someone else paid".
+    match /personal-expenses/{uid}/months/{monthYear}/expenses/{expenseId} {
+      allow create: if request.auth != null
+                    && callerIsNotBlocked()
+                    && isValidSharedExpenseMirror(uid, monthYear, request.resource.data);
+    }
+
+    // Bookkeeping only — no real data — for the same cross-post. Lets a
+    // non-owner touch just the `months` index (root doc) or create/refresh an
+    // always-empty month marker doc; neither ever holds sensitive content.
+    match /personal-expenses/{uid} {
+      // A payer with no prior personal-expenses doc makes this a *create*
+      // (setDoc(..., {merge:true}) on a non-existent doc), not an update —
+      // resource.data doesn't exist yet to diff against, so this needs its
+      // own branch rather than falling through to the update rule below.
+      allow create: if request.auth != null
+                    && callerIsNotBlocked()
+                    && request.resource.data.keys().hasOnly(['months']);
+      allow update: if request.auth != null
+                    && callerIsNotBlocked()
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['months']);
+    }
+    match /personal-expenses/{uid}/months/{monthYear} {
+      allow create, update: if request.auth != null
+                    && callerIsNotBlocked()
+                    && request.resource.data.size() == 0;
+    }
+
     // Personal loans — owner only; blocked user cannot write
     match /personal-loans/{mobile} {
       allow read, write: if request.auth != null
@@ -655,25 +687,6 @@ service cloud.firestore {
                          && callerIsNotBlocked();
     }
 
-    // Bug reports — reporters can manage their own reports; bug staff can resolve all.
-    match /bug-reports/{uid}/reports/{reportId} {
-      allow read: if request.auth != null
-                  && (request.auth.uid == uid || callerIsBugStaff());
-      allow create: if request.auth != null
-                    && request.auth.uid == uid
-                    && callerIsNotBlocked();
-      allow update, delete: if request.auth != null
-                            && callerIsNotBlocked()
-                            && (request.auth.uid == uid || callerIsBugStaff());
-    }
-
-    // Collection group rule required for collectionGroup('reports') admin query
-    match /{path=**}/reports/{reportId} {
-      allow read, write: if request.auth != null
-                          && callerIsNotBlocked()
-                          && callerIsBugStaff();
-    }
-
     // Collection group rules for leave-group balance checks
     match /{path=**}/payments/{paymentId} {
       allow read: if request.auth != null
@@ -682,35 +695,6 @@ service cloud.firestore {
     match /{path=**}/loans/{loanId} {
       allow read: if request.auth != null
                   && (callerIsAdmin() || callerIsGroupMember(resource.data.get('group', '')));
-    }
-
-    // Bug report counters — authenticated, non-blocked only for writes.
-    // Scoped to the single counter doc ('global') the app actually uses, so a
-    // stranger can't squat arbitrary counter IDs.
-    match /bug-report-counters/{counterId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null
-                    && callerIsNotBlocked()
-                    && counterId == 'global'
-                    && request.resource.data.get('count', 0) == 1;
-      allow update: if request.auth != null
-                    && callerIsNotBlocked()
-                    && counterId == 'global'
-                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['count'])
-                    && request.resource.data.count == resource.data.get('count', 0) + 1;
-      allow delete: if false;
-    }
-
-    // Bug report notifications — reporter-owned inboxes and bug staff admin inbox.
-    match /bug-report-notifications/admin/items/{itemId} {
-      allow read, write: if request.auth != null
-                          && callerIsNotBlocked()
-                          && callerIsBugStaff();
-    }
-    match /bug-report-notifications/{uid}/items/{itemId} {
-      allow read, write: if request.auth != null
-                          && callerIsNotBlocked()
-                          && (request.auth.uid == uid || callerIsBugStaff());
     }
 
     // App config — readable by any authenticated user; writable only by admins

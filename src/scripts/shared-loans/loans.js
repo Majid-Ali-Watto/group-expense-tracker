@@ -39,7 +39,7 @@ export const Loans = () => {
   const route = useRoute()
   const router = useRouter()
   const { dbRef, read, readShallow, updateData, deleteData } = useFireBase()
-  const formatAmount = inject('formatAmount')
+  const rawFormatAmount = inject('formatAmount')
 
   const showLoanForm = ref(route.query.new === '1')
   const closeLoanForm = () => {
@@ -72,6 +72,8 @@ export const Loans = () => {
   const groupObj = computed(() =>
     activeGroup.value ? groupStore.getGroupById(activeGroup.value) : null
   )
+  const currency = computed(() => groupObj.value?.currency)
+  const formatAmount = (amount) => rawFormatAmount(amount, currency.value)
 
   const usersList = computed(() => {
     if (
@@ -398,6 +400,7 @@ export const Loans = () => {
 
   return {
     formatAmount,
+    currency,
     showLoanForm,
     closeLoanForm,
     selectedMonth,

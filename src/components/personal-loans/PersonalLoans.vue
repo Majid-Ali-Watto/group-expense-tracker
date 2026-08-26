@@ -181,6 +181,7 @@
           :dataRef="loanContent"
           :showPopup="true"
           :reportMonth="selectedMonth"
+          :currency="currency"
           @table-write="onTableWrite"
         />
       </div>
@@ -209,6 +210,7 @@ const { t } = useI18n()
 
 const {
   formatAmount,
+  currency,
   loanKeys,
   loanContent,
   selectedMonth,
