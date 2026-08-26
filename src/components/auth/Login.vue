@@ -84,6 +84,9 @@
           :placeholder="t('auth.googleMobileDialog.placeholder')"
           :wrap-form-item="false"
           @enter="submitGoogleMobile"
+          @country-changed="
+            googleMobileCountry = $event?.iso2 || $event?.countryCode || ''
+          "
         />
         <template #footer>
           <GenericButton
@@ -149,6 +152,7 @@ const {
   isSavingFeatureSelection,
   googleMobileDialogVisible,
   googleMobileInput,
+  googleMobileCountry,
   isGoogleMobileSubmitting,
   handleSubmit,
   handleForgotCode,

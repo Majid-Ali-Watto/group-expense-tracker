@@ -27,10 +27,11 @@
         <WelcomeBanner
           :displayName="displayName"
           :activeTab="activeTab"
-          :isAdminActive="isAdminActive"
+          :isTabRoute="isTabRoute"
+          :goToMainMenu="goToMainMenu"
         />
         <div
-          v-if="!isAdminActive"
+          v-if="isTabRoute"
           :key="tabBarKey"
           class="app-tabs"
           :class="{ 'app-tabs--rtl': locale === 'ur' }"
@@ -157,7 +158,8 @@ const {
   allNotifications,
   notificationCount,
   dismissNotification,
-  isAdminActive
+  isTabRoute,
+  goToMainMenu
 } = App()
 
 // The Settings page (a route, so a descendant of this component's own
@@ -219,6 +221,14 @@ provide('appLogout', logout)
   }
 }
 
+.app-tab-header {
+  /* Always gives the page content below the WelcomeBanner some breathing
+     room — previously this margin lived only on .app-tabs, so any route
+     without a tab bar (admin/settings/report-bug/help) touched the banner
+     directly with zero gap. */
+  margin-bottom: 12px;
+}
+
 .app-tabs {
   display: flex;
   align-items: stretch;
@@ -226,7 +236,6 @@ provide('appLogout', logout)
   margin-top: 0;
   border-bottom: 1px solid var(--border-color);
   background: var(--tab-gradient-start);
-  margin-bottom: 12px;
 }
 
 .app-tabs--rtl {
@@ -290,10 +299,6 @@ html[lang='ur'] .app-tabs__item {
 }
 
 @media (max-width: 767px) {
-  .app-tab-header {
-    margin-bottom: 12px;
-  }
-
   .app-tabs {
     display: none;
   }

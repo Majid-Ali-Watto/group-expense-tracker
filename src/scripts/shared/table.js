@@ -125,13 +125,20 @@ export const Table = (props) => {
       : formatted
   }
 
-  function getSearchableValue(key, value) {
+  function getSearchableValue(key, value, row) {
     if (key === 'recipient') return formatRecipient(value)
     if (key === 'giver' || key === 'receiver') return formatUser(value)
     if (key === 'loanGiver' || key === 'loanReceiver') return formatUser(value)
     if (key === 'payer') {
+      if (row?.payerMode === 'multiple' && row?.payers?.length) {
+        return row.payers.map((p) => formatUser(p.uid)).join(', ')
+      }
       return value ? formatUser(value) : ''
     }
+    // 'payers' itself is absorbed into 'payer' above (row.payers holds
+    // {uid, amount} entries, not directly searchable/sortable text) — skip it
+    // here so it doesn't duplicate raw uids into search results.
+    if (key === 'payers') return ''
     return value
   }
 
@@ -178,7 +185,12 @@ export const Table = (props) => {
     { immediate: true, deep: true }
   )
 
-  const formatAmount = inject('formatAmount')
+  // Table.vue is reused across shared expenses/loans (group currency) and
+  // personal expenses/loans (the active user's own currency) — the caller
+  // passes whichever currency applies via the `currency` prop, since this
+  // composable has no scope of its own to derive it from.
+  const rawFormatAmount = inject('formatAmount')
+  const formatAmount = (amount) => rawFormatAmount(amount, props.currency)
 
   function waitForComponentRef(timeoutMs = 5000) {
     if (childRef.value?.componentRef)
@@ -280,6 +292,11 @@ export const Table = (props) => {
         'deleteRequest',
         'notifications',
         'payerMode',
+        // Multi-payer detail already renders inside the 'payer' column
+        // (see Table.vue's column.key === 'payer' branch) — never show these
+        // raw fields as their own column.
+        'payers',
+        'payerUids',
         'splitMode',
         // 'splitItems',
         'receiptMeta',
@@ -364,6 +381,53 @@ export const Table = (props) => {
       message: h('div', { class: 'table-toast__content' }, [
         h('div', { class: 'table-toast__label' }, t('table.addedBy')),
         h('div', { class: 'table-toast__value' }, addedBy),
+        h('div', { class: 'table-toast__label' }, t('common.date')),
+        h('div', { class: 'table-toast__value' }, when)
+      ])
+    })
+  }
+
+  // Shown from the info icon next to an amount that was entered in a
+  // different currency and converted at save time (see originalAmount/
+  // originalCurrency/exchangeRate — convertToGroupCurrency() and its
+  // per-form siblings). `row.amount`/props.currency is what's already on
+  // screen; the original figures are the only thing this adds.
+  const showExchangeInfo = (row) => {
+    const originalCurrency = row?.originalCurrency
+    const convertedCurrency = props.currency
+    const rate = row?.exchangeRate
+    const when = row?.whenAdded || t('table.notAvailable')
+
+    ElMessage({
+      type: 'info',
+      duration: 8000,
+      showClose: true,
+      customClass: 'table-toast',
+      message: h('div', { class: 'table-toast__content' }, [
+        h('div', { class: 'table-toast__label' }, t('table.originalAmount')),
+        h(
+          'div',
+          { class: 'table-toast__value' },
+          rawFormatAmount(row?.originalAmount, originalCurrency)
+        ),
+        h('div', { class: 'table-toast__label' }, t('table.convertedAmount')),
+        h(
+          'div',
+          { class: 'table-toast__value' },
+          formatAmount(row?.amount)
+        ),
+        h('div', { class: 'table-toast__label' }, t('table.exchangeRate')),
+        h(
+          'div',
+          { class: 'table-toast__value' },
+          typeof rate === 'number'
+            ? t('table.exchangeRateValue', {
+                from: originalCurrency,
+                rate: rate.toFixed(4),
+                to: convertedCurrency
+              })
+            : t('table.notAvailable')
+        ),
         h('div', { class: 'table-toast__label' }, t('common.date')),
         h('div', { class: 'table-toast__value' }, when)
       ])
@@ -1349,7 +1413,7 @@ export const Table = (props) => {
             k === 'updateRequest'
           )
             return false
-          const searchableValue = getSearchableValue(k, val)
+          const searchableValue = getSearchableValue(k, val, row)
           if (Array.isArray(searchableValue))
             return JSON.stringify(searchableValue).toLowerCase().includes(q)
           if (typeof searchableValue === 'object' && searchableValue !== null)
@@ -1364,8 +1428,8 @@ export const Table = (props) => {
       const key = sortKey.value
       const order = sortOrder.value
       data = [...data].sort((a, b) => {
-        const av = getSearchableValue(key, a[key]) ?? ''
-        const bv = getSearchableValue(key, b[key]) ?? ''
+        const av = getSearchableValue(key, a[key], a) ?? ''
+        const bv = getSearchableValue(key, b[key], b) ?? ''
         const an = parseFloat(av)
         const bn = parseFloat(bv)
         if (!isNaN(an) && !isNaN(bn)) return order === 'asc' ? an - bn : bn - an
@@ -1577,6 +1641,7 @@ export const Table = (props) => {
     duplicate,
     openForEdit,
     showRowInfo,
+    showExchangeInfo,
     openForDelete,
     downloadExcelData,
     downloadPdfData,

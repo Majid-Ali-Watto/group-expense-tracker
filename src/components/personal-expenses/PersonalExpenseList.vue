@@ -58,6 +58,7 @@
         :keys="keys"
         :dataRef="content"
         :reportMonth="selectedMonth"
+        :currency="currency"
       />
     </template>
   </div>
@@ -74,6 +75,7 @@ const { t } = useI18n()
 
 const {
   formatAmount,
+  currency,
   selectedMonth,
   expenses,
   filteredExpenses,

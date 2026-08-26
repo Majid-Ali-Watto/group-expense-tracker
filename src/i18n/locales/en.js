@@ -14,8 +14,7 @@ export default {
     sharedExpenses: 'Shared Expenses',
     sharedLoans: 'Shared Loans',
     personalExpenses: 'Personal Expenses',
-    personalLoans: 'Personal Loans',
-    bugReports: 'Bug Reports'
+    personalLoans: 'Personal Loans'
   },
   headerActions: {
     navigation: 'Navigation',
@@ -59,10 +58,14 @@ export default {
     font: 'Font',
     urduFont: 'Urdu Font',
     urduFontNote: 'Used only when the interface language is Urdu.',
+    currency: 'Currency',
+    currencyHint:
+      'Used for your personal expenses and loans, and as the default when you create a group.',
     manageTabs: 'Manage Tabs',
     loginForMore: 'Log in to choose which tabs are visible in your account.',
     storage: 'Storage & Data',
-    storageHint: 'Cached files and preferences saved by your browser on this device.',
+    storageHint:
+      'Cached files and preferences saved by your browser on this device.',
     clearCache: 'Clear site cache',
     clearCacheHint:
       'Removes offline app files and images your browser cached for faster loading. Your account data on the server is not touched — everything re-downloads fresh. The page will reload.',
@@ -106,7 +109,10 @@ export default {
     brand: 'Kharchafy',
     tagline:
       'Split bills, track loans, manage budgets, and keep money records clear.',
-    publicNavLabel: 'Public pages'
+    publicNavLabel: 'Public pages',
+    rights: 'All rights reserved.',
+    terms: 'Terms of Service',
+    privacy: 'Privacy Policy'
   },
   landing: {
     eyebrow: 'Split bills, track loans, manage budgets',
@@ -178,6 +184,20 @@ export default {
     dialogTitle: 'How to Use Kharchafy',
     needHelp: 'Need help?',
     emailSupportTitle: 'Email support'
+  },
+  terms: {
+    eyebrow: 'Legal',
+    title: 'Terms of Service',
+    intro:
+      'The rules for using Kharchafy — your account, groups and shared data, what the app does and does not do with money, and your responsibilities.',
+    lastUpdated: 'Last updated'
+  },
+  privacy: {
+    eyebrow: 'Legal',
+    title: 'Privacy Policy',
+    intro:
+      'What information Kharchafy collects, how we use it, who we share it with, and the choices you have.',
+    lastUpdated: 'Last updated'
   },
   auth: {
     modeToggle: {},
@@ -354,6 +374,7 @@ export default {
   },
   common: {
     me: 'ME?',
+    back: '← Back',
     reset: 'Reset',
     cancel: 'Cancel',
     approve: 'Approve',
@@ -364,6 +385,7 @@ export default {
     change: 'Change',
     none: 'None',
     all: 'All',
+    selectAll: 'Select All',
     single: 'Single',
     multiple: 'Multiple',
     equal: 'Equal',
@@ -469,6 +491,10 @@ export default {
   },
   sharedExpenses: {
     newTransaction: 'Want to create a new transaction?',
+    willConvertTo:
+      'Will be converted to {amount} {currency} using today’s rate.',
+    exchangeRateUnavailable:
+      'Currency conversion is temporarily unavailable — please try again shortly or pick the group’s currency.',
     transactionDetails: 'Transaction Details',
     payerMode: 'Payer Mode',
     payer: 'Payer',
@@ -730,8 +756,8 @@ export default {
     titlePlaceholder: 'Brief summary of the issue',
     descriptionPlaceholder:
       'Describe what happened, what you expected, and the steps to reproduce.',
-    severity: 'Severity',
-    selectSeverity: 'Select severity',
+    severity: 'Priority',
+    selectSeverity: 'Select priority',
     screenshots: 'Screenshots',
     uploadHint: 'Up to {max} images · JPG, PNG, WebP, GIF · Max {size}MB each',
     attachScreenshot: 'Attach Screenshot',
@@ -761,8 +787,8 @@ export default {
     replyToAdmin: 'Reply to admin... Ctrl+Enter to send',
     addCommentForAdmin: 'Add a comment for admin...',
     submitted: 'Submitted {date}',
-    allSeverities: 'All severities',
-    searchPlaceholder: 'Search by bug number (khata-bug-...) or title...',
+    allSeverities: 'All priorities',
+    searchPlaceholder: 'Search by Jira key (KKA-...) or title...',
     totalOpen: '{total} total · {open} open',
     refresh: 'Refresh',
     noReportsMatch: 'No bug reports match the current filter.',
@@ -787,18 +813,19 @@ export default {
       charts: 'Charts / Visuals',
       other: 'Other'
     },
-    severities: {
-      low: 'Low',
-      medium: 'Medium',
+    priorities: {
+      highest: 'Highest',
       high: 'High',
-      critical: 'Critical'
+      low: 'Low',
+      lowest: 'Lowest'
     },
     statuses: {
+      todo: 'To Do',
       inProgress: 'In Progress',
       needsInfo: 'Needs Info',
-      wontFix: "Won't Fix",
-      resolved: 'Resolved',
-      closed: 'Closed'
+      invalid: 'Invalid',
+      qa: 'QA',
+      done: 'Done'
     },
     validation: {
       categoryRequired: 'Please select a category',
@@ -859,6 +886,9 @@ export default {
     descriptionPlaceholder: 'Enter group description (optional)',
     membersLabel: 'Members (max. 30)',
     membersLabelPlain: 'Members',
+    currencyLabel: 'Currency',
+    currencyLockedHint:
+      "This group already has expense/loan history, so its currency can't be changed — past amounts stay in the original currency and balances aren't reconverted.",
     membersPlaceholder: 'Select members',
     selectedCount: 'Selected: {count}/{max}',
     categoryOptionalPlaceholder: 'Select a category (optional)',
@@ -1013,6 +1043,9 @@ export default {
     nameChangedNotif: 'Name: "{oldName}" → "{newName}"',
     descriptionChangedNotif:
       'Description: "{oldDescription}" → "{newDescription}"',
+    currencyChangedNotif: 'Currency: {oldCurrency} → {newCurrency}',
+    currencyLockedHasHistory:
+      "This group's currency can't be changed once it has expense/loan history.",
     emptyPlaceholder: '(empty)',
     groupUpdatedNotif: 'Group updated — {changes}',
     groupUpdatedToast: 'Group updated',
@@ -1173,6 +1206,11 @@ export default {
     editDuplicate: 'Edit / Duplicate',
     addedBy: 'Added By',
     whenAdded: 'Added At',
+    exchangeInfoTooltip: 'View currency conversion details',
+    originalAmount: 'Original Amount',
+    convertedAmount: 'Converted Amount',
+    exchangeRate: 'Exchange Rate',
+    exchangeRateValue: '1 {from} = {rate} {to}',
     noResultsFound: 'No results found',
     noResultsMatch: 'No rows match "{search}"',
     tryDifferentSearch: 'Try a different search.',
@@ -1244,9 +1282,7 @@ export default {
     codeBlock: 'Code block',
     bulletList: 'Bullet list',
     numberedList: 'Numbered list',
-    insertTemplate: 'Insert bug report template',
-    attachImage: 'Attach image',
-    hint: 'Markdown supported'
+    insertTemplate: 'Insert bug report template'
   },
   netPosition: {
     dialogTitle: 'Your Expenses Summary',
@@ -1285,7 +1321,8 @@ export default {
     welcomeBack: 'Welcome back',
     userNameLabel: 'User Name',
     activeGroupLabel: 'Active Group (joined groups)',
-    noGroupSelected: 'No Group Selected'
+    noGroupSelected: 'No Group Selected',
+    mainMenu: 'Main Menu'
   },
   admin: {
     config: {
@@ -1294,10 +1331,10 @@ export default {
       storageTitle: 'Storage',
       cacheTitle: 'Cache',
       downloadsTitle: 'Downloads',
+      bugReportingTitle: 'Bug Reporting',
       ocrTitle: 'OCR / Receipt Extraction',
       allowReceiptUploads: 'Allow receipt uploads',
       enableCloudinary: 'Enable Cloudinary provider',
-      enableFirebaseStorage: 'Enable receipt storage provider',
       enableQueryCaching: 'Enable query caching',
       allowPdfDownloads: 'Allow PDF downloads',
       allowExcelDownloads: 'Allow Excel downloads',
@@ -1346,7 +1383,6 @@ export default {
       loadingUsers: 'Loading users…',
       searchPlaceholder: 'Search by name or email…',
       blockedColumn: 'Blocked',
-      bugResolverColumn: 'Bug Resolver',
       paidTierColumn: 'Paid Tier',
       tabConfigColumn: 'Tab Config',
       noUsersMatch: 'No users match your search.',

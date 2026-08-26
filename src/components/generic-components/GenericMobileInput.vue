@@ -132,10 +132,17 @@ function onSearchInput(event) {
 }
 
 function onInput(number, phoneObject) {
+  // Prefer the widget's own selected/detected country over the PK fallback
+  // in normalizePhoneNumber's default — matters for the "not yet fully
+  // valid" fallback path below, where the raw digits have no leading "+"
+  // and would otherwise always be parsed as if they were a PK number
+  // regardless of which country the user actually picked.
+  const country = phoneObject?.country?.iso2 || phoneObject?.country
+
   const value =
     phoneObject?.isValid && phoneObject?.number
       ? normalizePhoneNumber(phoneObject.number)
-      : number
+      : normalizePhoneNumber(number, country || undefined)
 
   emit('update:modelValue', value || '')
   emit('input', value || '', phoneObject)

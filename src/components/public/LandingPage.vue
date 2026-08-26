@@ -2,13 +2,19 @@
   <main class="public-page">
     <section class="hero-section">
       <div class="hero-copy">
-        <p class="eyebrow">{{ t('landing.eyebrow') }}</p>
+        <div class="title-row">
+          <span class="title-icon">
+            <el-icon :size="14"><Wallet /></el-icon>
+          </span>
+          <p class="eyebrow">{{ t('landing.eyebrow') }}</p>
+        </div>
         <h1>{{ t('landing.heroTitle') }}</h1>
         <p class="hero-text">{{ t('landing.heroText') }}</p>
         <div class="hero-actions">
-          <RouterLink class="cta-primary" :to="withLocale('/register')">{{
-            t('nav.createAccount')
-          }}</RouterLink>
+          <RouterLink class="cta-primary" :to="withLocale('/register')">
+            {{ t('nav.createAccount') }}
+            <el-icon :size="16"><Right /></el-icon>
+          </RouterLink>
           <RouterLink class="cta-secondary" :to="withLocale('/login')">{{
             t('landing.openApp')
           }}</RouterLink>
@@ -16,8 +22,19 @@
       </div>
 
       <div class="hero-panel">
-        <div v-for="item in highlights" :key="item.title" class="hero-card">
-          <h2>{{ item.title }}</h2>
+        <div
+          v-for="(item, index) in highlights"
+          :key="item.title"
+          class="hero-card"
+        >
+          <CardHead dense>
+            <template #icon
+              ><el-icon :size="18"
+                ><component :is="HIGHLIGHT_ICONS[index]"
+              /></el-icon
+            ></template>
+            <template #title><h2>{{ item.title }}</h2></template>
+          </CardHead>
           <p>{{ item.description }}</p>
         </div>
       </div>
@@ -30,11 +47,18 @@
 
       <div class="card-grid">
         <article
-          v-for="item in useCases"
+          v-for="(item, index) in useCases"
           :key="item.title"
           class="content-card"
         >
-          <h3>{{ item.title }}</h3>
+          <CardHead dense>
+            <template #icon
+              ><el-icon :size="18"
+                ><component :is="USE_CASE_ICONS[index]"
+              /></el-icon
+            ></template>
+            <template #title><h3>{{ item.title }}</h3></template>
+          </CardHead>
           <p>{{ item.description }}</p>
         </article>
       </div>
@@ -50,25 +74,49 @@
           class="content-card link-card"
           :to="withLocale('/features')"
         >
-          <h3>{{ t('landing.explore.features.title') }}</h3>
+          <CardHead dense>
+            <template #icon><el-icon :size="18"><Grid /></el-icon></template>
+            <template #title
+              ><h3>{{ t('landing.explore.features.title') }}</h3></template
+            >
+          </CardHead>
           <p>{{ t('landing.explore.features.description') }}</p>
         </RouterLink>
         <RouterLink
           class="content-card link-card"
           :to="withLocale('/group-expense-tracker')"
         >
-          <h3>{{ t('landing.explore.groupExpenseTracker.title') }}</h3>
+          <CardHead dense>
+            <template #icon><UsersIcon class="card-icon-svg" /></template>
+            <template #title
+              ><h3>
+                {{ t('landing.explore.groupExpenseTracker.title') }}
+              </h3></template
+            >
+          </CardHead>
           <p>{{ t('landing.explore.groupExpenseTracker.description') }}</p>
         </RouterLink>
         <RouterLink
           class="content-card link-card"
           :to="withLocale('/personal-budget-tracker')"
         >
-          <h3>{{ t('landing.explore.personalBudgetTracker.title') }}</h3>
+          <CardHead dense>
+            <template #icon><el-icon :size="18"><WalletFilled /></el-icon></template>
+            <template #title
+              ><h3>
+                {{ t('landing.explore.personalBudgetTracker.title') }}
+              </h3></template
+            >
+          </CardHead>
           <p>{{ t('landing.explore.personalBudgetTracker.description') }}</p>
         </RouterLink>
         <RouterLink class="content-card link-card" :to="withLocale('/faq')">
-          <h3>{{ t('landing.explore.faq.title') }}</h3>
+          <CardHead dense>
+            <template #icon><el-icon :size="18"><ChatDotRound /></el-icon></template>
+            <template #title
+              ><h3>{{ t('landing.explore.faq.title') }}</h3></template
+            >
+          </CardHead>
           <p>{{ t('landing.explore.faq.description') }}</p>
         </RouterLink>
       </div>
@@ -81,6 +129,22 @@ import { computed } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { LANDING_HIGHLIGHTS, PUBLIC_USE_CASES } from '@/constants'
+import {
+  Coin,
+  Money,
+  PieChart,
+  Bell,
+  HomeFilled,
+  Calendar,
+  User,
+  WalletFilled,
+  Grid,
+  ChatDotRound,
+  Right,
+  Wallet
+} from '@element-plus/icons-vue'
+import { UsersIcon } from '@/components/icons'
+import CardHead from './CardHead.vue'
 
 const route = useRoute()
 const { t, locale } = useI18n()
@@ -88,13 +152,51 @@ const { t, locale } = useI18n()
 const highlights = computed(() => LANDING_HIGHLIGHTS[locale.value])
 const useCases = computed(() => PUBLIC_USE_CASES[locale.value])
 const withLocale = (path) => (route.meta?.locale === 'ur' ? `/ur${path}` : path)
+
+// Index-matched to LANDING_HIGHLIGHTS / PUBLIC_USE_CASES — purely decorative,
+// content stays in the locale data.
+const HIGHLIGHT_ICONS = [Coin, Money, PieChart, Bell]
+const USE_CASE_ICONS = [HomeFilled, Calendar, User, WalletFilled]
 </script>
 
 <style scoped>
 .public-page {
+  position: relative;
   padding: 108px 20px 32px;
   width: 100%;
-  color: #163020;
+  color: #173025;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.public-page::before,
+.public-page::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  border-radius: 50%;
+  filter: blur(60px);
+  pointer-events: none;
+}
+
+.public-page::before {
+  top: -120px;
+  right: -80px;
+  width: 380px;
+  height: 380px;
+  background: radial-gradient(circle, rgba(34, 197, 94, 0.22), transparent 70%);
+}
+
+.public-page::after {
+  top: 260px;
+  left: -120px;
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(
+    circle,
+    rgba(13, 148, 136, 0.16),
+    transparent 70%
+  );
 }
 
 .hero-section {
@@ -120,7 +222,31 @@ const withLocale = (path) => (route.meta?.locale === 'ur' ? `/ur${path}` : path)
       rgba(255, 255, 255, 0.9),
       transparent 46%
     ),
-    linear-gradient(135deg, #f1fdf5 0%, #dcfce7 100%);
+    linear-gradient(135deg, #eefcf2 0%, #dff8e8 100%);
+}
+
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.title-row .eyebrow {
+  margin: 0;
+}
+
+.title-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  border-radius: 7px;
+  color: #ffffff;
+  background: linear-gradient(135deg, #16a34a 0%, #0d9488 100%);
+  box-shadow: 0 4px 10px rgba(21, 128, 61, 0.28);
 }
 
 .hero-panel {
@@ -135,6 +261,19 @@ const withLocale = (path) => (route.meta?.locale === 'ur' ? `/ur${path}` : path)
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.92);
   border: 1px solid rgba(22, 101, 52, 0.08);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.hero-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 28px rgba(22, 101, 52, 0.12);
+}
+
+.card-icon-svg {
+  width: 18px;
+  height: 18px;
 }
 
 .eyebrow {
@@ -173,22 +312,41 @@ h1 {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 6px;
   min-height: 46px;
-  padding: 0 18px;
+  padding: 0 20px;
   border-radius: 999px;
   font-weight: 700;
   text-decoration: none;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .cta-primary {
   color: #ffffff;
-  background: #15803d;
+  background: linear-gradient(135deg, #16a34a 0%, #0d9488 100%);
+  box-shadow: 0 10px 24px rgba(21, 128, 61, 0.28);
+}
+
+.cta-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 28px rgba(21, 128, 61, 0.34);
+}
+
+[dir='rtl'] .cta-primary .el-icon {
+  transform: scaleX(-1);
 }
 
 .cta-secondary {
   color: #166534;
   border: 1px solid rgba(21, 128, 61, 0.3);
   background: rgba(255, 255, 255, 0.84);
+}
+
+.cta-secondary:hover {
+  transform: translateY(-2px);
+  background: #ffffff;
 }
 
 .content-section {
@@ -218,6 +376,16 @@ h1 {
 .content-card {
   padding: 24px;
   background: #ffffff;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.content-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(22, 101, 52, 0.14);
+  border-color: rgba(21, 128, 61, 0.28);
 }
 
 .content-card p,
@@ -251,6 +419,10 @@ h1 {
   background: linear-gradient(135deg, #0f2c1b 0%, #123f24 100%);
 }
 
+:root.dark-theme .eyebrow {
+  color: #6ee7b7;
+}
+
 :root.dark-theme .hero-panel,
 :root.dark-theme .content-card,
 :root.dark-theme .hero-card {
@@ -267,6 +439,11 @@ h1 {
   color: #d6ffe1;
   border-color: rgba(110, 231, 183, 0.2);
   background: rgba(17, 40, 26, 0.9);
+}
+
+:root.dark-theme .content-card:hover {
+  box-shadow: none;
+  border-color: rgba(110, 231, 183, 0.32);
 }
 
 @media (max-width: 920px) {

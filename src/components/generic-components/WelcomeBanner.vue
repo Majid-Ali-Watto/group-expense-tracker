@@ -41,7 +41,7 @@
         <!-- Group Info -->
         <div
           class="flex items-center gap-3 sm:ml-4"
-          v-if="sharedTab && !isAdminActive"
+          v-if="sharedTab && isTabRoute"
         >
           <div class="flex-shrink-0">
             <div
@@ -71,6 +71,16 @@
             />
           </div>
         </div>
+
+        <!-- Main Menu — shown instead of the group dropdown whenever the tab
+             bar itself is hidden (/admin, /settings, /report-bug, /help),
+             since there's no tab strip to navigate back from otherwise. -->
+        <div class="flex items-center sm:ml-4" v-if="!isTabRoute">
+          <GenericButton type="default" size="default" @click="goToMainMenu">
+            <MenuIcon class="w-4 h-4" />
+            {{ t('welcomeBanner.mainMenu') }}
+          </GenericButton>
+        </div>
       </div>
     </div>
   </div>
@@ -79,8 +89,8 @@
 <script setup>
 import { ref, computed, watch, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { UsersIcon } from '@/components/icons'
-import { UserAvatar } from '@/components/generic-components'
+import { MenuIcon, UsersIcon } from '@/components/icons'
+import { GenericButton, UserAvatar } from '@/components/generic-components'
 import GenericDropDown from './GenericDropDown.vue'
 import { useGroupStore, useAuthStore, useUserStore } from '@/stores'
 import { useJoinedGroups } from '@/composables'
@@ -90,7 +100,8 @@ import { showSuccess } from '@/utils'
 defineProps({
   displayName: String,
   activeTab: String,
-  isAdminActive: Boolean
+  isTabRoute: Boolean,
+  goToMainMenu: { type: Function, default: () => {} }
 })
 
 const { t } = useI18n()

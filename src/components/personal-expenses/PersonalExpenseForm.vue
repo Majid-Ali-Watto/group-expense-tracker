@@ -24,7 +24,30 @@
 
       <el-row :gutter="12">
         <el-col :xs="24" :sm="12" :md="12" :lg="12">
-          <AmountInput v-model.number="form.amount" required />
+          <div class="flex gap-2 items-start">
+            <AmountInput v-model.number="form.amount" required class="flex-1" />
+            <el-form-item label="&nbsp;" class="amount-currency-item">
+              <el-select v-model="form.currency" class="w-full" size="default">
+                <el-option
+                  v-for="option in currencyOptions"
+                  :key="option.code"
+                  :value="option.code"
+                  :label="option.code"
+                />
+              </el-select>
+            </el-form-item>
+          </div>
+          <p
+            v-if="convertedAmountPreview"
+            class="text-xs text-gray-500 -mt-3 mb-3"
+          >
+            {{
+              t('sharedExpenses.willConvertTo', {
+                amount: convertedAmountPreview,
+                currency: personalCurrency
+              })
+            }}
+          </p>
         </el-col>
         <el-col :xs="24" :sm="12" :md="12" :lg="12">
           <GenericDropDown
@@ -125,6 +148,7 @@
                 :precision="2"
                 :wrap-form-item="false"
                 input-class="w-full"
+                :width="120"
               />
             </el-form-item>
             <el-button
@@ -152,7 +176,8 @@
               :precision="2"
               :wrap-form-item="false"
               input-class="w-full"
-              style="width: 120px; flex-shrink: 0"
+              :width="120"
+              style="flex-shrink: 0"
             />
             <el-button
               size="default"
@@ -258,6 +283,9 @@ const {
   form,
   categoryOptions,
   recipientOptions,
+  personalCurrency,
+  currencyOptions,
+  convertedAmountPreview,
   expenseForm,
   validateForm,
   resetForm,
@@ -284,3 +312,18 @@ defineExpose({
   requestClose
 })
 </script>
+
+<style scoped>
+/* Same el-form-item as AmountInput's own "Amount" label — putting the
+   select in a form-item with a blank label (instead of a hand-tuned
+   margin-top) keeps the two inputs aligned via Element Plus's own label
+   height/spacing rather than a guessed pixel offset. */
+.amount-currency-item {
+  width: 92px;
+  flex-shrink: 0;
+}
+
+.amount-currency-item :deep(.el-form-item__label) {
+  visibility: hidden;
+}
+</style>

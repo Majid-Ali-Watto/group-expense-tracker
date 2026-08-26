@@ -20,10 +20,12 @@ import {
   formatDateForStorage,
   mergeCategoryOptions,
   normalizePhoneNumber,
-  phoneNumbersMatch
+  phoneNumbersMatch,
+  formatPlainNumber
 } from '@/utils'
 import { useAuthStore, useGroupStore, useUserStore } from '@/stores'
-import { DB_NODES } from '@/constants'
+import { useCurrency } from '@/composables/useCurrency'
+import { DB_NODES, DEFAULT_CURRENCY } from '@/constants'
 import { invalidateByPrefix } from '@/utils/queryCache'
 
 export const LoanForm = (props, emit) => {
@@ -32,6 +34,22 @@ export const LoanForm = (props, emit) => {
   const groupStore = useGroupStore()
   const userStore = useUserStore()
   const storeProxy = useStoreProxy()
+  const { currencyOptionsIncluding, getExchangeRate, convertCurrency } =
+    useCurrency()
+
+  const activeUserUid = computed(() => authStore.getActiveUserUid)
+
+  // Personal loans convert into the active user's own currency; shared
+  // (group) loans convert into the group's shared currency — same
+  // "convert into one currency so balances stay consistent" reasoning as
+  // shared-expenses.js / personal-expense-form.js.
+  const loanCurrency = computed(() =>
+    props.isPersonal
+      ? userStore.getUserByUid(activeUserUid.value)?.currency ||
+        DEFAULT_CURRENCY
+      : groupStore.getGroupById(groupStore.getActiveGroup)?.currency ||
+        DEFAULT_CURRENCY
+  )
 
   const openForm = () => {
     emit('closeForm')
@@ -39,6 +57,7 @@ export const LoanForm = (props, emit) => {
 
   const createInitialFormData = () => ({
     amount: null,
+    currency: loanCurrency.value,
     loanGiver: '',
     loanReceiver: '',
     loanGiverMobile: '',
@@ -69,10 +88,32 @@ export const LoanForm = (props, emit) => {
   const isEditMode = computed(() => !!props.row?.amount)
 
   const formData = ref(createInitialFormData())
+  // Narrowed to codes the current exchange-rate snapshot can actually
+  // convert (plus whatever's already on the form, even if editing a past
+  // entry whose currency later dropped out of the snapshot) — useCurrency.js.
+  const currencyOptions = computed(() =>
+    currencyOptionsIncluding(formData.value.currency)
+  )
+  // Live preview for the "Will be converted to {amount} {currency}..." note
+  // — recalculates as the entrant edits the amount or currency. Null hides
+  // the note (matching currency, no amount yet, or no rate available).
+  const convertedAmountPreview = computed(() => {
+    const enteredCurrency = formData.value.currency || loanCurrency.value
+    if (enteredCurrency === loanCurrency.value) return null
+
+    const enteredAmount = parseFloat(formData.value.amount)
+    if (!enteredAmount || Number.isNaN(enteredAmount)) return null
+
+    const converted = convertCurrency(
+      enteredAmount,
+      enteredCurrency,
+      loanCurrency.value
+    )
+    return converted === null ? null : formatPlainNumber(converted)
+  })
   const initialFormSnapshot = ref(JSON.stringify(createInitialFormData()))
   const existingMonth = ref(dateToMonthNode(formData.value.date))
 
-  const activeUserUid = computed(() => authStore.getActiveUserUid)
   const activeUserName = computed(
     () => userStore.getUserByUid(activeUserUid.value)?.name || ''
   )
@@ -324,7 +365,11 @@ export const LoanForm = (props, emit) => {
   watch(
     () => props.row,
     async (newRow) => {
-      formData.value.amount = newRow?.amount ?? null
+      // Edit mode shows/edits what was actually typed (original
+      // amount+currency), not the already-converted base amount.
+      formData.value.amount = newRow?.originalAmount ?? newRow?.amount ?? null
+      formData.value.currency =
+        newRow?.originalCurrency || newRow?.currency || loanCurrency.value
       formData.value.loanGiver = props.isPersonal
         ? (newRow?.loanGiver ?? '')
         : (newRow?.giver ?? '')
@@ -525,7 +570,9 @@ export const LoanForm = (props, emit) => {
 
         const receiptUrls = uploadedReceipts.receiptUrls
         const receiptMeta = uploadedReceipts.receiptMeta
-        const loanData = getLoanData(receiptUrls, receiptMeta)
+        const loanData =
+          whatTask === 'Delete' ? null : getLoanData(receiptUrls, receiptMeta)
+        if (whatTask !== 'Delete' && !loanData) return
 
         if (whatTask === 'Save' || whatTask === 'Duplicate') {
           // Capture expense data before saveData resets the form
@@ -601,7 +648,7 @@ export const LoanForm = (props, emit) => {
             const personalUpdatePath = `${props.dbRef}/${authStore.getActiveUserUid}/months/${updateMonth}/loans`
             updateData(
               `${personalUpdatePath}/${props.row.id}`,
-              () => getLoanData(receiptUrls, receiptMeta),
+              () => loanData,
               t('sharedLoans.loanUpdated')
             )
             emit('closeModal')
@@ -645,8 +692,14 @@ export const LoanForm = (props, emit) => {
     receiptUrls = [],
     receiptMeta = []
   ) => {
+    const changes = getLoanData(receiptUrls, receiptMeta)
+    if (!changes) {
+      showError(t('sharedExpenses.exchangeRateUnavailable'))
+      return
+    }
+
     const updateRequest = {
-      changes: getLoanData(receiptUrls, receiptMeta),
+      changes,
       ...buildRequestMeta(storeProxy)
     }
 
@@ -658,7 +711,38 @@ export const LoanForm = (props, emit) => {
     emit('closeModal')
   }
 
+  // Converts the entered amount into loanCurrency if a different one was
+  // picked, freezing the rate used at this moment. Returns null when the
+  // rate table doesn't have a needed currency, so the caller can block
+  // submission rather than silently store a wrong number.
+  function convertToLoanCurrency(enteredAmount) {
+    const baseCurrency = loanCurrency.value
+    const enteredCurrency = formData.value.currency || baseCurrency
+
+    if (enteredCurrency === baseCurrency) {
+      return { amount: enteredAmount, extra: {} }
+    }
+
+    const rate = getExchangeRate(enteredCurrency, baseCurrency)
+    if (rate === null) return null
+
+    return {
+      amount: Math.round(enteredAmount * rate * 100) / 100,
+      extra: {
+        originalAmount: enteredAmount,
+        originalCurrency: enteredCurrency,
+        exchangeRate: rate
+      }
+    }
+  }
+
   function getLoanData(receiptUrls = [], receiptMeta = []) {
+    const converted = convertToLoanCurrency(parseFloat(formData.value.amount))
+    if (!converted) {
+      showError(t('sharedExpenses.exchangeRateUnavailable'))
+      return null
+    }
+
     const giverMobile = props.isPersonal
       ? giverRealMobile.value ||
         normalizePhoneNumber(formData.value.loanGiverMobile) ||
@@ -672,7 +756,9 @@ export const LoanForm = (props, emit) => {
       : formData.value.loanReceiver
 
     const loan = {
-      amount: formData.value.amount,
+      amount: converted.amount,
+      currency: loanCurrency.value,
+      ...converted.extra,
       description: formData.value.description,
       ...(formData.value.category
         ? { category: formData.value.category }
@@ -704,6 +790,9 @@ export const LoanForm = (props, emit) => {
     isVisible,
     isEditMode,
     formData,
+    loanCurrency,
+    currencyOptions,
+    convertedAmountPreview,
     openForm,
     closeForm,
     requestClose,

@@ -14,7 +14,6 @@ Keep these users and groups available in your test environment:
 - `member_user`: regular member
 - `third_user`: extra member for 3+ member flows
 - `non_member_user`: authenticated user not in the target group
-- `bug_resolver_user`: user with `bugResolver: true`
 
 Keep these groups available:
 

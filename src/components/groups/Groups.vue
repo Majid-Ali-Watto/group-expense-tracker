@@ -181,6 +181,7 @@
         v-model="editDialogVisible"
         :form="editForm"
         :member-options="editMemberOptions"
+        :has-currency-history="editingGroupHasCurrencyHistory"
         @save="handleEditSave"
       />
 
@@ -246,6 +247,7 @@ const {
   rejectInvitation,
   editDialogVisible,
   editForm,
+  editingGroupHasCurrencyHistory,
   editMemberOptions,
   transferDialogVisible,
   newOwnerUid,

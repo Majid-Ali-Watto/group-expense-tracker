@@ -3,12 +3,12 @@
  *
  * Firestore path: configs/storage
  * Expected document shape:
- *   { firebase: true|false, cloudinary: true|false }
+ *   { cloudinary: true|false, upload_allowed: true|false }
  *
  * Rules:
- *   - If the document doesn't exist → both providers enabled (default behaviour)
- *   - true  → provider is enabled and eligible for fallback
- *   - false → provider is explicitly disabled; never used, even as fallback
+ *   - If the document doesn't exist → receipt uploads are enabled by default.
+ *   - cloudinary false → receipt upload attempts are disabled.
+ *   - upload_allowed false → receipt upload UI is hidden.
  */
 
 import { reactive } from 'vue'
@@ -23,7 +23,8 @@ const _config = reactive({
   downloads: null,
   manageTabs: null,
   bugs: null,
-  ocr: null
+  ocr: null,
+  exchangeRates: null
 })
 
 let _loaded = false
@@ -36,6 +37,7 @@ function resetConfigState() {
   _config.manageTabs = null
   _config.bugs = null
   _config.ocr = null
+  _config.exchangeRates = null
   setCacheEnabled(true)
 }
 
@@ -43,11 +45,13 @@ function resetConfigState() {
  * Load app config from Firestore.
  * Called once after successful login. Subsequent calls are no-ops.
  * Subscribes to config documents in real time:
- *   configs/storage  → { cloudinary, firebase }  (storage provider flags)
+ *   configs/storage  → { cloudinary, upload_allowed } (receipt upload flags)
  *   configs/cache    → { isCached }               (feature flags)
  *   configs/downloads → { pdf, excel }            (download button flags)
  *   configs/manage-tabs → { showManageTab }       (manage-tabs visibility)
  *   configs/bugs → { report }                     (bug-report visibility)
+ *   configs/exchange-rates → { base, rates, fetchedAt } (currency conversion,
+ *     refreshed server-side by kharcafy-node-be's cron job — see useCurrency.js)
  */
 export async function loadAppConfig() {
   if (_loaded) return
@@ -126,6 +130,16 @@ export async function loadAppConfig() {
       onError: () => {
         _config.ocr = {}
       }
+    },
+    {
+      key: 'exchangeRates',
+      ref: doc(database, DB_NODES.CONFIGS, 'exchange-rates'),
+      onData: (snap) => {
+        _config.exchangeRates = snap.exists() ? snap.data() : {}
+      },
+      onError: () => {
+        _config.exchangeRates = {}
+      }
     }
   ]
 
@@ -144,19 +158,18 @@ export function stopAppConfigSync() {
 /**
  * Returns the resolved storage provider flags.
  *
- *  { cloudinary: true|false, firebase: true|false }
+ *  { cloudinary: true|false, upload_allowed: true|false }
  *
- * If the config hasn't been loaded yet or a flag is absent for a provider,
- * that provider is treated as enabled (safe default).
+ * If the config hasn't been loaded yet or a flag is absent, uploads are treated
+ * as enabled.
  */
 export function getStorageConfig() {
   const cfg = _config.storage
   if (!cfg) {
-    return { cloudinary: true, firebase: true, upload_allowed: true }
+    return { cloudinary: true, upload_allowed: true }
   }
   return {
     cloudinary: cfg.cloudinary !== false,
-    firebase: cfg.firebase !== false,
     upload_allowed: cfg.upload_allowed !== false
   }
 }
@@ -209,6 +222,29 @@ export function getEmailConfig() {
     send: cfg.send !== false,
     free_email_limit_per_month: cfg.free_email_limit_per_month ?? null,
     paid_emails_limit_per_month: cfg.paid_emails_limit_per_month ?? null
+  }
+}
+
+/**
+ * Returns the last exchange-rate snapshot refreshed server-side by
+ * kharcafy-node-be's cron job (`configs/exchange-rates`).
+ *
+ *  { base: 'USD', rates: { PKR: 280.1, ... }, fetchedAt: <ISO string> }
+ *
+ * `rates` defaults to `{}` (not yet loaded, or the doc doesn't exist yet)
+ * — callers should treat a missing rate as "conversion unavailable" rather
+ * than guessing.
+ */
+export function getExchangeRatesConfig() {
+  const cfg = _config.exchangeRates
+  if (!cfg) {
+    return { base: 'USD', rates: {}, fetchedAt: null }
+  }
+
+  return {
+    base: cfg.base || 'USD',
+    rates: cfg.rates || {},
+    fetchedAt: cfg.fetchedAt || null
   }
 }
 

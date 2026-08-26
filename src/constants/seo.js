@@ -569,6 +569,36 @@ export function getSeoPages(locale) {
           : 'Kharchafy help, expense tracker help, group expense guide, bill splitting guide, personal budget help, loan tracker help',
       structuredData: [softwareApplicationSchema(locale)]
     }),
+    terms: buildPageSeo({
+      title:
+        locale === 'ur'
+          ? 'شرائط و ضوابط | خرچے فائی'
+          : 'Terms of Service | Kharchafy',
+      description:
+        locale === 'ur'
+          ? 'خرچے فائی استعمال کرنے کی شرائط و ضوابط پڑھیں، جن میں اکاؤنٹ، گروپس، مالی وضاحت، اور ذمہ داری شامل ہیں۔'
+          : 'Read the terms of service for using Kharchafy, covering accounts, groups, financial disclaimers, and liability.',
+      canonicalPath: `${localePrefix}/terms`,
+      keywords:
+        locale === 'ur'
+          ? 'خرچے فائی شرائط, استعمال کی شرائط, سروس کی شرائط'
+          : 'Kharchafy terms, terms of service, terms of use'
+    }),
+    privacy: buildPageSeo({
+      title:
+        locale === 'ur'
+          ? 'پرائیویسی پالیسی | خرچے فائی'
+          : 'Privacy Policy | Kharchafy',
+      description:
+        locale === 'ur'
+          ? 'جانیں خرچے فائی کیا معلومات جمع کرتا ہے، انہیں کیسے استعمال کرتا ہے، اور کن کے ساتھ شیئر کرتا ہے۔'
+          : 'Learn what information Kharchafy collects, how it is used, and who it is shared with.',
+      canonicalPath: `${localePrefix}/privacy`,
+      keywords:
+        locale === 'ur'
+          ? 'خرچے فائی پرائیویسی, ڈیٹا پالیسی, پرائیویسی پالیسی'
+          : 'Kharchafy privacy, privacy policy, data policy'
+    }),
     login: buildPageSeo({
       title: locale === 'ur' ? 'لاگ ان | خرچے فائی' : 'Login | Kharchafy',
       description:

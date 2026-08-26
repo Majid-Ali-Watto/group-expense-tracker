@@ -6,8 +6,7 @@ import { DB_NODES } from '@/constants'
 // firestore.rules).
 export const DEFAULT_USER_ADMIN_FLAGS = {
   isAdmin: false,
-  billedUser: false,
-  bugResolver: false
+  billedUser: false
 }
 
 // Mirrors findUserTabConfigByUid in user-tab-access.js: read the caller's own

@@ -53,6 +53,7 @@
               <ShowPaymentDetails
                 :getUserName="getUserName"
                 :request="request"
+                :currency="currency"
               />
 
               <!-- Approval buttons -->
@@ -146,6 +147,7 @@
           :dataRef="pdfContent"
           :showPopup="true"
           :reportMonth="selectedMonth"
+          :currency="currency"
         />
       </div>
     </template>
@@ -177,6 +179,7 @@ const props = defineProps({
 const {
   pdfContent,
   paymentKeys,
+  currency,
   isContentLoading,
   selectedMonth,
   selectedFriend,

@@ -4,7 +4,7 @@ import { ElMessageBox } from 'element-plus'
 import { onSnapshot } from '@/firebase'
 import { getCurrentMonth, showError, showSuccess } from '@/utils'
 import { useFireBase, useUnsavedChangesGuard } from '@/composables'
-import { useAuthStore, useDataStore } from '@/stores'
+import { useAuthStore, useDataStore, useUserStore } from '@/stores'
 import { DB_NODES } from '@/constants'
 
 const MONTH_OPTIONS = [
@@ -31,10 +31,16 @@ function parseMonthKey(monthKey) {
 }
 
 export const SalaryForm = () => {
-  const formatAmount = inject('formatAmount')
+  const rawFormatAmount = inject('formatAmount')
   const { t } = useI18n()
   const authStore = useAuthStore()
   const dataStore = useDataStore()
+  const userStore = useUserStore()
+  const formatAmount = (amount) =>
+    rawFormatAmount(
+      amount,
+      userStore.getUserByUid(authStore.getActiveUserUid)?.currency
+    )
   const { read, dbRef, setData, updateData } = useFireBase()
   const initialMonth = parseMonthKey(
     dataStore.selectedMonth || getCurrentMonth()

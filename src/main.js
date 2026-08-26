@@ -19,17 +19,10 @@ import { routes, scrollBehavior, setupRouterGuard } from './router'
 import overflowPopup from '@/directives/overflow-popup'
 import { initializeAnalytics } from '@/utils/analytics'
 import { toCapitalize } from '@/utils/string-formatting'
+import { formatAmount } from '@/utils/formatAmount'
 import { createAppI18n, getStoredLocale } from '@/i18n'
 import './main.css'
 
-const PKR = new Intl.NumberFormat('en-PK', {
-  style: 'currency',
-  currency: 'PKR',
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2
-})
-
-const formatAmount = (amount) => PKR.format(amount)
 String.prototype.toCapitalize = toCapitalize
 
 // `ViteSSG` owns app creation, router creation (memory history during

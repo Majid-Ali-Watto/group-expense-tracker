@@ -4,13 +4,12 @@ import { database, collection, doc, setDoc, onSnapshot } from '@/firebase'
 import { DB_NODES } from '@/constants'
 import { showError, showSuccess } from '@/utils'
 
-// isAdmin/billedUser/bugResolver live in user-admin-flags/{uid} — a separate,
+// isAdmin/billedUser live in user-admin-flags/{uid} — a separate,
 // admin-only-writable collection (see firestore.rules) — not on users/{uid}.
-const ADMIN_FLAG_FIELDS = new Set(['isAdmin', 'billedUser', 'bugResolver'])
+const ADMIN_FLAG_FIELDS = new Set(['isAdmin', 'billedUser'])
 const DEFAULT_ADMIN_FLAGS = {
   isAdmin: false,
-  billedUser: false,
-  bugResolver: false
+  billedUser: false
 }
 
 export function AdminUsers() {
@@ -32,7 +31,7 @@ export function AdminUsers() {
   )
   const saving = ref(false)
 
-  // Merges each users/{uid} row with its isAdmin/billedUser/bugResolver from
+  // Merges each users/{uid} row with its isAdmin/billedUser from
   // user-admin-flags/{uid} and its email from user-private/{uid} (both split
   // off users/{uid} because that doc is readable by any authenticated user),
   // so the rest of this composable (and AdminUsers.vue) can keep treating

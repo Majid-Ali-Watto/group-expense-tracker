@@ -19,10 +19,13 @@ import {
   normalizeDateInputValue,
   formatDateForStorage,
   mergeCategoryOptions,
-  showSuccess
+  showSuccess,
+  showError,
+  formatPlainNumber
 } from '@/utils'
 import { useAuthStore, useGroupStore, useUserStore } from '@/stores'
-import { DB_NODES } from '@/constants'
+import { useCurrency } from '@/composables/useCurrency'
+import { DB_NODES, DEFAULT_CURRENCY } from '@/constants'
 
 export const SharedExpenses = (props, emit) => {
   const { t } = useI18n()
@@ -49,6 +52,16 @@ export const SharedExpenses = (props, emit) => {
   const categoryOptions = computed(() =>
     mergeCategoryOptions([activeGroupCategory.value, formData.value?.category])
   )
+  // The group's shared currency — every expense converts into this so
+  // balances/settlement stay in one currency. The form still lets the
+  // entrant pick a different currency per entry (see getPaymentData).
+  const activeGroupCurrency = computed(
+    () =>
+      groupStore.getGroupById(groupStore.getActiveGroup)?.currency ||
+      DEFAULT_CURRENCY
+  )
+  const { currencyOptionsIncluding, getExchangeRate, convertCurrency } =
+    useCurrency()
 
   const activeUserUid = computed(() => authStore.getActiveUserUid)
 
@@ -65,6 +78,7 @@ export const SharedExpenses = (props, emit) => {
 
   const createInitialFormData = () => ({
     amount: null,
+    currency: activeGroupCurrency.value,
     description: '',
     location: '',
     payerMode: 'single',
@@ -78,6 +92,29 @@ export const SharedExpenses = (props, emit) => {
   })
 
   const formData = ref(createInitialFormData())
+  // Narrowed to codes the current exchange-rate snapshot can actually
+  // convert (plus whatever's already on the form, even if editing a past
+  // entry whose currency later dropped out of the snapshot) — useCurrency.js.
+  const currencyOptions = computed(() =>
+    currencyOptionsIncluding(formData.value.currency)
+  )
+  // Live preview for the "Will be converted to {amount} {currency}..." note
+  // — recalculates as the entrant edits the amount or currency. Null hides
+  // the note (matching currency, no amount yet, or no rate available).
+  const convertedAmountPreview = computed(() => {
+    const enteredCurrency = formData.value.currency || activeGroupCurrency.value
+    if (enteredCurrency === activeGroupCurrency.value) return null
+
+    const enteredAmount = parseFloat(formData.value.amount)
+    if (!enteredAmount || Number.isNaN(enteredAmount)) return null
+
+    const converted = convertCurrency(
+      enteredAmount,
+      enteredCurrency,
+      activeGroupCurrency.value
+    )
+    return converted === null ? null : formatPlainNumber(converted)
+  })
   const initialFormSnapshot = ref(JSON.stringify(createInitialFormData()))
   const existingMonth = ref(dateToMonthNode(formData.value.date))
   const {
@@ -117,12 +154,25 @@ export const SharedExpenses = (props, emit) => {
   watch(
     () => props.row,
     (newRow) => {
-      formData.value.amount = newRow?.amount ?? null
+      // Edit mode shows/edits what was actually typed — the original
+      // amount+currency when the entry was made in a different currency
+      // than the group's, not the already-converted base amount.
+      formData.value.amount = newRow?.originalAmount ?? newRow?.amount ?? null
+      formData.value.currency =
+        newRow?.originalCurrency ||
+        newRow?.currency ||
+        activeGroupCurrency.value
       formData.value.description = newRow?.description ?? ''
       formData.value.location = newRow?.location ?? ''
       formData.value.payerMode = newRow?.payerMode ?? 'single'
       formData.value.payer = newRow?.payer ?? ''
-      formData.value.payers = newRow?.payers ?? []
+      // Same "show what was actually typed" rule as amount/currency above —
+      // each payer's stored amount is group-currency-converted, so show the
+      // originally-entered figure back when it differs.
+      formData.value.payers = (newRow?.payers ?? []).map((p) => ({
+        uid: p.uid,
+        amount: p.originalAmount ?? p.amount ?? null
+      }))
       formData.value.date = normalizeDateInputValue(newRow?.date)
       formData.value.category =
         newRow?.category ?? activeGroupCategory.value ?? ''
@@ -300,6 +350,7 @@ export const SharedExpenses = (props, emit) => {
         const receiptUrls = uploadedReceipts.receiptUrls
         const receiptMeta = uploadedReceipts.receiptMeta
         const paymentData = getPaymentData(receiptUrls, receiptMeta)
+        if (!paymentData) return
 
         if (whatTask === 'Save' || whatTask === 'Duplicate') {
           saveData(
@@ -394,8 +445,14 @@ export const SharedExpenses = (props, emit) => {
     receiptUrls = [],
     receiptMeta = []
   ) => {
+    const changes = getPaymentData(receiptUrls, receiptMeta)
+    if (!changes) {
+      showError(t('sharedExpenses.exchangeRateUnavailable'))
+      return
+    }
+
     const updateRequest = {
-      changes: getPaymentData(receiptUrls, receiptMeta),
+      changes,
       ...buildRequestMeta(storeProxy)
     }
 
@@ -407,8 +464,41 @@ export const SharedExpenses = (props, emit) => {
     emit('closeModal')
   }
 
+  // Converts the entered amount into the group's base currency if the
+  // entrant picked a different one, freezing the rate used at this moment
+  // (not recomputed later) — see originalAmount/originalCurrency/exchangeRate
+  // below. Returns null if the rate table doesn't have a needed currency,
+  // so the caller can block submission rather than silently store a wrong
+  // number.
+  function convertToGroupCurrency(enteredAmount) {
+    const groupCurrency = activeGroupCurrency.value
+    const enteredCurrency = formData.value.currency || groupCurrency
+
+    if (enteredCurrency === groupCurrency) {
+      return { amount: enteredAmount, extra: {} }
+    }
+
+    const rate = getExchangeRate(enteredCurrency, groupCurrency)
+    if (rate === null) return null
+
+    return {
+      amount: Math.round(enteredAmount * rate * 100) / 100,
+      extra: {
+        originalAmount: enteredAmount,
+        originalCurrency: enteredCurrency,
+        exchangeRate: rate
+      }
+    }
+  }
+
   function getPaymentData(receiptUrls = [], receiptMeta = []) {
-    const amount = parseFloat(formData.value.amount)
+    const enteredAmount = parseFloat(formData.value.amount)
+    const converted = convertToGroupCurrency(enteredAmount)
+    if (!converted) {
+      showError(t('sharedExpenses.exchangeRateUnavailable'))
+      return null
+    }
+    const amount = converted.amount
     const location = formData.value.location?.trim() ?? ''
     const participantsList =
       formData.value.participants && formData.value.participants.length
@@ -472,23 +562,46 @@ export const SharedExpenses = (props, emit) => {
 
     // ---- payer(s) ----
     const isMultiPayer = formData.value.payerMode === 'multiple'
+    // Payer amounts are entered in the same currency as the overall expense
+    // (formData.value.currency) — convert with the same frozen rate used for
+    // `amount` above, so payers[].amount stays comparable to amount/split
+    // for summaries, settlements, and the personal-expenses cross-post.
+    const payerRate = converted.extra.exchangeRate ?? 1
     const payersField = isMultiPayer
       ? formData.value.payers
           .filter((p) => p.uid)
-          .map((p) => ({
-            uid: p.uid,
-            amount: parseFloat(p.amount || 0)
-          }))
+          .map((p) => {
+            const entered = parseFloat(p.amount || 0)
+            return {
+              uid: p.uid,
+              amount: Math.round(entered * payerRate * 100) / 100,
+              ...(payerRate !== 1
+                ? {
+                    originalAmount: entered,
+                    originalCurrency: formData.value.currency
+                  }
+                : {})
+            }
+          })
       : null
 
     const payment = {
       amount,
+      currency: activeGroupCurrency.value,
+      ...converted.extra,
       description: formData.value.description,
       category: formData.value.category,
       ...(location ? { location } : isEditMode.value ? { location: null } : {}),
       payerMode: formData.value.payerMode,
       payer: isMultiPayer ? null : formData.value.payer,
       ...(payersField ? { payers: payersField } : {}),
+      // Flat uid list mirroring payer/payers — lets Firestore rules verify
+      // "uid is a payer on this item" without partial-matching map arrays.
+      payerUids: isMultiPayer
+        ? payersField.map((p) => p.uid)
+        : formData.value.payer
+          ? [formData.value.payer]
+          : [],
       group: groupStore.getActiveGroup || null,
       date: formatDateForStorage(formData.value.date),
       whenAdded: new Date().toLocaleString('en-PK'),
@@ -516,6 +629,9 @@ export const SharedExpenses = (props, emit) => {
     resetForm,
     usersOptions,
     categoryOptions,
+    activeGroupCurrency,
+    currencyOptions,
+    convertedAmountPreview,
     formData,
     transactionForm,
     validateForm,

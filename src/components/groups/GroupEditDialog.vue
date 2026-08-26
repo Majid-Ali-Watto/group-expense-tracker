@@ -39,6 +39,17 @@
         size="default"
         multiple
       />
+      <GenericDropDown
+        v-model="localForm.currency"
+        :label="t('groups.currencyLabel')"
+        prop="currency"
+        :options="currencyOptions"
+        :disabled="hasCurrencyHistory"
+        size="default"
+      />
+      <p v-if="hasCurrencyHistory" class="text-xs text-gray-500 -mt-2 mb-2">
+        {{ t('groups.currencyLockedHint') }}
+      </p>
     </el-form>
 
     <template #footer>
@@ -67,6 +78,8 @@
 import { computed, ref, reactive, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { getGroupRules } from '@/assets'
+import { DEFAULT_CURRENCY } from '@/constants'
+import { useCurrency } from '@/composables/useCurrency'
 import {
   GenericInputField,
   GenericDropDown
@@ -77,14 +90,35 @@ const { t, locale } = useI18n()
 const props = defineProps({
   modelValue: { type: Boolean, required: true },
   form: { type: Object, required: true },
-  memberOptions: { type: Array, required: true }
+  memberOptions: { type: Array, required: true },
+  // Whether the group already has shared-expense/loan history — locks the
+  // currency field (see groups.js's editingGroupHasCurrencyHistory/
+  // updateGroup() for why: past amounts are frozen in the old currency and
+  // balances are never re-converted).
+  hasCurrencyHistory: { type: Boolean, default: false }
 })
 
 const emit = defineEmits(['update:modelValue', 'save'])
 
 const rules = computed(() => getGroupRules(locale.value))
 const formRef = ref(null)
-const localForm = reactive({ name: '', description: '', members: [] })
+const localForm = reactive({
+  name: '',
+  description: '',
+  members: [],
+  currency: DEFAULT_CURRENCY
+})
+
+// Narrowed to codes the current exchange-rate snapshot can actually
+// convert (plus whatever the group is already set to, even if that code
+// dropped out of the snapshot) — see useCurrency.js.
+const { currencyOptionsIncluding } = useCurrency()
+const currencyOptions = computed(() =>
+  currencyOptionsIncluding(localForm.currency).map((option) => ({
+    value: option.code,
+    label: `${option.code} — ${option.label}`
+  }))
+)
 
 watch(
   () => props.form,
@@ -92,6 +126,7 @@ watch(
     localForm.name = val.name ?? ''
     localForm.description = val.description ?? ''
     localForm.members = val.members ? [...val.members] : []
+    localForm.currency = val.currency || DEFAULT_CURRENCY
   },
   { immediate: true }
 )

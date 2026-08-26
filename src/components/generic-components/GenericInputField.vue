@@ -74,7 +74,13 @@ const resolvedLabel = computed(() =>
 )
 
 const wrapperProps = computed(() => {
-  if (!props.wrapFormItem) return {}
+  // Unwrapped root is a plain <div> sitting inside an ancestor
+  // el-form-item's __content box, which Element Plus always renders as
+  // `display:flex`. Without flex-grow, that div shrinks to its content's
+  // intrinsic width instead of filling whatever space the caller's own
+  // el-form-item (or other flex container) allocated it — el-input's
+  // width:100% then has nothing definite to resolve against and collapses.
+  if (!props.wrapFormItem) return { class: 'flex-1 min-w-0' }
   const p = {
     label: resolvedLabel.value,
     prop: props.prop,

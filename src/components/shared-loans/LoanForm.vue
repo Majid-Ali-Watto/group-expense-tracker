@@ -60,7 +60,38 @@
 
           <el-row :gutter="12">
             <el-col :xs="24" :sm="12" :md="12" :lg="12">
-              <AmountInput v-model="formData.amount" required />
+              <div class="flex gap-2 items-start">
+                <AmountInput
+                  v-model="formData.amount"
+                  required
+                  class="flex-1"
+                />
+                <el-form-item label="&nbsp;" class="amount-currency-item">
+                  <el-select
+                    v-model="formData.currency"
+                    class="w-full"
+                    size="default"
+                  >
+                    <el-option
+                      v-for="option in currencyOptions"
+                      :key="option.code"
+                      :value="option.code"
+                      :label="option.code"
+                    />
+                  </el-select>
+                </el-form-item>
+              </div>
+              <p
+                v-if="convertedAmountPreview"
+                class="text-xs text-gray-500 -mt-3 mb-3"
+              >
+                {{
+                  t('sharedExpenses.willConvertTo', {
+                    amount: convertedAmountPreview,
+                    currency: loanCurrency
+                  })
+                }}
+              </p>
             </el-col>
             <el-col :xs="24" :sm="12" :md="12" :lg="12">
               <GenericDropDown
@@ -379,6 +410,9 @@ const {
   resetForm,
   requestClose,
   validateForm,
+  loanCurrency,
+  currencyOptions,
+  convertedAmountPreview,
   receiptFiles,
   receiptExtracting,
   receiptUploading,
@@ -430,5 +464,18 @@ defineExpose({
    field's far right edge instead of immediately after the label text. */
 .field-with-me-toggle :deep(.el-form-item__label) {
   width: 100%;
+}
+
+/* Same el-form-item as AmountInput's own "Amount" label — putting the
+   select in a form-item with a blank label (instead of a hand-tuned
+   margin-top) keeps the two inputs aligned via Element Plus's own label
+   height/spacing rather than a guessed pixel offset. */
+.amount-currency-item {
+  width: 92px;
+  flex-shrink: 0;
+}
+
+.amount-currency-item :deep(.el-form-item__label) {
+  visibility: hidden;
 }
 </style>

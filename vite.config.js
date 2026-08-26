@@ -8,12 +8,13 @@ import { fileURLToPath, URL } from 'node:url'
 import { PUBLIC_BASE_PATHS } from './src/constants/publicPaths'
 import { SITE_NAME, SITE_URL } from './src/constants/seo'
 
-// The 12 crawlable URLs (6 public pages x en/ur) — the only routes vite-ssg
+// The 16 crawlable URLs (8 public pages x en/ur) — the only routes vite-ssg
 // prerenders to static HTML. Everything else (login/register/private app
 // routes) stays a plain client-rendered SPA, same as before.
-const SSG_INCLUDED_ROUTES = Object.values(PUBLIC_BASE_PATHS).flatMap(
-  (path) => [path, path === '/' ? '/ur' : `/ur${path}`]
-)
+const SSG_INCLUDED_ROUTES = Object.values(PUBLIC_BASE_PATHS).flatMap((path) => [
+  path,
+  path === '/' ? '/ur' : `/ur${path}`
+])
 
 export default defineConfig({
   base: '/', // Required for SPA deep links on root-hosted deployments like Netlify

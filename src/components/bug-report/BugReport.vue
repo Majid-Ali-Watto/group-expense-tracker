@@ -1,5 +1,5 @@
 <template>
-  <div class="bug-page">
+  <div>
     <BugReportHeader
       :active-view="activeView"
       :report-count="myReports.length"
@@ -8,7 +8,7 @@
 
     <BugReportSuccess
       v-if="activeView === 'form' && submitted"
-      :bug-number="lastSubmittedBugNumber"
+      :bug-number="lastSubmittedIssueKey"
       @reset="resetForm"
     />
 
@@ -43,22 +43,6 @@
       :my-reports-loading="myReportsLoading"
       :expanded-ids="expandedIds"
       :action-loading="actionLoading"
-      :status-label="statusLabel"
-      :notes-open="notesOpen"
-      :current-user-id="authStore.getActiveUserUid"
-      :reply-inputs="replyInputs"
-      :reply-errors="replyErrors"
-      :reply-saving-id="replySavingId"
-      :reply-editor-refs="replyEditorRefs"
-      :open-reaction-picker="openReactionPicker"
-      :reaction-picker-align="reactionPickerAlign"
-      :replying-to="replyingTo"
-      :note-editing-id="noteEditingId"
-      :note-edit-text="noteEditText"
-      :note-edit-error="noteEditError"
-      :note-edit-saving-id="noteEditSavingId"
-      :reactions-of="reactionsOf"
-      :notes-of="notesOf"
       :markdown-to-html="markdownToHtml"
       :format-date="formatDate"
       :copy-text="copyText"
@@ -67,35 +51,6 @@
       @edit="openEdit"
       @delete="deleteReport"
       @toggle-expand="toggleExpand"
-      @toggle-notes="toggleNotes"
-      @toggle-picker="(noteId, event) => togglePickerOpen(noteId, event)"
-      @toggle-reaction="(r, note, emoji) => toggleReaction(r, note, emoji)"
-      @reply="
-        (reportId, note) =>
-          startReply(
-            reportId,
-            note,
-            note.authorType === 'admin' ? 'Admin' : 'You'
-          )
-      "
-      @cancel-reply="cancelReply"
-      @scroll-to="scrollToNote"
-      @start-edit="startNoteEdit"
-      @cancel-edit="cancelNoteEdit"
-      @save-edit="(r, note, text) => saveNoteEdit(r, note, text)"
-      @delete-note="(r, note) => deleteNote(r, note)"
-      @update:compose-text="
-        (reportId, val) => {
-          replyInputs[reportId] = val
-          replyErrors[reportId] = ''
-        }
-      "
-      @send="addReporterReply"
-      @editor-mounted="
-        (reportId, el) => {
-          if (el) replyEditorRefs[reportId] = el
-        }
-      "
     />
 
     <BugReportEditDialog
@@ -128,14 +83,7 @@ import BugReportTips from './BugReportTips.vue'
 import BugReportForm from './BugReportForm.vue'
 import MyReportsView from './MyReportsView.vue'
 import BugReportEditDialog from './BugReportEditDialog.vue'
-import {
-  BugReport,
-  markdownToHtml,
-  formatDate,
-  copyText,
-  downloadImage,
-  notesOf
-} from '@/scripts/bug-reports'
+import { BugReport, markdownToHtml, formatDate, copyText, downloadImage } from '@/scripts/bug-reports'
 
 const props = defineProps({
   view: { type: String, default: 'form' },
@@ -143,14 +91,13 @@ const props = defineProps({
 })
 
 const {
-  authStore,
   activeView,
   form,
   formRef,
   submitting,
   uploadingScreenshots,
   submitted,
-  lastSubmittedBugNumber,
+  lastSubmittedIssueKey,
   screenshots,
   uploadProgress,
   isClean,
@@ -176,49 +123,15 @@ const {
   editSaving,
   openEdit,
   closeEdit,
+  resetEdit,
   removeExistingScreenshot,
   handleEditFileChange,
   removeEditNewScreenshot,
   saveEdit,
-  resetEdit,
-  replyInputs,
-  replyErrors,
-  replySavingId,
-  notesOpen,
-  replyEditorRefs,
-  toggleNotes,
-  addReporterReply,
-  openReactionPicker,
-  reactionPickerAlign,
-  replyingTo,
-  noteEditingId,
-  noteEditText,
-  noteEditError,
-  noteEditSavingId,
-  togglePickerOpen,
-  startReply,
-  cancelReply,
-  scrollToNote,
-  startNoteEdit,
-  cancelNoteEdit,
-  saveNoteEdit,
-  deleteNote,
-  toggleReaction,
-  reactionsOf,
   MAX_SCREENSHOTS,
-  SEVERITIES,
-  STATUS_LABEL
+  SEVERITIES
 } = BugReport(props)
 
-const statusLabel = STATUS_LABEL
 const severities = SEVERITIES
 const MAX_SIZE_MB = 2
 </script>
-
-<style scoped>
-.bug-page {
-  max-width: 720px;
-  margin: 0 auto;
-  /* padding: 8px; */
-}
-</style>

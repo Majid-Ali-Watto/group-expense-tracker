@@ -1,10 +1,5 @@
-/* Font stylesheets are NOT statically imported here on purpose — there are
-   6 base + 3 Urdu options (see FONT_OPTIONS/URDU_FONT_OPTIONS in
-   src/composables/useFontFamily.js) and a visitor only ever uses 2 of them.
-   Each is instead injected as a <link> on demand: once pre-mount, for
-   whichever 2 are currently selected, by the inline script in index.html;
-   and again by useFontFamily.js whenever the user picks a different one in
-   Settings. Both sites dedupe via a `data-font-id` attribute. */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -12,7 +7,11 @@
 
 @layer base {
   * {
-    font-family: var(--font-family-base);
+    /* !important: without it, any component-scoped font-family
+       declaration (present or future, anywhere in the app) silently wins
+       over the user's chosen font for that element — this is the one rule
+       in this file that didn't already follow that convention. */
+    font-family: var(--font-family-base, 'Poppins', sans-serif) !important;
   }
 
   legend {
@@ -20,7 +19,7 @@
   }
 
   h2 {
-    @apply font-semibold mb-4 text-sm lg:text-xl md:text-lg sm:text-base !important;
+    @apply font-semibold text-sm lg:text-xl md:text-lg sm:text-base !important;
   }
 
   strong {
@@ -30,24 +29,34 @@
 
 body {
   min-width: 320px !important;
-  font-family: var(--font-family-base);
+  font-family: var(--font-family-base, 'Poppins', sans-serif) !important;
 }
 
-/* Urdu pages use whichever Urdu font the user picked in Settings instead of
-   the Latin-only base font — must be at least as specific as the `body`
-   rule above. `--font-line-height-urdu` is set alongside `--font-family-urdu`
-   by useFontFamily.js: Nastaliq-style fonts' diagonal, stacked strokes need
-   far more vertical room than Latin text (1.6, fine for Poppins, is too
-   tight and wrapped lines overlap), while Naskh-style fonts need less.
-   `!important` is required to win over component-scoped line-heights (e.g.
-   h1 { line-height: 1.08 }) tuned for the base font. */
+/* Urdu public pages use the selected Urdu stack instead of the base app
+   font — must be at least as specific as the `body` rule above.
+   Nastaliq's diagonal, stacked strokes need far more vertical room than
+   Latin text; 1.6 (fine for Poppins) is too tight and wrapped lines
+   overlap, so Urdu pages get a much larger line-height. `!important` is
+   required to win over component-scoped line-heights (e.g. h1 { line-
+   height: 1.08 }) tuned for Poppins — and, like the base font rule above,
+   to win over any component-scoped font-family declaration too. */
 html[lang='ur'] * {
-  font-family: var(--font-family-urdu), var(--font-family-base), sans-serif;
+  font-family: var(
+    --font-family-urdu,
+    'Noto Nastaliq Urdu',
+    'Poppins',
+    sans-serif
+  ) !important;
   line-height: var(--font-line-height-urdu, 2) !important;
 }
 
 html[lang='ur'] body {
-  font-family: var(--font-family-urdu), var(--font-family-base), sans-serif;
+  font-family: var(
+    --font-family-urdu,
+    'Noto Nastaliq Urdu',
+    'Poppins',
+    sans-serif
+  ) !important;
 }
 
 /* The brand/tagline stays short and single-line. The Nastaliq line-height
@@ -124,9 +133,6 @@ header > span {
 /* Theme CSS Variables */
 :root.light-theme,
 :root {
-  --font-family-base: 'Poppins', sans-serif;
-  --font-family-urdu: 'Noto Nastaliq Urdu', sans-serif;
-  --font-line-height-urdu: 2;
   --bg-primary: #ffffff;
   --bg-secondary: #f9fafb;
   --text-primary: #1f2937;
@@ -1240,19 +1246,18 @@ button:disabled {
 /* Filter bars */
 .filter-bar {
   background-color: var(--card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
+  border: 1px solid var(--success-100);
+  border-radius: 12px;
   padding: 0.75rem 0.85rem;
-  box-shadow: 0 4px 12px -10px rgba(15, 23, 42, 0.35);
+  box-shadow: 0 8px 24px -16px rgba(34, 197, 94, 0.25);
   /* Counteract el-row's negative gutter margins so the bar aligns with siblings */
   margin-left: 0 !important;
   margin-right: 0 !important;
 }
 
 .dark-theme .filter-bar {
-  background-color: var(--card-bg);
-  border-color: var(--border-color);
-  box-shadow: 0 4px 12px -10px rgba(0, 0, 0, 0.7);
+  border-color: rgba(34, 197, 94, 0.3);
+  box-shadow: 0 8px 24px -16px rgba(34, 197, 94, 0.2);
 }
 
 .filter-bar .el-form-item__label {

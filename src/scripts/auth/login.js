@@ -19,7 +19,7 @@ import {
   hasSharedFeatures
 } from '@/helpers'
 import { useAuthStore, useGroupStore, useUserStore } from '@/stores'
-import { DB_NODES } from '@/constants'
+import { DB_NODES, currencyForCountry } from '@/constants'
 import {
   showError,
   showSuccess,
@@ -65,6 +65,10 @@ export const Login = () => {
   const createInitialForm = () => ({
     name: '',
     mobile: '',
+    // ISO2 country, set by GenericMobileInput's country-changed event —
+    // used only to pick a default currency at signup (currencyForCountry),
+    // changeable afterward in Settings.
+    country: '',
     email: '',
     password: '',
     rememberMe: false
@@ -112,6 +116,9 @@ export const Login = () => {
   // Google sign-in — mobile collection for new Google users
   const googleMobileDialogVisible = ref(false)
   const googleMobileInput = ref('')
+  // ISO2 country, set by GenericMobileInput's country-changed event — same
+  // "pick a default currency at signup" purpose as form.value.country above.
+  const googleMobileCountry = ref('')
   const isGoogleMobileSubmitting = ref(false)
   const googlePendingFirebaseUser = ref(null)
 
@@ -188,17 +195,18 @@ export const Login = () => {
       email: payload.email || '',
       photoUrl: payload.photoUrl || '',
       photoMeta: payload.photoMeta || null,
+      country: payload.country || '',
+      currency: payload.currency || currencyForCountry(payload.country),
       emailVerified: payload.emailVerified !== false,
       blocked: payload.blocked === true
     })
-    // isAdmin/billedUser/bugResolver live in user-admin-flags/{uid} — every
-    // caller of completeLogin is expected to have already fetched them
+    // isAdmin/billedUser live in user-admin-flags/{uid} — every caller of
+    // completeLogin is expected to have already fetched them
     // (resolveUserFromAuth merges them in; the Google-returning-user path
     // fetches them explicitly) and passed them through on payload.
     userStore.setActiveUserAdminFlags({
       isAdmin: payload.isAdmin === true,
-      billedUser: payload.billedUser === true,
-      bugResolver: payload.bugResolver === true
+      billedUser: payload.billedUser === true
     })
     userStore.setActiveUserTabAccess({
       config: payload.userTabConfig || null,
@@ -382,11 +390,15 @@ export const Login = () => {
   // ── Registration ──────────────────────────────────────────────────────────
 
   async function handleRegistration() {
-    const { name, mobile, email, password, rememberMe } = form.value
+    const { name, mobile, country, email, password, rememberMe } = form.value
 
     const normalizedName = name.trim().replace(/\s+/g, ' ')
     const emailValue = email.trim().toLowerCase()
     const mobileValue = normalizePhoneNumber(mobile)
+    // Default currency inferred from the phone widget's selected country —
+    // changeable afterward in Settings. Falls back to PKR (currencyForCountry's
+    // own default) if the widget never reported a country.
+    const currencyValue = currencyForCountry(country)
 
     if (!normalizedName || !mobileValue || !emailValue || !password) {
       return showError(t('authMessages.allFieldsRequired'))
@@ -437,8 +449,8 @@ export const Login = () => {
 
       await sendEmailVerification(userCredential.user, actionCodeSettings)
 
-      // Save user data to Firestore. isAdmin/billedUser/bugResolver are
-      // intentionally NOT included here — they live in the admin-only
+      // Save user data to Firestore. isAdmin/billedUser are intentionally
+      // NOT included here — they live in the admin-only
       // user-admin-flags/{uid} doc (see firestore.rules), and default to
       // false there when absent. email is likewise kept off this doc — it
       // lives in the self/admin-only user-private/{uid} doc instead, since
@@ -447,6 +459,8 @@ export const Login = () => {
         uid: userCredential.user.uid,
         name: normalizedName,
         mobile: mobileValue,
+        country: country || '',
+        currency: currencyValue,
         emailVerified: false, // Will be set to true on first successful login
         blocked: false
       }
@@ -595,7 +609,6 @@ export const Login = () => {
         emailVerified: true,
         blocked: resolvedUser.blocked === true,
         billedUser: resolvedUser.billedUser === true,
-        bugResolver: resolvedUser.bugResolver === true,
         isAdmin: resolvedUser.isAdmin === true,
         password,
         userTabConfig: tabConfigDoc
@@ -756,13 +769,13 @@ export const Login = () => {
           password: null,
           userTabConfig: tabConfigDoc,
           billedUser: existingUser.billedUser === true,
-          bugResolver: existingUser.bugResolver === true,
           isAdmin: existingUser.isAdmin === true
         })
       } else {
         // New Google user — collect mobile number before saving to DB
         googlePendingFirebaseUser.value = firebaseUser
         googleMobileInput.value = ''
+        googleMobileCountry.value = ''
         googleMobileDialogVisible.value = true
       }
     } catch (error) {
@@ -806,7 +819,7 @@ export const Login = () => {
       const name = (firebaseUser.displayName || email.split('@')[0]).trim()
       const uid = firebaseUser.uid
 
-      // isAdmin/billedUser/bugResolver intentionally omitted — they live in
+      // isAdmin/billedUser intentionally omitted — they live in
       // the admin-only user-admin-flags/{uid} doc and default to false there.
       // email is likewise omitted — it lives in the self/admin-only
       // user-private/{uid} doc instead, since users/{uid} is readable by any
@@ -815,6 +828,8 @@ export const Login = () => {
         uid,
         name,
         mobile,
+        country: googleMobileCountry.value || '',
+        currency: currencyForCountry(googleMobileCountry.value),
         emailVerified: true,
         blocked: false
       }
@@ -836,6 +851,7 @@ export const Login = () => {
   function cancelGoogleMobileDialog() {
     googleMobileDialogVisible.value = false
     googleMobileInput.value = ''
+    googleMobileCountry.value = ''
     googlePendingFirebaseUser.value = null
     signOut(auth).catch(() => {})
   }
@@ -854,6 +870,7 @@ export const Login = () => {
     isSavingFeatureSelection,
     googleMobileDialogVisible,
     googleMobileInput,
+    googleMobileCountry,
     isGoogleMobileSubmitting,
     handleSubmit,
     handleForgotCode,

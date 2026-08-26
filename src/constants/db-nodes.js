@@ -10,8 +10,5 @@ export const DB_NODES = {
   USER_PRIVATE: 'user-private',
   GROUPS: 'groups',
   SALARIES: 'salaries',
-  BUG_REPORTS: 'bug-reports',
-  BUG_REPORT_COUNTERS: 'bug-report-counters',
-  BUG_REPORT_NOTIFICATIONS: 'bug-report-notifications',
   CONFIGS: 'configs'
 }

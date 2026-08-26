@@ -4,7 +4,7 @@ import { useStoreProxy } from '@/composables'
 import { formatUserDisplay } from '@/utils'
 
 export const Summary = (props) => {
-  const formatAmount = inject('formatAmount')
+  const rawFormatAmount = inject('formatAmount')
   const groupStore = useGroupStore()
   const userStore = useUserStore()
   const storeProxy = useStoreProxy()
@@ -13,6 +13,8 @@ export const Summary = (props) => {
   const groupObj = computed(() =>
     activeGroup.value ? groupStore.getGroupById(activeGroup.value) : null
   )
+  const formatAmount = (amount) =>
+    rawFormatAmount(amount, groupObj.value?.currency)
 
   const filteredPayments = computed(() => {
     const all = props.payments || []

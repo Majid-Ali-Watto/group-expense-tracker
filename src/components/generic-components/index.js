@@ -1,3 +1,4 @@
+import AccordionItem from './AccordionItem.vue'
 import AddNewTransactionButton from './AddNewTransactionButton.vue'
 import AmountInput from './GenericAmountField.vue'
 import AppImage from './AppImage.vue'
@@ -16,15 +17,14 @@ import GroupDetailsAccordion from './GroupDetailsAccordion.vue'
 import GroupNotificationsForCurrentUser from './GroupNotificationsForCurrentUser.vue'
 import GroupPendingMembersList from './GroupPendingMembersList.vue'
 import GroupRequestButtons from './GroupRequestButtons.vue'
-import HelpDialog from './HelpDialog.vue'
 import ImageCropEditorDialog from './ImageCropEditorDialog.vue'
 import ImagePreviewDialog from './ImagePreviewDialog.vue'
-import MarkdownEditor from './MarkdownEditor.vue'
 import NetPositionDialog from './NetPositionDialog.vue'
 import NoGroupFound from './NoGroupFound.vue'
 import NotificationsForCurrentUser from './NotificationsForCurrentUser.vue'
 import ReceiptOcrField from './ReceiptOcrField.vue'
 import ReceiptUploadField from './ReceiptUploadField.vue'
+import RichTextEditor from './RichTextEditor.vue'
 import ShowPaymentDetails from './ShowPaymentDetails.vue'
 import UserTabConfigDialog from './UserTabConfigDialog.vue'
 import UserTabConfigForm from './UserTabConfigForm.vue'
@@ -35,6 +35,7 @@ import YourPositionInGroup from './YourPositionInGroup.vue'
 const GenericInput = GenericInputField
 
 export {
+  AccordionItem,
   AddNewTransactionButton,
   AmountInput,
   AppImage,
@@ -54,15 +55,14 @@ export {
   GroupNotificationsForCurrentUser,
   GroupPendingMembersList,
   GroupRequestButtons,
-  HelpDialog,
   ImageCropEditorDialog,
   ImagePreviewDialog,
-  MarkdownEditor,
   NetPositionDialog,
   NoGroupFound,
   NotificationsForCurrentUser,
   ReceiptOcrField,
   ReceiptUploadField,
+  RichTextEditor,
   ShowPaymentDetails,
   UserTabConfigDialog,
   UserTabConfigForm,

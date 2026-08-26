@@ -14,8 +14,7 @@ export default {
     sharedExpenses: 'مشترکہ اخراجات',
     sharedLoans: 'مشترکہ قرضے',
     personalExpenses: 'ذاتی اخراجات',
-    personalLoans: 'ذاتی قرضے',
-    bugReports: 'بگ رپورٹس'
+    personalLoans: 'ذاتی قرضے'
   },
   headerActions: {
     navigation: 'نیویگیشن',
@@ -59,6 +58,9 @@ export default {
     font: 'فونٹ',
     urduFont: 'اردو فونٹ',
     urduFontNote: 'صرف اس وقت استعمال ہوتا ہے جب انٹرفیس زبان اردو ہو۔',
+    currency: 'کرنسی',
+    currencyHint:
+      'آپ کے ذاتی اخراجات اور قرضوں کے لیے، اور گروپ بناتے وقت بطور ڈیفالٹ استعمال ہوتی ہے۔',
     manageTabs: 'ٹیبز منظم کریں',
     loginForMore:
       'اپنے اکاؤنٹ میں دکھائے جانے والے ٹیبز منتخب کرنے کے لیے لاگ ان کریں۔',
@@ -107,7 +109,10 @@ export default {
   footer: {
     brand: 'خرچے فائی',
     tagline: 'بل تقسیم کریں، قرضے ٹریک کریں، بجٹ سنبھالیں، اور حساب صاف رکھیں۔',
-    publicNavLabel: 'عوامی صفحات'
+    publicNavLabel: 'عوامی صفحات',
+    rights: 'جملہ حقوق محفوظ ہیں۔',
+    terms: 'شرائط و ضوابط',
+    privacy: 'پرائیویسی پالیسی'
   },
   landing: {
     eyebrow: 'بل، قرضے، بجٹ، سب ایک جگہ',
@@ -180,6 +185,20 @@ export default {
     dialogTitle: 'خرچے فائی کیسے استعمال کریں',
     needHelp: 'مدد چاہیے؟',
     emailSupportTitle: 'ای میل سپورٹ'
+  },
+  terms: {
+    eyebrow: 'قانونی',
+    title: 'شرائط و ضوابط',
+    intro:
+      'خرچے فائی استعمال کرنے کے قوانین — آپ کا اکاؤنٹ، گروپس اور مشترکہ ڈیٹا، ایپ پیسوں کے ساتھ کیا کرتی اور نہیں کرتی، اور آپ کی ذمہ داریاں۔',
+    lastUpdated: 'آخری اپ ڈیٹ'
+  },
+  privacy: {
+    eyebrow: 'قانونی',
+    title: 'پرائیویسی پالیسی',
+    intro:
+      'خرچے فائی کون سی معلومات جمع کرتا ہے، انہیں کیسے استعمال کرتا ہے، کس کے ساتھ شیئر کرتا ہے، اور آپ کے پاس کیا اختیارات ہیں۔',
+    lastUpdated: 'آخری اپ ڈیٹ'
   },
   auth: {
     modeToggle: {},
@@ -364,6 +383,7 @@ export default {
   },
   common: {
     me: 'میں؟',
+    back: '← واپس',
     reset: 'دوبارہ ترتیب دیں',
     cancel: 'منسوخ کریں',
     approve: 'منظور کریں',
@@ -374,6 +394,7 @@ export default {
     change: 'تبدیل کریں',
     none: 'کوئی نہیں',
     all: 'سب',
+    selectAll: 'سب منتخب کریں',
     single: 'واحد',
     multiple: 'متعدد',
     equal: 'برابر',
@@ -479,6 +500,10 @@ export default {
   },
   sharedExpenses: {
     newTransaction: 'نیا لین دین بنانا چاہتے ہیں؟',
+    willConvertTo:
+      'آج کی شرح کے مطابق {amount} {currency} میں تبدیل کر دیا جائے گا۔',
+    exchangeRateUnavailable:
+      'کرنسی کی تبدیلی عارضی طور پر دستیاب نہیں ہے — براہ کرم کچھ دیر بعد دوبارہ کوشش کریں یا گروپ کی کرنسی منتخب کریں۔',
     transactionDetails: 'لین دین کی تفصیلات',
     payerMode: 'ادائیگی کا طریقہ',
     payer: 'ادا کنندہ',
@@ -741,8 +766,8 @@ export default {
     titlePlaceholder: 'مسئلے کا مختصر خلاصہ',
     descriptionPlaceholder:
       'بتائیں کیا ہوا، آپ کیا توقع کر رہے تھے، اور مسئلہ دوبارہ پیدا کرنے کے اقدامات۔',
-    severity: 'شدت',
-    selectSeverity: 'شدت منتخب کریں',
+    severity: 'ترجیح',
+    selectSeverity: 'ترجیح منتخب کریں',
     screenshots: 'اسکرین شاٹس',
     uploadHint:
       'زیادہ سے زیادہ {max} تصاویر · JPG, PNG, WebP, GIF · ہر فائل زیادہ سے زیادہ {size}MB',
@@ -773,8 +798,8 @@ export default {
     replyToAdmin: 'ایڈمن کو جواب دیں... Ctrl+Enter سے بھیجیں',
     addCommentForAdmin: 'ایڈمن کے لیے تبصرہ شامل کریں...',
     submitted: 'جمع ہوا {date}',
-    allSeverities: 'تمام شدتیں',
-    searchPlaceholder: 'بگ نمبر (khata-bug-...) یا عنوان سے تلاش کریں...',
+    allSeverities: 'تمام ترجیحات',
+    searchPlaceholder: 'Jira کوڈ (KKA-...) یا عنوان سے تلاش کریں...',
     totalOpen: '{total} کل · {open} کھلے',
     refresh: 'ریفریش',
     noReportsMatch: 'موجودہ چھانٹی سے کوئی بگ رپورٹ نہیں ملی۔',
@@ -799,18 +824,19 @@ export default {
       charts: 'چارٹس / بصریات',
       other: 'دیگر'
     },
-    severities: {
-      low: 'کم',
-      medium: 'درمیانی',
+    priorities: {
+      highest: 'سب سے زیادہ',
       high: 'زیادہ',
-      critical: 'انتہائی اہم'
+      low: 'کم',
+      lowest: 'سب سے کم'
     },
     statuses: {
+      todo: 'کرنا ہے',
       inProgress: 'جاری',
       needsInfo: 'مزید معلومات درکار',
-      wontFix: 'درست نہیں کیا جائے گا',
-      resolved: 'حل شدہ',
-      closed: 'بند'
+      invalid: 'غلط',
+      qa: 'کوالٹی چیک',
+      done: 'مکمل'
     },
     validation: {
       categoryRequired: 'براہ کرم زمرہ منتخب کریں',
@@ -872,6 +898,9 @@ export default {
     descriptionPlaceholder: 'گروپ کی تفصیل درج کریں (اختیاری)',
     membersLabel: 'اراکین (زیادہ سے زیادہ 30)',
     membersLabelPlain: 'اراکین',
+    currencyLabel: 'کرنسی',
+    currencyLockedHint:
+      'اس گروپ میں پہلے سے اخراجات/قرض کی تاریخ موجود ہے، اس لیے اس کی کرنسی تبدیل نہیں کی جا سکتی — پرانی رقمیں اصل کرنسی میں رہیں گی اور بیلنس دوبارہ تبدیل نہیں کیا جائے گا۔',
     membersPlaceholder: 'اراکین منتخب کریں',
     selectedCount: 'منتخب: {count}/{max}',
     categoryOptionalPlaceholder: 'زمرہ منتخب کریں (اختیاری)',
@@ -1027,6 +1056,9 @@ export default {
     atLeastTwoMembersRequired: 'کم از کم دو اراکین ضروری ہیں',
     nameChangedNotif: 'نام: "{oldName}" → "{newName}"',
     descriptionChangedNotif: 'تفصیل: "{oldDescription}" → "{newDescription}"',
+    currencyChangedNotif: 'کرنسی: {oldCurrency} → {newCurrency}',
+    currencyLockedHasHistory:
+      'اخراجات/قرض کی تاریخ ہونے کے بعد اس گروپ کی کرنسی تبدیل نہیں کی جا سکتی۔',
     emptyPlaceholder: '(خالی)',
     groupUpdatedNotif: 'گروپ اپ ڈیٹ ہو گیا — {changes}',
     groupUpdatedToast: 'گروپ اپ ڈیٹ ہو گیا',
@@ -1195,6 +1227,11 @@ export default {
     editDuplicate: 'ترمیم / نقل',
     addedBy: 'شامل کردہ از',
     whenAdded: 'شامل کرنے کا وقت',
+    exchangeInfoTooltip: 'کرنسی کی تبدیلی کی تفصیلات دیکھیں',
+    originalAmount: 'اصل رقم',
+    convertedAmount: 'تبدیل شدہ رقم',
+    exchangeRate: 'شرح تبادلہ',
+    exchangeRateValue: '1 {from} = {rate} {to}',
     noResultsFound: 'کوئی نتیجہ نہیں ملا',
     noResultsMatch: '"{search}" سے کوئی قطار مماثل نہیں',
     tryDifferentSearch: 'مختلف تلاش آزمائیں۔',
@@ -1266,9 +1303,7 @@ export default {
     codeBlock: 'کوڈ بلاک',
     bulletList: 'بلٹ لسٹ',
     numberedList: 'نمبر شدہ لسٹ',
-    insertTemplate: 'بگ رپورٹ ٹیمپلیٹ شامل کریں',
-    attachImage: 'تصویر منسلک کریں',
-    hint: 'مارک ڈاؤن سپورٹ موجود ہے'
+    insertTemplate: 'بگ رپورٹ ٹیمپلیٹ شامل کریں'
   },
   netPosition: {
     dialogTitle: 'آپ کے اخراجات کا خلاصہ',
@@ -1307,7 +1342,8 @@ export default {
     welcomeBack: 'واپس خوش آمدید',
     userNameLabel: 'صارف کا نام',
     activeGroupLabel: 'فعال گروپ (شامل شدہ گروپس)',
-    noGroupSelected: 'کوئی گروپ منتخب نہیں'
+    noGroupSelected: 'کوئی گروپ منتخب نہیں',
+    mainMenu: 'مرکزی مینو'
   },
   admin: {
     config: {
@@ -1316,10 +1352,10 @@ export default {
       storageTitle: 'اسٹوریج',
       cacheTitle: 'کیش',
       downloadsTitle: 'ڈاؤن لوڈز',
+      bugReportingTitle: 'بگ رپورٹنگ',
       ocrTitle: 'OCR / رسید ڈیٹا نکالنا',
       allowReceiptUploads: 'رسید اپ لوڈ کی اجازت دیں',
       enableCloudinary: 'Cloudinary پرووائیڈر فعال کریں',
-      enableFirebaseStorage: 'رسید اسٹوریج پرووائیڈر فعال کریں',
       enableQueryCaching: 'کوئری کیشنگ فعال کریں',
       allowPdfDownloads: 'PDF ڈاؤن لوڈ کی اجازت دیں',
       allowExcelDownloads: 'Excel ڈاؤن لوڈ کی اجازت دیں',
@@ -1368,7 +1404,6 @@ export default {
       loadingUsers: 'صارفین لوڈ ہو رہے ہیں…',
       searchPlaceholder: 'نام یا ای میل سے تلاش کریں…',
       blockedColumn: 'بلاک',
-      bugResolverColumn: 'بگ ریزالور',
       paidTierColumn: 'پیڈ ٹیئر',
       tabConfigColumn: 'ٹیب کنفگ',
       noUsersMatch: 'آپ کی تلاش سے کوئی صارف مماثل نہیں۔',

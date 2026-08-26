@@ -145,16 +145,3 @@ export async function downloadImage(url, filename) {
     showError(i18n.global.t('bugReports.downloadFailed'))
   }
 }
-
-/**
- * Convert a Firebase notes object into a time-sorted array.
- *
- * @param {{ notes?: Record<string, object> }} report
- * @returns {Array<{ id: string } & object>}
- */
-export function notesOf(report) {
-  if (!report?.notes) return []
-  return Object.entries(report.notes)
-    .map(([id, n]) => ({ id, ...n }))
-    .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
-}

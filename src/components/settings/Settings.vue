@@ -1,11 +1,10 @@
 <!-- eslint-disable vue/multi-word-component-names -->
 <template>
   <div
-    class="settings-page min-h-screen p-4 sm:p-6"
-    style="background-color: var(--bg-secondary)"
-    :style="{ paddingTop: isLoggedIn ? undefined : '96px' }"
+    class="settings-page"
+    :class="isLoggedIn ? 'min-h-screen p-4 sm:p-6' : 'public-page'"
   >
-    <div class="max-w-2xl mx-auto space-y-4">
+    <div class="space-y-4">
       <header class="settings-hero flex items-center gap-3 rounded-2xl p-4">
         <button
           type="button"
@@ -97,6 +96,34 @@
               {{ t('settings.urduFontNote') }}
             </p>
           </div>
+        </div>
+      </section>
+
+      <section v-if="isLoggedIn" class="settings-card">
+        <div class="settings-card__header">
+          <span class="settings-card__icon">
+            <el-icon :size="18"><Money /></el-icon>
+          </span>
+          <div class="min-w-0">
+            <h2 class="settings-card__title">
+              {{ t('settings.currency') }}
+            </h2>
+            <p class="settings-card__hint">
+              {{ t('settings.currencyHint') }}
+            </p>
+          </div>
+        </div>
+
+        <div class="settings-card__body">
+          <GenericDropDown
+            :model-value="currency"
+            :options="currencyDropdownOptions"
+            :wrap-form-item="false"
+            :clearable="false"
+            :placeholder="t('common.selectOption')"
+            select-class="w-full max-w-xs"
+            @update:model-value="setCurrency"
+          />
         </div>
       </section>
 
@@ -205,10 +232,14 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Back, Brush, Grid, Delete } from '@element-plus/icons-vue'
+import { Back, Brush, Grid, Delete, Money } from '@element-plus/icons-vue'
 import { MoonIcon, SunIcon } from '@/components/icons'
-import { UserTabConfigForm } from '@/components/generic-components'
+import {
+  UserTabConfigForm,
+  GenericDropDown
+} from '@/components/generic-components'
 import { Settings } from '@/scripts/settings'
 
 const { t } = useI18n()
@@ -224,6 +255,9 @@ const {
   urduFontFamily,
   URDU_FONT_OPTIONS,
   setUrduFontFamily,
+  currency,
+  currencyOptions,
+  setCurrency,
   canManageTabs,
   tabSelection,
   isSavingTabs,
@@ -235,9 +269,62 @@ const {
   clearLocalStorageData,
   resetApp
 } = Settings()
+
+// GenericDropDown expects {value, label} pairs — searchable by both code
+// and name (Element Plus's el-select filters against the rendered label).
+const currencyDropdownOptions = computed(() =>
+  currencyOptions.value.map((option) => ({
+    value: option.code,
+    label: `${option.symbol} ${option.code} — ${option.label}`
+  }))
+)
 </script>
 
 <style scoped>
+/* Guest (not-logged-in) view — matches the decorative background every
+   other public marketing page (Login, Landing, Features, FAQ, ...) shares,
+   so Settings doesn't look flat/plain next to them. The logged-in view
+   stays undecorated, matching the rest of the authenticated app (Groups,
+   Shared Expenses, ...), which has no such decoration either. */
+.settings-page.public-page {
+  position: relative;
+  min-height: 100vh;
+  padding: 108px 20px 32px;
+  width: 100%;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.settings-page.public-page::before,
+.settings-page.public-page::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  border-radius: 50%;
+  filter: blur(60px);
+  pointer-events: none;
+}
+
+.settings-page.public-page::before {
+  top: -120px;
+  right: -80px;
+  width: 380px;
+  height: 380px;
+  background: radial-gradient(circle, rgba(34, 197, 94, 0.22), transparent 70%);
+}
+
+.settings-page.public-page::after {
+  top: 260px;
+  left: -120px;
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(
+    circle,
+    rgba(13, 148, 136, 0.16),
+    transparent 70%
+  );
+}
+
 .settings-hero {
   background:
     radial-gradient(

@@ -48,6 +48,14 @@
           :placeholder="t('groups.categoryOptionalPlaceholder')"
           size="default"
         />
+        <GenericDropDown
+          v-model="groupForm.currency"
+          :label="t('groups.currencyLabel')"
+          prop="currency"
+          label-position="top"
+          :options="currencyOptions"
+          size="default"
+        />
         <div class="flex flex-row justify-end gap-2">
           <slot name="clear"></slot>
           <el-button size="default" @click="resetCreateForm">{{
@@ -71,6 +79,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { getGroupRules, GROUP_CATEGORIES } from '@/assets'
+import { useCurrency } from '@/composables/useCurrency'
 import { GroupsCreate } from '@/scripts/groups'
 import { GenericDropDown } from '@/components/generic-components'
 import { GenericInputField } from '@/components/generic-components'
@@ -94,4 +103,14 @@ const {
   resetCreateForm,
   isSubmitting
 } = GroupsCreate(emit, props)
+
+// Narrowed to codes the current exchange-rate snapshot can actually
+// convert (plus whatever's already selected) — see useCurrency.js.
+const { currencyOptionsIncluding } = useCurrency()
+const currencyOptions = computed(() =>
+  currencyOptionsIncluding(groupForm.value.currency).map((option) => ({
+    value: option.code,
+    label: `${option.code} — ${option.label}`
+  }))
+)
 </script>

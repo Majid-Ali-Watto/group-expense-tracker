@@ -10,7 +10,7 @@ export {
   cleanupOldReceipts as cleanupOldCloudinaryReceipts
 } from './cloudinaryUpload'
 export * from './downloadDataProcedures'
-export * from './firebaseStorageUpload'
+export * from './formatAmount'
 export {
   default as getCurrentMonth,
   dateToMonthNode,

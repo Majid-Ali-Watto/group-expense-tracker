@@ -24,14 +24,11 @@
 
       <!-- Column headers — hidden on mobile -->
       <div
-        class="hidden sm:grid sm:grid-cols-[1fr_1fr_repeat(4,6rem)_8.5rem] gap-x-3 px-2 mb-1 text-xs font-semibold text-gray-400 uppercase tracking-wide"
+        class="hidden sm:grid sm:grid-cols-[1fr_1fr_repeat(3,6rem)_8.5rem] gap-x-3 px-2 mb-1 text-xs font-semibold text-gray-400 uppercase tracking-wide"
       >
         <span>{{ t('groups.nameLabel') }}</span>
         <span>{{ t('common.email') }}</span>
         <span class="text-center">{{ t('admin.users.blockedColumn') }}</span>
-        <span class="text-center">{{
-          t('admin.users.bugResolverColumn')
-        }}</span>
         <span class="text-center">{{ t('common.admin') }}</span>
         <span class="text-center">{{ t('admin.users.paidTierColumn') }}</span>
         <span class="text-center">{{ t('admin.users.tabConfigColumn') }}</span>
@@ -41,7 +38,7 @@
         <div
           v-for="user in filteredUsers"
           :key="user.uid"
-          class="grid sm:grid-cols-[1fr_1fr_repeat(4,6rem)_8.5rem] gap-x-3 gap-y-2 items-center px-2 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+          class="grid sm:grid-cols-[1fr_1fr_repeat(3,6rem)_8.5rem] gap-x-3 gap-y-2 items-center px-2 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
         >
           <!-- Name -->
           <div
@@ -64,11 +61,6 @@
               :value="user.blocked === true"
               :danger="true"
               @change="updateUserFlag(user.uid, 'blocked', $event)"
-            />
-            <FlagToggle
-              :label="t('admin.users.bugResolverColumn')"
-              :value="user.bugResolver === true"
-              @change="updateUserFlag(user.uid, 'bugResolver', $event)"
             />
             <FlagToggle
               :label="t('common.admin')"

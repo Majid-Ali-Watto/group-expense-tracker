@@ -23,7 +23,7 @@
             {{ expenseState.label }}
           </el-tag>
           <span class="font-semibold" :class="expenseState.textClass">
-            Rs. {{ expenseState.abs }}
+            {{ expenseState.formatted }}
           </span>
         </div>
       </div>
@@ -38,7 +38,7 @@
             {{ loanState.label }}
           </el-tag>
           <span class="font-semibold" :class="loanState.textClass">
-            Rs. {{ loanState.abs }}
+            {{ loanState.formatted }}
           </span>
         </div>
       </div>
@@ -56,7 +56,7 @@
             {{ netState.label }}
           </el-tag>
           <span class="font-bold text-base" :class="netState.textClass">
-            Rs. {{ netState.abs }}
+            {{ netState.formatted }}
           </span>
         </div>
       </div>
@@ -67,13 +67,15 @@
   </div>
 </template>
 <script setup>
-import { computed } from 'vue'
+import { computed, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore, useUserStore } from '@/stores'
+import { DEFAULT_CURRENCY } from '@/constants'
 
 const { t } = useI18n()
 const authStore = useAuthStore()
 const userStore = useUserStore()
+const formatAmount = inject('formatAmount')
 
 const currentUserLabel = computed(() => {
   const u = userStore.getUserByUid(authStore.getActiveUserUid)
@@ -92,6 +94,7 @@ const props = defineProps({
 })
 
 const balance = computed(() => props.getGroupBalances(props.group.id) || {})
+const groupCurrency = computed(() => props.group.currency || DEFAULT_CURRENCY)
 
 const makeState = (
   val,
@@ -105,7 +108,7 @@ const makeState = (
   return {
     type: num > 0 ? 'success' : num < 0 ? 'danger' : 'info',
     label: num > 0 ? pos : num < 0 ? neg : zero,
-    abs: Math.abs(num).toFixed(2),
+    formatted: formatAmount(Math.abs(num), groupCurrency.value),
     textClass:
       num < 0
         ? 'text-red-600 dark:text-red-400'

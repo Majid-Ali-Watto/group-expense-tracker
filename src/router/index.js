@@ -26,6 +26,8 @@ const HelpPage = () => import('@/components/public/HelpPage.vue')
 const PersonalBudgetTrackerPage = () =>
   import('@/components/public/PersonalBudgetTrackerPage.vue')
 const FaqPage = () => import('@/components/public/FaqPage.vue')
+const TermsPage = () => import('@/components/public/TermsPage.vue')
+const PrivacyPage = () => import('@/components/public/PrivacyPage.vue')
 const Groups = () => import('@/components/groups/Groups.vue')
 const Login = () => import('@/components/auth/Login.vue')
 const SharedExpenses = () =>
@@ -37,8 +39,7 @@ const PersonalExpenses = () =>
   import('@/components/personal-expenses/PersonalExpenses.vue')
 const PersonalLoans = () =>
   import('@/components/personal-loans/PersonalLoans.vue')
-const BugReportsAdmin = () =>
-  import('@/components/bug-reports-admin/BugReportsAdmin.vue')
+const BugReport = () => import('@/components/bug-report/BugReport.vue')
 const AdminConfig = () => import('@/components/admin/AdminConfig.vue')
 const SharedGroups = () => import('@/components/groups/SharedGroups.vue')
 const Settings = () => import('@/components/settings/Settings.vue')
@@ -50,8 +51,7 @@ export const TAB_ROUTES = {
   [Tabs.SHARED_LOANS]: '/shared-loans',
   [Tabs.USERS]: '/users',
   [Tabs.PERSONAL_EXPENSES]: '/personal-expenses',
-  [Tabs.PERSONAL_LOANS]: '/personal-loans',
-  [Tabs.BUG_RESOLVER]: '/bug-reports'
+  [Tabs.PERSONAL_LOANS]: '/personal-loans'
 }
 
 // URL base path → Tab name mapping
@@ -61,8 +61,7 @@ export const ROUTE_TABS = {
   '/shared-loans': Tabs.SHARED_LOANS,
   '/users': Tabs.USERS,
   '/personal-expenses': Tabs.PERSONAL_EXPENSES,
-  '/personal-loans': Tabs.PERSONAL_LOANS,
-  '/bug-reports': Tabs.BUG_RESOLVER
+  '/personal-loans': Tabs.PERSONAL_LOANS
 }
 
 // Tabs that embed a groupId in their URL path
@@ -108,7 +107,13 @@ const PUBLIC_PAGES = [
     seoKey: 'personalBudgetTracker'
   },
   { path: PUBLIC_BASE_PATHS.help, component: HelpPage, seoKey: 'help' },
-  { path: PUBLIC_BASE_PATHS.faq, component: FaqPage, seoKey: 'faq' }
+  { path: PUBLIC_BASE_PATHS.faq, component: FaqPage, seoKey: 'faq' },
+  { path: PUBLIC_BASE_PATHS.terms, component: TermsPage, seoKey: 'terms' },
+  {
+    path: PUBLIC_BASE_PATHS.privacy,
+    component: PrivacyPage,
+    seoKey: 'privacy'
+  }
 ]
 
 const SEO_PAGES_BY_LOCALE = { en: getSeoPages('en'), ur: getSeoPages('ur') }
@@ -235,14 +240,20 @@ export const routes = [
     }
   },
   {
-    path: '/bug-reports',
-    component: BugReportsAdmin,
-    meta: {
-      tab: Tabs.BUG_RESOLVER,
-      requiresAuth: true,
-      requiresBugResolver: true,
-      seo: SEO_PAGES.app
-    }
+    // Reporter's own "Report a bug" / "My Reports" — was a header popup,
+    // now a real route so it's shareable/reachable via notifications. view
+    // ('form' | 'my-reports') and openId come from the query string rather
+    // than a path param since they're just initial UI state, not identity.
+    // No `tab` meta — not part of the tabs nav system (reached via the
+    // header's Report Bug button, like /admin and /settings aren't tabs
+    // either).
+    path: '/report-bug',
+    component: BugReport,
+    props: (route) => ({
+      view: route.query.view || 'form',
+      openBugId: route.query.openId || null
+    }),
+    meta: { requiresAuth: true, seo: SEO_PAGES.app }
   },
   {
     path: '/shared-groups',
@@ -309,8 +320,7 @@ async function getCurrentUserProfile() {
   // other reader) doesn't have to fetch them a second time.
   userStore.setActiveUserAdminFlags({
     isAdmin: user.isAdmin === true,
-    billedUser: user.billedUser === true,
-    bugResolver: user.bugResolver === true
+    billedUser: user.billedUser === true
   })
 
   return userStore.getUserByUid(user.uid) || user
@@ -393,11 +403,7 @@ export function setupRouterGuard(router) {
       groupStore.setActiveGroup(to.params.groupId)
     }
 
-    if (
-      to.meta.requiresBugResolver ||
-      to.meta.requiresUserTab ||
-      to.meta.requiresAdmin
-    ) {
+    if (to.meta.requiresUserTab || to.meta.requiresAdmin) {
       const user = await getCurrentUserProfile()
       const tabConfig = await getCurrentUserTabConfig(user?.uid)
       const fallbackPath = getFallbackPath(
@@ -414,16 +420,12 @@ export function setupRouterGuard(router) {
         if (!allowed) return fallbackPath
       }
 
-      if (to.meta.requiresBugResolver || to.meta.requiresAdmin) {
-        // isAdmin/bugResolver live in user-admin-flags/{uid}, not on the
-        // users/{uid} doc returned by getCurrentUserProfile().
+      if (to.meta.requiresAdmin) {
+        // isAdmin lives in user-admin-flags/{uid}, not on the users/{uid}
+        // doc returned by getCurrentUserProfile().
         const adminFlags = await getCurrentUserAdminFlags(user?.uid)
 
-        if (to.meta.requiresBugResolver && !adminFlags?.bugResolver) {
-          return fallbackPath
-        }
-
-        if (to.meta.requiresAdmin && !adminFlags?.isAdmin) {
+        if (!adminFlags?.isAdmin) {
           return fallbackPath
         }
       }
