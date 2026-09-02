@@ -11,7 +11,9 @@
     <section class="bullet-section">
       <article class="bullet-card">
         <CardHead>
-          <template #icon><el-icon :size="18"><Coin /></el-icon></template>
+          <template #icon
+            ><el-icon :size="18"><Coin /></el-icon
+          ></template>
           <template #title
             ><h2>{{ t('groupExpenseTracker.benefitsHeading') }}</h2></template
           >
@@ -25,7 +27,9 @@
 
       <article class="bullet-card">
         <CardHead>
-          <template #icon><el-icon :size="18"><Share /></el-icon></template>
+          <template #icon
+            ><el-icon :size="18"><Share /></el-icon
+          ></template>
           <template #title
             ><h2>{{ t('groupExpenseTracker.useCasesHeading') }}</h2></template
           >

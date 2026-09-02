@@ -140,13 +140,21 @@ export const NetPosition = () => {
 
         Object.values(loans).forEach((loan) => {
           if (!loan || !loan.amount) return
+          // Only what's still unpaid counts toward net position — a
+          // confirmed (full or partial) repayment must stop counting, or an
+          // already-repaid loan can mask (or cancel out) a later, unrelated
+          // loan between the same two people. See loans.js's loanSettlements
+          // for the same fix.
+          const totalPaid = loan.paidRequest?.totalPaid || 0
+          const remaining = loan.amount - totalPaid
+          if (remaining <= 0.001) return
 
           if (loan.giver === userUid) {
             // User is the lender
-            result.lenderAmount += loan.amount
+            result.lenderAmount += remaining
           } else if (loan.receiver === userUid) {
             // User is the debtor
-            result.debtorAmount += loan.amount
+            result.debtorAmount += remaining
           }
         })
 

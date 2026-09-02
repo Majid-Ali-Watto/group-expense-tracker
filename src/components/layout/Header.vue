@@ -79,14 +79,31 @@
 
 <script setup>
 import { ref } from 'vue'
-import { Header } from '@/scripts/layout'
+// Direct path, not the '@/scripts/layout' barrel — that barrel also
+// re-exports app.js, same reasoning as App.vue's equivalent comment.
+import { Header } from '@/scripts/layout/header'
 import DesktopHeaderActions from '../header/DesktopHeaderActions.vue'
 import LanguageSwitcher from '../header/LanguageSwitcher.vue'
 import MobileHeaderMenu from '../header/MobileHeaderMenu.vue'
 import NotificationBell from '../header/NotificationBell.vue'
-import ProfileDialog from '../header/ProfileDialog.vue'
 import PublicHeaderNav from '../header/PublicHeaderNav.vue'
 import TitleAndTagline from '../header/TitleAndTagline.vue'
+import { loadAsyncComponent } from '@/utils/async-component'
+
+// Lazy, not a plain synchronous import like its siblings above —
+// ProfileDialog is `v-if="showProfile"` (opened by clicking the profile
+// icon), but a synchronous import bundles its full module — including a
+// direct '@/firebase' import and the '@/components/generic-components'
+// barrel (which statically imports ~30 components, NetPositionDialog.vue
+// among them) — into Header.vue's own chunk unconditionally. Since Header
+// renders on every route including public marketing pages, that dragged
+// Firestore-touching code and a pile of unrelated component CSS
+// (NetPositionDialog + the el-dialog/el-checkbox/el-form/el-alert it needs)
+// into every visitor's bundle regardless of whether they ever open this
+// dialog.
+const ProfileDialog = loadAsyncComponent(
+  () => import('../header/ProfileDialog.vue')
+)
 
 defineOptions({ inheritAttrs: false })
 

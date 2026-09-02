@@ -183,4 +183,33 @@ function onValidate(phoneObject) {
   padding: 0 7px;
   background: var(--el-input-bg-color, var(--el-fill-color-blank));
 }
+
+/* The country dropdown panel ships hardcoded light colors (white bg, #ccc
+   border) with no theme awareness. Using the app's own theme tokens here
+   (rather than a `:root.dark-theme` selector) means this stays correct in
+   both themes automatically, since the tokens themselves flip. */
+:deep(.vti__dropdown-list) {
+  background-color: var(--card-bg);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+:deep(.vti__dropdown-item.highlighted) {
+  background-color: var(--bg-secondary);
+}
+
+:deep(.vti__dropdown-item.last-preferred) {
+  border-bottom-color: var(--border-color);
+}
+
+:deep(.vti__search_box) {
+  background-color: var(--card-bg);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+:deep(.vti__country-code),
+:deep(.vti__dropdown-arrow) {
+  color: var(--text-secondary, #6b7280);
+}
 </style>

@@ -30,11 +30,23 @@
       content="black-translucent"
     />
     <meta name="apple-mobile-web-app-title" content="Kharchafy" />
-    <!-- Warm up the Google Fonts connection ahead of the font <link> the
-         inline script below injects for whichever 2 fonts (base + Urdu)
-         are actually selected — see src/composables/useFontFamily.js. -->
+    <!-- Warm up the Google Fonts connection for whichever fonts the inline
+         script below ends up injecting — see src/composables/useFontFamily.js. -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Default base font, linked directly (not injected by the script
+         below) so the browser's preload scanner can start fetching it while
+         still parsing this HTML, instead of waiting for the inline script
+         to run first. Covers the common case — a first-time visitor, or any
+         returning visitor who never changed their font in Settings — with
+         zero script-injection delay. data-font-id must match the id
+         loadFont()/ensureFontLinkLoaded() dedup on, so a visitor who *did*
+         pick "poppins" explicitly doesn't get a second, redundant <link>. -->
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+      data-font-id="poppins"
+    />
     <style>
       #private-route-reloader {
         display: none;
@@ -205,7 +217,18 @@
             '--font-line-height-urdu',
             urduFont.lineHeight
           )
-          loadFont(urduFontId, urduFont)
+          // --font-family-urdu only actually renders anything under the
+          // html[lang='ur'] rules in main.css (see useFontFamily.js's
+          // header comment) — setting the CSS variable above is free, but
+          // fetching its Google Fonts stylesheet is a real render-blocking
+          // network request this page has no use for unless it's an Urdu
+          // page. Same locale check as the private-route-reloader text
+          // script further down this file.
+          var isUrduPage =
+            window.location.pathname === '/ur' ||
+            window.location.pathname.indexOf('/ur/') === 0 ||
+            localStorage.getItem('appLocale') === 'ur'
+          if (isUrduPage) loadFont(urduFontId, urduFont)
         }
 
         applyFontFamily()
@@ -214,6 +237,9 @@
     </script>
     <script>
       ;(function () {
+        // Keep in sync with PUBLIC_BASE_PATHS in src/constants/publicPaths.js
+        // (the 8 prerendered marketing pages), plus /login and /register —
+        // guest-accessible routes that are public but not prerendered.
         var publicBasePaths = [
           '/',
           '/features',
@@ -221,6 +247,8 @@
           '/help',
           '/group-expense-tracker',
           '/personal-budget-tracker',
+          '/terms',
+          '/privacy',
           '/login',
           '/register'
         ]

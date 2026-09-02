@@ -1,19 +1,18 @@
 import { useGroupStore } from '../stores/groupStore'
-import { useAuthStore } from '../stores/authStore'
-import { useUserStore } from '../stores/userStore'
 import { Tabs } from '../assets/enums'
 import { PUBLIC_BASE_PATHS, SEO_PAGES, getSeoPages } from '@/constants'
+// Direct path, not the '@/helpers' barrel — see the equivalent comment in
+// src/scripts/layout/app.js.
 import {
-  resolveUserFromAuth,
   canAccessTab,
-  getDefaultAccessibleTab,
-  findUserTabConfigByUid,
-  findUserAdminFlagsByUid,
-  canAccessManageTabs
-} from '@/helpers'
-import { maskMobile } from '@/utils/maskMobile'
-import { auth } from '@/firebase'
+  getDefaultAccessibleTab
+} from '@/helpers/user-tab-access'
 import { setStoredLocale } from '@/i18n'
+// getCurrentUserProfile/getCurrentUserTabConfig/getCurrentUserAdminFlags are
+// Firestore-backed and live in ./session-guard-helpers, imported dynamically
+// below — only visitors who actually have a session (checked via the
+// zero-dependency hasSession() first) pay for that SDK weight. See
+// src/firebase.js's header comment for why this split exists.
 
 // Standard dynamic imports — do NOT use loadAsyncComponent here.
 // loadAsyncComponent sets suspensible:false which conflicts with Vue Router's
@@ -76,15 +75,6 @@ export function hasSession() {
     !!sessionStorage.getItem('_session')
   )
 }
-
-// Resolves once Firebase Auth has finished its initial state check.
-// Prevents the guard from seeing auth.currentUser as null on first navigation.
-const authReady = new Promise((resolve) => {
-  const unsubscribe = auth.onAuthStateChanged((user) => {
-    unsubscribe()
-    resolve(user)
-  })
-})
 
 // Public marketing pages — each exists at one URL per supported locale
 // (e.g. /features and /ur/features) so Urdu content is independently
@@ -292,65 +282,6 @@ export function scrollBehavior(to, from, savedPosition) {
   return { top: 0, behavior: 'smooth' }
 }
 
-async function getCurrentUserProfile() {
-  const authStore = useAuthStore()
-  const userStore = useUserStore()
-  const cachedUser = authStore.getActiveUserUid
-    ? userStore.getUserByUid(authStore.getActiveUserUid)
-    : null
-
-  if (cachedUser) return cachedUser
-
-  const firebaseUser = auth.currentUser ?? (await authReady)
-  const user = await resolveUserFromAuth(firebaseUser)
-  if (!user) return null
-
-  authStore.setActiveUserUid(user.uid)
-  userStore.addUser({
-    uid: user.uid,
-    mobile: user.mobile || '',
-    name: user.name || '',
-    email: user.email || '',
-    emailVerified: user.emailVerified !== false,
-    maskedMobile: maskMobile(user.mobile || ''),
-    blocked: user.blocked === true
-  })
-  // resolveUserFromAuth already merged these in from user-admin-flags/{uid} —
-  // seed the store slice here too so getCurrentUserAdminFlags() below (and any
-  // other reader) doesn't have to fetch them a second time.
-  userStore.setActiveUserAdminFlags({
-    isAdmin: user.isAdmin === true,
-    billedUser: user.billedUser === true
-  })
-
-  return userStore.getUserByUid(user.uid) || user
-}
-
-async function getCurrentUserTabConfig(uid) {
-  const userStore = useUserStore()
-  if (userStore.isActiveUserTabConfigLoaded) {
-    return userStore.getActiveUserTabConfig
-  }
-
-  const config = await findUserTabConfigByUid(uid)
-  userStore.setActiveUserTabAccess({
-    config,
-    accessManageTabs: canAccessManageTabs(config)
-  })
-  return config
-}
-
-async function getCurrentUserAdminFlags(uid) {
-  const userStore = useUserStore()
-  if (userStore.isActiveUserAdminFlagsLoaded) {
-    return userStore.getActiveUserAdminFlags
-  }
-
-  const flags = await findUserAdminFlagsByUid(uid)
-  userStore.setActiveUserAdminFlags(flags)
-  return flags
-}
-
 function getFallbackPath(userTabConfig, groupId = null) {
   const tab = getDefaultAccessibleTab(userTabConfig, {
     hasActiveGroup: !!groupId
@@ -380,12 +311,18 @@ export function setupRouterGuard(router) {
     const session = hasSession()
 
     if ((to.path === '/' || to.path === '/ur') && session) {
+      const { getCurrentUserProfile, getCurrentUserTabConfig } = await import(
+        './session-guard-helpers'
+      )
       const user = await getCurrentUserProfile()
       const tabConfig = await getCurrentUserTabConfig(user?.uid)
       return getFallbackPath(tabConfig, useGroupStore().getActiveGroup)
     }
 
     if (to.meta.requiresGuest && session) {
+      const { getCurrentUserProfile, getCurrentUserTabConfig } = await import(
+        './session-guard-helpers'
+      )
       const user = await getCurrentUserProfile()
       const tabConfig = await getCurrentUserTabConfig(user?.uid)
       return getFallbackPath(tabConfig, useGroupStore().getActiveGroup)
@@ -397,13 +334,12 @@ export function setupRouterGuard(router) {
 
     const groupStore = useGroupStore()
 
-    // Group-gated routes — set active group from URL param.
-    // Non-member access is handled inside the route component (GroupAccessGuard).
-    if (to.params.groupId) {
-      groupStore.setActiveGroup(to.params.groupId)
-    }
-
     if (to.meta.requiresUserTab || to.meta.requiresAdmin) {
+      const {
+        getCurrentUserProfile,
+        getCurrentUserTabConfig,
+        getCurrentUserAdminFlags
+      } = await import('./session-guard-helpers')
       const user = await getCurrentUserProfile()
       const tabConfig = await getCurrentUserTabConfig(user?.uid)
       const fallbackPath = getFallbackPath(
@@ -430,5 +366,18 @@ export function setupRouterGuard(router) {
         }
       }
     }
+  })
+
+  // Group-gated routes — the URL param owns the active group, applied once the
+  // navigation has actually landed. Doing this in `beforeEach` instead made a
+  // group switch fight itself: the group-scoped pages reset their filters when
+  // the active group changes, useRouteQuerySync() then `router.replace()`s the
+  // route it is still mounted on, and that replace carried the *old* groupId
+  // straight back into the store — the switch appeared to succeed (toast and
+  // all) and then silently reverted.
+  // Non-member access is handled inside the route component (GroupAccessGuard).
+  router.afterEach((to, from, failure) => {
+    if (failure) return
+    if (to.params.groupId) useGroupStore().setActiveGroup(to.params.groupId)
   })
 }

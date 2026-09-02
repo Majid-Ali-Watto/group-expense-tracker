@@ -1,4 +1,6 @@
-import { analyticsReady } from '@/firebase'
+// Straight from the helper, not '@/firebase' — that module also bundles the
+// full Firestore SDK, which this file has no reason to pull in.
+import { analyticsReady } from '@/helpers/firebase-analytics'
 
 const APP_NAME = 'Kharchafy'
 

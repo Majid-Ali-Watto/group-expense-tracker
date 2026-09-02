@@ -4,14 +4,18 @@
       :eyebrow="t('landing.explore.personalBudgetTracker.title')"
       :title="t('personalBudgetTracker.title')"
     >
-      <template #icon><el-icon :size="14"><WalletFilled /></el-icon></template>
+      <template #icon
+        ><el-icon :size="14"><WalletFilled /></el-icon
+      ></template>
       <p>{{ t('personalBudgetTracker.intro') }}</p>
     </PageTitleSection>
 
     <section class="bullet-section single-column">
       <article class="bullet-card">
         <CardHead>
-          <template #icon><el-icon :size="18"><WalletFilled /></el-icon></template>
+          <template #icon
+            ><el-icon :size="18"><WalletFilled /></el-icon
+          ></template>
           <template #title
             ><h2>{{ t('personalBudgetTracker.benefitsHeading') }}</h2></template
           >

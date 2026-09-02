@@ -111,7 +111,9 @@ import {
   SwitchButton,
   Tools
 } from '@element-plus/icons-vue'
-import { UserAvatar } from '@/components/generic-components'
+// Direct path, not the '@/components/generic-components' barrel — see the
+// equivalent comment in WelcomeBanner.vue.
+import UserAvatar from '@/components/generic-components/UserAvatar.vue'
 import {
   AlertTriangleIcon,
   QuestionCircleIcon,

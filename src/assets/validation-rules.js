@@ -7,13 +7,19 @@ const VALIDATION_MESSAGES = { en: en.validation, ur: ur.validation }
 export function getLoginRules(locale = 'en') {
   const m = VALIDATION_MESSAGES[locale] || VALIDATION_MESSAGES.en
 
+  // trigger: 'change' only (never 'blur') — el-input calls formItem.validate
+  // on every keystroke AND on blur; keeping 'blur' out of every rule here
+  // means tabbing through an untouched, still-empty field shows no error,
+  // while typing (then clearing) still validates live. Full validation
+  // still always runs on submit via loginForm.value.validate() regardless
+  // of these per-field triggers.
   return {
     name: [
-      { required: true, message: m.nameRequired, trigger: 'blur' },
+      { required: true, message: m.nameRequired, trigger: 'change' },
       {
         min: 3,
         message: m.nameMinLength,
-        trigger: 'blur'
+        trigger: 'change'
       },
       {
         validator: (rule, value, callback) => {
@@ -26,11 +32,11 @@ export function getLoginRules(locale = 'en') {
             callback()
           }
         },
-        trigger: 'blur'
+        trigger: 'change'
       }
     ],
     mobile: [
-      { required: true, message: m.mobileRequired, trigger: 'blur' },
+      { required: true, message: m.mobileRequired, trigger: 'change' },
       {
         validator: (_rule, value, callback) => {
           if (!value) return callback()
@@ -40,11 +46,11 @@ export function getLoginRules(locale = 'en') {
             callback()
           }
         },
-        trigger: ['blur', 'change']
+        trigger: 'change'
       }
     ],
     email: [
-      { required: true, message: m.emailRequired, trigger: 'blur' },
+      { required: true, message: m.emailRequired, trigger: 'change' },
       {
         validator: (rule, value, callback) => {
           if (!value) return callback()
@@ -60,20 +66,20 @@ export function getLoginRules(locale = 'en') {
             callback()
           }
         },
-        trigger: 'blur'
+        trigger: 'change'
       }
     ],
     password: [
-      { required: true, message: m.passwordRequired, trigger: 'blur' },
+      { required: true, message: m.passwordRequired, trigger: 'change' },
       {
         min: 6,
         message: m.passwordMin,
-        trigger: 'blur'
+        trigger: 'change'
       },
       {
         max: 15,
         message: m.passwordMax,
-        trigger: 'blur'
+        trigger: 'change'
       }
     ]
   }

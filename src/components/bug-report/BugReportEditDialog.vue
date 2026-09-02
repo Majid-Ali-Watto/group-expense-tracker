@@ -22,9 +22,16 @@
           :model-value="editForm.category"
           :placeholder="t('bugReports.selectCategory')"
           class="w-full"
-          @update:model-value="$emit('update:editForm', { ...editForm, category: $event })"
+          @update:model-value="
+            $emit('update:editForm', { ...editForm, category: $event })
+          "
         >
-          <el-option v-for="cat in categories" :key="cat.value" :label="cat.label" :value="cat.value" />
+          <el-option
+            v-for="cat in categories"
+            :key="cat.value"
+            :label="cat.label"
+            :value="cat.value"
+          />
         </el-select>
       </el-form-item>
 
@@ -34,7 +41,9 @@
           :placeholder="t('bugReports.titlePlaceholder')"
           maxlength="120"
           show-word-limit
-          @update:model-value="$emit('update:editForm', { ...editForm, title: $event })"
+          @update:model-value="
+            $emit('update:editForm', { ...editForm, title: $event })
+          "
         />
       </el-form-item>
 
@@ -44,7 +53,9 @@
           :placeholder="t('bugReports.descriptionPlaceholder')"
           :maxlength="1000"
           :show-word-limit="true"
-          @update:model-value="$emit('update:editForm', { ...editForm, description: $event })"
+          @update:model-value="
+            $emit('update:editForm', { ...editForm, description: $event })
+          "
         />
       </el-form-item>
 
@@ -56,18 +67,26 @@
         :filterable="false"
         :clearable="false"
         select-class="w-full"
-        @update:model-value="$emit('update:editForm', { ...editForm, severity: $event })"
+        @update:model-value="
+          $emit('update:editForm', { ...editForm, severity: $event })
+        "
       />
 
       <!-- Existing screenshots -->
-      <el-form-item v-if="editForm.existingScreenshots?.length" :label="t('bugReports.currentScreenshots')">
+      <el-form-item
+        v-if="editForm.existingScreenshots?.length"
+        :label="t('bugReports.currentScreenshots')"
+      >
         <div class="bug-edit-thumbs">
           <div
             v-for="(ss, i) in editForm.existingScreenshots"
             :key="ss.id || i"
             class="bug-edit-thumb"
           >
-            <AppImage :src="ss.url" :alt="ss.filename || `screenshot-${i + 1}`" />
+            <AppImage
+              :src="ss.url"
+              :alt="ss.filename || `screenshot-${i + 1}`"
+            />
             <button
               type="button"
               class="bug-edit-thumb-remove"
@@ -85,7 +104,10 @@
         <div class="bug-upload-area">
           <label
             class="bug-upload-btn"
-            :class="{ 'is-disabled': totalScreenshotCount >= maxScreenshots || editSaving }"
+            :class="{
+              'is-disabled':
+                totalScreenshotCount >= maxScreenshots || editSaving
+            }"
           >
             <PhotoIcon class="w-4 h-4" />
             {{ t('bugReports.attachScreenshot') }}
@@ -101,11 +123,21 @@
           </label>
 
           <div v-if="editNewScreenshots.length" class="bug-file-list">
-            <div v-for="(item, i) in editNewScreenshots" :key="i" class="bug-file-item">
-              <AppImage :src="item.preview" class="bug-file-thumb" :alt="item.file.name" />
+            <div
+              v-for="(item, i) in editNewScreenshots"
+              :key="i"
+              class="bug-file-item"
+            >
+              <AppImage
+                :src="item.preview"
+                class="bug-file-thumb"
+                :alt="item.file.name"
+              />
               <div class="bug-file-info">
                 <span class="bug-file-name">{{ item.file.name }}</span>
-                <span class="bug-file-size">{{ formatSize(item.file.size) }}</span>
+                <span class="bug-file-size">{{
+                  formatSize(item.file.size)
+                }}</span>
               </div>
               <button
                 type="button"
@@ -122,10 +154,20 @@
     </el-form>
 
     <template #footer>
-      <GenericButton size="default" type="default" :disabled="editSaving" @click="$emit('reset')">
+      <GenericButton
+        size="default"
+        type="default"
+        :disabled="editSaving"
+        @click="$emit('reset')"
+      >
         {{ t('common.reset') }}
       </GenericButton>
-      <GenericButton size="default" type="warning" :loading="editSaving" @click="$emit('save')">
+      <GenericButton
+        size="default"
+        type="warning"
+        :loading="editSaving"
+        @click="$emit('save')"
+      >
         {{ editSaving ? t('bugReports.saving') : t('common.save') }}
       </GenericButton>
     </template>
@@ -136,7 +178,12 @@
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { PhotoIcon, XIcon } from '@/components/icons'
-import { AppImage, GenericDropDown, GenericButton, RichTextEditor } from '@/components/generic-components'
+import {
+  AppImage,
+  GenericDropDown,
+  GenericButton,
+  RichTextEditor
+} from '@/components/generic-components'
 
 const localFormRef = ref(null)
 const localFileInputRef = ref(null)
@@ -155,7 +202,9 @@ const props = defineProps({
 })
 
 const totalScreenshotCount = computed(
-  () => (props.editForm?.existingScreenshots?.length ?? 0) + props.editNewScreenshots.length
+  () =>
+    (props.editForm?.existingScreenshots?.length ?? 0) +
+    props.editNewScreenshots.length
 )
 
 defineExpose({

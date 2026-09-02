@@ -1,4 +1,6 @@
-import { performanceReady } from '@/firebase'
+// Straight from the helper, not '@/firebase' — that module also bundles the
+// full Firestore SDK, which this file has no reason to pull in.
+import { performanceReady } from '@/helpers/firebase-performance'
 
 let perfModulePromise = null
 

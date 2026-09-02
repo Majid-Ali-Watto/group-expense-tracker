@@ -2,8 +2,8 @@
   <div class="bug-success">
     <CheckIcon class="w-8 h-8 success-icon" />
     <p class="bug-success-title">{{ t('bugReports.reportSubmitted') }}</p>
-    <p v-if="bugNumber" class="bug-success-number">
-      {{ t('bugReports.bugNumber') }} <strong>#{{ bugNumber }}</strong>
+    <p v-if="trackingId" class="bug-success-number">
+      {{ t('bugReports.trackingId') }} <strong>{{ trackingId }}</strong>
     </p>
     <p class="bug-success-text">{{ t('bugReports.thankYou') }}</p>
     <GenericButton type="default" size="default" @click="$emit('reset')">{{
@@ -20,7 +20,7 @@ import { useI18n } from 'vue-i18n'
 const { t } = useI18n()
 
 defineProps({
-  bugNumber: { type: [String, Number], default: null }
+  trackingId: { type: String, default: null }
 })
 
 defineEmits(['reset'])

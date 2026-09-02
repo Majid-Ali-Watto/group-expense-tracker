@@ -1,6 +1,7 @@
 export * from './users'
 export * from './blocked'
 export * from './user-tab-access'
+export * from './user-tab-config-sync'
 export * from './user-admin-flags'
 export * from './user-private'
 export * from './validateEmail'

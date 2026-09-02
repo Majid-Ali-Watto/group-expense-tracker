@@ -17,7 +17,10 @@
         <!-- Top row: badges + actions -->
         <div class="bug-mr-top">
           <div class="bug-mr-badges">
-            <span class="bug-mr-badge" :class="`mr-badge-${statusSlug(r.status)}`">
+            <span
+              class="bug-mr-badge"
+              :class="`mr-badge-${statusSlug(r.status)}`"
+            >
               {{ r.status }}
             </span>
             <span
@@ -78,6 +81,12 @@
         <!-- Title -->
         <p class="bug-mr-number">
           <a :href="r.url" target="_blank" rel="noopener">{{ r.key }}</a>
+          <!-- Lets the user match this entry against the tracking id they
+               were shown immediately on submission (see BugReportSuccess.vue)
+               — '' for issues created before this existed. -->
+          <span v-if="r.trackingId" class="bug-mr-tracking-id">{{
+            r.trackingId
+          }}</span>
         </p>
         <div class="bug-mr-title-row">
           <p class="bug-mr-title">{{ r.title }}</p>
@@ -107,7 +116,11 @@
             </button>
           </div>
           <div v-if="r.screenshots?.length" class="bug-mr-screenshots">
-            <div v-for="(ss, i) in r.screenshots" :key="ss.id || i" class="bug-mr-thumb">
+            <div
+              v-for="(ss, i) in r.screenshots"
+              :key="ss.id || i"
+              class="bug-mr-thumb"
+            >
               <AppImage
                 :src="ss.url"
                 :alt="t('bugReports.screenshotAlt', { index: i + 1 })"
@@ -125,7 +138,9 @@
                 <button
                   class="bug-mr-img-action-btn"
                   :title="t('common.download')"
-                  @click.prevent="downloadImage(ss.url, ss.filename || `screenshot-${i + 1}`)"
+                  @click.prevent="
+                    downloadImage(ss.url, ss.filename || `screenshot-${i + 1}`)
+                  "
                 >
                   <DownloadIcon class="w-3.5 h-3.5" />
                 </button>
@@ -470,6 +485,11 @@ defineEmits(['reopen', 'edit', 'delete', 'toggle-expand'])
 }
 .bug-mr-number a:hover {
   text-decoration: underline;
+}
+.bug-mr-tracking-id {
+  margin-left: 8px;
+  color: var(--el-text-color-secondary);
+  font-weight: 500;
 }
 
 .bug-mr-desc {

@@ -201,10 +201,7 @@ export default {
     lastUpdated: 'آخری اپ ڈیٹ'
   },
   auth: {
-    modeToggle: {},
     infoAlert: {
-      registerText:
-        'اپنے نام، موبائل، ای میل، اور لاگ ان کوڈ کے ساتھ نیا اکاؤنٹ بنائیں۔',
       registerWarning:
         'اپنا اکاؤنٹ فعال کرنے کے لیے آپ کو 48 گھنٹوں کے اندر اپنی ای میل کی تصدیق کرنی ہوگی۔',
       loginText: 'اپنی ای میل اور پاس ورڈ سے لاگ ان کریں۔'
@@ -220,6 +217,7 @@ export default {
       resendVerification: 'تصدیقی ای میل دوبارہ بھیجیں',
       forgotPassword: 'پاس ورڈ بھول گئے؟',
       rememberMe: 'مجھے یاد رکھیں',
+      agreeToTerms: 'میں {terms} اور {privacy} سے اتفاق کرتا ہوں',
       or: 'یا',
       continueWithGoogle: 'Google کے ساتھ جاری رکھیں',
       newToApp: 'خرچے فائی میں نئے ہیں؟',
@@ -236,7 +234,6 @@ export default {
       title: 'ایک اور مرحلہ',
       instructions:
         'رجسٹریشن مکمل کرنے کے لیے براہ کرم اپنا موبائل نمبر درج کریں۔',
-      prioritize: 'ترجیحاً (ایزی پیسہ/جاز کیش)، ضروری نہیں',
       placeholder: 'موبائل نمبر',
       continue: 'جاری رکھیں'
     },
@@ -266,6 +263,8 @@ export default {
       'بہت زیادہ ناکام کوششیں۔ {minutes} منٹ میں دوبارہ کوشش کریں۔',
     fillRequiredFields: 'براہ کرم تمام مطلوبہ فیلڈز درست طریقے سے پُر کریں',
     allFieldsRequired: 'رجسٹریشن کے لیے تمام فیلڈز درکار ہیں',
+    termsNotAccepted:
+      'براہ کرم جاری رکھنے کے لیے شرائط و ضوابط اور پرائیویسی پالیسی سے اتفاق کریں',
     invalidEmail: 'براہ کرم ایک درست ای میل ایڈریس درج کریں',
     passwordLength: 'پاس ورڈ 6 سے 15 حروف کے درمیان ہونا چاہیے',
     mobileExists: 'اس موبائل نمبر کے ساتھ پہلے سے اکاؤنٹ موجود ہے',
@@ -406,6 +405,7 @@ export default {
     date: 'تاریخ',
     location: 'مقام',
     uploading: 'اپ لوڈ ہو رہا ہے...',
+    loading: 'لوڈ ہو رہا ہے...',
     tax: 'ٹیکس',
     removeTax: 'ٹیکس ہٹائیں',
     importantNotice: 'اہم اطلاع',
@@ -459,6 +459,17 @@ export default {
     actions: 'اقدامات',
     fullName: 'پورا نام',
     mobileNumber: 'موبائل نمبر',
+    mobileWalletProviderLabel: 'والٹ / اکاؤنٹ کا نام',
+    mobileWalletProviderPlaceholder: 'مثلاً جاز کیش، ایزی پیسہ، UPI، PayPal',
+    mobileWalletProviderNote:
+      'تجویز: اگر اس نمبر پر کوئی موبائل والٹ یا بینک اکاؤنٹ ہے (مثلاً جاز کیش، ایزی پیسہ، UPI) تو یہاں اس کا نام لکھ سکتے ہیں تاکہ دوسروں کو معلوم ہو کہ آپ کو ادائیگی کیسے کرنی ہے۔ یہ ضروری نہیں — کوئی بھی درست موبائل نمبر چل جائے گا۔',
+    bankAccountLabel: 'بینک / ادائیگی اکاؤنٹ',
+    bankNameLabel: 'بینک کا نام',
+    bankNamePlaceholder: 'مثلاً HBL، میزان بینک',
+    bankAccountNumberLabel: 'اکاؤنٹ نمبر / IBAN',
+    bankAccountNumberPlaceholder: 'مثلاً PK00XXXX0000000000000000',
+    bankAccountNote:
+      'اختیاری — اگر آپ چاہتے ہیں کہ گروپ ممبرز آپ کو بینک ٹرانسفر کے ذریعے ادائیگی کر سکیں تو یہ درج کریں۔',
     email: 'ای میل',
     sendRequest: 'درخواست بھیجیں',
     failedLoadMonths: 'مہینے لوڈ کرنے میں ناکامی۔ براہ کرم دوبارہ کوشش کریں۔',
@@ -555,6 +566,29 @@ export default {
     settlementDone: 'حساب برابر',
     pays: 'ادا کرتا ہے',
     receives: 'وصول کرتا ہے',
+    markAsPaid: 'ادا شدہ نشان زد کریں',
+    markAsPaidHint:
+      'اختیاری طور پر ٹرانسفر کا اسکرین شاٹ بطور ثبوت منسلک کریں۔ دوسرے ممبر کی تصدیق کے بعد ہی یہ "ادا شدہ" ظاہر ہوگا۔',
+    attachReceiptOptional: 'رسید منسلک کریں (اختیاری)',
+    markAllPaid: 'میری تمام ادائیگیاں ادا شدہ نشان زد کریں ({count})',
+    pendingConfirmation: 'تصدیق کا انتظار',
+    paymentRejected: 'مسترد - وجہ دیکھیں',
+    claimedPaidBy: '{user} کا کہنا ہے کہ انہوں نے یہ ادائیگی کر دی ہے',
+    claimedPaidAmount: '{user} کا کہنا ہے کہ انہوں نے {amount} ادا کیے ہیں',
+    partiallyPaidNote: '{total} میں سے {paid} ادا ہو چکے',
+    amountToMarkPaidLabel: 'ادا شدہ نشان زد کرنے کی رقم',
+    amountExceedsRemaining: 'واجب الادا رقم سے زیادہ نہیں ہو سکتی',
+    viewReceipt: 'رسید دیکھیں',
+    markedPaidSuccess: 'ادا شدہ نشان زد کر دیا گیا — تصدیق کا انتظار ہے',
+    markedAllPaidSuccess: '{count} ادائیگی(اں) ادا شدہ نشان زد کر دی گئیں',
+    paymentConfirmedSuccess: 'ادائیگی کی تصدیق ہو گئی',
+    paymentRejectedNotice: 'ادائیگی کا دعویٰ مسترد کر دیا گیا',
+    rejectPaidConfirm: 'یہ دوسرے ممبر کو بتائے گا کہ آپ کو یہ ادائیگی موصول نہیں ہوئی۔',
+    rejectPaidTitle: 'ادائیگی کا دعویٰ مسترد کریں',
+    rejectionReasonPlaceholder: 'وضاحت کریں کہ آپ اس دعوے کو کیوں مسترد کر رہے ہیں',
+    rejectionReasonRequired: 'براہ کرم وجہ بتائیں',
+    rejectionReasonTitle: 'مسترد کرنے کی وجہ',
+    noRejectionReason: 'کوئی وجہ فراہم نہیں کی گئی۔',
     requestSettlementConfirm:
       'یہ تمام گروپ ممبران کو حساب برابر کرنے کی درخواست بھیجے گا۔ حساب برابر کرنے سے پہلے تمام اراکین کی منظوری ضروری ہے۔',
     noActiveGroup: 'کوئی فعال گروپ منتخب نہیں',
@@ -629,7 +663,11 @@ export default {
     failedLoadLoans: 'قرضے لوڈ کرنے میں ناکامی۔ دوبارہ کوشش کریں۔',
     proposedGiver: 'دینے والا:',
     proposedReceiver: 'لینے والا:',
-    loanToBeDeleted: 'حذف ہونے والا قرضہ:'
+    loanToBeDeleted: 'حذف ہونے والا قرضہ:',
+    markedPaidSuccess: 'ادا شدہ نشان زد کر دیا گیا — تصدیق کا انتظار ہے',
+    markedAllPaidSuccess: '{count} قرضہ (جات) ادا شدہ نشان زد کر دیے گئے',
+    paymentConfirmedSuccess: 'واپسی کی تصدیق ہو گئی',
+    paymentRejectedNotice: 'واپسی کا دعویٰ مسترد کر دیا گیا'
   },
   users: {
     blockedAccountWarning:
@@ -757,7 +795,7 @@ export default {
       'یہ بھی بتائیں کہ مسئلہ ہمیشہ ہوتا ہے یا کبھی کبھار۔'
     ],
     reportSubmitted: 'رپورٹ کامیابی سے جمع ہو گئی!',
-    bugNumber: 'بگ نمبر:',
+    trackingId: 'ٹریکنگ آئی ڈی:',
     thankYou: 'بہتری میں مدد کے لیے شکریہ۔ ہم جلد از جلد اس کا جائزہ لیں گے۔',
     submitAnother: 'ایک اور رپورٹ جمع کریں',
     category: 'بگ زمرہ',
@@ -1443,9 +1481,20 @@ export default {
     newVerifiedEmailLabel: 'نئی تصدیق شدہ ای میل',
     confirmNewEmailLabel: 'نئی ای میل کی تصدیق کریں',
     editMobileTitle: 'موبائل نمبر میں ترمیم کریں',
+    editPaymentTitle: 'بینک اکاؤنٹ میں ترمیم کریں',
+    editWalletTitle: 'والٹ / اکاؤنٹ کے نام میں ترمیم کریں',
     editNameTitle: 'پورے نام میں ترمیم کریں',
     uploadPhoto: 'تصویر اپ لوڈ کریں',
     photoEditorAlt: 'پروفائل تصویر ایڈیٹر',
+    qrCodeLabel: 'ادائیگی کا QR کوڈ',
+    qrCodeAlt: 'ادائیگی کا QR کوڈ',
+    addQrCode: 'QR کوڈ شامل کریں',
+    updateQrCode: 'QR کوڈ اپ ڈیٹ کریں',
+    qrCodeTypeInvalid: 'صرف JPG، PNG، اور WEBP تصاویر کی اجازت ہے۔',
+    qrCodeSizeTooLarge: 'QR کوڈ تصویر کا سائز 1MB سے کم ہونا چاہیے۔',
+    qrCodeUpdated: 'ادائیگی کا QR کوڈ کامیابی سے اپ ڈیٹ ہو گیا',
+    qrCodeUpdateFailed: 'ادائیگی کا QR کوڈ اپ ڈیٹ کرنے میں ناکامی۔',
+    qrCodeRemoved: 'ادائیگی کا QR کوڈ کامیابی سے ہٹا دیا گیا',
     newEmailRequired: 'نئی ای میل درکار ہے',
     newEmailMustDiffer: 'نئی ای میل آپ کی موجودہ ای میل سے مختلف ہونی چاہیے',
     confirmNewEmailRequired: 'براہ کرم اپنی نئی ای میل کی تصدیق کریں',
@@ -1465,5 +1514,19 @@ export default {
     sendVerificationFailed: 'ای میل تصدیق بھیجنے میں ناکامی۔',
     verificationEmailSentBody:
       'تصدیقی ای میل {email} پر بھیج دی گئی ہے۔ تبدیلی مکمل کرنے کے لیے اس لنک پر کلک کریں، پھر نئی ای میل کے ساتھ دوبارہ سائن ان کریں۔'
+  },
+  paymentAccount: {
+    dialogTitle: 'اکاؤنٹ کی تفصیلات',
+    viewDetails: 'اکاؤنٹ نمبر دیکھیں',
+    intro: '{name} کو ادائیگی کیسے کریں',
+    noDetails: '{name} نے ابھی تک کوئی اکاؤنٹ کی تفصیلات شامل نہیں کیں۔',
+    copyAccountNumber: 'اکاؤنٹ نمبر کاپی کریں',
+    walletNameLabel: 'والٹ کا نام',
+    walletAccountLabel: 'والٹ اکاؤنٹ',
+    bankNameLabel: 'بینک کا نام',
+    bankAccountLabel: 'بینک اکاؤنٹ',
+    previewQrCode: 'پیش منظر',
+    downloadQrCode: 'ڈاؤن لوڈ کریں',
+    qrDownloadFailed: 'QR کوڈ ڈاؤن لوڈ کرنے میں ناکامی۔'
   }
 }

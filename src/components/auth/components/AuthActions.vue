@@ -20,8 +20,15 @@
     <el-checkbox
       :model-value="rememberMe"
       :label="t('auth.actions.rememberMe')"
-      class="text-sm text-gray-700 mb-4"
+      class="text-sm text-gray-700"
       @update:modelValue="$emit('update:rememberMe', $event)"
+    />
+
+    <TermsConsentCheckbox
+      v-if="mode === 'register'"
+      :model-value="termsAccepted"
+      class="mb-4"
+      @update:modelValue="$emit('update:termsAccepted', $event)"
     />
 
     <div class="flex items-center justify-between gap-2">
@@ -31,7 +38,7 @@
         size="default"
         custom-class="flex-1"
         :loading="isSubmitting"
-        :disabled="isSubmitting"
+        :disabled="isSubmitting || (mode === 'register' && !termsAccepted)"
       >
         {{ mode === 'register' ? t('nav.register') : t('nav.login') }}
       </GenericButton>
@@ -109,12 +116,14 @@
 <script setup>
 import { useI18n } from 'vue-i18n'
 import { GenericButton } from '@/components/generic-components'
+import TermsConsentCheckbox from './TermsConsentCheckbox.vue'
 
 const { t } = useI18n()
 
 defineProps({
   mode: { type: String, required: true },
   rememberMe: { type: Boolean, default: false },
+  termsAccepted: { type: Boolean, default: false },
   isSubmitting: { type: Boolean, default: false },
   showResendVerification: { type: Boolean, default: false }
 })
@@ -122,6 +131,7 @@ defineProps({
 defineEmits([
   'update:mode',
   'update:rememberMe',
+  'update:termsAccepted',
   'submit',
   'forgot-code',
   'resend-verification',

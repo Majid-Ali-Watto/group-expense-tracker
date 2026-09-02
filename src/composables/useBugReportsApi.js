@@ -26,7 +26,9 @@ async function callApi(path, { method = 'GET', body } = {}) {
   const responseBody = await response.json().catch(() => ({}))
 
   if (!response.ok) {
-    throw new Error(responseBody?.message || `Bug report request failed (${response.status}).`)
+    throw new Error(
+      responseBody?.message || `Bug report request failed (${response.status}).`
+    )
   }
 
   return responseBody
@@ -60,5 +62,10 @@ export function useBugReportsApi() {
     await callApi(`/${encodeURIComponent(issueKey)}`, { method: 'DELETE' })
   }
 
-  return { fetchBugReports, updateBugReportStatus, updateBugReport, deleteBugReport }
+  return {
+    fetchBugReports,
+    updateBugReportStatus,
+    updateBugReport,
+    deleteBugReport
+  }
 }

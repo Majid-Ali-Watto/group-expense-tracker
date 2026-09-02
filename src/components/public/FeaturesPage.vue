@@ -4,7 +4,9 @@
       :eyebrow="t('features.eyebrow')"
       :title="t('features.title')"
     >
-      <template #icon><el-icon :size="14"><Grid /></el-icon></template>
+      <template #icon
+        ><el-icon :size="14"><Grid /></el-icon
+      ></template>
       <p>{{ t('features.intro') }}</p>
     </PageTitleSection>
 
@@ -17,10 +19,11 @@
         <CardHead>
           <template #icon
             ><el-icon :size="18"
-              ><component :is="FEATURE_ICONS[index]"
-            /></el-icon
+              ><component :is="FEATURE_ICONS[index]" /></el-icon
           ></template>
-          <template #title><h2>{{ section.title }}</h2></template>
+          <template #title
+            ><h2>{{ section.title }}</h2></template
+          >
         </CardHead>
         <ul>
           <li v-for="point in section.points" :key="point">{{ point }}</li>

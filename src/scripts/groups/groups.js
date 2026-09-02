@@ -755,7 +755,15 @@ export const Groups = () => {
           photoUrl: user.photoUrl || '',
           photoMeta: user.photoMeta || null,
           maskedMobile: maskMobile(user.mobile || ''),
-          blocked: user.blocked === true
+          blocked: user.blocked === true,
+          // Same payment-account fields as shared-groups.js's
+          // loadSharedGroups() and users.js's syncUsersListener() — keep all
+          // three user-list hydration paths in sync.
+          mobileWalletProvider: user.mobileWalletProvider || '',
+          bankName: user.bankName || '',
+          bankAccountNumber: user.bankAccountNumber || '',
+          qrCodeUrl: user.qrCodeUrl || '',
+          qrCodeMeta: user.qrCodeMeta || null
         })
       })
     } catch (error) {
@@ -968,8 +976,14 @@ export const Groups = () => {
 
       Object.values(loansSource).forEach((loan) => {
         if (!loansMonthNode && !isSameMonth(loan?.date)) return
-        const amt = parseFloat(loan.amount) || 0
-        if (!amt) return
+        // Only what's still unpaid counts toward net position — a confirmed
+        // (full or partial) repayment must stop counting, or an
+        // already-repaid loan can mask (or cancel out) a later, unrelated
+        // loan between the same two people. See loans.js's loanSettlements
+        // for the same fix.
+        const totalPaid = loan.paidRequest?.totalPaid || 0
+        const amt = (parseFloat(loan.amount) || 0) - totalPaid
+        if (amt <= 0.001) return
         if (loan.giver === currentUser) loansNet += amt
         if (loan.receiver === currentUser) loansNet -= amt
       })
@@ -1646,7 +1660,8 @@ export const Groups = () => {
       read(`${DB_NODES.SHARED_LOANS}/${groupId}`, false)
     ])
     return (
-      (expenseDoc?.months?.length || 0) > 0 || (loanDoc?.months?.length || 0) > 0
+      (expenseDoc?.months?.length || 0) > 0 ||
+      (loanDoc?.months?.length || 0) > 0
     )
   }
 
@@ -1721,7 +1736,10 @@ export const Groups = () => {
 
       // Name/description/currency changes don't need member approval
       // (unlike membership changes) — update directly and notify members.
-      if ((nameChanged || descriptionChanged || currencyChanged) && !membersChanged) {
+      if (
+        (nameChanged || descriptionChanged || currencyChanged) &&
+        !membersChanged
+      ) {
         const updatedGroup = {
           ...group,
           name: editForm.value.name,
@@ -2235,11 +2253,17 @@ export const Groups = () => {
           return t('groupsMessages.cannotLeaveLoanChangePending')
         }
 
+        // Only what's still unpaid should keep blocking the user from
+        // leaving, or count toward the balance that must be zero to leave —
+        // a confirmed (full or partial) repayment genuinely closes that much
+        // of the loan out. See loans.js's loanSettlements for the same fix.
+        const totalPaid = loan?.paidRequest?.totalPaid || 0
+        const amt = (parseFloat(loan.amount) || 0) - totalPaid
+        if (amt <= 0.001) continue
+
         if (loan?.giver === mobile || loan?.receiver === mobile)
           hasActiveUserTransactions = true
 
-        const amt = parseFloat(loan.amount) || 0
-        if (!amt) continue
         if (loan.giver === mobile) net += amt
         if (loan.receiver === mobile) net -= amt
       }
@@ -2260,10 +2284,13 @@ export const Groups = () => {
           if (loan?.deleteRequest || loan?.updateRequest) {
             throw new Error(t('groupsMessages.cannotLeaveLoanChangePending'))
           }
+          // See the collectionGroup loop above — only what's still unpaid
+          // should count.
+          const totalPaid = loan?.paidRequest?.totalPaid || 0
+          const amt = (parseFloat(loan.amount) || 0) - totalPaid
+          if (amt <= 0.001) return
           if (loan?.giver === mobile || loan?.receiver === mobile)
             hasActiveUserTransactions = true
-          const amt = parseFloat(loan.amount) || 0
-          if (!amt) return
           if (loan.giver === mobile) net += amt
           if (loan.receiver === mobile) net -= amt
         })

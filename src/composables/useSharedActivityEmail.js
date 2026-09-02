@@ -4,7 +4,7 @@ import { useEmailLimit } from '@/composables/useEmailLimit'
 import { getApiAuthHeaders, getIdentity } from '@/utils'
 
 const API_BASE_URL = import.meta.env.VITE_NODE_BE_API_URL?.trim()
-const PRODUCTION = true //import.meta.env.PROD
+const PRODUCTION = import.meta.env.PROD
 const BUG_REPORT_RECIPIENT = import.meta.env.VITE_BUG_REPORT_HELP_EMAIL?.trim()
 
 export function useSharedActivityEmail() {
@@ -34,13 +34,16 @@ export function useSharedActivityEmail() {
     })().catch(() => {})
   }
 
-  // bug-report submission is no longer a best-effort side channel — Jira is
-  // now the sole store for the report (no Firestore doc), so unlike
-  // postEmailNotification() above this is awaited and throws on failure so
-  // the caller (bug-report.js's submitReport) can surface it and read back
-  // the created Jira issue. Also bypasses the getEmailConfig().send toggle:
-  // that flag is a user preference for *notification* emails, not a gate on
-  // whether a bug report actually gets submitted.
+  // Unlike postEmailNotification() above, this is awaited and throws on
+  // failure so the caller (bug-report.js's submitReport) can surface it.
+  // The backend responds immediately with a locally-generated trackingId
+  // (`{ notificationType, trackingId }`) — creating the real Jira issue
+  // happens afterward, in the background (see kharcafy-node-be's
+  // "Background jobs" — bug-report-creation-job.service.ts), so this no
+  // longer waits on that Jira round-trip either. Also bypasses the
+  // getEmailConfig().send toggle: that flag is a user preference for
+  // *notification* emails, not a gate on whether a bug report actually
+  // gets submitted.
   async function postBugReportNotification(payload) {
     if (!API_BASE_URL) {
       throw new Error('Bug report backend is not configured.')
@@ -60,7 +63,9 @@ export function useSharedActivityEmail() {
     const body = await response.json().catch(() => ({}))
 
     if (!response.ok) {
-      throw new Error(body?.message || `Bug report submission failed (${response.status}).`)
+      throw new Error(
+        body?.message || `Bug report submission failed (${response.status}).`
+      )
     }
 
     return body
@@ -197,8 +202,9 @@ export function useSharedActivityEmail() {
     incrementEmailCount()
   }
 
-  // Returns the backend's response body (`{ jiraIssue, ... }`) — awaited and
-  // thrown on failure, unlike sendSharedActivityEmail's fire-and-forget.
+  // Returns the backend's response body (`{ notificationType, trackingId }`)
+  // — awaited and thrown on failure, unlike sendSharedActivityEmail's
+  // fire-and-forget.
   async function sendBugReportEmail({
     title = '',
     category = '',

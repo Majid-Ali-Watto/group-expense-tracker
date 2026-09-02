@@ -9,7 +9,7 @@
       </template>
       <template #title>{{ t('groups.viewDetails') }}</template>
 
-      <div class="space-y-3 pt-2 px-2">
+      <div class="space-y-3">
         <!-- Description -->
         <div v-if="group.description">
           <div class="text-xs font-medium text-gray-500 mb-1">

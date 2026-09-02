@@ -49,11 +49,16 @@ service cloud.firestore {
         && request.resource.data.get('isAdmin', false) == resource.data.get('isAdmin', false);
     }
 
-    // Self-created user docs may include admin-managed flags only at their safe defaults.
+    // Self-created user docs may include admin-managed flags only at their safe
+    // defaults, and must record that the user agreed to the Terms of Service /
+    // Privacy Policy at signup (see group-expense-tracker's login.js) — this is
+    // the app's actual authorization boundary since there's no backend
+    // registration endpoint to enforce it server-side otherwise.
     function validUserCreateFlags() {
       return request.resource.data.get('blocked', false) == false
         && request.resource.data.get('billedUser', false) == false
-        && request.resource.data.get('isAdmin', false) == false;
+        && request.resource.data.get('isAdmin', false) == false
+        && request.resource.data.get('termsAcceptedAt', null) is string;
     }
 
     // True when the named group document exists and is not blocked.
@@ -465,6 +470,113 @@ service cloud.firestore {
         && (!changedKeys.hasAny(['updateRequest']) || sharedItemRequestValid('updateRequest'));
     }
 
+    // ── Shared-loan repayment ("mark as paid") enforcement ──────────────────
+    // Deliberately separate from sharedItemRequestValid()/sharedItemRequestApproved()
+    // above: those model a request that ALL group members must approve
+    // (deleteRequest/updateRequest — see sharedItemMemberCount()). A loan
+    // repayment only needs the lender's (the loan's own `giver` field) sign-off,
+    // not a group-wide vote, so it gets its own narrower state machine keyed
+    // off the loan item's own giver/receiver fields rather than member count.
+    // Repayment flows receiver -> giver (the borrower pays the lender back) —
+    // the mirror of the loan itself (giver -> receiver) — so `paidRequest.from`
+    // is always the loan's `receiver` and `.to` is always its `giver`.
+    //
+    // Supports PARTIAL repayment: paidRequest tracks a running `totalPaid`
+    // (cumulative confirmed amount) plus at most one `pending` claim at a
+    // time (an installment awaiting the lender's confirm/reject) — not a
+    // single one-shot pending/confirmed/rejected status. `totalPaid` only
+    // ever moves by exactly the pending claim's amount, on confirm.
+    function loanPaidRequestValid() {
+      let oldReq = resource.data.get('paidRequest', null);
+      let newReq = request.resource.data.get('paidRequest', null);
+      let giver = resource.data.get('giver', '');
+      let receiver = resource.data.get('receiver', '');
+      let oldPending = oldReq != null ? oldReq.get('pending', null) : null;
+      let newPending = newReq != null ? newReq.get('pending', null) : null;
+      return (newReq == null)
+        || (oldReq == null && newReq != null
+              && request.auth.uid == receiver
+              && newReq.get('from', '') == receiver
+              && newReq.get('to', '') == giver
+              && newReq.get('totalPaid', -1) == 0
+              && newPending != null
+              && newPending.get('requestedBy', '') == receiver
+              && newPending.get('amount', 0) > 0)
+        || (oldReq != null && newReq != null
+              && newReq.get('from', '') == oldReq.get('from', '')
+              && newReq.get('to', '') == oldReq.get('to', '')
+              && (
+                    // Debtor (receiver) submits a new claim — only while
+                    // nothing is currently pending; totalPaid unchanged.
+                    (request.auth.uid == receiver
+                      && oldPending == null
+                      && newPending != null
+                      && newPending.get('requestedBy', '') == receiver
+                      && newPending.get('amount', 0) > 0
+                      && newReq.get('totalPaid', 0) == oldReq.get('totalPaid', 0))
+                 || // Creditor (giver) resolves a pending claim — confirm
+                    // bumps totalPaid by exactly the claim amount; reject
+                    // leaves it unchanged. Either way `pending` clears.
+                    (request.auth.uid == giver
+                      && oldPending != null
+                      && newPending == null
+                      && (
+                           newReq.get('totalPaid', 0) == oldReq.get('totalPaid', 0) + oldPending.get('amount', 0)
+                        || newReq.get('totalPaid', 0) == oldReq.get('totalPaid', 0)
+                      ))
+                 ));
+    }
+
+    function loanPaidRequestMetaOnly() {
+      let changedKeys = request.resource.data.diff(resource.data).affectedKeys();
+      return changedKeys.hasOnly(['paidRequest', 'notifications'])
+        && loanPaidRequestValid();
+    }
+
+    // ── Settlement-payment ("mark as paid") record enforcement ─────────────
+    // Backs settlement-payments/{groupId}/months/{monthYear}/records/{id} —
+    // the persisted paid-so-far ledger for the derived (never-stored)
+    // pairwise settlements computed client-side in settlement.js. Same
+    // running-totalPaid + at-most-one-pending-claim shape as
+    // loanPaidRequestValid() above, but as a whole-document state machine
+    // (create/update) rather than one field on an existing item, since
+    // settlement rows have no item doc of their own.
+    function settlementPaymentCreateValid() {
+      let pending = request.resource.data.get('pending', null);
+      return request.resource.data.get('from', '') == request.auth.uid
+        && request.resource.data.get('totalPaid', -1) == 0
+        && pending != null
+        && pending.get('requestedBy', '') == request.auth.uid
+        && pending.get('amount', 0) > 0;
+    }
+
+    function settlementPaymentUpdateValid() {
+      let oldPending = resource.data.get('pending', null);
+      let newPending = request.resource.data.get('pending', null);
+      return request.resource.data.get('from', '') == resource.data.get('from', '')
+        && request.resource.data.get('to', '') == resource.data.get('to', '')
+        && (
+              // Debtor (from) submits a new claim — only while nothing is
+              // currently pending; totalPaid unchanged.
+              (resource.data.get('from', '') == request.auth.uid
+                && oldPending == null
+                && newPending != null
+                && newPending.get('requestedBy', '') == request.auth.uid
+                && newPending.get('amount', 0) > 0
+                && request.resource.data.get('totalPaid', 0) == resource.data.get('totalPaid', 0))
+           || // Creditor (to) resolves a pending claim — confirm bumps
+              // totalPaid by exactly the claim amount; reject leaves it
+              // unchanged. Either way `pending` clears.
+              (resource.data.get('to', '') == request.auth.uid
+                && oldPending != null
+                && newPending == null
+                && (
+                     request.resource.data.get('totalPaid', 0) == resource.data.get('totalPaid', 0) + oldPending.get('amount', 0)
+                  || request.resource.data.get('totalPaid', 0) == resource.data.get('totalPaid', 0)
+                ))
+           );
+    }
+
     // Users — any authenticated user can read.
     // New users may create their own document (callerIsNotBlocked() would fail because
     // the document doesn't exist yet when checked). Updates/deletes still require the
@@ -616,12 +728,30 @@ service cloud.firestore {
                     && (
                       sharedItemRequestMetaOnly()
                       || sharedItemRequestApproved('updateRequest', groupId)
+                      || loanPaidRequestMetaOnly()
                     );
       allow delete: if callerCanAccessSharedGroup(groupId)
                     && (
                       sharedItemRequestApproved('deleteRequest', groupId)
                       || sharedItemSettlementApproved(groupId)
                     );
+    }
+
+    // Settlement payments — persisted "paid" status overlay for the derived
+    // (never stored) pairwise shared-expense settlements computed client-side
+    // in settlement.js. One doc per (from,to) pair per group per month; see
+    // settlementPaymentCreateValid()/settlementPaymentUpdateValid() above.
+    match /settlement-payments/{groupId} {
+      allow read, write: if callerCanAccessSharedGroup(groupId);
+    }
+    match /settlement-payments/{groupId}/months/{monthYear} {
+      allow read, write: if callerCanAccessSharedGroup(groupId);
+    }
+    match /settlement-payments/{groupId}/months/{monthYear}/records/{recordId} {
+      allow read: if callerCanAccessSharedGroup(groupId);
+      allow create: if callerCanAccessSharedGroup(groupId) && settlementPaymentCreateValid();
+      allow update: if callerCanAccessSharedGroup(groupId) && settlementPaymentUpdateValid();
+      allow delete: if false;
     }
 
     // Personal expenses — read restricted to owner; blocked user cannot write

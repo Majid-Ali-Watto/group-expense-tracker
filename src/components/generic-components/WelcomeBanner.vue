@@ -88,9 +88,19 @@
 
 <script setup>
 import { ref, computed, watch, nextTick } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { MenuIcon, UsersIcon } from '@/components/icons'
-import { GenericButton, UserAvatar } from '@/components/generic-components'
+// Direct paths, not the '@/components/generic-components' barrel — that
+// barrel also statically imports NetPositionDialog.vue (and ~30 other
+// components) at its top. WelcomeBanner.vue is itself reached via a
+// loadAsyncComponent(() => import(...)) closure created eagerly in
+// src/scripts/layout/app.js (evaluated on every route, though the component
+// only renders when logged in), so going through the shared barrel dragged
+// NetPositionDialog's CSS (plus el-dialog/el-checkbox/el-form/el-alert) into
+// every prerendered public page's <head> as render-blocking stylesheets.
+import GenericButton from './GenericButton.vue'
+import UserAvatar from './UserAvatar.vue'
 import GenericDropDown from './GenericDropDown.vue'
 import { useGroupStore, useAuthStore, useUserStore } from '@/stores'
 import { useJoinedGroups } from '@/composables'
@@ -105,6 +115,8 @@ defineProps({
 })
 
 const { t } = useI18n()
+const route = useRoute()
+const router = useRouter()
 const groupStore = useGroupStore()
 const authStore = useAuthStore()
 const userStore = useUserStore()
@@ -142,10 +154,24 @@ watch(joinedGroups, async () => {
   selectedGroupId.value = id
 })
 
-function handleSelectGroup(id) {
+async function handleSelectGroup(id) {
   const group = groupStore.getGroupById(id)
   if (!group) return
-  groupStore.setActiveGroup(id)
+
+  // On group-scoped routes (/shared-expenses/:groupId, /shared-loans/:groupId)
+  // the URL owns the active group — router.afterEach() applies params.groupId
+  // to the store — so switch by navigating. Writing only the store there left
+  // the URL on the old group, and the next in-page `router.replace()` (filter
+  // → query sync, which fires because the page resets its filters on group
+  // change) put that stale groupId back: the toast showed but the dropdown
+  // snapped back, so switching took two attempts.
+  if (route.params.groupId && route.params.groupId !== id) {
+    const failure = await router.push(`/${route.path.split('/')[1]}/${id}`)
+    if (failure) return
+  } else {
+    groupStore.setActiveGroup(id)
+  }
+
   showSuccess(t('groupsMessages.selectedGroupSuccess', { name: group.name }))
 }
 </script>

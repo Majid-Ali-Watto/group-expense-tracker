@@ -74,7 +74,6 @@ h1 {
   /* max-width: 66ch; */
   line-height: 1.75;
   color: #446055;
-
 }
 
 :root.dark-theme .title-section {

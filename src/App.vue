@@ -1,7 +1,8 @@
 <template>
-  <el-config-provider>
-    <Analytics />
-    <SpeedInsights />
+
+  <el-config-provider v-if="isOnline">
+    <Analytics v-if="isProd"/>
+    <SpeedInsights v-if="isProd"/>
     <div
       class="flex flex-col min-h-screen"
       :dir="locale === 'ur' ? 'rtl' : 'ltr'"
@@ -108,27 +109,53 @@
 
       <PublicFooter v-if="showPublicFooter" />
 
-      <!-- Expenses Summary Dialog -->
-      <NetPositionDialog
-        v-if="loggedIn"
+      <!-- Expenses Summary Dialog. `:is`, not a plain <NetPositionDialog>
+           tag — NetPositionDialog is a ref, populated on first login rather
+           than at App() setup, so its (and el-dialog/el-checkbox/el-form/
+           el-alert's) CSS doesn't ship on the public marketing pages. See
+           src/scripts/layout/app.js's comment above its definition. -->
+      <component
+        :is="NetPositionDialog"
+        v-if="loggedIn && NetPositionDialog"
         v-model="showNetPositionDialog"
         :summary="netPositionSummary"
       />
     </div>
   </el-config-provider>
+  <OfflinePage v-else-if="!isOnline"/>
 </template>
 
 <script setup>
 import { provide } from 'vue'
 import { Analytics } from '@vercel/analytics/vue'
 import { SpeedInsights } from '@vercel/speed-insights/vue'
-import { App } from '@/scripts/layout'
+// Direct path, not the '@/scripts/layout' barrel — that barrel also
+// re-exports header.js, which is Firestore-backed (used by the lazy
+// Header.vue), and App.vue is the always-mounted root, so going through the
+// shared barrel module risked dragging that Firestore SDK into every
+// route's eager bundle. See src/firebase.js's header comment.
+import { App } from '@/scripts/layout/app'
+// Direct path, not the '@/composables' barrel — that barrel re-exports
+// several Firestore-backed composables (useFireBase, useGlobalNotifications,
+// useAppConfig, ...), and App.vue is the always-mounted root, so importing
+// through the barrel would drag the whole Firestore SDK into every route's
+// eager bundle just to reach this one Firestore-free composable. See
+// src/firebase.js's header comment.
+import { useOnlineStatus } from '@/composables/useOnlineStatus'
+
+// Deliberately not LIVE_INTEGRATIONS_ENABLED: that flag is overridable via
+// VITE_LIVE_INTEGRATIONS_ENABLED for local testing of other integrations
+// (Cloudinary, exchange rates), which would also flip Analytics/Speed
+// Insights on in dev and send dev traffic to real Vercel dashboards.
+// Analytics/Speed Insights must stay tied to an actual production build.
+const isProd = import.meta.env.PROD
 
 const {
   Header,
   WelcomeBanner,
   PublicFooter,
   NetPositionDialog,
+  OfflinePage,
   locale,
   loggedIn,
   logout,
@@ -161,7 +188,7 @@ const {
   isTabRoute,
   goToMainMenu
 } = App()
-
+const { isOnline } = useOnlineStatus()
 // The Settings page (a route, so a descendant of this component's own
 // subtree) needs to trigger a full logout for the "Reset app" action.
 // logout() closes over sync-listener teardown created inside App() —

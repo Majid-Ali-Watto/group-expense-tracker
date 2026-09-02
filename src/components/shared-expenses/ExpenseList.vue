@@ -206,8 +206,4 @@ const {
 .pending-requests-accordion :deep(.el-collapse-item__header) {
   padding-inline: 12px;
 }
-.pending-requests-accordion :deep(.el-collapse-item__content) {
-  padding-inline: 12px;
-  padding-top: 12px;
-}
 </style>

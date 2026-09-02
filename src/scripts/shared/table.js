@@ -411,11 +411,7 @@ export const Table = (props) => {
           rawFormatAmount(row?.originalAmount, originalCurrency)
         ),
         h('div', { class: 'table-toast__label' }, t('table.convertedAmount')),
-        h(
-          'div',
-          { class: 'table-toast__value' },
-          formatAmount(row?.amount)
-        ),
+        h('div', { class: 'table-toast__value' }, formatAmount(row?.amount)),
         h('div', { class: 'table-toast__label' }, t('table.exchangeRate')),
         h(
           'div',

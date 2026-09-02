@@ -1,7 +1,9 @@
 <template>
   <main class="public-page inner-page">
     <PageTitleSection :eyebrow="t('faq.eyebrow')" :title="t('faq.title')">
-      <template #icon><el-icon :size="14"><ChatDotRound /></el-icon></template>
+      <template #icon
+        ><el-icon :size="14"><ChatDotRound /></el-icon
+      ></template>
       <p>{{ t('faq.intro') }}</p>
     </PageTitleSection>
 
@@ -93,10 +95,6 @@ const openItems = ref([])
 :deep(.faq-list .el-collapse-item__header) {
   font-size: 1.1rem;
   padding: 18px 24px;
-}
-
-:deep(.faq-list .el-collapse-item__content) {
-  padding-inline: 24px;
 }
 
 /* FAQ's badge is a numbered pill rather than the default rounded-square

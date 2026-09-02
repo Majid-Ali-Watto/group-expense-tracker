@@ -8,7 +8,7 @@
 
     <BugReportSuccess
       v-if="activeView === 'form' && submitted"
-      :bug-number="lastSubmittedIssueKey"
+      :tracking-id="lastSubmittedTrackingId"
       @reset="resetForm"
     />
 
@@ -83,7 +83,13 @@ import BugReportTips from './BugReportTips.vue'
 import BugReportForm from './BugReportForm.vue'
 import MyReportsView from './MyReportsView.vue'
 import BugReportEditDialog from './BugReportEditDialog.vue'
-import { BugReport, markdownToHtml, formatDate, copyText, downloadImage } from '@/scripts/bug-reports'
+import {
+  BugReport,
+  markdownToHtml,
+  formatDate,
+  copyText,
+  downloadImage
+} from '@/scripts/bug-reports'
 
 const props = defineProps({
   view: { type: String, default: 'form' },
@@ -97,7 +103,7 @@ const {
   submitting,
   uploadingScreenshots,
   submitted,
-  lastSubmittedIssueKey,
+  lastSubmittedTrackingId,
   screenshots,
   uploadProgress,
   isClean,

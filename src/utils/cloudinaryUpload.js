@@ -1,9 +1,27 @@
 import { getApiAuthHeaders } from './apiAuth'
-import { MAX_RECEIPT_FILE_SIZE_BYTES } from '@/constants'
+import { generateUUID } from './uuid'
+import {
+  MAX_RECEIPT_FILE_SIZE_BYTES,
+  LIVE_INTEGRATIONS_ENABLED
+} from '@/constants'
 
 const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
 const API_BASE = import.meta.env.VITE_NODE_BE_API_URL?.trim()
 const API_KEY = import.meta.env.VITE_X_API_KEY || ''
+
+// Dev-mode stand-in for a real Cloudinary upload — no signature round-trip,
+// no real network upload, just a plausible-looking link so the rest of the
+// UI (previews, saved receipt metadata, etc.) has something to work with.
+// picsum.photos is a real public placeholder-image service, so the link
+// actually resolves to an image instead of dead-ending.
+function mockUploadResult() {
+  const seed = generateUUID()
+  return {
+    url: `https://picsum.photos/seed/${seed}/600/400`,
+    publicId: `dev-mock/${seed}`,
+    resourceType: 'image'
+  }
+}
 
 async function getUploadSignature() {
   if (!API_BASE) {
@@ -35,6 +53,14 @@ export async function uploadToCloudinary(
     throw new Error(
       `File size must be less than ${Math.round(maxSizeBytes / (1024 * 1024))}MB.`
     )
+  }
+
+  // Outside prod (or when explicitly overridden — see
+  // src/constants/liveIntegrations.js), skip Cloudinary entirely: no
+  // signature request, no real upload, just a mock link. Keeps local/dev
+  // testing from burning real Cloudinary quota.
+  if (!LIVE_INTEGRATIONS_ENABLED) {
+    return mockUploadResult()
   }
 
   const signed = await getUploadSignature()
@@ -73,7 +99,10 @@ export async function deleteFromCloudinary(
   resourceType = 'image',
   context = null
 ) {
-  if (!publicId || !API_BASE) return
+  // A dev-mock publicId (see mockUploadResult above) never existed on
+  // Cloudinary — nothing to delete, and no reason to touch the real
+  // backend/Cloudinary for it.
+  if (!publicId || !API_BASE || !LIVE_INTEGRATIONS_ENABLED) return
 
   try {
     const headers = await getApiAuthHeaders({

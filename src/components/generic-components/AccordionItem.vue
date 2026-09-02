@@ -1,5 +1,9 @@
 <template>
-  <el-collapse-item :name="name" class="accordion-item" :class="`is-${variant}`">
+  <el-collapse-item
+    :name="name"
+    class="accordion-item"
+    :class="`is-${variant}`"
+  >
     <template #title>
       <span class="accordion-item-title">
         <span v-if="$slots.badge" class="accordion-item-badge">
@@ -63,10 +67,6 @@ defineProps({
   line-height: 1.4;
 }
 
-:deep(.el-collapse-item__content) {
-  padding-block: 4px 16px;
-}
-
 :deep(.el-collapse-item__wrap) {
   background: transparent;
   border-bottom: none;
@@ -105,11 +105,6 @@ defineProps({
   padding: 12px 14px;
 }
 
-.is-card :deep(.el-collapse-item__content) {
-  padding-inline: 14px;
-  padding-inline-start: 56px;
-}
-
 .is-card .accordion-item-title {
   gap: 12px;
 }
@@ -128,11 +123,6 @@ defineProps({
 .is-compact :deep(.el-collapse-item__header) {
   font-size: 13px;
   padding: 8px 10px;
-}
-
-.is-compact :deep(.el-collapse-item__content) {
-  padding-inline: 10px;
-  padding-inline-start: 38px;
 }
 
 .is-compact .accordion-item-title {

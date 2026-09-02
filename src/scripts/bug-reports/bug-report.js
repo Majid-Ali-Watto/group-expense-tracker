@@ -1,7 +1,8 @@
 import { ref, computed, watch, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessageBox } from 'element-plus'
-import { auth } from '@/firebase'
+// Only auth is needed here — '@/firebase-auth' skips pulling in Firestore.
+import { auth } from '@/firebase-auth'
 import { useSharedActivityEmail } from '@/composables'
 import { useBugReportsApi } from '@/composables/useBugReportsApi'
 import { uploadReceipt, showError, showSuccess } from '@/utils'
@@ -71,7 +72,12 @@ export const BugReport = (props) => {
   const userStore = useUserStore()
   const { t } = useI18n()
   const { sendBugReportEmail } = useSharedActivityEmail()
-  const { fetchBugReports, updateBugReportStatus, updateBugReport, deleteBugReport } = useBugReportsApi()
+  const {
+    fetchBugReports,
+    updateBugReportStatus,
+    updateBugReport,
+    deleteBugReport
+  } = useBugReportsApi()
 
   const activeView = ref(props.view)
   const isLoggedIn = computed(() => !!authStore.getActiveUserUid)
@@ -157,7 +163,7 @@ export const BugReport = (props) => {
   const submitting = ref(false)
   const uploadingScreenshots = ref(false)
   const submitted = ref(false)
-  const lastSubmittedIssueKey = ref('')
+  const lastSubmittedTrackingId = ref('')
   const screenshots = ref([])
   const uploadProgress = ref([])
   const form = ref(emptyForm())
@@ -231,7 +237,7 @@ export const BugReport = (props) => {
     uploadProgress.value = []
     form.value = emptyForm()
     submitted.value = false
-    lastSubmittedIssueKey.value = ''
+    lastSubmittedTrackingId.value = ''
     formRef.value?.clearValidate()
   }
 
@@ -281,11 +287,15 @@ export const BugReport = (props) => {
         email: auth.currentUser?.email || ''
       }
 
-      // The backend creates the Jira issue (and re-uploads screenshots as
-      // real Jira attachments) — this is now the only place the report is
-      // stored, so it's awaited: a Jira failure must surface as a failed
-      // submission, not a silently-lost report.
-      const { jiraIssue } = await sendBugReportEmail({
+      // The backend returns a tracking id immediately (it no longer waits
+      // on Jira — see kharcafy-node-be's "Background jobs" section) and
+      // creates the actual Jira issue in the background, re-uploading
+      // screenshots as real Jira attachments once it exists. A validation
+      // or enqueue-level failure still surfaces here as a failed
+      // submission; a Jira-side failure after that point is retried by the
+      // backend's queue and, if it's ultimately never created, is only
+      // visible to ops (not re-surfaced to this submission).
+      const { trackingId } = await sendBugReportEmail({
         title: form.value.title.trim(),
         category: form.value.category,
         severity: form.value.severity,
@@ -295,7 +305,7 @@ export const BugReport = (props) => {
         submittedAt: new Date().toISOString()
       })
 
-      lastSubmittedIssueKey.value = jiraIssue?.key || ''
+      lastSubmittedTrackingId.value = trackingId || ''
       submitted.value = true
       await fetchMyReports()
     } catch (err) {
@@ -324,7 +334,9 @@ export const BugReport = (props) => {
     try {
       myReports.value = await fetchBugReports()
     } catch (err) {
-      showError(err.message || t('bugReports.failedLoadReports', { message: '' }))
+      showError(
+        err.message || t('bugReports.failedLoadReports', { message: '' })
+      )
     } finally {
       myReportsLoading.value = false
     }
@@ -422,7 +434,8 @@ export const BugReport = (props) => {
 
   function handleEditFileChange(e) {
     const existing = editForm.value?.existingScreenshots?.length ?? 0
-    const remaining = MAX_SCREENSHOTS - existing - editNewScreenshots.value.length
+    const remaining =
+      MAX_SCREENSHOTS - existing - editNewScreenshots.value.length
     Array.from(e.target.files || [])
       .slice(0, remaining)
       .forEach((file) => {
@@ -533,7 +546,7 @@ export const BugReport = (props) => {
     submitting,
     uploadingScreenshots,
     submitted,
-    lastSubmittedIssueKey,
+    lastSubmittedTrackingId,
     screenshots,
     uploadProgress,
     isClean,

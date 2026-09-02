@@ -643,8 +643,19 @@ details {
     box-shadow 0.28s var(--motion-smooth) !important;
 }
 
+/* Single source of truth for every accordion's expanded-content padding
+   app-wide (AccordionItem's card/compact variants, FAQ, pending-requests
+   accordions, etc.) — none of them should set their own padding-inline/
+   padding-block on .el-collapse-item__content any more. Change it here
+   and every accordion in the app picks it up, instead of each one
+   independently guessing a value that has to be kept in sync with its own
+   header padding + badge size (the actual cause of the last few
+   accordion-padding bugs). Header padding is unaffected — components can
+   still customize .el-collapse-item__header per their own design. */
 .el-collapse-item__content {
   color: var(--text-primary) !important;
+  padding-inline: 16px;
+  padding-block: 8px 16px;
   transform-origin: top center;
   transition:
     opacity 0.26s var(--motion-smooth),
@@ -1126,64 +1137,6 @@ button:disabled {
   color: var(--text-secondary) !important;
 }
 
-/* Segmented Toggle */
-.el-segmented {
-  background-color: var(--bg-secondary) !important;
-  border-color: var(--border-color) !important;
-  border: 1px solid var(--border-color) !important;
-  /* Override Element Plus segmented theme to green */
-  --el-segmented-item-selected-bg-color: #22c55e;
-  --el-segmented-item-selected-color: #ffffff;
-}
-
-.el-segmented__item-label {
-  color: var(--text-primary) !important;
-  padding: 0.5rem 1rem;
-}
-
-.el-segmented__item {
-  color: var(--text-primary) !important;
-  background-color: var(--bg-secondary) !important;
-}
-
-/* Inactive hover: dark mode only */
-.dark-theme .el-segmented__item:not(.is-selected):hover {
-  background-color: #374151 !important;
-  color: #ffffff !important;
-}
-
-.el-segmented__item.is-selected {
-  background-color: #22c55e !important;
-  color: #ffffff !important;
-  border-color: #22c55e !important;
-}
-
-.el-segmented__item.is-selected .el-segmented__item-label {
-  color: #ffffff !important;
-}
-
-/* Active hover: keep text white, not green */
-.el-segmented__item.is-selected:hover .el-segmented__item-label,
-.el-segmented__item.is-selected .el-segmented__item-label:hover {
-  color: #ffffff !important;
-}
-
-/* Auth segmented styling */
-.auth-segment.el-segmented {
-  border-color: #22c55e !important;
-  box-shadow: 0 8px 24px -12px rgba(34, 197, 94, 0.35);
-}
-
-/* Auth inactive hover: light mode = green tint, dark mode = dark bg */
-.auth-segment .el-segmented__item:not(.is-selected):hover {
-  background-color: var(--success-100) !important;
-  color: #15803d !important;
-}
-.dark-theme .auth-segment .el-segmented__item:not(.is-selected):hover {
-  background-color: #374151 !important;
-  color: #ffffff !important;
-}
-
 /* Forgot password / resend links */
 .forgot-link {
   color: #22c55e !important;
@@ -1201,8 +1154,8 @@ button:disabled {
 .auth-switch-enter-active,
 .auth-switch-leave-active {
   transition:
-    opacity 0.25s var(--motion-smooth),
-    transform 0.25s var(--motion-smooth);
+    opacity 0.5s var(--motion-smooth),
+    transform 0.5s var(--motion-smooth);
 }
 
 .auth-switch-enter-from,

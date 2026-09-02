@@ -109,7 +109,19 @@ export const SharedGroups = () => {
             photoUrl: user.photoUrl || '',
             photoMeta: user.photoMeta || null,
             maskedMobile: maskMobile(user.mobile || ''),
-            blocked: user.blocked === true
+            blocked: user.blocked === true,
+            // Payment-account fields — not sensitive beyond what `mobile`
+            // above already is (real mobile is already loaded for every
+            // user here; display-time masking is what actually gates it,
+            // see getDisplayMobile). Omitting these here was silently
+            // wiping out anything a user saved on their profile the next
+            // time this ran (every app load), even though the Firestore
+            // write itself succeeded.
+            mobileWalletProvider: user.mobileWalletProvider || '',
+            bankName: user.bankName || '',
+            bankAccountNumber: user.bankAccountNumber || '',
+            qrCodeUrl: user.qrCodeUrl || '',
+            qrCodeMeta: user.qrCodeMeta || null
           }
         })
         userStore.setUsers(users)

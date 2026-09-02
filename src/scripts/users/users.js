@@ -410,7 +410,15 @@ export const Users = () => {
             maskedMobile: maskMobile(u.mobile || ''),
             deleteRequest: u.deleteRequest || null,
             updateRequest: u.updateRequest || null,
-            blocked: u.blocked === true
+            blocked: u.blocked === true,
+            // Same payment-account fields as shared-groups.js's
+            // loadSharedGroups() projection — keep the two in sync so
+            // whichever hydrates userStore first doesn't blank the other out.
+            mobileWalletProvider: u.mobileWalletProvider || '',
+            bankName: u.bankName || '',
+            bankAccountNumber: u.bankAccountNumber || '',
+            qrCodeUrl: u.qrCodeUrl || '',
+            qrCodeMeta: u.qrCodeMeta || null
           }
 
           userStore.addUser(user)

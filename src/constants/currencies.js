@@ -63,7 +63,9 @@ export const COUNTRY_TO_CURRENCY = {
 }
 
 export function currencyForCountry(iso2) {
-  return COUNTRY_TO_CURRENCY[String(iso2 || '').toUpperCase()] || DEFAULT_CURRENCY
+  return (
+    COUNTRY_TO_CURRENCY[String(iso2 || '').toUpperCase()] || DEFAULT_CURRENCY
+  )
 }
 
 export function currencyOption(code) {

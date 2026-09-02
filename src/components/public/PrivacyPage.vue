@@ -1,7 +1,16 @@
 <template>
   <main class="public-page inner-page">
-    <PageTitleSection :eyebrow="t('privacy.eyebrow')" :title="t('privacy.title')">
-      <template #icon><el-icon :size="14"><Lock /></el-icon></template>
+    <el-button size="default" class="back-btn" @click="router.back()">{{
+      t('common.back')
+    }}</el-button>
+
+    <PageTitleSection
+      :eyebrow="t('privacy.eyebrow')"
+      :title="t('privacy.title')"
+    >
+      <template #icon
+        ><el-icon :size="14"><Lock /></el-icon
+      ></template>
       <p>{{ t('privacy.intro') }}</p>
       <p class="last-updated">
         {{ t('privacy.lastUpdated') }}: {{ lastUpdated }}
@@ -17,10 +26,11 @@
         <CardHead>
           <template #icon
             ><el-icon :size="18"
-              ><component :is="SECTION_ICONS[index]"
-            /></el-icon
+              ><component :is="SECTION_ICONS[index]" /></el-icon
           ></template>
-          <template #title><h2>{{ section.title }}</h2></template>
+          <template #title
+            ><h2>{{ section.title }}</h2></template
+          >
         </CardHead>
         <p v-for="(paragraph, pIndex) in section.paragraphs" :key="pIndex">
           {{ paragraph }}
@@ -35,6 +45,7 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { PRIVACY_SECTIONS, LEGAL_LAST_UPDATED } from '@/constants'
 import {
@@ -54,6 +65,7 @@ import {
 import PageTitleSection from './PageTitleSection.vue'
 import CardHead from './CardHead.vue'
 
+const router = useRouter()
 const { t, locale } = useI18n()
 const sections = computed(() => PRIVACY_SECTIONS[locale.value])
 const lastUpdated = computed(() => LEGAL_LAST_UPDATED[locale.value])
@@ -77,6 +89,11 @@ const SECTION_ICONS = [
 </script>
 
 <style scoped>
+.back-btn {
+  display: inline-flex;
+  margin-bottom: 12px;
+}
+
 .public-page {
   position: relative;
   padding: 108px 20px 32px;

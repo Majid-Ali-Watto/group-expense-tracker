@@ -130,7 +130,9 @@ function marksToMarkdown(text, marks) {
 
 function inlineToMarkdown(content) {
   return (content || [])
-    .map((node) => (node.type === 'text' ? marksToMarkdown(node.text, node.marks) : ''))
+    .map((node) =>
+      node.type === 'text' ? marksToMarkdown(node.text, node.marks) : ''
+    )
     .join('')
 }
 

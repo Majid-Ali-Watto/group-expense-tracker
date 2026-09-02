@@ -70,7 +70,10 @@ const resolvedLabel = computed(() =>
 const numberInputStyle = computed(() =>
   props.width == null
     ? undefined
-    : { width: typeof props.width === 'number' ? `${props.width}px` : props.width }
+    : {
+        width:
+          typeof props.width === 'number' ? `${props.width}px` : props.width
+      }
 )
 
 const wrapperProps = computed(() => {

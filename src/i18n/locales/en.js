@@ -200,10 +200,7 @@ export default {
     lastUpdated: 'Last updated'
   },
   auth: {
-    modeToggle: {},
     infoAlert: {
-      registerText:
-        'Create a new account with your name, mobile, email, and Password.',
       registerWarning:
         'You must verify your email within 48 hours to activate your account.',
       loginText: 'Login with your email and password.'
@@ -219,6 +216,7 @@ export default {
       resendVerification: 'Resend Verification Email',
       forgotPassword: 'Forgot Password?',
       rememberMe: 'Remember Me',
+      agreeToTerms: 'I agree to the {terms} and {privacy}',
       or: 'or',
       continueWithGoogle: 'Continue with Google',
       newToApp: 'New to Kharchafy?',
@@ -234,7 +232,6 @@ export default {
     googleMobileDialog: {
       title: 'One more step',
       instructions: 'Please enter your mobile number to complete registration.',
-      prioritize: 'Prioritize (Easypaisa/Jazzcash), not mandatory',
       placeholder: 'Mobile number',
       continue: 'Continue'
     },
@@ -264,6 +261,8 @@ export default {
       'Too many failed attempts. Try again in {minutes} minute(s).',
     fillRequiredFields: 'Please fill in all required fields correctly',
     allFieldsRequired: 'All fields are required for registration',
+    termsNotAccepted:
+      'Please agree to the Terms of Service and Privacy Policy to continue',
     invalidEmail: 'Please enter a valid email address',
     passwordLength: 'Password must be between 6 and 15 characters',
     mobileExists: 'An account with this mobile number already exists',
@@ -397,6 +396,7 @@ export default {
     date: 'Date',
     location: 'Location',
     uploading: 'Uploading...',
+    loading: 'Loading...',
     tax: 'Tax',
     removeTax: 'Remove tax',
     importantNotice: 'Important Notice',
@@ -450,6 +450,17 @@ export default {
     actions: 'Actions',
     fullName: 'Full Name',
     mobileNumber: 'Mobile Number',
+    mobileWalletProviderLabel: 'Wallet / account name',
+    mobileWalletProviderPlaceholder: 'e.g. JazzCash, EasyPaisa, UPI, PayPal',
+    mobileWalletProviderNote:
+      "Tip: if this number has a mobile wallet or bank account (e.g. JazzCash, EasyPaisa, UPI), you can name it here so others know how to pay you. Not required — any valid mobile number works.",
+    bankAccountLabel: 'Bank / Payment Account',
+    bankNameLabel: 'Bank name',
+    bankNamePlaceholder: 'e.g. HBL, Meezan Bank',
+    bankAccountNumberLabel: 'Account number / IBAN',
+    bankAccountNumberPlaceholder: 'e.g. PK00XXXX0000000000000000',
+    bankAccountNote:
+      'Optional — add these if you want group members to be able to pay you by bank transfer.',
     email: 'Email',
     sendRequest: 'Send Request',
     failedLoadMonths: 'Failed to load months. Please try again.',
@@ -546,6 +557,30 @@ export default {
     settlementDone: 'Settlement Done',
     pays: 'Pays',
     receives: 'Receives',
+    markAsPaid: 'Mark as Paid',
+    markAsPaidHint:
+      'Optionally attach a screenshot of the transfer as proof of payment. The other member will need to confirm before this shows as paid.',
+    attachReceiptOptional: 'Attach receipt (optional)',
+    markAllPaid: 'Mark all my payments as paid ({count})',
+    pendingConfirmation: 'Pending confirmation',
+    paymentRejected: 'Rejected - View Reason',
+    claimedPaidBy: '{user} says they paid this',
+    claimedPaidAmount: '{user} says they paid {amount}',
+    partiallyPaidNote: '{paid} of {total} paid',
+    amountToMarkPaidLabel: 'Amount to mark as paid',
+    amountExceedsRemaining: "Can't be more than what's still owed",
+    viewReceipt: 'View receipt',
+    markedPaidSuccess: 'Marked as paid — waiting for confirmation',
+    markedAllPaidSuccess: 'Marked {count} payment(s) as paid',
+    paymentConfirmedSuccess: 'Payment confirmed',
+    paymentRejectedNotice: 'Payment claim rejected',
+    rejectPaidConfirm:
+      "This tells the other member you haven't received this payment.",
+    rejectPaidTitle: 'Reject Payment Claim',
+    rejectionReasonPlaceholder: 'Explain why you are rejecting this claim',
+    rejectionReasonRequired: 'Please provide a reason',
+    rejectionReasonTitle: 'Rejection Reason',
+    noRejectionReason: 'No reason provided.',
     requestSettlementConfirm:
       'This will send a settlement request to all group members. All members must approve before settlement can be finalized.',
     noActiveGroup: 'No active group selected',
@@ -620,7 +655,11 @@ export default {
     failedLoadLoans: 'Failed to load loans. Please try again.',
     proposedGiver: 'Giver:',
     proposedReceiver: 'Receiver:',
-    loanToBeDeleted: 'Loan to be deleted:'
+    loanToBeDeleted: 'Loan to be deleted:',
+    markedPaidSuccess: 'Marked as paid — waiting for confirmation',
+    markedAllPaidSuccess: 'Marked {count} loan(s) as paid',
+    paymentConfirmedSuccess: 'Repayment confirmed',
+    paymentRejectedNotice: 'Repayment claim rejected'
   },
   users: {
     blockedAccountWarning:
@@ -746,7 +785,7 @@ export default {
       'Note whether the issue happens consistently or only sometimes.'
     ],
     reportSubmitted: 'Report submitted successfully!',
-    bugNumber: 'Bug Number:',
+    trackingId: 'Tracking ID:',
     thankYou:
       "Thank you for helping us improve. We'll look into it as soon as possible.",
     submitAnother: 'Submit another report',
@@ -1422,9 +1461,20 @@ export default {
     newVerifiedEmailLabel: 'New Verified Email',
     confirmNewEmailLabel: 'Confirm New Email',
     editMobileTitle: 'Edit Mobile Number',
+    editPaymentTitle: 'Edit Bank Account',
+    editWalletTitle: 'Edit Wallet / Account Name',
     editNameTitle: 'Edit Full Name',
     uploadPhoto: 'Upload Photo',
     photoEditorAlt: 'Profile photo editor',
+    qrCodeLabel: 'Payment QR Code',
+    qrCodeAlt: 'Payment QR code',
+    addQrCode: 'Add QR Code',
+    updateQrCode: 'Update QR Code',
+    qrCodeTypeInvalid: 'Only JPG, PNG, and WEBP images are allowed.',
+    qrCodeSizeTooLarge: 'QR code image size must be less than 1MB.',
+    qrCodeUpdated: 'Payment QR code updated successfully',
+    qrCodeUpdateFailed: 'Failed to update payment QR code.',
+    qrCodeRemoved: 'Payment QR code removed successfully',
     newEmailRequired: 'New email is required',
     newEmailMustDiffer: 'New email must be different from your current email',
     confirmNewEmailRequired: 'Please confirm your new email',
@@ -1444,5 +1494,19 @@ export default {
     sendVerificationFailed: 'Failed to send email verification.',
     verificationEmailSentBody:
       'Verification email sent to {email}. Open that link to complete the change, then sign in again with the new email.'
+  },
+  paymentAccount: {
+    dialogTitle: 'Account Details',
+    viewDetails: 'View Account No.',
+    intro: 'How to pay {name}',
+    noDetails: "{name} hasn't added any account details yet.",
+    copyAccountNumber: 'Copy account number',
+    walletNameLabel: 'Wallet Name',
+    walletAccountLabel: 'Wallet Account',
+    bankNameLabel: 'Bank Name',
+    bankAccountLabel: 'Bank Account',
+    previewQrCode: 'Preview',
+    downloadQrCode: 'Download',
+    qrDownloadFailed: 'Failed to download QR code.'
   }
 }

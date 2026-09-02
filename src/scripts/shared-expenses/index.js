@@ -1,4 +1,5 @@
 export * from './expense-list'
 export * from './settlement'
+export * from './settlement-payments'
 export * from './shared-expenses'
 export * from './summary'

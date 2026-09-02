@@ -75,7 +75,9 @@ export const Settings = () => {
   // Narrowed to codes the current exchange-rate snapshot can actually
   // convert (plus whatever the user already has set, even if that code
   // dropped out of the snapshot) — see useCurrency.js.
-  const currencyOptions = computed(() => currencyOptionsIncluding(currency.value))
+  const currencyOptions = computed(() =>
+    currencyOptionsIncluding(currency.value)
+  )
 
   async function setCurrency(code) {
     const uid = authStore.getActiveUserUid

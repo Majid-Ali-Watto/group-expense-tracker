@@ -1,4 +1,5 @@
-import { auth } from '@/firebase'
+// Only auth is needed here — '@/firebase-auth' skips pulling in Firestore.
+import { auth } from '@/firebase-auth'
 
 export async function getApiAuthHeaders(headers = {}) {
   const token = await auth.currentUser?.getIdToken()

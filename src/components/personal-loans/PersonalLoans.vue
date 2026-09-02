@@ -16,9 +16,8 @@
           class="mt-4 no-print-pdf"
           @clear="clearFilters"
         />
-        <!-- Accordions -->
+        <!-- Summary Statistics -->
         <el-collapse v-model="openPanels" class="mt-4">
-          <!-- Summary Statistics -->
           <el-collapse-item name="summary">
             <template #title>
               <span class="font-semibold text-sm lg:text-base px-2">{{
@@ -85,8 +84,12 @@
               </div>
             </div>
           </el-collapse-item>
+        </el-collapse>
 
-          <!-- Who Owes Whom -->
+        <!-- Who Owes Whom — its own el-collapse (like Summary/Settlement in
+             shared expenses) so the two accordions have a visible gap
+             between them instead of sharing one connected block. -->
+        <el-collapse v-model="openSettlementPanels" class="mt-4">
           <el-collapse-item name="settlements">
             <template #title>
               <span class="font-semibold text-sm lg:text-base px-2">{{
@@ -242,6 +245,7 @@ const onTableWrite = () => {
 }
 
 const openPanels = ref([])
+const openSettlementPanels = ref([])
 const { isMobileScreen } = useMobileScreen()
 
 const lendingDebtingSegments = computed(() => [

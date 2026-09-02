@@ -678,7 +678,15 @@ export function useGlobalNotifications() {
               deleteRequest: u.deleteRequest || null,
               updateRequest: u.updateRequest || null,
               rejectionNotification: u.rejectionNotification || null,
-              blocked: u.blocked === true
+              blocked: u.blocked === true,
+              // Same payment-account fields as the other userStore hydration
+              // paths (shared-groups.js, users.js, groups.js) — keep them all
+              // in sync.
+              mobileWalletProvider: u.mobileWalletProvider || '',
+              bankName: u.bankName || '',
+              bankAccountNumber: u.bankAccountNumber || '',
+              qrCodeUrl: u.qrCodeUrl || '',
+              qrCodeMeta: u.qrCodeMeta || null
             })
           })
         }

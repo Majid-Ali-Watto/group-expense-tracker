@@ -259,18 +259,194 @@
             </el-collapse-item>
           </el-collapse>
         </div>
+        <PaymentAccountDetailsDialog
+          v-model:visible="loanPaymentDetailsVisible"
+          :user-uid="loanPaymentDetailsUid"
+          :display-name="loanPaymentDetailsName"
+        />
+
+        <el-dialog
+          v-model="markLoanPaidDialogVisible"
+          :title="t('sharedExpenses.markAsPaid')"
+          width="min(92vw, 380px)"
+          append-to-body
+        >
+          <p class="text-sm text-gray-600 mb-3">
+            {{ t('sharedExpenses.markAsPaidHint') }}
+          </p>
+          <AmountInput
+            v-model="markLoanPaidAmount"
+            :label="t('sharedExpenses.amountToMarkPaidLabel')"
+            :min="0.01"
+            :max="markLoanPaidMaxAmount"
+            required
+            class="mb-3"
+          />
+          <input
+            ref="markLoanPaidFileInputRef"
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            class="hidden"
+            @change="handleMarkLoanPaidFileSelected"
+          />
+          <el-button size="default" @click="markLoanPaidFileInputRef?.click()">
+            {{
+              markLoanPaidReceiptFile
+                ? markLoanPaidReceiptFile.name
+                : t('sharedExpenses.attachReceiptOptional')
+            }}
+          </el-button>
+          <template #footer>
+            <div class="flex justify-end gap-2">
+              <el-button
+                size="default"
+                @click="markLoanPaidDialogVisible = false"
+              >
+                {{ t('common.cancel') }}
+              </el-button>
+              <el-button
+                size="default"
+                type="success"
+                :loading="markLoanPaidSubmitting"
+                @click="submitMarkLoanPaid"
+              >
+                {{ t('common.confirm') }}
+              </el-button>
+            </div>
+          </template>
+        </el-dialog>
+
         <!-- Filters -->
         <FilterBar :fields="filterFields" class="mt-4" @clear="clearFilters" />
         <div ref="loanContent">
-          <!-- Display Final Balances -->
-          <h3 class="mb-2">{{ t('sharedLoans.loanDetails') }}</h3>
-          <BalanceSummaryCard
-            :columns="loanBalanceColumns"
-            :rows="balances"
-            class="mb-4"
-          />
+          <!-- Who pays whom -->
+          <el-collapse v-model="openPanels" class="mt-4">
+            <el-collapse-item name="settlements">
+              <template #title>
+                <span class="font-semibold text-sm lg:text-base px-2">{{
+                  t('personalLoans.whoPaysWhom')
+                }}</span>
+              </template>
+              <div class="space-y-4 pb-2">
+                <div
+                  v-if="loanSettlements.length === 0"
+                  class="text-center py-8 rounded-lg border bg-gray-50 dark:bg-gray-800/50"
+                >
+                  <p class="text-lg mb-2">
+                    {{ t('sharedExpenses.allSettled') }}
+                  </p>
+                  <p class="text-sm text-gray-500">
+                    {{ t('table.noSettlementsPdf') }}
+                  </p>
+                </div>
 
-          <h2>{{ t('sharedLoans.loanRecords') }}</h2>
+                <BalanceSummaryCard
+                  v-else
+                  :columns="loanSettlementColumns"
+                  :rows="loanSettlements"
+                  :actions-label="t('common.actions')"
+                >
+                  <template #row-actions="{ row }">
+                    <template v-if="row.from === activeUserUid">
+                      <el-tag
+                        v-if="getPendingPairLoans(row.from, row.to).length > 0"
+                        size="small"
+                        type="warning"
+                      >
+                        {{ t('sharedExpenses.pendingConfirmation') }}
+                      </el-tag>
+                      <ActionsMenuButton
+                        v-else
+                        :label="t('common.actions')"
+                        @command="(cmd) => handleLoanPayerCommand(cmd, row)"
+                      >
+                        <el-dropdown-item command="view">
+                          {{ t('paymentAccount.viewDetails') }}
+                        </el-dropdown-item>
+                        <el-dropdown-item command="markPaid">
+                          {{ t('sharedExpenses.markAsPaid') }}
+                        </el-dropdown-item>
+                      </ActionsMenuButton>
+                    </template>
+                  </template>
+
+                  <!-- Full-width strip below the row — only rendered for
+                       the lender while a repayment claim is pending (a "⋮"
+                       menu / short tag is enough for every other case). -->
+                  <template #row-confirmation="{ row }">
+                    <div
+                      v-if="
+                        row.to === activeUserUid &&
+                        getPendingPairLoans(row.from, row.to).length > 0
+                      "
+                      class="bsc-confirmation-row"
+                    >
+                      <span class="text-xs text-gray-500">
+                        {{
+                          t('sharedExpenses.claimedPaidAmount', {
+                            user: getUserName(row.from),
+                            amount: formatAmount(
+                              getPendingPairLoans(row.from, row.to).reduce(
+                                (sum, l) => sum + l.paidRequest.pending.amount,
+                                0
+                              )
+                            )
+                          })
+                        }}
+                      </span>
+                      <a
+                        v-if="getPendingPairLoans(row.from, row.to)[0]?.paidRequest?.pending?.receiptUrl"
+                        :href="
+                          getPendingPairLoans(row.from, row.to)[0].paidRequest
+                            .pending.receiptUrl
+                        "
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="text-xs underline"
+                      >
+                        {{ t('sharedExpenses.viewReceipt') }}
+                      </a>
+                      <el-button
+                        size="small"
+                        type="success"
+                        @click="confirmLoanPaidForPair(row.from, row.to)"
+                      >
+                        {{ t('common.confirm') }}
+                      </el-button>
+                      <el-button
+                        size="small"
+                        type="danger"
+                        plain
+                        @click="rejectLoanPaidForPair(row.from, row.to)"
+                      >
+                        {{ t('common.reject') }}
+                      </el-button>
+                    </div>
+                  </template>
+                </BalanceSummaryCard>
+
+                <div
+                  v-if="myRepayableLoans.length > 0"
+                  class="flex justify-end"
+                >
+                  <el-button
+                    size="small"
+                    type="success"
+                    plain
+                    @click="markAllMyLoansPaid"
+                  >
+                    {{
+                      t('sharedExpenses.markAllPaid', {
+                        count: myRepayableLoans.length
+                      })
+                    }}
+                  </el-button>
+                </div>
+              </div>
+            </el-collapse-item>
+          </el-collapse>
+
+          <h2 class="mt-4">{{ t('sharedLoans.loanRecords') }}</h2>
           <Table
             :downloadTitle="t('tabs.sharedLoans')"
             :rows="filteredLoans"
@@ -286,11 +462,18 @@
 </template>
 
 <script setup>
+import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Table, BalanceSummaryCard, LoadingSkeleton } from '@/components/shared'
-import { FilterBar } from '@/components/generic-components'
+import {
+  ActionsMenuButton,
+  AmountInput,
+  FilterBar,
+  PaymentAccountDetailsDialog
+} from '@/components/generic-components'
 import { Loans } from '@/scripts/shared-loans'
-import { loadAsyncComponent } from '@/utils'
+import { loadAsyncComponent, showError, uploadReceipt } from '@/utils'
+import { MAX_RECEIPT_FILE_SIZE_BYTES } from '@/constants'
 const LoanForm = loadAsyncComponent(() => import('./LoanForm.vue'))
 
 const { t } = useI18n()
@@ -305,11 +488,19 @@ const {
   loanKeys,
   loanContent,
   filteredLoans,
-  balances,
+  loanSettlements,
+  loanSettlementColumns,
   userNotifications,
   pendingRequests,
   activePendingNames,
-  loanBalanceColumns,
+  myRepayableLoans,
+  getLoanRemaining,
+  requestLoanPaidAllocated,
+  markAllMyLoansPaid,
+  getMarkablePairLoans,
+  getPendingPairLoans,
+  confirmLoanPaidForPair,
+  rejectLoanPaidForPair,
   filterFields,
   closeLoanForm,
   dismissNotification,
@@ -323,14 +514,115 @@ const {
   rejectRequest,
   clearFilters
 } = Loans()
+
+// Collapsed by default, same as Personal Loans' accordion.
+const openPanels = ref([])
+
+// ── "View payment details" for the loan I owe ─────────────────────────────
+const loanPaymentDetailsVisible = ref(false)
+const loanPaymentDetailsUid = ref('')
+const loanPaymentDetailsName = ref('')
+
+function openLoanPaymentDetails(uid) {
+  loanPaymentDetailsUid.value = uid
+  loanPaymentDetailsName.value = getUserName(uid)
+  loanPaymentDetailsVisible.value = true
+}
+
+// ── "Mark as paid" (amount defaults to the full remaining balance across
+// every loan behind this "who pays whom" row, editable down for a partial
+// payment — allocated oldest-first across those loans at submit time) ────
+const markLoanPaidDialogVisible = ref(false)
+const markLoanPaidTarget = ref(null)
+const markLoanPaidAmount = ref(0)
+const markLoanPaidMaxAmount = ref(0)
+const markLoanPaidReceiptFile = ref(null)
+const markLoanPaidFileInputRef = ref(null)
+const markLoanPaidSubmitting = ref(false)
+
+function openMarkLoanPaidDialog(row) {
+  markLoanPaidTarget.value = row
+  markLoanPaidMaxAmount.value = getMarkablePairLoans(row.from, row.to).reduce(
+    (sum, loan) => sum + getLoanRemaining(loan),
+    0
+  )
+  markLoanPaidAmount.value = markLoanPaidMaxAmount.value
+  markLoanPaidReceiptFile.value = null
+  markLoanPaidDialogVisible.value = true
+}
+
+// ── Payer's "⋮" actions menu (View Account No. / Mark as Paid) ───────────
+function handleLoanPayerCommand(command, row) {
+  if (command === 'view') openLoanPaymentDetails(row.to)
+  else if (command === 'markPaid') openMarkLoanPaidDialog(row)
+}
+
+function handleMarkLoanPaidFileSelected(event) {
+  const file = event?.target?.files?.[0]
+  if (markLoanPaidFileInputRef.value) markLoanPaidFileInputRef.value.value = ''
+  if (!file) return
+
+  if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+    showError(t('profile.qrCodeTypeInvalid'))
+    return
+  }
+  if (file.size > MAX_RECEIPT_FILE_SIZE_BYTES) {
+    showError(t('profile.qrCodeSizeTooLarge'))
+    return
+  }
+
+  markLoanPaidReceiptFile.value = file
+}
+
+async function submitMarkLoanPaid() {
+  if (!markLoanPaidTarget.value) return
+
+  const amount = Number(markLoanPaidAmount.value)
+  if (!(amount > 0)) {
+    showError(t('common.amountRequired'))
+    return
+  }
+  if (amount > markLoanPaidMaxAmount.value + 0.001) {
+    showError(t('sharedExpenses.amountExceedsRemaining'))
+    return
+  }
+
+  markLoanPaidSubmitting.value = true
+  try {
+    let receiptUrl = null
+    let receiptMeta = null
+    if (markLoanPaidReceiptFile.value) {
+      const uploaded = await uploadReceipt(markLoanPaidReceiptFile.value)
+      receiptUrl = uploaded.url
+      receiptMeta = uploaded
+    }
+
+    await requestLoanPaidAllocated(
+      markLoanPaidTarget.value.from,
+      markLoanPaidTarget.value.to,
+      amount,
+      { receiptUrl, receiptMeta }
+    )
+    markLoanPaidDialogVisible.value = false
+  } catch (error) {
+    showError(error.message || error)
+  } finally {
+    markLoanPaidSubmitting.value = false
+  }
+}
 </script>
 
 <style scoped>
 .pending-requests-accordion :deep(.el-collapse-item__header) {
   padding-inline: 12px;
 }
-.pending-requests-accordion :deep(.el-collapse-item__content) {
-  padding-inline: 12px;
-  padding-top: 12px;
+
+.bsc-confirmation-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px dashed var(--border-color);
 }
 </style>

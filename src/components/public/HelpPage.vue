@@ -12,7 +12,9 @@
     >
 
     <PageTitleSection :eyebrow="t('help.eyebrow')" :title="t('help.title')">
-      <template #icon><el-icon :size="14"><QuestionFilled /></el-icon></template>
+      <template #icon
+        ><el-icon :size="14"><QuestionFilled /></el-icon
+      ></template>
       <p>{{ t('help.intro') }}</p>
     </PageTitleSection>
 

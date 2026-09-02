@@ -8,7 +8,6 @@
     <template #default>
       <span class="text-sm">
         <template v-if="mode === 'register'">
-          {{ t('auth.infoAlert.registerText') }}
           <strong>{{ t('auth.infoAlert.registerWarning') }}</strong>
         </template>
         <template v-else>{{ t('auth.infoAlert.loginText') }}</template>

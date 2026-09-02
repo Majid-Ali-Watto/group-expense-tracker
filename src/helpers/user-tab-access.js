@@ -1,6 +1,4 @@
 import { Tabs } from '@/assets'
-import { database, doc, getDoc } from '@/firebase'
-import { DB_NODES } from '@/constants'
 
 export const USER_TAB_KEYS = {
   GROUPS: 'groups',
@@ -221,23 +219,8 @@ export function buildUserTabConfigDocument(
   return payload
 }
 
-export async function findUserTabConfigByUid(uid) {
-  if (!uid) return null
-
-  try {
-    const snapshot = await getDoc(doc(database, DB_NODES.USER_TAB_CONFIGS, uid))
-    return snapshot.exists() ? { id: snapshot.id, ...snapshot.data() } : null
-  } catch (error) {
-    if (error?.code === 'permission-denied') {
-      console.warn(
-        'user-tab-configs read is not permitted; using default tab access.'
-      )
-      return null
-    }
-
-    throw error
-  }
-}
+// findUserTabConfigByUid moved to ./user-tab-config-sync.js — see that
+// file's header comment.
 
 /**
  * Returns true when the given config is missing any of the three shared-feature

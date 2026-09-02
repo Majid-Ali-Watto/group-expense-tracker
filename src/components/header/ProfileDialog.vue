@@ -126,6 +126,91 @@
             />
           </div>
         </el-descriptions-item>
+        <el-descriptions-item :label="t('common.mobileWalletProviderLabel')">
+          <div class="profile-field-value">
+            <span v-if="profileMobileWalletProvider">{{
+              profileMobileWalletProvider
+            }}</span>
+            <span v-else class="text-sm text-gray-500">{{
+              t('profile.notAvailable')
+            }}</span>
+            <el-button
+              text
+              circle
+              size="default"
+              :icon="Edit"
+              :disabled="isBlocked"
+              @click="openEditDialog('wallet')"
+            />
+          </div>
+        </el-descriptions-item>
+        <el-descriptions-item :label="t('common.bankAccountLabel')">
+          <div class="profile-field-value">
+            <div class="min-w-0 flex-1">
+              <span v-if="profileBankAccountDisplay">{{
+                profileBankAccountDisplay
+              }}</span>
+              <span v-else class="text-sm text-gray-500">{{
+                t('profile.notAvailable')
+              }}</span>
+            </div>
+            <el-button
+              text
+              circle
+              size="default"
+              :icon="Edit"
+              :disabled="isBlocked"
+              @click="openEditDialog('payment')"
+            />
+          </div>
+        </el-descriptions-item>
+        <el-descriptions-item :label="t('profile.qrCodeLabel')">
+          <div class="profile-field-value flex-wrap">
+            <div class="min-w-0 flex-1 flex items-center gap-2">
+              <img
+                v-if="profileQrCodeUrl"
+                :src="profileQrCodeUrl"
+                :alt="t('profile.qrCodeAlt')"
+                class="qr-preview"
+              />
+              <span v-else class="text-sm text-gray-500">{{
+                t('profile.notAvailable')
+              }}</span>
+            </div>
+            <div class="flex gap-1">
+              <input
+                ref="qrCodeInputRef"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                class="hidden"
+                @change="handleQrCodeSelected"
+              />
+              <el-button
+                size="default"
+                text
+                :loading="qrCodeSubmitting"
+                :disabled="isBlocked || qrCodeSubmitting"
+                @click="qrCodeInputRef?.click()"
+              >
+                {{
+                  profileQrCodeUrl
+                    ? t('profile.updateQrCode')
+                    : t('profile.addQrCode')
+                }}
+              </el-button>
+              <el-button
+                v-if="profileQrCodeUrl"
+                size="default"
+                text
+                :loading="qrCodeSubmitting"
+                :disabled="isBlocked || qrCodeSubmitting"
+                @click="removeProfileQrCode"
+              >
+                {{ t('common.remove') }}
+              </el-button>
+            </div>
+          </div>
+        </el-descriptions-item>
         <el-descriptions-item :label="t('profile.emailVerificationLabel')">
           <el-tag :type="emailVerified ? 'success' : 'info'" effect="light">
             {{
@@ -327,7 +412,11 @@
         />
       </el-form-item>
 
-      <el-form-item v-else :label="t('common.mobileNumber')" prop="mobile">
+      <el-form-item
+        v-else-if="editField === 'mobile'"
+        :label="t('common.mobileNumber')"
+        prop="mobile"
+      >
         <GenericMobileInput
           ref="mobileInputRef"
           :model-value="form.mobile"
@@ -336,6 +425,53 @@
           @update:modelValue="form.mobile = $event"
         />
       </el-form-item>
+
+      <template v-else-if="editField === 'wallet'">
+        <el-form-item
+          :label="t('common.mobileWalletProviderLabel')"
+          prop="mobileWalletProvider"
+        >
+          <GenericInputField
+            ref="walletProviderInputRef"
+            :model-value="form.mobileWalletProvider"
+            :wrap-form-item="false"
+            :placeholder="t('common.mobileWalletProviderPlaceholder')"
+            :maxlength="30"
+            @update:modelValue="form.mobileWalletProvider = $event"
+          />
+        </el-form-item>
+        <p class="-mt-2 text-xs text-gray-500">
+          {{ t('common.mobileWalletProviderNote') }}
+        </p>
+      </template>
+
+      <template v-else>
+        <el-form-item :label="t('common.bankNameLabel')" prop="bankName">
+          <GenericInputField
+            ref="bankNameInputRef"
+            :model-value="form.bankName"
+            :wrap-form-item="false"
+            :placeholder="t('common.bankNamePlaceholder')"
+            :maxlength="50"
+            @update:modelValue="form.bankName = $event"
+          />
+        </el-form-item>
+        <el-form-item
+          :label="t('common.bankAccountNumberLabel')"
+          prop="bankAccountNumber"
+        >
+          <GenericInputField
+            :model-value="form.bankAccountNumber"
+            :wrap-form-item="false"
+            :placeholder="t('common.bankAccountNumberPlaceholder')"
+            :maxlength="34"
+            @update:modelValue="form.bankAccountNumber = $event"
+          />
+        </el-form-item>
+        <p class="-mt-2 text-xs text-gray-500">
+          {{ t('common.bankAccountNote') }}
+        </p>
+      </template>
     </el-form>
 
     <template #footer>
@@ -385,12 +521,15 @@ import {
   updateProfile,
   verifyBeforeUpdateEmail
 } from '@/firebase'
-import {
-  GenericInputField,
-  GenericMobileInput,
-  ImageCropEditorDialog,
-  UserAvatar
-} from '@/components/generic-components'
+// Direct paths, not the '@/components/generic-components' barrel — see the
+// equivalent comment in WelcomeBanner.vue. Now that ProfileDialog.vue itself
+// is lazy-loaded (see Header.vue), this is no longer strictly required to
+// keep the barrel off the eager path, but keeps that guarantee from
+// depending on every future caller remembering to lazy-load this file too.
+import GenericInputField from '@/components/generic-components/GenericInputField.vue'
+import GenericMobileInput from '@/components/generic-components/GenericMobileInput.vue'
+import ImageCropEditorDialog from '@/components/generic-components/ImageCropEditorDialog.vue'
+import UserAvatar from '@/components/generic-components/UserAvatar.vue'
 import ChangePasswordDialog from '@/components/auth/ChangePasswordDialog.vue'
 import { getEmailConfig, getOcrConfig, useFireBase } from '@/composables'
 import { findUserByEmail, validateEmail } from '@/helpers'
@@ -406,7 +545,7 @@ import {
   showSuccess,
   uploadReceipt
 } from '@/utils'
-import { DB_NODES } from '@/constants'
+import { DB_NODES, MAX_RECEIPT_FILE_SIZE_BYTES } from '@/constants'
 import { setUserInStorage } from '@/utils/whoAdded'
 
 const props = defineProps({
@@ -430,6 +569,8 @@ const showChangePasswordDialog = ref(false)
 const photoInputRef = ref(null)
 const nameInputRef = ref(null)
 const mobileInputRef = ref(null)
+const walletProviderInputRef = ref(null)
+const bankNameInputRef = ref(null)
 const emailInputRef = ref(null)
 const confirmEmailInputRef = ref(null)
 const currentPasswordInputRef = ref(null)
@@ -439,9 +580,14 @@ const emailSubmitting = ref(false)
 const photoEditorVisible = ref(false)
 const photoEditorSourceUrl = ref('')
 const selectedPhotoName = ref('profile-photo.jpg')
+const qrCodeInputRef = ref(null)
+const qrCodeSubmitting = ref(false)
 const form = reactive({
   name: '',
-  mobile: ''
+  mobile: '',
+  mobileWalletProvider: '',
+  bankName: '',
+  bankAccountNumber: ''
 })
 const emailForm = reactive({
   email: '',
@@ -458,6 +604,16 @@ const profileEmail = computed(
 const profileMobile = computed(
   () => props.user?.mobile || t('profile.notAvailable')
 )
+const profileMobileWalletProvider = computed(
+  () => props.user?.mobileWalletProvider || ''
+)
+const profileBankAccountDisplay = computed(() => {
+  const bankName = props.user?.bankName || ''
+  const bankAccountNumber = props.user?.bankAccountNumber || ''
+  if (bankName && bankAccountNumber) return `${bankName} · ${bankAccountNumber}`
+  return bankName || bankAccountNumber
+})
+const profileQrCodeUrl = computed(() => props.user?.qrCodeUrl || '')
 const profilePhotoUrl = computed(() => props.user?.photoUrl || '')
 const emailVerified = computed(() => props.user?.emailVerified !== false)
 const canEditVerifiedEmail = computed(
@@ -536,11 +692,12 @@ const accountTierLabel = computed(() =>
 const accountTierTagType = computed(() =>
   isBilledUser.value ? 'success' : 'info'
 )
-const editDialogTitle = computed(() =>
-  editField.value === 'mobile'
-    ? t('profile.editMobileTitle')
-    : t('profile.editNameTitle')
-)
+const editDialogTitle = computed(() => {
+  if (editField.value === 'mobile') return t('profile.editMobileTitle')
+  if (editField.value === 'wallet') return t('profile.editWalletTitle')
+  if (editField.value === 'payment') return t('profile.editPaymentTitle')
+  return t('profile.editNameTitle')
+})
 
 const rules = {
   name: [
@@ -650,6 +807,9 @@ function userMatchesMember(member, userUid) {
 function syncFormFromUser(user) {
   form.name = user?.name || ''
   form.mobile = user?.mobile || ''
+  form.mobileWalletProvider = user?.mobileWalletProvider || ''
+  form.bankName = user?.bankName || ''
+  form.bankAccountNumber = user?.bankAccountNumber || ''
 }
 
 function syncPreviewPhoto(user) {
@@ -700,8 +860,13 @@ async function openEditDialog(field = 'name') {
   editDialogVisible.value = true
   await nextTick()
 
-  const targetRef =
-    field === 'mobile' ? mobileInputRef.value : nameInputRef.value
+  const targetRefs = {
+    mobile: mobileInputRef,
+    wallet: walletProviderInputRef,
+    payment: bankNameInputRef,
+    name: nameInputRef
+  }
+  const targetRef = (targetRefs[field] || nameInputRef).value
   targetRef?.$el?.querySelector('input, textarea')?.focus()
 }
 
@@ -742,6 +907,105 @@ function validateProfilePhoto(file) {
   }
 
   return true
+}
+
+function validateQrCodeFile(file) {
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp']
+  if (!allowedTypes.includes(file.type)) {
+    showError(t('profile.qrCodeTypeInvalid'))
+    return false
+  }
+  if (file.size > MAX_RECEIPT_FILE_SIZE_BYTES) {
+    showError(t('profile.qrCodeSizeTooLarge'))
+    return false
+  }
+
+  return true
+}
+
+// Uploaded as-is, deliberately skipping ImageCropEditorDialog — cropping/
+// re-encoding a QR code risks corrupting its finder-pattern modules and
+// making it unscannable.
+async function handleQrCodeSelected(event) {
+  const file = event?.target?.files?.[0]
+  if (qrCodeInputRef.value) qrCodeInputRef.value.value = ''
+  if (!file || !props.user?.uid || isBlocked.value) return
+  if (!validateQrCodeFile(file)) return
+
+  qrCodeSubmitting.value = true
+  try {
+    const uploaded = await uploadReceipt(file)
+    const currentUser = await read(`${DB_NODES.USERS}/${props.user.uid}`)
+    if (!currentUser) {
+      showError(t('users.userNotFound'))
+      return
+    }
+
+    const previousMeta = currentUser.qrCodeMeta || props.user?.qrCodeMeta || null
+    if (previousMeta?.url && previousMeta.url !== uploaded.url) {
+      deleteReceipt(previousMeta, {
+        documentPath: `${DB_NODES.USERS}/${props.user.uid}`
+      }).catch(() => {})
+    }
+
+    await updateData(
+      `${DB_NODES.USERS}/${props.user.uid}`,
+      () => ({
+        qrCodeUrl: uploaded.url,
+        qrCodeMeta: uploaded
+      }),
+      t('profile.qrCodeUpdated')
+    )
+
+    userStore.addUser(
+      buildUpdatedUserPayload(currentUser, {
+        qrCodeUrl: uploaded.url,
+        qrCodeMeta: uploaded
+      })
+    )
+  } catch (error) {
+    showError(error.message || t('profile.qrCodeUpdateFailed'))
+  } finally {
+    qrCodeSubmitting.value = false
+  }
+}
+
+async function removeProfileQrCode() {
+  if (!props.user?.uid || isBlocked.value) return
+
+  qrCodeSubmitting.value = true
+  try {
+    const currentUser = await read(`${DB_NODES.USERS}/${props.user.uid}`)
+    if (!currentUser) {
+      showError(t('users.userNotFound'))
+      return
+    }
+
+    const previousMeta = currentUser.qrCodeMeta || props.user?.qrCodeMeta || null
+    if (previousMeta?.url) {
+      deleteReceipt(previousMeta, {
+        documentPath: `${DB_NODES.USERS}/${props.user.uid}`
+      }).catch(() => {})
+    }
+
+    await updateData(
+      `${DB_NODES.USERS}/${props.user.uid}`,
+      () => ({
+        qrCodeUrl: null,
+        qrCodeMeta: null
+      }),
+      t('profile.qrCodeRemoved')
+    )
+
+    userStore.addUser(
+      buildUpdatedUserPayload(currentUser, {
+        qrCodeUrl: '',
+        qrCodeMeta: null
+      })
+    )
+  } finally {
+    qrCodeSubmitting.value = false
+  }
 }
 
 function closePhotoEditor() {
@@ -807,6 +1071,25 @@ function buildUpdatedUserPayload(currentUser, overrides = {}) {
     uid: currentUser.uid || props.user?.uid || '',
     name: overrides.name ?? currentUser.name ?? props.user?.name ?? '',
     mobile: overrides.mobile ?? currentUser.mobile ?? props.user?.mobile ?? '',
+    mobileWalletProvider:
+      overrides.mobileWalletProvider ??
+      currentUser.mobileWalletProvider ??
+      props.user?.mobileWalletProvider ??
+      '',
+    bankName:
+      overrides.bankName ?? currentUser.bankName ?? props.user?.bankName ?? '',
+    bankAccountNumber:
+      overrides.bankAccountNumber ??
+      currentUser.bankAccountNumber ??
+      props.user?.bankAccountNumber ??
+      '',
+    qrCodeUrl:
+      overrides.qrCodeUrl ?? currentUser.qrCodeUrl ?? props.user?.qrCodeUrl ?? '',
+    qrCodeMeta:
+      overrides.qrCodeMeta ??
+      currentUser.qrCodeMeta ??
+      props.user?.qrCodeMeta ??
+      null,
     email: currentUser.email || props.user?.email || '',
     emailVerified: currentUser.emailVerified !== false,
     blocked: currentUser.blocked === true,
@@ -1048,6 +1331,9 @@ async function submitProfileUpdate() {
   const uid = props.user.uid
   const newName = normalizeName(form.name)
   const newMobile = normalizeMobile(form.mobile)
+  const newWalletProvider = (form.mobileWalletProvider || '').trim()
+  const newBankName = (form.bankName || '').trim()
+  const newBankAccountNumber = (form.bankAccountNumber || '').trim()
 
   const currentUser = await read(`${DB_NODES.USERS}/${uid}`)
   if (!currentUser) {
@@ -1055,22 +1341,39 @@ async function submitProfileUpdate() {
     return
   }
 
-  const existingUsers = (await read(DB_NODES.USERS, false)) || {}
-  const mobileTaken = Object.entries(existingUsers).some(
-    ([otherUid, otherUser]) =>
-      otherUid !== uid && phoneNumbersMatch(otherUser?.mobile || '', newMobile)
-  )
-  if (mobileTaken) {
-    showError(t('authMessages.mobileExists'))
-    return
-  }
-
   const oldName = currentUser.name || ''
   const previousMobile = normalizeMobile(currentUser.mobile || '')
+  const previousWalletProvider = (currentUser.mobileWalletProvider || '').trim()
+  const previousBankName = (currentUser.bankName || '').trim()
+  const previousBankAccountNumber = (currentUser.bankAccountNumber || '').trim()
   const nameChanged = oldName !== newName
   const mobileChanged = previousMobile !== newMobile
+  const walletProviderChanged = previousWalletProvider !== newWalletProvider
+  const bankDetailsChanged =
+    previousBankName !== newBankName ||
+    previousBankAccountNumber !== newBankAccountNumber
 
-  if (!nameChanged && !mobileChanged) {
+  // Only worth a full-collection scan when the mobile number itself is
+  // actually part of this save — editing wallet/bank/name shouldn't ever
+  // trip a "number already exists" error against someone else's account.
+  if (mobileChanged) {
+    const existingUsers = (await read(DB_NODES.USERS, false)) || {}
+    const mobileTaken = Object.entries(existingUsers).some(
+      ([otherUid, otherUser]) =>
+        otherUid !== uid && phoneNumbersMatch(otherUser?.mobile || '', newMobile)
+    )
+    if (mobileTaken) {
+      showError(t('authMessages.mobileExists'))
+      return
+    }
+  }
+
+  if (
+    !nameChanged &&
+    !mobileChanged &&
+    !walletProviderChanged &&
+    !bankDetailsChanged
+  ) {
     handleEditVisibilityChange(false)
     return
   }
@@ -1079,7 +1382,10 @@ async function submitProfileUpdate() {
     `${DB_NODES.USERS}/${uid}`,
     () => ({
       name: newName,
-      mobile: newMobile
+      mobile: newMobile,
+      mobileWalletProvider: newWalletProvider,
+      bankName: newBankName,
+      bankAccountNumber: newBankAccountNumber
     }),
     t('users.userUpdated')
   )
@@ -1087,7 +1393,10 @@ async function submitProfileUpdate() {
   userStore.addUser({
     ...buildUpdatedUserPayload(currentUser, {
       name: newName,
-      mobile: newMobile
+      mobile: newMobile,
+      mobileWalletProvider: newWalletProvider,
+      bankName: newBankName,
+      bankAccountNumber: newBankAccountNumber
     })
   })
 
@@ -1227,6 +1536,15 @@ watch(
   justify-content: space-between;
   gap: 0.5rem;
   width: 100%;
+}
+
+.qr-preview {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  border-radius: 6px;
+  border: 1px solid var(--border-color, #e5e7eb);
+  background: #fff;
 }
 
 :global(:root.dark-theme .profile-hero) {

@@ -3,7 +3,12 @@ import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { ElMessageBox } from 'element-plus'
 import { stripLocalePrefix } from '@/utils/seo'
-import { useFireBase, loadAppConfig, useRateLimit } from '@/composables'
+import {
+  useFireBase,
+  loadAppConfig,
+  useRateLimit,
+  useExchangeRatesRefresh
+} from '@/composables'
 import {
   validateEmail,
   findUserByMobile,
@@ -60,21 +65,85 @@ export const Login = () => {
   const { setData } = useFireBase()
   const { clearLoginAttempts, isLoginLocked, recordFailedAttempt } =
     useRateLimit()
+  const { triggerExchangeRatesRefresh } = useExchangeRatesRefresh()
   const isSubmitting = ref(false)
 
   const createInitialForm = () => ({
     name: '',
     mobile: '',
+    // Optional free-text name of whatever wallet/bank account is linked to
+    // `mobile` (e.g. "JazzCash", "UPI") — purely informational, never validated.
+    mobileWalletProvider: '',
     // ISO2 country, set by GenericMobileInput's country-changed event —
     // used only to pick a default currency at signup (currencyForCountry),
     // changeable afterward in Settings.
     country: '',
     email: '',
     password: '',
-    rememberMe: false
+    rememberMe: false,
+    termsAccepted: false
   })
 
-  const form = ref(createInitialForm())
+  // Draft persistence — so navigating to /terms or /privacy mid-signup (or
+  // an accidental reload) doesn't wipe out what the user already typed.
+  // Vue Router has no keep-alive here (App.vue's RouterView is keyed on
+  // $route.path), so Login.vue's whole component instance — and this
+  // composable's `form` ref along with it — is destroyed on every route
+  // change, including toggling between /login and /register. sessionStorage
+  // survives that; it's cleared once a login actually completes (see
+  // completeLogin) so it never leaks into the next signed-in session.
+  // password is deliberately never persisted here — storing it in
+  // sessionStorage would be an unnecessary retention of a plaintext
+  // credential for no real convenience benefit (re-typing a password is
+  // trivial; re-typing name/mobile/email mid-form is the actual annoyance).
+  const AUTH_FORM_DRAFT_KEY = 'authFormDraft'
+  const DRAFT_FIELDS = [
+    'name',
+    'mobile',
+    'mobileWalletProvider',
+    'country',
+    'email',
+    'rememberMe',
+    'termsAccepted'
+  ]
+
+  function loadFormDraft() {
+    try {
+      const raw = sessionStorage.getItem(AUTH_FORM_DRAFT_KEY)
+      if (!raw) return {}
+      const parsed = JSON.parse(raw)
+      const draft = {}
+      for (const key of DRAFT_FIELDS) {
+        if (key in parsed) draft[key] = parsed[key]
+      }
+      return draft
+    } catch {
+      return {}
+    }
+  }
+
+  function saveFormDraft(value) {
+    try {
+      const draft = {}
+      for (const key of DRAFT_FIELDS) draft[key] = value[key]
+      sessionStorage.setItem(AUTH_FORM_DRAFT_KEY, JSON.stringify(draft))
+    } catch {
+      // Draft persistence is a convenience, not a requirement — ignore
+      // storage failures (private/incognito mode, quota, etc.).
+    }
+  }
+
+  function clearFormDraft() {
+    try {
+      sessionStorage.removeItem(AUTH_FORM_DRAFT_KEY)
+    } catch {
+      // Nothing to do if storage isn't available.
+    }
+  }
+
+  const form = ref({ ...createInitialForm(), ...loadFormDraft() })
+
+  watch(form, saveFormDraft, { deep: true })
 
   const loginForm = ref(null)
   // Initialize mode from the current URL path (ignoring an optional /ur prefix)
@@ -116,9 +185,13 @@ export const Login = () => {
   // Google sign-in — mobile collection for new Google users
   const googleMobileDialogVisible = ref(false)
   const googleMobileInput = ref('')
+  // Optional free-text wallet/bank account name for googleMobileInput —
+  // same purpose as form.value.mobileWalletProvider above.
+  const googleMobileWalletProvider = ref('')
   // ISO2 country, set by GenericMobileInput's country-changed event — same
   // "pick a default currency at signup" purpose as form.value.country above.
   const googleMobileCountry = ref('')
+  const googleMobileTermsAccepted = ref(false)
   const isGoogleMobileSubmitting = ref(false)
   const googlePendingFirebaseUser = ref(null)
 
@@ -187,6 +260,13 @@ export const Login = () => {
   }
 
   async function completeLogin(payload, message) {
+    // The signup/login draft has served its purpose once auth actually
+    // succeeds — drop it so it doesn't linger into whatever the next
+    // signed-out session on this tab/device types into the form.
+    clearFormDraft()
+    // Fire-and-forget — not awaited on purpose, must never delay or affect
+    // the login flow itself. Same style as trackAnalyticsEvent below.
+    triggerExchangeRatesRefresh()
     await clearLoginAttempts(payload.email)
     userStore.addUser({
       uid: payload.uid,
@@ -198,7 +278,18 @@ export const Login = () => {
       country: payload.country || '',
       currency: payload.currency || currencyForCountry(payload.country),
       emailVerified: payload.emailVerified !== false,
-      blocked: payload.blocked === true
+      blocked: payload.blocked === true,
+      // Payment-account fields — this is the FIRST thing that populates the
+      // active user's own userStore entry after login, before
+      // loadSharedGroups() (SharedGroups.vue) ever runs. Dropping these here
+      // meant a user's own profile showed them as blank until they happened
+      // to visit the Shared Groups page in that session, even though the
+      // data was sitting in Firestore the whole time.
+      mobileWalletProvider: payload.mobileWalletProvider || '',
+      bankName: payload.bankName || '',
+      bankAccountNumber: payload.bankAccountNumber || '',
+      qrCodeUrl: payload.qrCodeUrl || '',
+      qrCodeMeta: payload.qrCodeMeta || null
     })
     // isAdmin/billedUser live in user-admin-flags/{uid} — every caller of
     // completeLogin is expected to have already fetched them
@@ -390,11 +481,21 @@ export const Login = () => {
   // ── Registration ──────────────────────────────────────────────────────────
 
   async function handleRegistration() {
-    const { name, mobile, country, email, password, rememberMe } = form.value
+    const {
+      name,
+      mobile,
+      mobileWalletProvider,
+      country,
+      email,
+      password,
+      rememberMe,
+      termsAccepted
+    } = form.value
 
     const normalizedName = name.trim().replace(/\s+/g, ' ')
     const emailValue = email.trim().toLowerCase()
     const mobileValue = normalizePhoneNumber(mobile)
+    const mobileWalletProviderValue = (mobileWalletProvider || '').trim()
     // Default currency inferred from the phone widget's selected country —
     // changeable afterward in Settings. Falls back to PKR (currencyForCountry's
     // own default) if the widget never reported a country.
@@ -402,6 +503,12 @@ export const Login = () => {
 
     if (!normalizedName || !mobileValue || !emailValue || !password) {
       return showError(t('authMessages.allFieldsRequired'))
+    }
+
+    // Checked before creating the Firebase Auth user below — a UI-only
+    // validation failure shouldn't leave behind an orphaned Auth account.
+    if (!termsAccepted) {
+      return showError(t('authMessages.termsNotAccepted'))
     }
 
     if (!validateEmail(emailValue)) {
@@ -459,10 +566,12 @@ export const Login = () => {
         uid: userCredential.user.uid,
         name: normalizedName,
         mobile: mobileValue,
+        mobileWalletProvider: mobileWalletProviderValue,
         country: country || '',
         currency: currencyValue,
         emailVerified: false, // Will be set to true on first successful login
-        blocked: false
+        blocked: false,
+        termsAcceptedAt: new Date().toISOString()
       }
 
       await setData(
@@ -508,6 +617,7 @@ export const Login = () => {
       form.value.email = emailValue
       form.value.name = ''
       form.value.mobile = ''
+      form.value.mobileWalletProvider = ''
       form.value.password = ''
       showResendVerification.value = true
     } catch (error) {
@@ -605,6 +715,11 @@ export const Login = () => {
         email: resolvedUser.email,
         photoUrl: resolvedUser.photoUrl || '',
         photoMeta: resolvedUser.photoMeta || null,
+        mobileWalletProvider: resolvedUser.mobileWalletProvider || '',
+        bankName: resolvedUser.bankName || '',
+        bankAccountNumber: resolvedUser.bankAccountNumber || '',
+        qrCodeUrl: resolvedUser.qrCodeUrl || '',
+        qrCodeMeta: resolvedUser.qrCodeMeta || null,
         uid: resolvedUser.uid,
         emailVerified: true,
         blocked: resolvedUser.blocked === true,
@@ -765,6 +880,13 @@ export const Login = () => {
           name: existingUser.name,
           mobile: existingUser.mobile,
           email: existingUser.email,
+          photoUrl: existingUser.photoUrl || '',
+          photoMeta: existingUser.photoMeta || null,
+          mobileWalletProvider: existingUser.mobileWalletProvider || '',
+          bankName: existingUser.bankName || '',
+          bankAccountNumber: existingUser.bankAccountNumber || '',
+          qrCodeUrl: existingUser.qrCodeUrl || '',
+          qrCodeMeta: existingUser.qrCodeMeta || null,
           uid: existingUser.uid,
           password: null,
           userTabConfig: tabConfigDoc,
@@ -775,6 +897,7 @@ export const Login = () => {
         // New Google user — collect mobile number before saving to DB
         googlePendingFirebaseUser.value = firebaseUser
         googleMobileInput.value = ''
+        googleMobileWalletProvider.value = ''
         googleMobileCountry.value = ''
         googleMobileDialogVisible.value = true
       }
@@ -806,6 +929,9 @@ export const Login = () => {
     if (!isValidPhoneNumber(mobile)) {
       return showError(t('validation.mobilePattern'))
     }
+    if (!googleMobileTermsAccepted.value) {
+      return showError(t('authMessages.termsNotAccepted'))
+    }
 
     isGoogleMobileSubmitting.value = true
     try {
@@ -828,10 +954,12 @@ export const Login = () => {
         uid,
         name,
         mobile,
+        mobileWalletProvider: (googleMobileWalletProvider.value || '').trim(),
         country: googleMobileCountry.value || '',
         currency: currencyForCountry(googleMobileCountry.value),
         emailVerified: true,
-        blocked: false
+        blocked: false,
+        termsAcceptedAt: new Date().toISOString()
       }
 
       await setDoc(doc(database, DB_NODES.USERS, uid), userData)
@@ -851,7 +979,9 @@ export const Login = () => {
   function cancelGoogleMobileDialog() {
     googleMobileDialogVisible.value = false
     googleMobileInput.value = ''
+    googleMobileWalletProvider.value = ''
     googleMobileCountry.value = ''
+    googleMobileTermsAccepted.value = false
     googlePendingFirebaseUser.value = null
     signOut(auth).catch(() => {})
   }
@@ -870,7 +1000,9 @@ export const Login = () => {
     isSavingFeatureSelection,
     googleMobileDialogVisible,
     googleMobileInput,
+    googleMobileWalletProvider,
     googleMobileCountry,
+    googleMobileTermsAccepted,
     isGoogleMobileSubmitting,
     handleSubmit,
     handleForgotCode,

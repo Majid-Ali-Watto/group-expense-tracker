@@ -30,10 +30,11 @@
           <CardHead dense>
             <template #icon
               ><el-icon :size="18"
-                ><component :is="HIGHLIGHT_ICONS[index]"
-              /></el-icon
+                ><component :is="HIGHLIGHT_ICONS[index]" /></el-icon
             ></template>
-            <template #title><h2>{{ item.title }}</h2></template>
+            <template #title
+              ><h2>{{ item.title }}</h2></template
+            >
           </CardHead>
           <p>{{ item.description }}</p>
         </div>
@@ -54,10 +55,11 @@
           <CardHead dense>
             <template #icon
               ><el-icon :size="18"
-                ><component :is="USE_CASE_ICONS[index]"
-              /></el-icon
+                ><component :is="USE_CASE_ICONS[index]" /></el-icon
             ></template>
-            <template #title><h3>{{ item.title }}</h3></template>
+            <template #title
+              ><h3>{{ item.title }}</h3></template
+            >
           </CardHead>
           <p>{{ item.description }}</p>
         </article>
@@ -75,7 +77,9 @@
           :to="withLocale('/features')"
         >
           <CardHead dense>
-            <template #icon><el-icon :size="18"><Grid /></el-icon></template>
+            <template #icon
+              ><el-icon :size="18"><Grid /></el-icon
+            ></template>
             <template #title
               ><h3>{{ t('landing.explore.features.title') }}</h3></template
             >
@@ -101,7 +105,9 @@
           :to="withLocale('/personal-budget-tracker')"
         >
           <CardHead dense>
-            <template #icon><el-icon :size="18"><WalletFilled /></el-icon></template>
+            <template #icon
+              ><el-icon :size="18"><WalletFilled /></el-icon
+            ></template>
             <template #title
               ><h3>
                 {{ t('landing.explore.personalBudgetTracker.title') }}
@@ -112,7 +118,9 @@
         </RouterLink>
         <RouterLink class="content-card link-card" :to="withLocale('/faq')">
           <CardHead dense>
-            <template #icon><el-icon :size="18"><ChatDotRound /></el-icon></template>
+            <template #icon
+              ><el-icon :size="18"><ChatDotRound /></el-icon
+            ></template>
             <template #title
               ><h3>{{ t('landing.explore.faq.title') }}</h3></template
             >

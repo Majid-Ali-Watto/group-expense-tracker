@@ -1,9 +1,7 @@
 import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { database, doc, updateDoc, deleteField } from '@/firebase'
 import { getBugReportConfig, useShare } from '@/composables'
-import { DB_NODES } from '@/constants'
 import { PUBLIC_NAV_LINKS } from '@/constants'
 import { confirmAction } from '@/utils/confirmAction'
 import { getStoredLocale } from '@/i18n'
@@ -82,9 +80,14 @@ export const Header = (props, emit) => {
 
     if (notif.action === 'dismiss-user-rejection' && notif.userUid) {
       props.dismissNotification(notif.id)
-      updateDoc(doc(database, DB_NODES.USERS, notif.userUid), {
-        rejectionNotification: deleteField()
-      }).catch(() => {})
+      // Firestore-backed and only reachable for a logged-in user dismissing
+      // a real notification — lazy-loaded so Header.vue (rendered on every
+      // route, including public marketing pages) doesn't force the
+      // Firestore SDK into every visitor's bundle. See src/firebase.js's
+      // header comment.
+      import('./dismissUserRejection').then(({ dismissUserRejection }) =>
+        dismissUserRejection(notif.userUid).catch(() => {})
+      )
     }
 
     if (!notif.tab) return

@@ -221,7 +221,9 @@ import {
   ShareIcon,
   UsersIcon
 } from '@/components/icons'
-import { UserAvatar } from '@/components/generic-components'
+// Direct path, not the '@/components/generic-components' barrel — see the
+// equivalent comment in WelcomeBanner.vue.
+import UserAvatar from '@/components/generic-components/UserAvatar.vue'
 import { Tabs } from '@/assets'
 import { getAlternateLocalePath } from '@/utils/seo'
 import { setStoredLocale } from '@/i18n'

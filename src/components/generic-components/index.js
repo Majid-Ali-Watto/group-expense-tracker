@@ -1,4 +1,5 @@
 import AccordionItem from './AccordionItem.vue'
+import ActionsMenuButton from './ActionsMenuButton.vue'
 import AddNewTransactionButton from './AddNewTransactionButton.vue'
 import AmountInput from './GenericAmountField.vue'
 import AppImage from './AppImage.vue'
@@ -22,6 +23,7 @@ import ImagePreviewDialog from './ImagePreviewDialog.vue'
 import NetPositionDialog from './NetPositionDialog.vue'
 import NoGroupFound from './NoGroupFound.vue'
 import NotificationsForCurrentUser from './NotificationsForCurrentUser.vue'
+import PaymentAccountDetailsDialog from './PaymentAccountDetailsDialog.vue'
 import ReceiptOcrField from './ReceiptOcrField.vue'
 import ReceiptUploadField from './ReceiptUploadField.vue'
 import RichTextEditor from './RichTextEditor.vue'
@@ -36,6 +38,7 @@ const GenericInput = GenericInputField
 
 export {
   AccordionItem,
+  ActionsMenuButton,
   AddNewTransactionButton,
   AmountInput,
   AppImage,
@@ -60,6 +63,7 @@ export {
   NetPositionDialog,
   NoGroupFound,
   NotificationsForCurrentUser,
+  PaymentAccountDetailsDialog,
   ReceiptOcrField,
   ReceiptUploadField,
   RichTextEditor,

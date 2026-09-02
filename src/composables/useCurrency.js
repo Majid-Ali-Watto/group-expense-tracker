@@ -120,7 +120,10 @@ const availableCurrencyOptions = computed(() => {
   if (codes.size === 0) return CURRENCY_OPTIONS
 
   codes.delete(DEFAULT_CURRENCY)
-  return [describeCurrency(DEFAULT_CURRENCY), ...[...codes].sort().map(describeCurrency)]
+  return [
+    describeCurrency(DEFAULT_CURRENCY),
+    ...[...codes].sort().map(describeCurrency)
+  ]
 })
 
 // Same list, but guarantees `code` stays in it even if the live snapshot no

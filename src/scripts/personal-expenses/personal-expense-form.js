@@ -280,7 +280,9 @@ export const PersonalExpenseForm = (props, emit) => {
         const receiptUrls = uploadedReceipts.receiptUrls
         const receiptMeta = uploadedReceipts.receiptMeta
         const expenseData =
-          whatTask === 'Delete' ? null : getExpenseData(receiptUrls, receiptMeta)
+          whatTask === 'Delete'
+            ? null
+            : getExpenseData(receiptUrls, receiptMeta)
         if (whatTask !== 'Delete' && !expenseData) return
 
         if (whatTask == 'Save' || whatTask == 'Duplicate') {
@@ -342,9 +344,7 @@ export const PersonalExpenseForm = (props, emit) => {
   }
 
   function getExpenseData(receiptUrls = [], receiptMeta = []) {
-    const converted = convertToPersonalCurrency(
-      parseFloat(form.value?.amount)
-    )
+    const converted = convertToPersonalCurrency(parseFloat(form.value?.amount))
     if (!converted) {
       showError(t('sharedExpenses.exchangeRateUnavailable'))
       return null

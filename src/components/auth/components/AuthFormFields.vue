@@ -18,8 +18,24 @@
     required
     :placeholder="t('auth.formFields.mobilePlaceholder')"
     @update:modelValue="updateField('mobile', $event)"
-    @country-changed="updateField('country', $event?.iso2 || $event?.countryCode || '')"
+    @country-changed="
+      updateField('country', $event?.iso2 || $event?.countryCode || '')
+    "
   />
+
+  <template v-if="mode === 'register'">
+    <GenericInputField
+      :model-value="modelValue.mobileWalletProvider"
+      :label="t('common.mobileWalletProviderLabel')"
+      prop="mobileWalletProvider"
+      :placeholder="t('common.mobileWalletProviderPlaceholder')"
+      :maxlength="30"
+      @update:modelValue="updateField('mobileWalletProvider', $event)"
+    />
+    <p class="-mt-3 mb-2 text-xs text-gray-500">
+      {{ t('common.mobileWalletProviderNote') }}
+    </p>
+  </template>
 
   <GenericInputField
     :model-value="modelValue.email"
